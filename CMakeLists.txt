@@ -34,6 +34,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/Json.hpp
     src/data/JsonLoader.hpp
     src/data/JsonLoader.cpp
+    src/data/JsonReader.hpp
+    src/data/JsonReader.cpp
 )
 
 target_include_directories(i_dont_know_how_to_name_this_game PRIVATE

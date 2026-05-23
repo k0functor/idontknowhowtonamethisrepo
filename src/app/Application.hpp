@@ -8,7 +8,7 @@ class Application {
 public:
     Application();
 
-    int run();
+    std::int32_t run();
 
 private:
     void processEvents();

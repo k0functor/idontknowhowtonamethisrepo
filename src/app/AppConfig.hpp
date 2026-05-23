@@ -7,13 +7,13 @@
 struct WindowConfig {
     std::string title = "Card Roguelike";
 
-    uint32_t width = 1280;
-    uint32_t height = 720;
+    std::uint32_t width = 1280;
+    std::uint32_t height = 720;
 
     bool fullscreen = false;
     bool verticalSync = false;
 
-    uint32_t frameRateLimit = 60;
+    std::uint32_t frameRateLimit = 60;
 };
 
 struct PathConfig {

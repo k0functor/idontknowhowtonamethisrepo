@@ -20,7 +20,7 @@ using Json = nlohmann::json;
 
 const Json& readOptionalObject(
     const Json& parent,
-    const char* key,
+    const std::string& key,
     const std::filesystem::path& filePath
 ) {
     static const Json emptyObject = Json::object();
@@ -40,7 +40,7 @@ const Json& readOptionalObject(
 
 std::string readString(
     const Json& object,
-    const char* key,
+    const std::string& key,
     std::string currentValue,
     const std::filesystem::path& filePath
 ) {
@@ -59,7 +59,7 @@ std::string readString(
 
 bool readBool(
     const Json& object,
-    const char* key,
+    const std::string& key,
     bool currentValue,
     const std::filesystem::path& filePath
 ) {
@@ -76,12 +76,12 @@ bool readBool(
     return value.get<bool>();
 }
 
-unsigned int readUnsigned(
+std::uint32_t readUnsigned(
     const Json& object,
-    const char* key,
-    unsigned int currentValue,
-    unsigned int minValue,
-    unsigned int maxValue,
+    const std::string& key,
+    std::uint32_t currentValue,
+    std::uint32_t minValue,
+    std::uint32_t maxValue,
     const std::filesystem::path& filePath
 ) {
     if (!object.contains(key)) {
@@ -105,12 +105,12 @@ unsigned int readUnsigned(
         );
     }
 
-    return static_cast<unsigned int>(number);
+    return static_cast<std::uint32_t>(number);
 }
 
 std::filesystem::path readPath(
     const Json& object,
-    const char* key,
+    const std::string& key,
     std::filesystem::path currentValue,
     const std::filesystem::path& filePath
 ) {

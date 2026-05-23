@@ -5,6 +5,7 @@
 #include <SFML/Window/VideoMode.hpp>
 
 #include <optional>
+#include <cstdint>
 
 namespace {
     sf::RenderWindow createWindow(const AppConfig& config) {
@@ -31,7 +32,7 @@ Application::Application() {
     applyWindowSettings();
 }
 
-int Application::run() {
+std::int32_t Application::run() {
     while(window_.isOpen()) {
         processEvents();
         update();
