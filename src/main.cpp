@@ -1,21 +1,18 @@
-#include <SFML/Graphics.hpp>
+#include <app/Application.hpp>
+
+#include <exception>
+#include <iostream>
 
 int main()
 {
-	sf::RenderWindow window( sf::VideoMode( { 200, 200 } ), "SFML works!" );
-	sf::CircleShape shape( 100.f );
-	shape.setFillColor( sf::Color::Green );
-
-	while ( window.isOpen() )
-	{
-		while ( const std::optional event = window.pollEvent() )
-		{
-			if ( event->is<sf::Event::Closed>() )
-				window.close();
-		}
-
-		window.clear();
-		window.draw( shape );
-		window.display();
+	try {
+		Application app;
+		return app.run();
+	} catch (const std::exception& exception) {
+		std::cerr << "Fatal error: " << exception.what() << '\n';
+		return 1;
+	} catch (...) {
+		std::cerr << "Fatal error: unknown exception\n";
+		return 1;
 	}
 }

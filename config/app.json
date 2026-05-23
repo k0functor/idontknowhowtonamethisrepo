@@ -1,0 +1,20 @@
+{
+    "window": {
+        "title": "Card Roguelike",
+        "width": 1280,
+        "height": 720,
+        "fullscreen": false,
+        "vertical_sync": false,
+        "framerate_limit": 60
+    },
+
+    "paths": {
+        "assets": "assets",
+        "data": "data",
+        "saves": "saves"
+    },
+
+    "debug": {
+        "enabled": true
+    }
+}
