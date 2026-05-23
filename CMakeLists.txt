@@ -36,6 +36,13 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/JsonLoader.cpp
     src/data/JsonReader.hpp
     src/data/JsonReader.cpp
+
+    src/dice/DieType.hpp
+    src/dice/DieType.cpp
+    src/dice/DiceExpression.hpp
+    src/dice/DiceExpression.cpp
+    src/dice/DiceCorruption.hpp
+    src/dice/DiceCorruption.cpp
 )
 
 target_include_directories(i_dont_know_how_to_name_this_game PRIVATE

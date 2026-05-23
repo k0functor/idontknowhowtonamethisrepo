@@ -27,7 +27,7 @@ namespace {
 }
 
 Application::Application() {
-    config_ = AppConfig::loadFromFile("config.json");
+    config_ = AppConfig::loadFromFile("config/app.json");
     window_ = createWindow(config_);
     applyWindowSettings();
 }
