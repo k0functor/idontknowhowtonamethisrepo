@@ -26,9 +26,10 @@ namespace {
     }
 }
 
-Application::Application() {
-    config_ = AppConfig::loadFromFile("config/app.json");
-    window_ = createWindow(config_);
+Application::Application()
+    : config_(AppConfig::loadFromFile("config/app.json")),
+      window_(createWindow(config_)) {
+    loadLocalization();
     applyWindowSettings();
 }
 
@@ -65,4 +66,26 @@ void Application::applyWindowSettings() {
     if(!config_.window.verticalSync && config_.window.frameRateLimit > 0) {
         window_.setFramerateLimit(config_.window.frameRateLimit);
     }
+}
+
+void Application::loadLocalization() {
+    const auto localizationPath = config_.paths.data / "localization";
+
+    localization_.loadBundle(
+        Locale::russian(),
+        localizationPath / "ru.json"
+    );
+
+    localization_.loadBundle(
+        Locale::english(),
+        localizationPath / "en.json"
+    );
+
+    localization_.setMissingTextPolicy(
+        config_.debug.enabled
+            ? MissingTextPolicy::Throw
+            : MissingTextPolicy::ShowTextId
+    );
+
+    localization_.setCurrentLocale(config_.locale);
 }

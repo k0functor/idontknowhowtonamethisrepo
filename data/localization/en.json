@@ -1,0 +1,12 @@
+{
+  "game.title": "Card Roguelike",
+
+  "card.strike.name": "Strike",
+  "card.strike.description": "Deals {damage} damage.",
+
+  "card.defend.name": "Defend",
+  "card.defend.description": "Gain {block} block.",
+
+  "status.poison.name": "Poison",
+  "status.poison.description": "Takes damage at the end of the turn."
+}

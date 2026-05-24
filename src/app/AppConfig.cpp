@@ -180,6 +180,10 @@ AppConfig AppConfig::loadFromFile(const std::filesystem::path& filePath) {
         filePath
     );
 
+    config.locale = Locale(
+        readString(root, "locale", config.locale.code(), filePath)
+    );
+
     const Json& paths = readOptionalObject(root, "paths", filePath);
 
     config.paths.assets = readPath(

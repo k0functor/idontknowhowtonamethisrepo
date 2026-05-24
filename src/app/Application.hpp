@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AppConfig.hpp"
+#include "localization/LocalizationManager.hpp"
 
 #include <SFML/Graphics/RenderWindow.hpp>
 
@@ -16,8 +17,10 @@ private:
     void render();
 
     void applyWindowSettings();
+    void loadLocalization();
     
 private:
     AppConfig config_;
+    LocalizationManager localization_;
     sf::RenderWindow window_;
 };

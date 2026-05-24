@@ -1,5 +1,7 @@
 #pragma once
 
+#include "localization/Locale.hpp"
+
 #include <cstdint>
 #include <filesystem>
 #include <string>
@@ -30,6 +32,8 @@ struct AppConfig {
     WindowConfig window;
     PathConfig paths;
     DebugConfig debug;
+
+    Locale locale = Locale::russian();
 
     static AppConfig loadFromFile(const std::filesystem::path& filePath);
 };

@@ -39,8 +39,15 @@ add_executable(i_dont_know_how_to_name_this_game
 
     src/localization/Locale.hpp
     src/localization/Locale.cpp
+    src/localization/TextId.hpp
+    src/localization/LocalizedString.hpp
+    src/localization/MissingTextPolicy.hpp
     src/localization/LocalizationBundle.hpp
     src/localization/LocalizationBundle.cpp
+    src/localization/LocalizationManager.hpp
+    src/localization/LocalizationManager.cpp
+    src/localization/TextFormatter.hpp
+    src/localization/TextFormatter.cpp
 
     src/dice/DieType.hpp
     src/dice/DieType.cpp

@@ -1,0 +1,12 @@
+{
+  "game.title": "Card Roguelike",
+
+  "card.strike.name": "Удар",
+  "card.strike.description": "Наносит {damage} урона.",
+
+  "card.defend.name": "Защита",
+  "card.defend.description": "Даёт {block} защиты.",
+
+  "status.poison.name": "Яд",
+  "status.poison.description": "В конце хода получает урон."
+}
