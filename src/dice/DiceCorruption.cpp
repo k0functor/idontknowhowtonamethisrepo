@@ -2,21 +2,21 @@
 
 #include <stdexcept>
 
-std::string toString(const DiceCorruption& corruption)
+std::string toString(const DiceCorruptionType& corruption)
 {
     switch (corruption)
     {
-        case DiceCorruption::None:
+        case DiceCorruptionType::None:
             return "None";
-        case DiceCorruption::Cursed:
+        case DiceCorruptionType::Cursed:
             return "Cursed";
-        case DiceCorruption::Fire:
+        case DiceCorruptionType::Fire:
             return "Fire";
-        case DiceCorruption::Poison:
+        case DiceCorruptionType::Poison:
             return "Poison";
-        case DiceCorruption::Blood:
+        case DiceCorruptionType::Blood:
             return "Blood";
-        case DiceCorruption::Unstable:
+        case DiceCorruptionType::Unstable:
             return "Unstable";
         default:
             throw std::invalid_argument("Invalid DiceCorruption value");
