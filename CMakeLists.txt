@@ -37,6 +37,11 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/JsonReader.hpp
     src/data/JsonReader.cpp
 
+    src/localization/Locale.hpp
+    src/localization/Locale.cpp
+    src/localization/LocalizationBundle.hpp
+    src/localization/LocalizationBundle.cpp
+
     src/dice/DieType.hpp
     src/dice/DieType.cpp
     src/dice/DiceExpression.hpp
