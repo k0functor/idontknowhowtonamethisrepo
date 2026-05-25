@@ -4,13 +4,13 @@
 #include "scenes/DifficultySelectScene.hpp"
 #include "scenes/MainMenuScene.hpp"
 #include "scenes/ProfileHubScene.hpp"
-#include "scenes/RewardScene.hpp"
 #include "scenes/RunMapScene.hpp"
 #include "scenes/SaveSlotScene.hpp"
 #include "scenes/SplashScene.hpp"
 
 #include <iostream>
 #include <stdexcept>
+#include <utility>
 
 GameFlowController::GameFlowController(
     const ContentRegistry& content,
@@ -141,34 +141,20 @@ void GameFlowController::setCombatScene(const int nodeId) {
             uiFont_,
             runController_.run(),
             [this, nodeId](const CombatResult& result) {
-                queueTransition([this, nodeId, result]() {
-                    pendingReward_ = runController_.completeCombatAndCreateReward(
-                        nodeId,
-                        result,
-                        content_.cards(),
-                        content_.relics(),
-                        random_
-                    );
-                    setRewardScene();
-                });
+                return runController_.completeCombatAndCreateReward(
+                    nodeId,
+                    result,
+                    content_.cards(),
+                    content_.relics(),
+                    random_
+                );
             },
-            [this](const CombatResult&) { queueTransition([this]() { setProfileHubScene(); }); }
-        )
-    );
-}
-
-void GameFlowController::setRewardScene() {
-    if (!pendingReward_.has_value()) {
-        throw std::runtime_error("Cannot open reward scene: no pending reward");
-    }
-
-    sceneManager_.setScene(
-        std::make_unique<RewardScene>(
-            uiFont_,
-            localization_,
-            content_.cards(),
-            *pendingReward_,
-            [this](RewardSelection selection) { finishReward(std::move(selection)); }
+            [this](const RewardState& reward, RewardSelection selection) {
+                finishReward(reward, std::move(selection));
+            },
+            [this](const CombatResult&) {
+                queueTransition([this]() { setProfileHubScene(); });
+            }
         )
     );
 }
@@ -218,14 +204,9 @@ void GameFlowController::startMapNode(const int nodeId) {
     });
 }
 
-void GameFlowController::finishReward(RewardSelection selection) {
-    queueTransition([this, selection = std::move(selection)]() mutable {
-        if (!pendingReward_.has_value()) {
-            throw std::runtime_error("Cannot finish reward: no pending reward");
-        }
-
-        runController_.applyReward(*pendingReward_, selection);
-        pendingReward_.reset();
+void GameFlowController::finishReward(const RewardState& reward, RewardSelection selection) {
+    queueTransition([this, reward, selection = std::move(selection)]() mutable {
+        runController_.applyReward(reward, selection);
         setRunMapScene();
     });
 }

@@ -21,21 +21,26 @@
 #include "combat/TurnSystem.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
+#include "effects/EffectDefinition.hpp"
+#include "effects/EffectValue.hpp"
 #include "game/GameEventBus.hpp"
-#include "relics/RelicSystem.hpp"
-#include "localization/LocalizationManager.hpp"
-#include "preview/CardPreviewSystem.hpp"
-#include "run/RunState.hpp"
-#include "statuses/StatusSystem.hpp"
-#include "scenes/Scene.hpp"
 #include "inspect/InspectModelBuilder.hpp"
-#include "ui/CardViewModelBuilder.hpp"
+#include "localization/LocalizationManager.hpp"
+#include "localization/TextFormatter.hpp"
+#include "preview/CardPreviewSystem.hpp"
+#include "relics/RelicSystem.hpp"
+#include "rewards/RewardSelection.hpp"
+#include "rewards/RewardState.hpp"
+#include "run/RunState.hpp"
+#include "scenes/Scene.hpp"
+#include "statuses/StatusSystem.hpp"
 #include "ui/CardViewModel.hpp"
+#include "ui/CardViewModelBuilder.hpp"
+#include "ui/CombatView.hpp"
+#include "ui/CombatViewModelBuilder.hpp"
 #include "ui/EnemyViewModel.hpp"
 #include "ui/InspectPanelView.hpp"
 #include "ui/RelicInspectModal.hpp"
-#include "ui/CombatView.hpp"
-#include "ui/CombatViewModelBuilder.hpp"
 #include "ui/RelicViewModel.hpp"
 #include "ui/UiFont.hpp"
 
@@ -44,6 +49,7 @@
 #include <filesystem>
 #include <functional>
 #include <optional>
+#include <string>
 #include <vector>
 
 class CombatScene final : public Scene {
@@ -54,7 +60,8 @@ public:
         Random& random,
         const UiFont& uiFont,
         const RunState& runState,
-        std::function<void(const CombatResult&)> onCombatWon,
+        std::function<RewardState(const CombatResult&)> createRewardOnVictory,
+        std::function<void(const RewardState&, const RewardSelection&)> onRewardAccepted,
         std::function<void(const CombatResult&)> onCombatLost
     );
 
@@ -65,10 +72,12 @@ private:
     void initializeCombat();
     void rebuildViewModel(std::optional<EntityId> previewTarget);
     std::vector<RelicViewModel> buildRelicViewModels() const;
+
     void updateInspectInput(Vector2 mousePosition);
     void renderInspectOverlay() const;
     std::optional<EnemyViewModel> hoveredEnemyViewModel() const;
     std::optional<CardViewModel> inspectedCardViewModel() const;
+
     void handleMousePressed(Vector2 mousePosition);
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
@@ -81,13 +90,41 @@ private:
 
     void finishCombatIfNeeded();
 
+    void openRewardModalIfNeeded();
+    void updateRewardModalInput(Vector2 mousePosition);
+    void renderRewardModal() const;
+    void renderDefeatModal() const;
+
+    Rectangle rewardModalBounds() const;
+    Rectangle rewardGoldRowBounds() const;
+    Rectangle rewardCardRowBounds() const;
+    Rectangle rewardConsumableRowBounds(std::size_t index) const;
+    Rectangle rewardContinueButtonBounds() const;
+
+    Rectangle rewardCardChoiceModalBounds() const;
+    Rectangle rewardCardOptionBounds(std::size_t index) const;
+    Rectangle rewardCardCancelButtonBounds() const;
+
+    std::string rewardCardName(const CardId& cardId) const;
+    std::string rewardCardDescription(const CardId& cardId) const;
+    std::string localizedOrFallback(const TextId& textId, const std::string& fallback) const;
+
+    static std::string effectValueText(const EffectValue& value);
+    static std::string rangeToString(int minimum, int maximum);
+    static void fillVariablesFromEffect(
+        TextFormatter::Variables& variables,
+        const EffectDefinition& effect
+    );
+
 private:
     const ContentRegistry& content_;
     const LocalizationManager& localization_;
     Random& random_;
     const UiFont& uiFont_;
     const RunState& runState_;
-    std::function<void(const CombatResult&)> onCombatWon_;
+
+    std::function<RewardState(const CombatResult&)> createRewardOnVictory_;
+    std::function<void(const RewardState&, const RewardSelection&)> onRewardAccepted_;
     std::function<void(const CombatResult&)> onCombatLost_;
 
     GameEventBus eventBus_;
@@ -128,6 +165,12 @@ private:
     InspectPanelView inspectPanelView_;
     RelicInspectModal relicInspectModal_;
     std::optional<CardInstanceId> inspectedCardId_;
+
+    std::optional<RewardState> reward_;
+    std::optional<std::size_t> selectedRewardCardIndex_;
+    bool rewardGoldTaken_ = false;
+    bool rewardCardChooserOpen_ = false;
+    bool rewardAccepted_ = false;
 
     bool viewModelDirty_ = true;
     bool combatFinished_ = false;

@@ -43,7 +43,6 @@ private:
     void setDifficultySelectScene();
     void setRunMapScene();
     void setCombatScene(int nodeId);
-    void setRewardScene();
 
     void showMainMenu();
     void showSaveSlots();
@@ -51,7 +50,7 @@ private:
     void selectArchetype(PlayableArchetypeId archetypeId);
     void selectDifficulty(DifficultyId difficultyId);
     void startMapNode(int nodeId);
-    void finishReward(RewardSelection selection);
+    void finishReward(const RewardState& reward, RewardSelection selection);
     void requestExit();
 
 private:
@@ -66,7 +65,6 @@ private:
 
     std::optional<PlayableArchetypeId> selectedArchetypeId_;
     std::optional<DifficultyId> selectedDifficultyId_;
-    std::optional<RewardState> pendingReward_;
 
     std::function<void()> pendingTransition_;
     bool exitRequested_ = false;

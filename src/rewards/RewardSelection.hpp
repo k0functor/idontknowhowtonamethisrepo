@@ -5,7 +5,7 @@
 #include <optional>
 
 struct RewardSelection {
-    bool takeGold = true;
+    bool takeGold = false;
     std::optional<CardId> selectedCardId;
     bool skippedCardReward = false;
 };
