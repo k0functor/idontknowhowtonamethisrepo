@@ -1,0 +1,18 @@
+[
+  {
+    "id": "normal",
+    "name": "difficulty.normal.name",
+    "description": "difficulty.normal.description",
+    "enemy_hp_multiplier": 1.0,
+    "enemy_damage_multiplier": 1.0,
+    "gold_multiplier": 1.0
+  },
+  {
+    "id": "hard",
+    "name": "difficulty.hard.name",
+    "description": "difficulty.hard.description",
+    "enemy_hp_multiplier": 1.2,
+    "enemy_damage_multiplier": 1.15,
+    "gold_multiplier": 1.0
+  }
+]

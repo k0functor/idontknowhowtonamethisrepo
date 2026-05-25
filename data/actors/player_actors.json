@@ -1,0 +1,38 @@
+[
+  {
+    "id": "wanderer",
+    "name": "actor.wanderer.name",
+    "description": "actor.wanderer.description",
+    "max_hp": 70,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": []
+  },
+  {
+    "id": "bone_merchant",
+    "name": "actor.bone_merchant.name",
+    "description": "actor.bone_merchant.description",
+    "max_hp": 64,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": ["bone_purse"]
+  },
+  {
+    "id": "sadist",
+    "name": "actor.sadist.name",
+    "description": "actor.sadist.description",
+    "max_hp": 36,
+    "starting_energy": 2,
+    "starting_traits": [],
+    "starting_relics": ["razor_contract"]
+  },
+  {
+    "id": "masochist",
+    "name": "actor.masochist.name",
+    "description": "actor.masochist.description",
+    "max_hp": 44,
+    "starting_energy": 2,
+    "starting_traits": [],
+    "starting_relics": ["iron_nerves"]
+  }
+]

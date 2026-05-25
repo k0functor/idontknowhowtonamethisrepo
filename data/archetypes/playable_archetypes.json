@@ -1,0 +1,56 @@
+[
+  {
+    "id": "wanderer",
+    "name": "archetype.wanderer.name",
+    "short_description": "archetype.wanderer.short_description",
+    "details_description": "archetype.wanderer.details_description",
+    "unique_mechanic": "archetype.wanderer.unique_mechanic",
+    "actors": ["wanderer"],
+    "starting_deck": ["strike", "strike", "strike", "defend", "defend", "defend", "poisoned_guard"],
+    "starting_relics": [],
+    "starting_gold": 75,
+    "strengths": ["archetype.wanderer.strength.flexible"],
+    "weaknesses": ["archetype.wanderer.weakness.no_specialization"],
+    "mechanic_id": "default"
+  },
+  {
+    "id": "bone_merchant",
+    "name": "archetype.bone_merchant.name",
+    "short_description": "archetype.bone_merchant.short_description",
+    "details_description": "archetype.bone_merchant.details_description",
+    "unique_mechanic": "archetype.bone_merchant.unique_mechanic",
+    "actors": ["bone_merchant"],
+    "starting_deck": ["strike", "strike", "defend", "defend", "defend", "poisoned_guard"],
+    "starting_relics": ["bone_purse"],
+    "starting_gold": 120,
+    "strengths": [
+      "archetype.bone_merchant.strength.gold_income",
+      "archetype.bone_merchant.strength.rest_shop"
+    ],
+    "weaknesses": [
+      "archetype.bone_merchant.weakness.no_card_rewards",
+      "archetype.bone_merchant.weakness.shop_dependency"
+    ],
+    "mechanic_id": "merchant_progression"
+  },
+  {
+    "id": "sadist_masochist",
+    "name": "archetype.sadist_masochist.name",
+    "short_description": "archetype.sadist_masochist.short_description",
+    "details_description": "archetype.sadist_masochist.details_description",
+    "unique_mechanic": "archetype.sadist_masochist.unique_mechanic",
+    "actors": ["sadist", "masochist"],
+    "starting_deck": ["strike", "strike", "strike", "defend", "defend", "poisoned_guard"],
+    "starting_relics": ["razor_contract", "iron_nerves"],
+    "starting_gold": 50,
+    "strengths": [
+      "archetype.sadist_masochist.strength.two_bodies",
+      "archetype.sadist_masochist.strength.split_resources"
+    ],
+    "weaknesses": [
+      "archetype.sadist_masochist.weakness.complex_management",
+      "archetype.sadist_masochist.weakness.low_individual_hp"
+    ],
+    "mechanic_id": "sadist_masochist_party"
+  }
+]

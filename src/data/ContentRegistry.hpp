@@ -1,7 +1,10 @@
 #pragma once
 
+#include "actors/PlayerActorDatabase.hpp"
+#include "archetypes/PlayableArchetypeDatabase.hpp"
 #include "data/CardDatabase.hpp"
 #include "data/EnemyDatabase.hpp"
+#include "run/DifficultyDatabase.hpp"
 
 #include <filesystem>
 
@@ -17,7 +20,19 @@ public:
     const EnemyDatabase& enemies() const;
     EnemyDatabase& enemies();
 
+    const PlayableArchetypeDatabase& archetypes() const;
+    PlayableArchetypeDatabase& archetypes();
+
+    const PlayerActorDatabase& actors() const;
+    PlayerActorDatabase& actors();
+
+    const DifficultyDatabase& difficulties() const;
+    DifficultyDatabase& difficulties();
+
 private:
     CardDatabase cards_;
     EnemyDatabase enemies_;
+    PlayableArchetypeDatabase archetypes_;
+    PlayerActorDatabase actors_;
+    DifficultyDatabase difficulties_;
 };

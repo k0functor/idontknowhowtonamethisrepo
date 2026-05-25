@@ -10,8 +10,12 @@
 #include "combat/EffectResolver.hpp"
 #include "combat/EffectSystem.hpp"
 #include "combat/EnergySystem.hpp"
+#include "combat/EnemyMoveSelector.hpp"
+#include "combat/EnemyTurnSystem.hpp"
 #include "combat/ModifierSystem.hpp"
+#include "combat/PlayerTurnSystem.hpp"
 #include "combat/Targeting.hpp"
+#include "combat/TurnSystem.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
 #include "localization/LocalizationManager.hpp"
@@ -43,7 +47,7 @@ private:
     void rebuildViewModel(std::optional<EntityId> previewTarget);
     void handleClick(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
-    void drawIfHandIsLow();
+    void endPlayerTurn();
 
 private:
     const ContentRegistry& content_;
@@ -63,6 +67,12 @@ private:
     EffectSystem effectSystem_;
     CardPlaySystem cardPlaySystem_;
     CardPreviewSystem previewSystem_;
+
+    EnemyMoveSelector enemyMoveSelector_;
+    PlayerTurnSystem playerTurnSystem_;
+    EnemyTurnSystem enemyTurnSystem_;
+    TurnSystem turnSystem_;
+
     CardViewModelBuilder cardViewModelBuilder_;
     CombatViewModelBuilder combatViewModelBuilder_;
 

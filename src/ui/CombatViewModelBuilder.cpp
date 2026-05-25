@@ -1,6 +1,39 @@
 #include "CombatViewModelBuilder.hpp"
 
 #include <algorithm>
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+
+namespace {
+std::string intentLabel(const EnemyIntent& intent) {
+    switch (intent.type) {
+        case EnemyIntentType::Attack:
+            return intent.valueMin == intent.valueMax
+                ? "Attack " + std::to_string(intent.valueMax)
+                : "Attack " + std::to_string(intent.valueMin) + "-" + std::to_string(intent.valueMax);
+
+        case EnemyIntentType::Block:
+            return intent.valueMin == intent.valueMax
+                ? "Block " + std::to_string(intent.valueMax)
+                : "Block " + std::to_string(intent.valueMin) + "-" + std::to_string(intent.valueMax);
+
+        case EnemyIntentType::Buff:
+            return "Buff";
+
+        case EnemyIntentType::Debuff:
+            return "Debuff";
+
+        case EnemyIntentType::Special:
+            return "Special";
+
+        case EnemyIntentType::Unknown:
+            return "Unknown";
+    }
+
+    return "Unknown";
+}
+}
 
 CombatViewModelBuilder::CombatViewModelBuilder(
     const LocalizationManager& localization,
@@ -15,11 +48,21 @@ CombatViewModel CombatViewModelBuilder::build(
     const std::optional<EntityId> previewTarget
 ) const {
     CombatViewModel model;
+    model.phase = state.phase;
+    model.turn = state.turn;
     model.energy = state.resources.energy();
     model.maxEnergy = state.resources.maxEnergy();
     model.drawPileSize = static_cast<int>(state.deck.drawPile.size());
     model.discardPileSize = static_cast<int>(state.deck.discardPile.size());
     model.exhaustPileSize = static_cast<int>(state.deck.exhaustPile.size());
+    model.canEndTurn = state.phase == CombatPhase::PlayerTurn;
+
+    if (!state.players.empty()) {
+        const CombatEntity& player = state.players.front();
+        model.playerCurrentHp = player.health.current();
+        model.playerMaxHp = player.health.maximum();
+        model.playerBlock = player.block;
+    }
 
     model.handCards.reserve(state.hand.cards().size());
     for (const CardInstance& card : state.hand.cards()) {
@@ -33,6 +76,12 @@ CombatViewModel CombatViewModelBuilder::build(
         );
     }
 
+    std::unordered_map<std::uint64_t, EnemyIntent> intentsByEnemy;
+    intentsByEnemy.reserve(state.enemyIntents.size());
+    for (const EnemyIntentState& intentState : state.enemyIntents) {
+        intentsByEnemy.emplace(intentState.enemyId.value, intentState.intent);
+    }
+
     model.enemies.reserve(state.enemies.size());
     for (const CombatEntity& enemy : state.enemies) {
         EnemyViewModel enemyModel;
@@ -43,10 +92,20 @@ CombatViewModel CombatViewModelBuilder::build(
         enemyModel.block = enemy.block;
         enemyModel.statuses = enemy.statuses.all();
         enemyModel.alive = enemy.isAlive();
+
+        const auto intentIterator = intentsByEnemy.find(enemy.id.value);
+        if (intentIterator != intentsByEnemy.end()) {
+            enemyModel.intent = intentIterator->second;
+            enemyModel.intentText = intentLabel(enemyModel.intent);
+        } else {
+            enemyModel.intent.type = EnemyIntentType::Unknown;
+            enemyModel.intentText = enemyModel.alive ? "..." : "";
+        }
+
         model.enemies.push_back(std::move(enemyModel));
     }
 
-    model.recentLogEntries = recentLogEntries(state, 5);
+    model.recentLogEntries = recentLogEntries(state, 6);
     return model;
 }
 

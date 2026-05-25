@@ -20,8 +20,11 @@ public:
     std::optional<CardInstanceId> hoveredCardId() const;
     std::optional<EntityId> hoveredEnemyId() const;
 
+    bool endTurnButtonContains(Vector2 mousePosition) const;
+
 private:
     void layoutEnemies();
+    Rectangle endTurnButtonBounds() const;
 
 private:
     CombatViewModel model_;
@@ -29,4 +32,5 @@ private:
     std::vector<EnemyView> enemyViews_;
 
     std::optional<EntityId> hoveredEnemyId_;
+    bool hoveredEndTurnButton_ = false;
 };

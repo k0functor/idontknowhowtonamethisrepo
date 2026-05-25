@@ -43,12 +43,20 @@ void EnemyView::render(const Font* font, const bool hovered) const {
 
     DrawTextEx(*font, model_.name.c_str(), Vector2{position_.x + 14.f, position_.y + 12.f}, 20.f, 1.f, WHITE);
 
+    if (!model_.intentText.empty()) {
+        const Color intentColor = model_.intent.type == EnemyIntentType::Attack
+            ? Color{255, 160, 140, 255}
+            : Color{180, 215, 255, 255};
+
+        DrawTextEx(*font, model_.intentText.c_str(), Vector2{position_.x + 14.f, position_.y + 42.f}, 16.f, 1.f, intentColor);
+    }
+
     const std::string hpText = std::to_string(model_.currentHp) + "/" + std::to_string(model_.maxHp);
     DrawTextEx(*font, hpText.c_str(), Vector2{position_.x + 18.f, position_.y + size_.y - 38.f}, 14.f, 1.f, WHITE);
 
     if (model_.block > 0) {
         const std::string blockText = "Block: " + std::to_string(model_.block);
-        DrawTextEx(*font, blockText.c_str(), Vector2{position_.x + 14.f, position_.y + 46.f}, 15.f, 1.f, Color{180, 215, 255, 255});
+        DrawTextEx(*font, blockText.c_str(), Vector2{position_.x + 14.f, position_.y + 68.f}, 15.f, 1.f, Color{180, 215, 255, 255});
     }
 
     std::ostringstream statusText;
@@ -62,7 +70,7 @@ void EnemyView::render(const Font* font, const bool hovered) const {
 
     const std::string statuses = statusText.str();
     if (!statuses.empty()) {
-        DrawTextEx(*font, statuses.c_str(), Vector2{position_.x + 14.f, position_.y + 74.f}, 13.f, 1.f, Color{220, 220, 180, 255});
+        DrawTextEx(*font, statuses.c_str(), Vector2{position_.x + 14.f, position_.y + 94.f}, 13.f, 1.f, Color{220, 220, 180, 255});
     }
 }
 

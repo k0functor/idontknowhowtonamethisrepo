@@ -1,6 +1,5 @@
 #include "DebugCombatScene.hpp"
 
-#include "cards/DrawSystem.hpp"
 #include "combat/CombatPhase.hpp"
 #include "enemies/EnemyInstance.hpp"
 
@@ -52,6 +51,15 @@ DebugCombatScene::DebugCombatScene(
           effectResolver_,
           damageSystem_,
           blockSystem_
+      ),
+      playerTurnSystem_(drawSystem_),
+      enemyTurnSystem_(enemyMoveSelector_, effectSystem_),
+      turnSystem_(
+          content_.enemies(),
+          playerTurnSystem_,
+          enemyTurnSystem_,
+          enemyMoveSelector_,
+          5
       ),
       cardViewModelBuilder_(
           content_.cards(),
@@ -111,13 +119,11 @@ void DebugCombatScene::initializeCombat() {
 
     state_ = CombatState{};
     entityIds_.reset();
+    cardFactory_.reset();
     selectedCardId_.reset();
     lastPreviewTarget_.reset();
 
-    state_.phase = CombatPhase::PlayerTurn;
-    state_.turn = 1;
     state_.resources.setMaxEnergy(3);
-    state_.resources.resetEnergy();
 
     playerId_ = entityIds_.create();
     state_.players.push_back(makeDebugPlayer(playerId_));
@@ -132,9 +138,12 @@ void DebugCombatScene::initializeCombat() {
     state_.deck.drawPile.addTop(cardFactory_.create(CardId("strike")));
     state_.deck.drawPile.addTop(cardFactory_.create(CardId("strike")));
     state_.deck.drawPile.addTop(cardFactory_.create(CardId("defend")));
+    state_.deck.drawPile.addTop(cardFactory_.create(CardId("poisoned_guard")));
+    state_.deck.drawPile.addTop(cardFactory_.create(CardId("strike")));
+    state_.deck.drawPile.addTop(cardFactory_.create(CardId("defend")));
 
-    drawSystem_.drawCards(state_.deck, state_.hand, 5, random_);
     state_.log.add("Debug combat started");
+    turnSystem_.startCombat(state_, random_);
 
     viewModelDirty_ = true;
     rebuildViewModel(std::nullopt);
@@ -151,7 +160,12 @@ void DebugCombatScene::rebuildViewModel(const std::optional<EntityId> previewTar
     );
 }
 
-void DebugCombatScene::handleClick(const Vector2) {
+void DebugCombatScene::handleClick(const Vector2 mousePosition) {
+    if (view_.endTurnButtonContains(mousePosition)) {
+        endPlayerTurn();
+        return;
+    }
+
     if (selectedCardId_.has_value() && view_.hoveredEnemyId().has_value()) {
         playSelectedCardOn(*view_.hoveredEnemyId());
         return;
@@ -184,14 +198,19 @@ void DebugCombatScene::playSelectedCardOn(const EntityId target) {
 
     selectedCardId_.reset();
     lastPreviewTarget_.reset();
-    drawIfHandIsLow();
+
+    if (state_.aliveEnemyIds().empty()) {
+        state_.phase = CombatPhase::Won;
+        state_.enemyIntents.clear();
+        state_.log.add("Combat won");
+    }
+
     viewModelDirty_ = true;
 }
 
-void DebugCombatScene::drawIfHandIsLow() {
-    if (state_.hand.size() >= 3) {
-        return;
-    }
-
-    drawSystem_.drawCards(state_.deck, state_.hand, 1, random_);
+void DebugCombatScene::endPlayerTurn() {
+    selectedCardId_.reset();
+    lastPreviewTarget_.reset();
+    turnSystem_.endPlayerTurn(state_, random_);
+    viewModelDirty_ = true;
 }

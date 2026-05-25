@@ -2,10 +2,10 @@
 
 #include "Json.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <string>
 #include <vector>
-#include <cstdint>
 
 class JsonReader {
 public:
@@ -16,11 +16,13 @@ public:
     std::string requiredString(const std::string& key) const;
     std::int32_t requiredInt(const std::string& key) const;
     std::uint32_t requiredUnsigned(const std::string& key) const;
+    double requiredDouble(const std::string& key) const;
     bool requiredBool(const std::string& key) const;
 
     std::string optionalString(const std::string& key, const std::string& defaultValue) const;
     std::int32_t optionalInt(const std::string& key, std::int32_t defaultValue) const;
     std::uint32_t optionalUnsigned(const std::string& key, std::uint32_t defaultValue) const;
+    double optionalDouble(const std::string& key, double defaultValue) const;
     bool optionalBool(const std::string& key, bool defaultValue) const;
 
     const Json& requiredObject(const std::string& key) const;
@@ -29,6 +31,7 @@ public:
     const Json& requiredArray(const std::string& key) const;
     const Json& optionalArray(const std::string& key) const;
 
+    std::vector<std::string> requiredStringArray(const std::string& key) const;
     std::vector<std::string> optionalStringArray(
         const std::string& key,
         const std::vector<std::string>& defaultValue = {}

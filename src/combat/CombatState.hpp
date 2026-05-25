@@ -6,6 +6,7 @@
 #include "combat/CombatPhase.hpp"
 #include "combat/CombatResources.hpp"
 #include "entities/CombatEntity.hpp"
+#include "combat/EnemyIntentState.hpp"
 
 #include <vector>
 
@@ -23,6 +24,7 @@ public:
 
     std::vector<CombatEntity> players;
     std::vector<CombatEntity> enemies;
+    std::vector<EnemyIntentState> enemyIntents;
 
     Deck deck;
     Hand hand;

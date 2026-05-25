@@ -3,6 +3,9 @@
 void ContentRegistry::clear() {
     cards_.clear();
     enemies_.clear();
+    archetypes_.clear();
+    actors_.clear();
+    difficulties_.clear();
 }
 
 void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDirectory) {
@@ -10,6 +13,9 @@ void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDir
 
     cards_.loadFromDirectory(dataDirectory / "cards");
     enemies_.loadFromDirectory(dataDirectory / "enemies");
+    actors_.loadFromDirectory(dataDirectory / "actors");
+    archetypes_.loadFromDirectory(dataDirectory / "archetypes");
+    difficulties_.loadFromDirectory(dataDirectory / "run");
 }
 
 const CardDatabase& ContentRegistry::cards() const {
@@ -26,4 +32,28 @@ const EnemyDatabase& ContentRegistry::enemies() const {
 
 EnemyDatabase& ContentRegistry::enemies() {
     return enemies_;
+}
+
+const PlayableArchetypeDatabase& ContentRegistry::archetypes() const {
+    return archetypes_;
+}
+
+PlayableArchetypeDatabase& ContentRegistry::archetypes() {
+    return archetypes_;
+}
+
+const PlayerActorDatabase& ContentRegistry::actors() const {
+    return actors_;
+}
+
+PlayerActorDatabase& ContentRegistry::actors() {
+    return actors_;
+}
+
+const DifficultyDatabase& ContentRegistry::difficulties() const {
+    return difficulties_;
+}
+
+DifficultyDatabase& ContentRegistry::difficulties() {
+    return difficulties_;
 }

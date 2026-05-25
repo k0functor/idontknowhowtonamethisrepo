@@ -3,6 +3,36 @@
     "id": "training_dummy",
     "name": "enemy.training_dummy.name",
     "max_hp": 30,
-    "starting_block": 0
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "dummy_attack",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "dummy_guard",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

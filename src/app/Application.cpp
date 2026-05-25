@@ -27,11 +27,11 @@ Application::Application()
     loadLocalization();
     loadContent();
     applyWindowSettings();
-    createInitialScene();
+    createGameFlow();
 }
 
 Application::~Application() {
-    debugCombatScene_.reset();
+    gameFlow_.reset();
 
     if (windowInitialized_) {
         CloseWindow();
@@ -45,6 +45,11 @@ std::int32_t Application::run() {
 
         processEvents();
         update(deltaSeconds);
+
+        if (gameFlow_ != nullptr && gameFlow_->exitRequested()) {
+            break;
+        }
+
         render();
 
         if (!IsWindowFocused()) {
@@ -56,14 +61,12 @@ std::int32_t Application::run() {
 }
 
 void Application::processEvents() {
-    // raylib exposes input as polling functions. Window close is handled by
-    // WindowShouldClose() in run(). Revolutionary stuff: fewer objects to drag
-    // through every function signature like tiny bureaucrats.
+    // raylib exposes input through polling functions.
 }
 
 void Application::update(const float deltaSeconds) {
-    if (debugCombatScene_ != nullptr) {
-        debugCombatScene_->update(deltaSeconds);
+    if (gameFlow_ != nullptr) {
+        gameFlow_->update(deltaSeconds);
     }
 }
 
@@ -71,8 +74,8 @@ void Application::render() {
     BeginDrawing();
     ClearBackground(Color{20, 20, 24, 255});
 
-    if (debugCombatScene_ != nullptr) {
-        debugCombatScene_->render();
+    if (gameFlow_ != nullptr) {
+        gameFlow_->render();
     }
 
     EndDrawing();
@@ -134,11 +137,14 @@ void Application::loadContent() {
     if (config_.debug.enabled) {
         std::cout << "Loaded cards: " << content_.cards().size() << '\n';
         std::cout << "Loaded enemies: " << content_.enemies().size() << '\n';
+        std::cout << "Loaded actors: " << content_.actors().size() << '\n';
+        std::cout << "Loaded archetypes: " << content_.archetypes().size() << '\n';
+        std::cout << "Loaded difficulties: " << content_.difficulties().size() << '\n';
     }
 }
 
-void Application::createInitialScene() {
-    debugCombatScene_ = std::make_unique<DebugCombatScene>(
+void Application::createGameFlow() {
+    gameFlow_ = std::make_unique<GameFlowController>(
         content_,
         localization_,
         random_,

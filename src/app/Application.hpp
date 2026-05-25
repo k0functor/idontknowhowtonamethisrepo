@@ -3,8 +3,8 @@
 #include "AppConfig.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
+#include "flow/GameFlowController.hpp"
 #include "localization/LocalizationManager.hpp"
-#include "scenes/DebugCombatScene.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -28,7 +28,7 @@ private:
     void applyWindowSettings();
     void loadLocalization();
     void loadContent();
-    void createInitialScene();
+    void createGameFlow();
 
 private:
     AppConfig config_;
@@ -36,7 +36,7 @@ private:
     ContentRegistry content_;
     Random random_;
 
-    std::unique_ptr<DebugCombatScene> debugCombatScene_;
+    std::unique_ptr<GameFlowController> gameFlow_;
 
     bool windowInitialized_ = false;
 };

@@ -57,6 +57,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/parsers/CardDefinitionParser.cpp
     src/data/parsers/EnemyDefinitionParser.hpp
     src/data/parsers/EnemyDefinitionParser.cpp
+    src/data/parsers/EnemyActionDefinitionParser.hpp
+    src/data/parsers/EnemyActionDefinitionParser.cpp
 
     src/localization/Locale.hpp
     src/localization/Locale.cpp
@@ -116,6 +118,9 @@ add_executable(i_dont_know_how_to_name_this_game
     src/entities/CombatEntity.hpp
 
     src/enemies/EnemyId.hpp
+    src/enemies/EnemyIntent.hpp
+    src/enemies/EnemyIntent.cpp
+    src/enemies/EnemyActionDefinition.hpp
     src/enemies/EnemyDefinition.hpp
     src/enemies/EnemyInstance.hpp
 
@@ -126,6 +131,15 @@ add_executable(i_dont_know_how_to_name_this_game
     src/combat/CombatLog.cpp
     src/combat/CombatState.hpp
     src/combat/CombatState.cpp
+    src/combat/EnemyIntentState.hpp
+    src/combat/EnemyMoveSelector.hpp
+    src/combat/EnemyMoveSelector.cpp
+    src/combat/PlayerTurnSystem.hpp
+    src/combat/PlayerTurnSystem.cpp
+    src/combat/EnemyTurnSystem.hpp
+    src/combat/EnemyTurnSystem.cpp
+    src/combat/TurnSystem.hpp
+    src/combat/TurnSystem.cpp
     src/combat/ModifierSystem.hpp
     src/combat/ModifierSystem.cpp
     src/combat/EffectContext.hpp
@@ -175,6 +189,72 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/CombatView.hpp
     src/ui/CombatView.cpp
 
+    src/data/parsers/PlayableArchetypeParser.hpp
+    src/data/parsers/PlayableArchetypeParser.cpp
+    src/data/parsers/PlayerActorParser.hpp
+    src/data/parsers/PlayerActorParser.cpp
+    src/data/parsers/DifficultyDefinitionParser.hpp
+    src/data/parsers/DifficultyDefinitionParser.cpp
+    src/profile/ProfileData.hpp
+    src/profile/ProfileSlot.hpp
+    src/profile/ProfileManager.hpp
+    src/profile/ProfileManager.cpp
+    src/archetypes/PlayableArchetypeId.hpp
+    src/archetypes/PlayableArchetypeDefinition.hpp
+    src/archetypes/PlayableArchetypeDatabase.hpp
+    src/archetypes/PlayableArchetypeDatabase.cpp
+    src/actors/PlayerActorId.hpp
+    src/actors/PlayerActorDefinition.hpp
+    src/actors/PlayerActorDatabase.hpp
+    src/actors/PlayerActorDatabase.cpp
+    src/run/DifficultyId.hpp
+    src/run/DifficultyDefinition.hpp
+    src/run/DifficultyDatabase.hpp
+    src/run/DifficultyDatabase.cpp
+    src/run/RunMapNode.hpp
+    src/run/RunMapNode.cpp
+    src/run/RunMap.hpp
+    src/run/RunState.hpp
+    src/run/RunMapGenerator.hpp
+    src/run/RunMapGenerator.cpp
+    src/run/RunFactory.hpp
+    src/run/RunFactory.cpp
+    src/run/RunStats.hpp
+    src/run/RunController.hpp
+    src/run/RunController.cpp
+
+    src/rewards/CardRewardOption.hpp
+    src/rewards/RewardContext.hpp
+    src/rewards/RewardSelection.hpp
+    src/rewards/RewardState.hpp
+    src/rewards/RewardGenerator.hpp
+    src/rewards/RewardGenerator.cpp
+    src/rewards/RewardSystem.hpp
+    src/rewards/RewardSystem.cpp
+    src/flow/SceneId.hpp
+    src/flow/SceneManager.hpp
+    src/flow/SceneManager.cpp
+    src/flow/GameFlowController.hpp
+    src/flow/GameFlowController.cpp
+    src/ui/BasicUi.hpp
+    src/ui/BasicUi.cpp
+    src/scenes/Scene.hpp
+    src/scenes/SplashScene.hpp
+    src/scenes/SplashScene.cpp
+    src/scenes/MainMenuScene.hpp
+    src/scenes/MainMenuScene.cpp
+    src/scenes/SaveSlotScene.hpp
+    src/scenes/SaveSlotScene.cpp
+    src/scenes/ProfileHubScene.hpp
+    src/scenes/ProfileHubScene.cpp
+    src/scenes/DifficultySelectScene.hpp
+    src/scenes/DifficultySelectScene.cpp
+    src/scenes/RunMapScene.hpp
+    src/scenes/RunMapScene.cpp
+    src/scenes/CombatScene.hpp
+    src/scenes/CombatScene.cpp
+    src/scenes/RewardScene.hpp
+    src/scenes/RewardScene.cpp
     src/scenes/DebugCombatScene.hpp
     src/scenes/DebugCombatScene.cpp
 )
