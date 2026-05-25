@@ -171,6 +171,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/CardTransform.hpp
     src/ui/CardViewModel.hpp
     src/ui/EnemyViewModel.hpp
+    src/ui/PlayerViewModel.hpp
     src/ui/CombatViewModel.hpp
     src/ui/UiFont.hpp
     src/ui/UiFont.cpp
@@ -182,6 +183,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/HandView.cpp
     src/ui/EnemyView.hpp
     src/ui/EnemyView.cpp
+    src/ui/PlayerView.hpp
+    src/ui/PlayerView.cpp
     src/ui/CardViewModelBuilder.hpp
     src/ui/CardViewModelBuilder.cpp
     src/ui/CombatViewModelBuilder.hpp

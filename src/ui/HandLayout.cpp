@@ -37,9 +37,9 @@ std::vector<CardTransform> HandLayout::calculateBaseTransforms(const std::size_t
 
         CardTransform transform;
         transform.position.x = config_.centerX + centered * actualSpacing * static_cast<float>(cardCount - 1);
-        transform.position.y = config_.centerY + std::abs(centered) * config_.arcHeight;
+        transform.position.y = config_.centerY + std::abs(centered) * config_.arcHeight * config_.baseScale;
         transform.rotationDegrees = centered * config_.maxRotationDegrees;
-        transform.scale = {1.f, 1.f};
+        transform.scale = {config_.baseScale, config_.baseScale};
         transform.zIndex = static_cast<int>(i);
 
         transforms.push_back(transform);
@@ -54,29 +54,49 @@ CardTransform HandLayout::transformForState(
     const std::size_t,
     const bool hovered,
     const bool selected,
+    const bool dragged,
+    const Vector2 dragPosition,
     const bool anyCardElevated,
     const std::size_t elevatedIndex
 ) const {
+    if (dragged) {
+        baseTransform.position = dragPosition;
+        baseTransform.rotationDegrees = 0.f;
+        baseTransform.scale = {
+            config_.baseScale * config_.draggedScale,
+            config_.baseScale * config_.draggedScale
+        };
+        baseTransform.zIndex = 3000;
+        return baseTransform;
+    }
+
     if (anyCardElevated && currentIndex != elevatedIndex) {
+        const float push = config_.neighborPush * config_.baseScale;
         if (currentIndex < elevatedIndex) {
-            baseTransform.position.x -= config_.neighborPush;
+            baseTransform.position.x -= push;
         } else {
-            baseTransform.position.x += config_.neighborPush;
+            baseTransform.position.x += push;
         }
     }
 
     if (selected) {
-        baseTransform.position.y -= config_.selectedLift;
+        baseTransform.position.y -= config_.selectedLift * config_.baseScale;
         baseTransform.rotationDegrees = 0.f;
-        baseTransform.scale = {config_.selectedScale, config_.selectedScale};
+        baseTransform.scale = {
+            config_.baseScale * config_.selectedScale,
+            config_.baseScale * config_.selectedScale
+        };
         baseTransform.zIndex = 2000;
         return baseTransform;
     }
 
     if (hovered) {
-        baseTransform.position.y -= config_.hoverLift;
+        baseTransform.position.y -= config_.hoverLift * config_.baseScale;
         baseTransform.rotationDegrees = 0.f;
-        baseTransform.scale = {config_.hoverScale, config_.hoverScale};
+        baseTransform.scale = {
+            config_.baseScale * config_.hoverScale,
+            config_.baseScale * config_.hoverScale
+        };
         baseTransform.zIndex = 1000;
         return baseTransform;
     }

@@ -51,9 +51,15 @@ public:
 private:
     void initializeCombat();
     void rebuildViewModel(std::optional<EntityId> previewTarget);
-    void handleClick(Vector2 mousePosition);
+    void handleMousePressed(Vector2 mousePosition);
+    void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
     void endPlayerTurn();
+
+    bool selectedCardCanTargetEnemy() const;
+    bool selectedCardCanTargetPlayer() const;
+    bool cardCanTargetEnemy(CardInstanceId cardInstanceId) const;
+    bool cardCanTargetPlayer(CardInstanceId cardInstanceId) const;
 
     void finishCombatIfNeeded();
 
@@ -92,6 +98,7 @@ private:
 
     EntityId playerId_;
     std::optional<CardInstanceId> selectedCardId_;
+    std::optional<CardInstanceId> draggedCardId_;
 
     CombatView view_;
 

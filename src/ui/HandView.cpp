@@ -1,7 +1,14 @@
 #include "HandView.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <numeric>
+
+namespace {
+float clampFloat(const float value, const float minimum, const float maximum) {
+    return std::max(minimum, std::min(maximum, value));
+}
+}
 
 void HandView::setCards(const std::vector<CardViewModel>& models) {
     rebuildIfNeeded(models);
@@ -20,8 +27,51 @@ void HandView::setSelectedCard(const std::optional<CardInstanceId> selectedCardI
     updateTargets();
 }
 
+void HandView::setDraggedCard(
+    const std::optional<CardInstanceId> draggedCardId,
+    const Vector2 dragPosition
+) {
+    draggedCardId_ = draggedCardId;
+    dragPosition_ = dragPosition;
+    updateTargets();
+}
+
+void HandView::setViewport(const float width, const float height) {
+    const Vector2 cardSize = CardView::size();
+    const float widthScale = width / 1280.f;
+    const float heightScale = height / 720.f;
+    const float baseScale = clampFloat(std::min(widthScale, heightScale), 0.70f, 1.10f);
+
+    HandLayout::Config config;
+    config.baseScale = baseScale;
+    config.centerX = width * 0.5f;
+    config.arcHeight = 36.f;
+    config.cardSpacing = 108.f * baseScale;
+    config.maxTotalWidth = std::max(260.f, std::min(width - 360.f, 1040.f * baseScale));
+
+    const float bottomMargin = 20.f;
+    config.centerY = height
+        - cardSize.y * baseScale * 0.5f
+        - bottomMargin
+        - config.arcHeight * baseScale;
+    config.centerY = std::max(320.f * baseScale, config.centerY);
+
+    config.maxRotationDegrees = 10.f;
+    config.hoverLift = 95.f;
+    config.hoverScale = 1.12f;
+    config.selectedLift = 115.f;
+    config.selectedScale = 1.15f;
+    config.draggedScale = 1.16f;
+    config.neighborPush = 42.f;
+
+    layout_.setConfig(config);
+    updateTargets();
+}
+
 void HandView::update(const float deltaSeconds, const Vector2 mousePosition) {
-    const std::optional<std::size_t> hoveredIndex = findHoveredIndex(mousePosition);
+    const std::optional<std::size_t> hoveredIndex = draggedCardId_.has_value()
+        ? std::nullopt
+        : findHoveredIndex(mousePosition);
     hoveredCardId_.reset();
 
     if (hoveredIndex.has_value()) {
@@ -88,6 +138,11 @@ void HandView::updateTargets() {
     for (std::size_t i = 0; i < cards_.size(); ++i) {
         const CardInstanceId id = cards_[i].model().instanceId;
 
+        if (draggedCardId_.has_value() && id == *draggedCardId_) {
+            elevatedIndex = i;
+            break;
+        }
+
         if (selectedCardId_.has_value() && id == *selectedCardId_) {
             elevatedIndex = i;
             break;
@@ -102,6 +157,7 @@ void HandView::updateTargets() {
         const CardInstanceId id = cards_[i].model().instanceId;
         const bool hovered = hoveredCardId_.has_value() && id == *hoveredCardId_;
         const bool selected = selectedCardId_.has_value() && id == *selectedCardId_;
+        const bool dragged = draggedCardId_.has_value() && id == *draggedCardId_;
 
         CardTransform target = layout_.transformForState(
             baseTransforms[i],
@@ -109,6 +165,8 @@ void HandView::updateTargets() {
             cards_.size(),
             hovered,
             selected,
+            dragged,
+            dragPosition_,
             elevatedIndex.has_value(),
             elevatedIndex.value_or(0)
         );

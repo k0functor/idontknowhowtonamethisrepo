@@ -1,5 +1,6 @@
 #include "CombatView.hpp"
 
+#include <algorithm>
 #include <string>
 
 namespace {
@@ -25,22 +26,47 @@ void CombatView::setModel(const CombatViewModel& model) {
     model_ = model;
     handView_.setCards(model_.handCards);
 
+    playerViews_.resize(model_.players.size());
+    for (std::size_t i = 0; i < model_.players.size(); ++i) {
+        playerViews_[i].setModel(model_.players[i]);
+    }
+
     enemyViews_.resize(model_.enemies.size());
     for (std::size_t i = 0; i < model_.enemies.size(); ++i) {
         enemyViews_[i].setModel(model_.enemies[i]);
     }
 
-    layoutEnemies();
+    applyResponsiveLayout();
 }
 
 void CombatView::setSelectedCard(const std::optional<CardInstanceId> selectedCardId) {
     handView_.setSelectedCard(selectedCardId);
 }
 
+void CombatView::setDraggedCard(
+    const std::optional<CardInstanceId> draggedCardId,
+    const Vector2 dragPosition
+) {
+    draggedCardId_ = draggedCardId;
+    dragPosition_ = dragPosition;
+    handView_.setDraggedCard(draggedCardId, dragPosition);
+}
+
 void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
+    applyResponsiveLayout();
+
+    handView_.setDraggedCard(draggedCardId_, dragPosition_);
     handView_.update(deltaSeconds, mousePosition);
 
     hoveredEndTurnButton_ = endTurnButtonContains(mousePosition);
+
+    hoveredPlayerId_.reset();
+    for (const PlayerView& playerView : playerViews_) {
+        if (playerView.contains(mousePosition)) {
+            hoveredPlayerId_ = playerView.model().entityId;
+            break;
+        }
+    }
 
     hoveredEnemyId_.reset();
     for (const EnemyView& enemyView : enemyViews_) {
@@ -52,25 +78,29 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
 }
 
 void CombatView::render(const Font* font) const {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{20, 20, 24, 255});
-    DrawRectangle(0, 0, GetScreenWidth(), 72, Color{26, 28, 36, 255});
-    DrawRectangleLinesEx(Rectangle{10.f, 82.f, static_cast<float>(GetScreenWidth()) - 20.f, 388.f}, 1.f, Color{56, 58, 70, 255});
-    DrawRectangleLinesEx(Rectangle{10.f, 480.f, static_cast<float>(GetScreenWidth()) - 20.f, 230.f}, 1.f, Color{56, 58, 70, 255});
+    const int screenWidth = GetScreenWidth();
+    const int screenHeight = GetScreenHeight();
+
+    DrawRectangle(0, 0, screenWidth, screenHeight, Color{20, 20, 24, 255});
+    DrawRectangle(0, 0, screenWidth, 72, Color{26, 28, 36, 255});
+
+    const Rectangle battlefield = battlefieldBounds();
+    const Rectangle handArea = handBounds();
+    DrawRectangleLinesEx(battlefield, 1.f, Color{56, 58, 70, 255});
+    DrawRectangleLinesEx(handArea, 1.f, Color{56, 58, 70, 255});
 
     const Rectangle endTurnBounds = endTurnButtonBounds();
     const Color endTurnColor = model_.canEndTurn
         ? (hoveredEndTurnButton_ ? Color{210, 170, 80, 255} : Color{160, 120, 50, 255})
         : Color{70, 70, 76, 255};
-    DrawRectangleRec(endTurnBounds, endTurnColor);
-    DrawRectangleLinesEx(endTurnBounds, 2.f, Color{235, 220, 180, 255});
+    DrawRectangleRounded(endTurnBounds, 0.18f, 8, endTurnColor);
+    DrawRectangleRoundedLinesEx(endTurnBounds, 0.18f, 8, 2.f, Color{235, 220, 180, 255});
 
     if (font != nullptr) {
         const std::string energyText =
             "Turn: " + std::to_string(model_.turn) +
             "   " + phaseText(model_.phase) +
             "   Energy: " + std::to_string(model_.energy) + "/" + std::to_string(model_.maxEnergy) +
-            "   HP: " + std::to_string(model_.playerCurrentHp) + "/" + std::to_string(model_.playerMaxHp) +
-            "   Block: " + std::to_string(model_.playerBlock) +
             "   Draw: " + std::to_string(model_.drawPileSize) +
             "   Discard: " + std::to_string(model_.discardPileSize) +
             "   Exhaust: " + std::to_string(model_.exhaustPileSize);
@@ -78,11 +108,17 @@ void CombatView::render(const Font* font) const {
         DrawTextEx(*font, energyText.c_str(), Vector2{24.f, 20.f}, 18.f, 1.f, WHITE);
         DrawTextEx(*font, "End Turn", Vector2{endTurnBounds.x + 30.f, endTurnBounds.y + 18.f}, 18.f, 1.f, WHITE);
 
-        float logY = 92.f;
+        float logY = battlefield.y + 10.f;
+        const float logX = battlefield.x + 14.f;
         for (const std::string& entry : model_.recentLogEntries) {
-            DrawTextEx(*font, entry.c_str(), Vector2{24.f, logY}, 13.f, 1.f, Color{190, 190, 200, 255});
+            DrawTextEx(*font, entry.c_str(), Vector2{logX, logY}, 13.f, 1.f, Color{190, 190, 200, 255});
             logY += 18.f;
         }
+    }
+
+    for (const PlayerView& playerView : playerViews_) {
+        const bool hovered = hoveredPlayerId_.has_value() && playerView.model().entityId == *hoveredPlayerId_;
+        playerView.render(font, hovered);
     }
 
     for (const EnemyView& enemyView : enemyViews_) {
@@ -101,25 +137,95 @@ std::optional<EntityId> CombatView::hoveredEnemyId() const {
     return hoveredEnemyId_;
 }
 
+std::optional<EntityId> CombatView::hoveredPlayerId() const {
+    return hoveredPlayerId_;
+}
+
 bool CombatView::endTurnButtonContains(const Vector2 mousePosition) const {
     return model_.canEndTurn && CheckCollisionPointRec(mousePosition, endTurnButtonBounds());
 }
 
-void CombatView::layoutEnemies() {
-    const float startX = 850.f;
-    const float startY = 210.f;
-    const float spacingX = 260.f;
+void CombatView::applyResponsiveLayout() {
+    handView_.setViewport(
+        static_cast<float>(GetScreenWidth()),
+        static_cast<float>(GetScreenHeight())
+    );
+    layoutPlayers();
+    layoutEnemies();
+}
 
-    for (std::size_t i = 0; i < enemyViews_.size(); ++i) {
-        enemyViews_[i].setPosition(Vector2{startX + spacingX * static_cast<float>(i), startY});
+void CombatView::layoutPlayers() {
+    const Rectangle battlefield = battlefieldBounds();
+    const float viewWidth = std::clamp(battlefield.width * 0.20f, 190.f, 250.f);
+    const float viewHeight = 180.f;
+    const float centerX = battlefield.x + battlefield.width * 0.23f;
+    const float startY = battlefield.y + battlefield.height * 0.48f - viewHeight * 0.5f;
+    const float spacingY = viewHeight + 18.f;
+
+    const float totalHeight = playerViews_.empty()
+        ? 0.f
+        : viewHeight * static_cast<float>(playerViews_.size()) + spacingY * static_cast<float>(playerViews_.size() - 1);
+    const float firstY = battlefield.y + battlefield.height * 0.5f - totalHeight * 0.5f;
+
+    for (std::size_t i = 0; i < playerViews_.size(); ++i) {
+        playerViews_[i].setSize(Vector2{viewWidth, viewHeight});
+        playerViews_[i].setPosition(Vector2{
+            centerX - viewWidth * 0.5f,
+            playerViews_.size() == 1 ? startY : firstY + spacingY * static_cast<float>(i)
+        });
     }
 }
 
-Rectangle CombatView::endTurnButtonBounds() const {
+void CombatView::layoutEnemies() {
+    const Rectangle battlefield = battlefieldBounds();
+    const float viewWidth = std::clamp(battlefield.width * 0.20f, 190.f, 250.f);
+    const float viewHeight = 180.f;
+    const float spacingX = viewWidth + 28.f;
+
+    const float totalWidth = enemyViews_.empty()
+        ? 0.f
+        : viewWidth * static_cast<float>(enemyViews_.size()) + 28.f * static_cast<float>(enemyViews_.size() - 1);
+    const float centerX = battlefield.x + battlefield.width * 0.70f;
+    const float startX = centerX - totalWidth * 0.5f;
+    const float y = battlefield.y + battlefield.height * 0.48f - viewHeight * 0.5f;
+
+    for (std::size_t i = 0; i < enemyViews_.size(); ++i) {
+        enemyViews_[i].setPosition(Vector2{startX + spacingX * static_cast<float>(i), y});
+    }
+}
+
+Rectangle CombatView::battlefieldBounds() const {
+    const float margin = 14.f;
+    const float top = 82.f;
+    const float handHeight = std::clamp(static_cast<float>(GetScreenHeight()) * 0.36f, 250.f, 330.f);
+    const float bottom = static_cast<float>(GetScreenHeight()) - handHeight - 10.f;
     return Rectangle{
-        static_cast<float>(GetScreenWidth()) - 178.f,
-        static_cast<float>(GetScreenHeight()) - 176.f,
-        150.f,
-        58.f
+        margin,
+        top,
+        static_cast<float>(GetScreenWidth()) - margin * 2.f,
+        std::max(220.f, bottom - top)
+    };
+}
+
+Rectangle CombatView::handBounds() const {
+    const float margin = 14.f;
+    const float handHeight = std::clamp(static_cast<float>(GetScreenHeight()) * 0.36f, 250.f, 330.f);
+    return Rectangle{
+        margin,
+        static_cast<float>(GetScreenHeight()) - handHeight,
+        static_cast<float>(GetScreenWidth()) - margin * 2.f,
+        handHeight - 10.f
+    };
+}
+
+Rectangle CombatView::endTurnButtonBounds() const {
+    const Rectangle hand = handBounds();
+    const float width = 150.f;
+    const float height = 58.f;
+    return Rectangle{
+        hand.x + hand.width - width - 24.f,
+        hand.y - height - 16.f,
+        width,
+        height
     };
 }

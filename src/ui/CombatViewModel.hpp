@@ -3,6 +3,7 @@
 #include "combat/CombatPhase.hpp"
 #include "ui/CardViewModel.hpp"
 #include "ui/EnemyViewModel.hpp"
+#include "ui/PlayerViewModel.hpp"
 
 #include <string>
 #include <vector>
@@ -24,6 +25,7 @@ struct CombatViewModel {
 
     bool canEndTurn = false;
 
+    std::vector<PlayerViewModel> players;
     std::vector<CardViewModel> handCards;
     std::vector<EnemyViewModel> enemies;
     std::vector<std::string> recentLogEntries;

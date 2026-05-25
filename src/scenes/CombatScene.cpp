@@ -1,6 +1,8 @@
 #include "CombatScene.hpp"
 
+#include "cards/CardDefinition.hpp"
 #include "combat/CombatPhase.hpp"
+#include "effects/EffectTarget.hpp"
 #include "enemies/EnemyInstance.hpp"
 #include "ui/BasicUi.hpp"
 
@@ -95,15 +97,27 @@ void CombatScene::update(const float deltaSeconds) {
         return;
     }
 
+    if (draggedCardId_.has_value()) {
+        view_.setDraggedCard(draggedCardId_, mousePosition);
+    } else {
+        view_.setDraggedCard(std::nullopt, mousePosition);
+    }
+
     view_.setSelectedCard(selectedCardId_);
     view_.update(deltaSeconds, mousePosition);
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        handleClick(mousePosition);
+        handleMousePressed(mousePosition);
+    }
+
+    if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+        handleMouseReleased(mousePosition);
     }
 
     const std::optional<EntityId> previewTarget = selectedCardId_.has_value()
-        ? view_.hoveredEnemyId()
+        ? (view_.hoveredEnemyId().has_value()
+            ? view_.hoveredEnemyId()
+            : view_.hoveredPlayerId())
         : std::nullopt;
 
     if (previewTarget != lastPreviewTarget_) {
@@ -114,6 +128,7 @@ void CombatScene::update(const float deltaSeconds) {
     if (viewModelDirty_) {
         rebuildViewModel(previewTarget);
         view_.setSelectedCard(selectedCardId_);
+        view_.setDraggedCard(draggedCardId_, mousePosition);
         viewModelDirty_ = false;
     }
 
@@ -144,6 +159,7 @@ void CombatScene::initializeCombat() {
     entityIds_.reset();
     cardFactory_.reset();
     selectedCardId_.reset();
+    draggedCardId_.reset();
     lastPreviewTarget_.reset();
     combatFinished_ = false;
 
@@ -187,24 +203,52 @@ void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) 
     );
 }
 
-void CombatScene::handleClick(const Vector2 mousePosition) {
+void CombatScene::handleMousePressed(const Vector2 mousePosition) {
     if (view_.endTurnButtonContains(mousePosition)) {
         endPlayerTurn();
         return;
     }
 
-    if (selectedCardId_.has_value() && view_.hoveredEnemyId().has_value()) {
-        playSelectedCardOn(*view_.hoveredEnemyId());
-        return;
-    }
-
     if (view_.hoveredCardId().has_value()) {
         selectedCardId_ = *view_.hoveredCardId();
+        draggedCardId_ = selectedCardId_;
         viewModelDirty_ = true;
         return;
     }
 
+    if (selectedCardId_.has_value() && view_.hoveredEnemyId().has_value() && selectedCardCanTargetEnemy()) {
+        playSelectedCardOn(*view_.hoveredEnemyId());
+        return;
+    }
+
+    if (selectedCardId_.has_value() && view_.hoveredPlayerId().has_value() && selectedCardCanTargetPlayer()) {
+        playSelectedCardOn(*view_.hoveredPlayerId());
+        return;
+    }
+
     selectedCardId_.reset();
+    draggedCardId_.reset();
+    viewModelDirty_ = true;
+}
+
+void CombatScene::handleMouseReleased(const Vector2) {
+    if (!draggedCardId_.has_value()) {
+        return;
+    }
+
+    if (view_.hoveredEnemyId().has_value() && selectedCardCanTargetEnemy()) {
+        playSelectedCardOn(*view_.hoveredEnemyId());
+        return;
+    }
+
+    if (view_.hoveredPlayerId().has_value() && selectedCardCanTargetPlayer()) {
+        playSelectedCardOn(*view_.hoveredPlayerId());
+        return;
+    }
+
+    draggedCardId_.reset();
+    selectedCardId_.reset();
+    lastPreviewTarget_.reset();
     viewModelDirty_ = true;
 }
 
@@ -224,6 +268,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
     }
 
     selectedCardId_.reset();
+    draggedCardId_.reset();
     lastPreviewTarget_.reset();
 
     if (state_.aliveEnemyIds().empty()) {
@@ -237,9 +282,68 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 
 void CombatScene::endPlayerTurn() {
     selectedCardId_.reset();
+    draggedCardId_.reset();
     lastPreviewTarget_.reset();
     turnSystem_.endPlayerTurn(state_, random_);
     viewModelDirty_ = true;
+}
+
+bool CombatScene::selectedCardCanTargetEnemy() const {
+    return selectedCardId_.has_value() && cardCanTargetEnemy(*selectedCardId_);
+}
+
+bool CombatScene::selectedCardCanTargetPlayer() const {
+    return selectedCardId_.has_value() && cardCanTargetPlayer(*selectedCardId_);
+}
+
+bool CombatScene::cardCanTargetEnemy(const CardInstanceId cardInstanceId) const {
+    if (!state_.hand.contains(cardInstanceId)) {
+        return false;
+    }
+
+    const CardInstance& instance = state_.hand.get(cardInstanceId);
+    const CardDefinition& definition = content_.cards().get(instance.definitionId);
+
+    for (const EffectDefinition& effect : definition.effects) {
+        switch (effect.target) {
+            case EffectTarget::SingleEnemy:
+            case EffectTarget::AllEnemies:
+            case EffectTarget::RandomEnemy:
+                return true;
+            default:
+                break;
+        }
+    }
+
+    return false;
+}
+
+bool CombatScene::cardCanTargetPlayer(const CardInstanceId cardInstanceId) const {
+    if (!state_.hand.contains(cardInstanceId)) {
+        return false;
+    }
+
+    const CardInstance& instance = state_.hand.get(cardInstanceId);
+    const CardDefinition& definition = content_.cards().get(instance.definitionId);
+
+    bool hasPlayerTarget = false;
+
+    for (const EffectDefinition& effect : definition.effects) {
+        switch (effect.target) {
+            case EffectTarget::Self:
+            case EffectTarget::Ally:
+            case EffectTarget::AllAllies:
+            case EffectTarget::RandomAlly:
+                hasPlayerTarget = true;
+                break;
+            case EffectTarget::SingleEnemy:
+            case EffectTarget::AllEnemies:
+            case EffectTarget::RandomEnemy:
+                return false;
+        }
+    }
+
+    return hasPlayerTarget;
 }
 
 void CombatScene::finishCombatIfNeeded() {

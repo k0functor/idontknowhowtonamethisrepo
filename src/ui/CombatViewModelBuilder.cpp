@@ -57,6 +57,19 @@ CombatViewModel CombatViewModelBuilder::build(
     model.exhaustPileSize = static_cast<int>(state.deck.exhaustPile.size());
     model.canEndTurn = state.phase == CombatPhase::PlayerTurn;
 
+    model.players.reserve(state.players.size());
+    for (const CombatEntity& player : state.players) {
+        PlayerViewModel playerModel;
+        playerModel.entityId = player.id;
+        playerModel.name = localization_.get(player.nameTextId);
+        playerModel.currentHp = player.health.current();
+        playerModel.maxHp = player.health.maximum();
+        playerModel.block = player.block;
+        playerModel.statuses = player.statuses.all();
+        playerModel.alive = player.isAlive();
+        model.players.push_back(std::move(playerModel));
+    }
+
     if (!state.players.empty()) {
         const CombatEntity& player = state.players.front();
         model.playerCurrentHp = player.health.current();
