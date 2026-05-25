@@ -16,6 +16,7 @@ struct DiceCorruption {
     DiceCorruptionType type = DiceCorruptionType::None;
 };
 
+std::string toString(DiceCorruptionType type);
 std::string toString(const DiceCorruption& corruption);
 
-DiceCorruptionType parseDiceCorruptionType(std::string_view value);
+DiceCorruptionType diceCorruptionTypeFromString(std::string_view value);

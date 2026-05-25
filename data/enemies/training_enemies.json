@@ -1,0 +1,8 @@
+[
+  {
+    "id": "training_dummy",
+    "name": "enemy.training_dummy.name",
+    "max_hp": 30,
+    "starting_block": 0
+  }
+]

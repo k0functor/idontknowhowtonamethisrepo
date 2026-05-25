@@ -13,8 +13,8 @@ std::string TextFormatter::format(
 
         std::size_t position = 0;
 
-        while((position = result.find(placeholder.position)) != std::string::npos) {
-            result.replace(position.placeholder.length(), value);
+        while((position = result.find(placeholder, position)) != std::string::npos) {
+            result.replace(position, placeholder.length(), value);
             position += value.length();
         }
     }

@@ -3,59 +3,78 @@
 #include <stdexcept>
 
 std::string toString(const EffectType& effect) {
-    switch (effect)
-    {
+    switch (effect) {
         case EffectType::Damage:
-            return "Damage";
+            return "damage";
         case EffectType::Block:
-            return "Block";
+            return "block";
         case EffectType::Heal:
-            return "Heal";
+            return "heal";
         case EffectType::DrawCards:
-            return "DrawCards";
+            return "draw_cards";
         case EffectType::DiscardCards:
-            return "DiscardCards";
+            return "discard_cards";
         case EffectType::ApplyStatus:
-            return "ApplyStatus";
+            return "apply_status";
         case EffectType::GainEnergy:
-            return "GainEnergy";
+            return "gain_energy";
         case EffectType::GainStress:
-            return "GainStress";
+            return "gain_stress";
         case EffectType::LoseEnergy:
-            return "LoseEnergy";
+            return "lose_energy";
         case EffectType::LoseStress:
-            return "LoseStress";
+            return "lose_stress";
         case EffectType::LoseHp:
-            return "LoseHp";
-        default:
-            throw std::invalid_argument("Invalid EffectType value");
+            return "lose_hp";
     }
+
+    throw std::runtime_error("Unknown EffectType");
 }
 
-EffectType parseEffectType(std::string_view value) {
-    if (value == "Damage")
+EffectType effectTypeFromString(const std::string_view value) {
+    if (value == "damage" || value == "Damage") {
         return EffectType::Damage;
-    else if (value == "Block")
-        return EffectType::Block;
-    else if (value == "Heal")
-        return EffectType::Heal;
-    else if (value == "DrawCards")
-        return EffectType::DrawCards;
-    else if (value == "DiscardCards")
-        return EffectType::DiscardCards;
-    else if (value == "ApplyStatus")
-        return EffectType::ApplyStatus;
-    else if (value == "GainEnergy")
-        return EffectType::GainEnergy;
-    else if (value == "GainStress")
-        return EffectType::GainStress;
-    else if (value == "LoseEnergy")
-        return EffectType::LoseEnergy;
-    else if (value == "LoseStress")
-        return EffectType::LoseStress;
-    else if (value == "LoseHp")
-        return EffectType::LoseHp;
-    else
-        throw std::invalid_argument("Invalid string for EffectType: " + std::string(value));
-}
+    }
 
+    if (value == "block" || value == "Block") {
+        return EffectType::Block;
+    }
+
+    if (value == "heal" || value == "Heal") {
+        return EffectType::Heal;
+    }
+
+    if (value == "draw_cards" || value == "DrawCards") {
+        return EffectType::DrawCards;
+    }
+
+    if (value == "discard_cards" || value == "DiscardCards") {
+        return EffectType::DiscardCards;
+    }
+
+    if (value == "apply_status" || value == "ApplyStatus") {
+        return EffectType::ApplyStatus;
+    }
+
+    if (value == "gain_energy" || value == "GainEnergy") {
+        return EffectType::GainEnergy;
+    }
+
+    if (value == "gain_stress" || value == "GainStress") {
+        return EffectType::GainStress;
+    }
+
+    if (value == "lose_energy" || value == "LoseEnergy") {
+        return EffectType::LoseEnergy;
+    }
+
+    if (value == "lose_stress" || value == "LoseStress") {
+        return EffectType::LoseStress;
+    }
+
+    if (value == "lose_hp" || value == "LoseHp") {
+        return EffectType::LoseHp;
+    }
+
+    throw std::runtime_error("Unknown effect type: " + std::string(value));
+}

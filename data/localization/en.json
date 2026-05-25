@@ -1,12 +1,27 @@
 {
   "game.title": "Card Roguelike",
 
+  "debug.player.name": "Player",
+
   "card.strike.name": "Strike",
   "card.strike.description": "Deals {damage} damage.",
 
   "card.defend.name": "Defend",
   "card.defend.description": "Gain {block} block.",
 
+  "card.poisoned_guard.name": "Poisoned Guard",
+  "card.poisoned_guard.description": "Deals {damage} damage. Applies {poison} poison. Gain {block} block.",
+
+  "enemy.training_dummy.name": "Training Dummy",
+
+  "status.strength.name": "Strength",
+  "status.strength.description": "Increases outgoing damage.",
+  "status.vulnerable.name": "Vulnerable",
+  "status.vulnerable.description": "Takes more damage.",
+  "status.weak.name": "Weak",
+  "status.weak.description": "Deals less damage.",
+  "status.dexterity.name": "Dexterity",
+  "status.dexterity.description": "Increases block gained.",
   "status.poison.name": "Poison",
   "status.poison.description": "Takes damage at the end of the turn."
 }

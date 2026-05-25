@@ -48,7 +48,7 @@ int EffectValue::minimumPossibleValue() const {
     if (isFixed()) {
         return fixedAmount();
     } else {
-        return diceExpression().minimumPossibleValue();
+        return diceExpression_.count + diceExpression_.bonus;
     }
 }
 
@@ -56,6 +56,7 @@ int EffectValue::maximumPossibleValue() const {
     if (isFixed()) {
         return fixedAmount();
     } else {
-        return diceExpression().maximumPossibleValue();
+       return diceExpression_.count * sidesOfDie(diceExpression_.dieType)
+        + diceExpression_.bonus;
     }
 }

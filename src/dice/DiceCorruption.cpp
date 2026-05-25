@@ -2,41 +2,53 @@
 
 #include <stdexcept>
 
-std::string toString(const DiceCorruptionType& corruption)
-{
-    switch (corruption)
-    {
+std::string toString(const DiceCorruptionType type) {
+    switch (type) {
         case DiceCorruptionType::None:
-            return "None";
+            return "none";
         case DiceCorruptionType::Cursed:
-            return "Cursed";
+            return "cursed";
         case DiceCorruptionType::Fire:
-            return "Fire";
+            return "fire";
         case DiceCorruptionType::Poison:
-            return "Poison";
+            return "poison";
         case DiceCorruptionType::Blood:
-            return "Blood";
+            return "blood";
         case DiceCorruptionType::Unstable:
-            return "Unstable";
-        default:
-            throw std::invalid_argument("Invalid DiceCorruption value");
+            return "unstable";
     }
+
+    throw std::runtime_error("Unknown DiceCorruptionType");
 }
 
-DiceCorruptionType parseDiceCorruptionType(std::string_view value)
-{
-    if (value == "None")
+std::string toString(const DiceCorruption& corruption) {
+    return toString(corruption.type);
+}
+
+DiceCorruptionType diceCorruptionTypeFromString(const std::string_view value) {
+    if (value == "none" || value == "None") {
         return DiceCorruptionType::None;
-    else if (value == "Cursed")
+    }
+
+    if (value == "cursed" || value == "Cursed") {
         return DiceCorruptionType::Cursed;
-    else if (value == "Fire")
+    }
+
+    if (value == "fire" || value == "Fire") {
         return DiceCorruptionType::Fire;
-    else if (value == "Poison")
+    }
+
+    if (value == "poison" || value == "Poison") {
         return DiceCorruptionType::Poison;
-    else if (value == "Blood")
+    }
+
+    if (value == "blood" || value == "Blood") {
         return DiceCorruptionType::Blood;
-    else if (value == "Unstable")
+    }
+
+    if (value == "unstable" || value == "Unstable") {
         return DiceCorruptionType::Unstable;
-    else
-        throw std::invalid_argument("Invalid string for DiceCorruptionType: " + std::string(value));
+    }
+
+    throw std::runtime_error("Unknown dice corruption type: " + std::string(value));
 }

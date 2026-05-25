@@ -3,9 +3,9 @@
 #include <string>
 
 struct TextId {
-    std::string id;
+    std::string value;
 
     TextId() = default;
 
-    explicit TextId(std::string id) : id(std::move(id)) {}
+    explicit TextId(std::string value) : value(std::move(value)) {}
 };

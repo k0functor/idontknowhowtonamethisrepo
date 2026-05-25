@@ -1,12 +1,27 @@
 {
   "game.title": "Card Roguelike",
 
+  "debug.player.name": "Игрок",
+
   "card.strike.name": "Удар",
   "card.strike.description": "Наносит {damage} урона.",
 
   "card.defend.name": "Защита",
   "card.defend.description": "Даёт {block} защиты.",
 
+  "card.poisoned_guard.name": "Ядовитая стойка",
+  "card.poisoned_guard.description": "Наносит {damage} урона. Накладывает {poison} яда. Даёт {block} защиты.",
+
+  "enemy.training_dummy.name": "Тренировочный манекен",
+
+  "status.strength.name": "Сила",
+  "status.strength.description": "Увеличивает наносимый урон.",
+  "status.vulnerable.name": "Уязвимость",
+  "status.vulnerable.description": "Получает больше урона.",
+  "status.weak.name": "Слабость",
+  "status.weak.description": "Наносит меньше урона.",
+  "status.dexterity.name": "Ловкость",
+  "status.dexterity.description": "Увеличивает получаемую защиту.",
   "status.poison.name": "Яд",
   "status.poison.description": "В конце хода получает урон."
 }

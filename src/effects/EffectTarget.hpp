@@ -15,4 +15,4 @@ enum class EffectTarget {
 
 std::string toString(const EffectTarget& target);
 
-EffectTarget parseEffectTarget(std::string_view value);
+EffectTarget effectTargetFromString(std::string_view value);

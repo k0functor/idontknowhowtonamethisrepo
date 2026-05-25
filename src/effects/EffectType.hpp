@@ -19,4 +19,4 @@ enum class EffectType {
 
 std::string toString(const EffectType& effect);
 
-EffectType parseEffectType(std::string_view value);
+EffectType effectTypeFromString(std::string_view value);

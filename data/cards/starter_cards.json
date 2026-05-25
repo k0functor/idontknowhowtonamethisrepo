@@ -1,0 +1,80 @@
+[
+  {
+    "id": "strike",
+    "name": "card.strike.name",
+    "description": "card.strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "defend",
+    "name": "card.defend.name",
+    "description": "card.defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "poisoned_guard",
+    "name": "card.poisoned_guard.name",
+    "description": "card.poisoned_guard.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 55,
+    "type": "attack",
+    "dice_corruption": {
+      "type": "poison"
+    },
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d6"
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "poison",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  }
+]

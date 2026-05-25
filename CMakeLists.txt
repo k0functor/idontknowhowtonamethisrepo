@@ -7,15 +7,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
-FetchContent_Declare(
-    SFML
-    GIT_REPOSITORY https://github.com/SFML/SFML.git
-    GIT_TAG 3.1.0
-    GIT_SHALLOW ON
-    EXCLUDE_FROM_ALL
-    SYSTEM
-)
-FetchContent_MakeAvailable(SFML)
+
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+
+find_package(raylib 6.0 QUIET)
+if (NOT raylib_FOUND)
+    FetchContent_Declare(
+        raylib
+        URL https://github.com/raysan5/raylib/archive/refs/tags/6.0.tar.gz
+    )
+    FetchContent_MakeAvailable(raylib)
+endif()
 
 FetchContent_Declare(
     nlohmann_json
@@ -23,7 +26,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nlohmann_json)
 
-add_executable(i_dont_know_how_to_name_this_game 
+add_executable(i_dont_know_how_to_name_this_game
     src/main.cpp
 
     src/app/Application.hpp
@@ -31,11 +34,29 @@ add_executable(i_dont_know_how_to_name_this_game
     src/app/AppConfig.hpp
     src/app/AppConfig.cpp
 
+    src/core/Random.hpp
+    src/core/Random.cpp
+
     src/data/Json.hpp
     src/data/JsonLoader.hpp
     src/data/JsonLoader.cpp
     src/data/JsonReader.hpp
     src/data/JsonReader.cpp
+    src/data/ContentRegistry.hpp
+    src/data/ContentRegistry.cpp
+    src/data/CardDatabase.hpp
+    src/data/CardDatabase.cpp
+    src/data/EnemyDatabase.hpp
+    src/data/EnemyDatabase.cpp
+
+    src/data/parsers/EffectValueParser.hpp
+    src/data/parsers/EffectValueParser.cpp
+    src/data/parsers/EffectDefinitionParser.hpp
+    src/data/parsers/EffectDefinitionParser.cpp
+    src/data/parsers/CardDefinitionParser.hpp
+    src/data/parsers/CardDefinitionParser.cpp
+    src/data/parsers/EnemyDefinitionParser.hpp
+    src/data/parsers/EnemyDefinitionParser.cpp
 
     src/localization/Locale.hpp
     src/localization/Locale.cpp
@@ -55,43 +76,150 @@ add_executable(i_dont_know_how_to_name_this_game
     src/dice/DiceExpression.cpp
     src/dice/DiceCorruption.hpp
     src/dice/DiceCorruption.cpp
+
+    src/effects/EffectType.hpp
+    src/effects/EffectType.cpp
+    src/effects/EffectTarget.hpp
+    src/effects/EffectTarget.cpp
+    src/effects/EffectValue.hpp
+    src/effects/EffectValue.cpp
+    src/effects/EffectDefinition.hpp
+
+    src/cards/CardId.hpp
+    src/cards/CardType.hpp
+    src/cards/CardType.cpp
+    src/cards/CardRarity.hpp
+    src/cards/CardRarity.cpp
+    src/cards/CardKeyword.hpp
+    src/cards/CardKeyword.cpp
+    src/cards/CardDefinition.hpp
+    src/cards/CardInstanceId.hpp
+    src/cards/CardInstance.hpp
+    src/cards/CardInstanceFactory.hpp
+    src/cards/CardInstanceFactory.cpp
+    src/cards/CardPile.hpp
+    src/cards/CardPile.cpp
+    src/cards/Deck.hpp
+    src/cards/Deck.cpp
+    src/cards/Hand.hpp
+    src/cards/Hand.cpp
+    src/cards/DrawSystem.hpp
+    src/cards/DrawSystem.cpp
+
+    src/entities/EntityId.hpp
+    src/entities/EntityId.cpp
+    src/entities/EntityType.hpp
+    src/entities/Health.hpp
+    src/entities/Health.cpp
+    src/entities/StatusContainer.hpp
+    src/entities/StatusContainer.cpp
+    src/entities/CombatEntity.hpp
+
+    src/enemies/EnemyId.hpp
+    src/enemies/EnemyDefinition.hpp
+    src/enemies/EnemyInstance.hpp
+
+    src/combat/CombatPhase.hpp
+    src/combat/CombatResources.hpp
+    src/combat/CombatResources.cpp
+    src/combat/CombatLog.hpp
+    src/combat/CombatLog.cpp
+    src/combat/CombatState.hpp
+    src/combat/CombatState.cpp
+    src/combat/ModifierSystem.hpp
+    src/combat/ModifierSystem.cpp
+    src/combat/EffectContext.hpp
+    src/combat/ResolvedEffectValue.hpp
+    src/combat/EffectResolver.hpp
+    src/combat/EffectResolver.cpp
+    src/combat/Targeting.hpp
+    src/combat/Targeting.cpp
+    src/combat/DamagePreview.hpp
+    src/combat/DamageSystem.hpp
+    src/combat/DamageSystem.cpp
+    src/combat/BlockSystem.hpp
+    src/combat/BlockSystem.cpp
+    src/combat/EnergySystem.hpp
+    src/combat/EnergySystem.cpp
+    src/combat/EffectSystem.hpp
+    src/combat/EffectSystem.cpp
+    src/combat/CardPlayValidator.hpp
+    src/combat/CardPlayValidator.cpp
+    src/combat/CardPlaySystem.hpp
+    src/combat/CardPlaySystem.cpp
+
+    src/preview/PreviewValue.hpp
+    src/preview/EffectPreview.hpp
+    src/preview/CardPreview.hpp
+    src/preview/CardPreviewSystem.hpp
+    src/preview/CardPreviewSystem.cpp
+
+    src/ui/CardTransform.hpp
+    src/ui/CardViewModel.hpp
+    src/ui/EnemyViewModel.hpp
+    src/ui/CombatViewModel.hpp
+    src/ui/UiFont.hpp
+    src/ui/UiFont.cpp
+    src/ui/CardView.hpp
+    src/ui/CardView.cpp
+    src/ui/HandLayout.hpp
+    src/ui/HandLayout.cpp
+    src/ui/HandView.hpp
+    src/ui/HandView.cpp
+    src/ui/EnemyView.hpp
+    src/ui/EnemyView.cpp
+    src/ui/CardViewModelBuilder.hpp
+    src/ui/CardViewModelBuilder.cpp
+    src/ui/CombatViewModelBuilder.hpp
+    src/ui/CombatViewModelBuilder.cpp
+    src/ui/CombatView.hpp
+    src/ui/CombatView.cpp
+
+    src/scenes/DebugCombatScene.hpp
+    src/scenes/DebugCombatScene.cpp
 )
 
 target_include_directories(i_dont_know_how_to_name_this_game PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_compile_features(i_dont_know_how_to_name_this_game PRIVATE 
+target_compile_features(i_dont_know_how_to_name_this_game PRIVATE
     cxx_std_20
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_compile_options(i_dont_know_how_to_name_this_game PRIVATE 
+    target_compile_options(i_dont_know_how_to_name_this_game PRIVATE
         -Wall
         -Wextra
         -Wpedantic
     )
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(i_dont_know_how_to_name_this_game PRIVATE 
+    target_compile_options(i_dont_know_how_to_name_this_game PRIVATE
         /W4
         /permissive-
     )
 endif()
 
-target_link_libraries(i_dont_know_how_to_name_this_game PRIVATE 
-    SFML::Graphics
-    SFML::Window
-    SFML::System
-    SFML::Audio
+target_link_libraries(i_dont_know_how_to_name_this_game PRIVATE
+    raylib
     nlohmann_json::nlohmann_json
 )
 
-add_custom_target(copy_runtime_files ALL
+add_custom_command(TARGET i_dont_know_how_to_name_this_game POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/config
-        ${CMAKE_BINARY_DIR}/config
+        $<TARGET_FILE_DIR:i_dont_know_how_to_name_this_game>/config
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/data
+        $<TARGET_FILE_DIR:i_dont_know_how_to_name_this_game>/data
 )
 
-add_dependencies(i_dont_know_how_to_name_this_game copy_runtime_files)
+if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
+    add_custom_command(TARGET i_dont_know_how_to_name_this_game POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/assets
+            $<TARGET_FILE_DIR:i_dont_know_how_to_name_this_game>/assets
+    )
+endif()
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT i_dont_know_how_to_name_this_game)

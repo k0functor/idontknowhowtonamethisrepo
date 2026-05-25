@@ -1,70 +1,108 @@
 #include "Application.hpp"
 
-#include <SFML/Graphics/Color.hpp>
-#include <SFML/Window/Event.hpp>
-#include <SFML/Window/VideoMode.hpp>
+#include <raylib.h>
 
-#include <optional>
-#include <cstdint>
+#include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <limits>
+#include <stdexcept>
+#include <thread>
 
 namespace {
-    sf::RenderWindow createWindow(const AppConfig& config) {
-        const sf::State windowState = config.window.fullscreen
-            ? sf::State::Fullscreen
-            : sf::State::Windowed;
+int toWindowDimension(const unsigned int value) {
+    return static_cast<int>(std::min<unsigned int>(value, static_cast<unsigned int>(std::numeric_limits<int>::max())));
+}
 
-        const sf::VideoMode videoMode = config.window.fullscreen
-            ? sf::VideoMode::getDesktopMode()
-            : sf::VideoMode({config.window.width, config.window.height});
-
-        return sf::RenderWindow(
-            videoMode,
-            config.window.title,
-            sf::Style::Default,
-            windowState
-        );
-    }
+float clampDeltaSeconds(const float deltaSeconds) {
+    constexpr float maxDeltaSeconds = 0.1f;
+    return std::clamp(deltaSeconds, 0.f, maxDeltaSeconds);
+}
 }
 
 Application::Application()
     : config_(AppConfig::loadFromFile("config/app.json")),
-      window_(createWindow(config_)) {
+      random_(12345u) {
+    initializeWindow();
     loadLocalization();
+    loadContent();
     applyWindowSettings();
+    createInitialScene();
+}
+
+Application::~Application() {
+    debugCombatScene_.reset();
+
+    if (windowInitialized_) {
+        CloseWindow();
+        windowInitialized_ = false;
+    }
 }
 
 std::int32_t Application::run() {
-    while(window_.isOpen()) {
+    while (!WindowShouldClose()) {
+        const float deltaSeconds = clampDeltaSeconds(GetFrameTime());
+
         processEvents();
-        update();
+        update(deltaSeconds);
         render();
+
+        if (!IsWindowFocused()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
     }
 
     return 0;
 }
 
 void Application::processEvents() {
-    while(const std::optional event = window_.pollEvent()) {
-        if(event->is<sf::Event::Closed>()) {
-            window_.close();
-        }
+    // raylib exposes input as polling functions. Window close is handled by
+    // WindowShouldClose() in run(). Revolutionary stuff: fewer objects to drag
+    // through every function signature like tiny bureaucrats.
+}
+
+void Application::update(const float deltaSeconds) {
+    if (debugCombatScene_ != nullptr) {
+        debugCombatScene_->update(deltaSeconds);
     }
 }
 
-void Application::update() {
-    return;
+void Application::render() {
+    BeginDrawing();
+    ClearBackground(Color{20, 20, 24, 255});
+
+    if (debugCombatScene_ != nullptr) {
+        debugCombatScene_->render();
+    }
+
+    EndDrawing();
 }
 
-void Application::render() {
-    window_.clear(sf::Color(20, 20, 24));
-    window_.display();
+void Application::initializeWindow() {
+    const int width = toWindowDimension(config_.window.width);
+    const int height = toWindowDimension(config_.window.height);
+
+    SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
+    InitWindow(width, height, config_.window.title.c_str());
+    windowInitialized_ = true;
+
+    if (config_.window.fullscreen) {
+        ToggleFullscreen();
+    }
 }
 
 void Application::applyWindowSettings() {
-    window_.setVerticalSyncEnabled(config_.window.verticalSync);
+    if (config_.window.verticalSync) {
+        SetWindowState(FLAG_VSYNC_HINT);
+        return;
+    }
 
-    if(!config_.window.verticalSync && config_.window.frameRateLimit > 0) {
-        window_.setFramerateLimit(config_.window.frameRateLimit);
+    ClearWindowState(FLAG_VSYNC_HINT);
+
+    if (config_.window.frameRateLimit > 0) {
+        SetTargetFPS(static_cast<int>(config_.window.frameRateLimit));
+    } else {
+        SetTargetFPS(0);
     }
 }
 
@@ -88,4 +126,22 @@ void Application::loadLocalization() {
     );
 
     localization_.setCurrentLocale(config_.locale);
+}
+
+void Application::loadContent() {
+    content_.loadFromDataDirectory(config_.paths.data);
+
+    if (config_.debug.enabled) {
+        std::cout << "Loaded cards: " << content_.cards().size() << '\n';
+        std::cout << "Loaded enemies: " << content_.enemies().size() << '\n';
+    }
+}
+
+void Application::createInitialScene() {
+    debugCombatScene_ = std::make_unique<DebugCombatScene>(
+        content_,
+        localization_,
+        random_,
+        config_.paths.assets
+    );
 }
