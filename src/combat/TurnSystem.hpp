@@ -7,6 +7,7 @@
 #include "core/Random.hpp"
 #include "data/EnemyDatabase.hpp"
 #include "statuses/StatusSystem.hpp"
+#include "game/GameEventBus.hpp"
 
 #include <cstddef>
 
@@ -18,7 +19,8 @@ public:
         const EnemyTurnSystem& enemyTurnSystem,
         const EnemyMoveSelector& enemyMoveSelector,
         const StatusSystem& statusSystem,
-        std::size_t handSize = 5
+        std::size_t handSize = 5,
+        const GameEventBus* eventBus = nullptr
     );
 
     void startCombat(CombatState& state, Random& random) const;
@@ -36,4 +38,5 @@ private:
     const EnemyMoveSelector& enemyMoveSelector_;
     const StatusSystem& statusSystem_;
     std::size_t handSize_ = 5;
+    const GameEventBus* eventBus_ = nullptr;
 };

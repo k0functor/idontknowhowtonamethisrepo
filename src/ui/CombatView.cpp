@@ -39,6 +39,10 @@ void CombatView::setModel(const CombatViewModel& model) {
     applyResponsiveLayout();
 }
 
+const CombatViewModel& CombatView::model() const {
+    return model_;
+}
+
 void CombatView::setSelectedCard(const std::optional<CardInstanceId> selectedCardId) {
     handView_.setSelectedCard(selectedCardId);
 }
@@ -59,6 +63,14 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
     handView_.update(deltaSeconds, mousePosition);
 
     hoveredEndTurnButton_ = endTurnButtonContains(mousePosition);
+
+    hoveredRelicIndex_.reset();
+    for (std::size_t i = 0; i < model_.relics.size(); ++i) {
+        if (CheckCollisionPointRec(mousePosition, relicBounds(i))) {
+            hoveredRelicIndex_ = i;
+            break;
+        }
+    }
 
     hoveredPlayerId_.reset();
     for (const PlayerView& playerView : playerViews_) {
@@ -108,6 +120,22 @@ void CombatView::render(const Font* font) const {
         DrawTextEx(*font, energyText.c_str(), Vector2{24.f, 20.f}, 18.f, 1.f, WHITE);
         DrawTextEx(*font, "End Turn", Vector2{endTurnBounds.x + 30.f, endTurnBounds.y + 18.f}, 18.f, 1.f, WHITE);
 
+        for (std::size_t i = 0; i < model_.relics.size(); ++i) {
+            const RelicViewModel& relic = model_.relics[i];
+            const Rectangle bounds = relicBounds(i);
+            const bool hovered = hoveredRelicIndex_.has_value() && *hoveredRelicIndex_ == i;
+            const Color fill = hovered ? Color{95, 72, 38, 255} : Color{70, 58, 35, 255};
+            const Color border = hovered ? Color{255, 225, 120, 255} : Color{230, 190, 90, 255};
+
+            DrawRectangleRounded(bounds, 0.22f, 6, fill);
+            DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
+
+            const std::string text = relic.name.size() > 15
+                ? relic.name.substr(0, 14) + "…"
+                : relic.name;
+            DrawTextEx(*font, text.c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
+        }
+
         float logY = battlefield.y + 10.f;
         const float logX = battlefield.x + 14.f;
         for (const std::string& entry : model_.recentLogEntries) {
@@ -137,8 +165,44 @@ std::optional<EntityId> CombatView::hoveredEnemyId() const {
     return hoveredEnemyId_;
 }
 
+std::optional<Rectangle> CombatView::hoveredEnemyBounds() const {
+    if (!hoveredEnemyId_.has_value()) {
+        return std::nullopt;
+    }
+
+    const Rectangle battlefield = battlefieldBounds();
+    const float viewWidth = std::clamp(battlefield.width * 0.20f, 190.f, 250.f);
+    const float viewHeight = 180.f;
+    const float spacingX = viewWidth + 28.f;
+
+    const float totalWidth = enemyViews_.empty()
+        ? 0.f
+        : viewWidth * static_cast<float>(enemyViews_.size()) + 28.f * static_cast<float>(enemyViews_.size() - 1);
+
+    const float centerX = battlefield.x + battlefield.width * 0.70f;
+    const float startX = centerX - totalWidth * 0.5f;
+    const float y = battlefield.y + battlefield.height * 0.48f - viewHeight * 0.5f;
+
+    for (std::size_t i = 0; i < enemyViews_.size(); ++i) {
+        if (enemyViews_[i].model().entityId == *hoveredEnemyId_) {
+            return Rectangle{
+                startX + spacingX * static_cast<float>(i),
+                y,
+                viewWidth,
+                viewHeight
+            };
+        }
+    }
+
+    return std::nullopt;
+}
+
 std::optional<EntityId> CombatView::hoveredPlayerId() const {
     return hoveredPlayerId_;
+}
+
+std::optional<std::size_t> CombatView::hoveredRelicIndex() const {
+    return hoveredRelicIndex_;
 }
 
 bool CombatView::endTurnButtonContains(const Vector2 mousePosition) const {
@@ -228,4 +292,9 @@ Rectangle CombatView::endTurnButtonBounds() const {
         width,
         height
     };
+}
+
+Rectangle CombatView::relicBounds(const std::size_t index) const {
+    const float x = 24.f + static_cast<float>(index) * 148.f;
+    return Rectangle{x, 44.f, 136.f, 24.f};
 }

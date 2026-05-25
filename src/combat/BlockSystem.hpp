@@ -4,6 +4,7 @@
 #include "combat/ModifierSystem.hpp"
 #include "dice/DiceCorruption.hpp"
 #include "entities/EntityId.hpp"
+#include "game/GameEventBus.hpp"
 
 class CombatState;
 
@@ -14,7 +15,7 @@ struct BlockResult {
 
 class BlockSystem {
 public:
-    explicit BlockSystem(const ModifierSystem& modifierSystem);
+    explicit BlockSystem(const ModifierSystem& modifierSystem, const GameEventBus* eventBus = nullptr);
 
     BlockResult gainBlock(
         CombatState& state,
@@ -37,4 +38,5 @@ public:
 
 private:
     const ModifierSystem& modifierSystem_;
+    const GameEventBus* eventBus_ = nullptr;
 };

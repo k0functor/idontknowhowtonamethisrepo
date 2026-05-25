@@ -5,6 +5,7 @@
 #include "combat/ModifierSystem.hpp"
 #include "dice/DiceCorruption.hpp"
 #include "entities/EntityId.hpp"
+#include "game/GameEventBus.hpp"
 
 class CombatState;
 
@@ -18,7 +19,7 @@ struct DamageResult {
 
 class DamageSystem {
 public:
-    explicit DamageSystem(const ModifierSystem& modifierSystem);
+    explicit DamageSystem(const ModifierSystem& modifierSystem, const GameEventBus* eventBus = nullptr);
 
     DamageResult dealDamage(
         CombatState& state,
@@ -50,4 +51,5 @@ public:
 
 private:
     const ModifierSystem& modifierSystem_;
+    const GameEventBus* eventBus_ = nullptr;
 };

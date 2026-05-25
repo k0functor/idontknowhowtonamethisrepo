@@ -9,6 +9,7 @@
 #include "combat/Targeting.hpp"
 #include "effects/EffectDefinition.hpp"
 #include "statuses/StatusSystem.hpp"
+#include "game/GameEventBus.hpp"
 
 #include <vector>
 
@@ -21,7 +22,8 @@ public:
         const BlockSystem& blockSystem,
         const EnergySystem& energySystem,
         const DrawSystem& drawSystem,
-        const StatusSystem& statusSystem
+        const StatusSystem& statusSystem,
+        const GameEventBus* eventBus = nullptr
     );
 
     void applyEffects(
@@ -44,4 +46,5 @@ private:
     const EnergySystem& energySystem_;
     const DrawSystem& drawSystem_;
     const StatusSystem& statusSystem_;
+    const GameEventBus* eventBus_ = nullptr;
 };

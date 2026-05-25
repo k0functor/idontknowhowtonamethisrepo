@@ -4,6 +4,7 @@ void ContentRegistry::clear() {
     cards_.clear();
     enemies_.clear();
     statuses_.clear();
+    relics_.clear();
     archetypes_.clear();
     actors_.clear();
     difficulties_.clear();
@@ -13,6 +14,7 @@ void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDir
     clear();
 
     statuses_.loadFromDirectory(dataDirectory / "statuses");
+    relics_.loadFromDirectory(dataDirectory / "relics");
     cards_.loadFromDirectory(dataDirectory / "cards");
     enemies_.loadFromDirectory(dataDirectory / "enemies");
     actors_.loadFromDirectory(dataDirectory / "actors");
@@ -42,6 +44,14 @@ const StatusDatabase& ContentRegistry::statuses() const {
 
 StatusDatabase& ContentRegistry::statuses() {
     return statuses_;
+}
+
+const RelicDatabase& ContentRegistry::relics() const {
+    return relics_;
+}
+
+RelicDatabase& ContentRegistry::relics() {
+    return relics_;
 }
 
 const PlayableArchetypeDatabase& ContentRegistry::archetypes() const {

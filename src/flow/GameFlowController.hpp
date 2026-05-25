@@ -1,6 +1,7 @@
 #pragma once
 
 #include "archetypes/PlayableArchetypeId.hpp"
+#include "combat/CombatResult.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
 #include "flow/SceneManager.hpp"

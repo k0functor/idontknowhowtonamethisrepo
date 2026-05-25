@@ -4,6 +4,7 @@
 #include "archetypes/PlayableArchetypeDatabase.hpp"
 #include "data/CardDatabase.hpp"
 #include "data/EnemyDatabase.hpp"
+#include "relics/RelicDatabase.hpp"
 #include "run/DifficultyDatabase.hpp"
 #include "statuses/StatusDatabase.hpp"
 
@@ -24,6 +25,9 @@ public:
     const StatusDatabase& statuses() const;
     StatusDatabase& statuses();
 
+    const RelicDatabase& relics() const;
+    RelicDatabase& relics();
+
     const PlayableArchetypeDatabase& archetypes() const;
     PlayableArchetypeDatabase& archetypes();
 
@@ -37,6 +41,7 @@ private:
     CardDatabase cards_;
     EnemyDatabase enemies_;
     StatusDatabase statuses_;
+    RelicDatabase relics_;
     PlayableArchetypeDatabase archetypes_;
     PlayerActorDatabase actors_;
     DifficultyDatabase difficulties_;

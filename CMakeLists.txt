@@ -72,6 +72,11 @@ add_executable(i_dont_know_how_to_name_this_game
     src/localization/TextFormatter.hpp
     src/localization/TextFormatter.cpp
 
+    src/game/GameEvent.hpp
+    src/game/GameEvent.cpp
+    src/game/GameEventBus.hpp
+    src/game/GameEventBus.cpp
+
     src/dice/DieType.hpp
     src/dice/DieType.cpp
     src/dice/DiceExpression.hpp
@@ -87,6 +92,24 @@ add_executable(i_dont_know_how_to_name_this_game
     src/effects/EffectValue.cpp
     src/effects/EffectDefinition.hpp
 
+
+    src/relics/RelicId.hpp
+    src/relics/RelicRarity.hpp
+    src/relics/RelicRarity.cpp
+    src/relics/RelicModifierDefinition.hpp
+    src/relics/RelicModifierDefinition.cpp
+    src/relics/RelicTriggerDefinition.hpp
+    src/relics/RelicDefinition.hpp
+    src/relics/RelicInstance.hpp
+    src/relics/RelicInventory.hpp
+    src/relics/RelicInventory.cpp
+    src/relics/RelicDatabase.hpp
+    src/relics/RelicDatabase.cpp
+    src/relics/RelicSystem.hpp
+    src/relics/RelicSystem.cpp
+
+    src/data/parsers/RelicDefinitionParser.hpp
+    src/data/parsers/RelicDefinitionParser.cpp
     src/statuses/StatusId.hpp
     src/statuses/StatusType.hpp
     src/statuses/StatusType.cpp
@@ -145,6 +168,11 @@ add_executable(i_dont_know_how_to_name_this_game
     src/combat/CombatLog.cpp
     src/combat/CombatState.hpp
     src/combat/CombatState.cpp
+    src/combat/CombatOutcome.hpp
+    src/combat/CombatResult.hpp
+    src/combat/CombatResult.cpp
+    src/combat/CombatController.hpp
+    src/combat/CombatController.cpp
     src/combat/EnemyIntentState.hpp
     src/combat/EnemyMoveSelector.hpp
     src/combat/EnemyMoveSelector.cpp
@@ -206,6 +234,14 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/CombatViewModelBuilder.cpp
     src/ui/CombatView.hpp
     src/ui/CombatView.cpp
+    src/inspect/InspectEntry.hpp
+    src/inspect/InspectPanelModel.hpp
+    src/inspect/InspectModelBuilder.hpp
+    src/inspect/InspectModelBuilder.cpp
+    src/ui/InspectPanelView.hpp
+    src/ui/InspectPanelView.cpp
+    src/ui/RelicInspectModal.hpp
+    src/ui/RelicInspectModal.cpp
 
     src/data/parsers/PlayableArchetypeParser.hpp
     src/data/parsers/PlayableArchetypeParser.cpp
@@ -273,8 +309,6 @@ add_executable(i_dont_know_how_to_name_this_game
     src/scenes/CombatScene.cpp
     src/scenes/RewardScene.hpp
     src/scenes/RewardScene.cpp
-    src/scenes/DebugCombatScene.hpp
-    src/scenes/DebugCombatScene.cpp
 )
 
 target_include_directories(i_dont_know_how_to_name_this_game PRIVATE

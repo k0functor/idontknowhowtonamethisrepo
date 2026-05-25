@@ -4,6 +4,7 @@
 #include "ui/CardViewModel.hpp"
 #include "ui/EnemyViewModel.hpp"
 #include "ui/PlayerViewModel.hpp"
+#include "ui/RelicViewModel.hpp"
 
 #include <string>
 #include <vector>
@@ -29,4 +30,5 @@ struct CombatViewModel {
     std::vector<CardViewModel> handCards;
     std::vector<EnemyViewModel> enemies;
     std::vector<std::string> recentLogEntries;
+    std::vector<RelicViewModel> relics;
 };

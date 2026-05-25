@@ -24,6 +24,7 @@ bool canAppearAsCombatReward(const CardDefinition& card) {
 RewardState RewardGenerator::generateCombatReward(
     const RewardContext& context,
     const CardDatabase& cards,
+    const RelicDatabase& relics,
     Random& random
 ) const {
     RewardState reward;
@@ -31,6 +32,7 @@ RewardState RewardGenerator::generateCombatReward(
 
     const int baseGold = baseGoldForNode(context.nodeType);
     reward.gold = static_cast<int>(static_cast<float>(baseGold) * context.run.goldRewardMultiplier);
+    reward.gold = static_cast<int>(static_cast<double>(reward.gold) * relicGoldMultiplier(context, relics));
 
     if (context.run.archetypeMechanicId == "merchant_progression") {
         reward.gold = static_cast<int>(static_cast<float>(reward.gold) * 1.25f);
@@ -93,4 +95,30 @@ bool RewardGenerator::shouldOfferCards(const RewardContext& context) const {
 
 int RewardGenerator::cardRewardCount(const RewardContext&) const {
     return 3;
+}
+
+
+double RewardGenerator::relicGoldMultiplier(
+    const RewardContext& context,
+    const RelicDatabase& relics
+) const {
+    double result = 1.0;
+
+    for (const std::string& relicId : context.run.relicIds) {
+        const RelicId id(relicId);
+
+        if (!relics.contains(id)) {
+            continue;
+        }
+
+        const RelicDefinition& relic = relics.get(id);
+
+        for (const RelicModifierDefinition& modifier : relic.modifiers) {
+            if (modifier.type == RelicModifierType::GoldRewardMultiply) {
+                result *= modifier.multiplier;
+            }
+        }
+    }
+
+    return result;
 }

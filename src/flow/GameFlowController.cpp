@@ -140,17 +140,19 @@ void GameFlowController::setCombatScene(const int nodeId) {
             random_,
             uiFont_,
             runController_.run(),
-            [this, nodeId]() {
-                queueTransition([this, nodeId]() {
+            [this, nodeId](const CombatResult& result) {
+                queueTransition([this, nodeId, result]() {
                     pendingReward_ = runController_.completeCombatAndCreateReward(
                         nodeId,
+                        result,
                         content_.cards(),
+                        content_.relics(),
                         random_
                     );
                     setRewardScene();
                 });
             },
-            [this]() { queueTransition([this]() { setProfileHubScene(); }); }
+            [this](const CombatResult&) { queueTransition([this]() { setProfileHubScene(); }); }
         )
     );
 }

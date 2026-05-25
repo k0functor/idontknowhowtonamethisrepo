@@ -82,10 +82,14 @@ void RunController::startNode(const int nodeId) {
 
 RewardState RunController::completeCombatAndCreateReward(
     const int nodeId,
+    const CombatResult& combatResult,
     const CardDatabase& cards,
+    const RelicDatabase& relics,
     Random& random
 ) {
     const RunMapNodeType completedNodeType = node(nodeId).type;
+
+    (void)combatResult;
 
     markNodeCompletedAndUnlockNext(nodeId);
 
@@ -101,6 +105,22 @@ RewardState RunController::completeCombatAndCreateReward(
     return rewardGenerator_.generateCombatReward(
         RewardContext{state, completedNodeType},
         cards,
+        relics,
+        random
+    );
+}
+
+RewardState RunController::completeCombatAndCreateReward(
+    const int nodeId,
+    const CardDatabase& cards,
+    const RelicDatabase& relics,
+    Random& random
+) {
+    return completeCombatAndCreateReward(
+        nodeId,
+        CombatResult{},
+        cards,
+        relics,
         random
     );
 }

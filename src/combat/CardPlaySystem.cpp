@@ -9,12 +9,14 @@ CardPlaySystem::CardPlaySystem(
     const CardDatabase& cardDatabase,
     const CardPlayValidator& validator,
     const EnergySystem& energySystem,
-    const EffectSystem& effectSystem
+    const EffectSystem& effectSystem,
+    const GameEventBus* eventBus
 )
     : cardDatabase_(cardDatabase),
       validator_(validator),
       energySystem_(energySystem),
-      effectSystem_(effectSystem) {}
+      effectSystem_(effectSystem),
+      eventBus_(eventBus) {}
 
 PlayCardResult CardPlaySystem::playCard(
     CombatState& state,
@@ -68,5 +70,17 @@ PlayCardResult CardPlaySystem::playCard(
     }
 
     state.log.add("Played card: " + definition.id.value);
+
+    if (eventBus_ != nullptr) {
+        GameEvent event;
+        event.type = GameEventType::CardPlayed;
+        event.source = request.source;
+        event.target = request.target;
+        event.cardInstanceId = request.cardInstanceId;
+        event.cardDefinitionId = definition.id;
+        event.turn = state.turn;
+        eventBus_->emit(event);
+    }
+
     return {true, {}};
 }

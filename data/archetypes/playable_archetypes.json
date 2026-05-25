@@ -5,12 +5,29 @@
     "short_description": "archetype.wanderer.short_description",
     "details_description": "archetype.wanderer.details_description",
     "unique_mechanic": "archetype.wanderer.unique_mechanic",
-    "actors": ["wanderer"],
-    "starting_deck": ["strike", "strike", "strike", "defend", "defend", "defend", "poisoned_guard"],
-    "starting_relics": [],
+    "actors": [
+      "wanderer"
+    ],
+    "starting_deck": [
+      "strike",
+      "strike",
+      "strike",
+      "defend",
+      "defend",
+      "defend",
+      "poisoned_guard"
+    ],
+    "starting_relics": [
+      "whetstone",
+      "old_bell"
+    ],
     "starting_gold": 75,
-    "strengths": ["archetype.wanderer.strength.flexible"],
-    "weaknesses": ["archetype.wanderer.weakness.no_specialization"],
+    "strengths": [
+      "archetype.wanderer.strength.flexible"
+    ],
+    "weaknesses": [
+      "archetype.wanderer.weakness.no_specialization"
+    ],
     "mechanic_id": "default"
   },
   {
@@ -19,9 +36,21 @@
     "short_description": "archetype.bone_merchant.short_description",
     "details_description": "archetype.bone_merchant.details_description",
     "unique_mechanic": "archetype.bone_merchant.unique_mechanic",
-    "actors": ["bone_merchant"],
-    "starting_deck": ["strike", "strike", "defend", "defend", "defend", "poisoned_guard"],
-    "starting_relics": ["bone_purse"],
+    "actors": [
+      "bone_merchant"
+    ],
+    "starting_deck": [
+      "strike",
+      "strike",
+      "defend",
+      "defend",
+      "defend",
+      "poisoned_guard"
+    ],
+    "starting_relics": [
+      "bone_purse",
+      "copper_coin"
+    ],
     "starting_gold": 120,
     "strengths": [
       "archetype.bone_merchant.strength.gold_income",
@@ -39,9 +68,22 @@
     "short_description": "archetype.sadist_masochist.short_description",
     "details_description": "archetype.sadist_masochist.details_description",
     "unique_mechanic": "archetype.sadist_masochist.unique_mechanic",
-    "actors": ["sadist", "masochist"],
-    "starting_deck": ["strike", "strike", "strike", "defend", "defend", "poisoned_guard"],
-    "starting_relics": ["razor_contract", "iron_nerves"],
+    "actors": [
+      "sadist",
+      "masochist"
+    ],
+    "starting_deck": [
+      "strike",
+      "strike",
+      "strike",
+      "defend",
+      "defend",
+      "poisoned_guard"
+    ],
+    "starting_relics": [
+      "razor_contract",
+      "iron_nerves"
+    ],
     "starting_gold": 50,
     "strengths": [
       "archetype.sadist_masochist.strength.two_bodies",

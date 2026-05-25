@@ -5,8 +5,9 @@
 #include <algorithm>
 #include <string>
 
-DamageSystem::DamageSystem(const ModifierSystem& modifierSystem)
-    : modifierSystem_(modifierSystem) {}
+DamageSystem::DamageSystem(const ModifierSystem& modifierSystem, const GameEventBus* eventBus)
+    : modifierSystem_(modifierSystem),
+      eventBus_(eventBus) {}
 
 DamageResult DamageSystem::dealDamage(
     CombatState& state,
@@ -49,6 +50,33 @@ DamageResult DamageSystem::dealDamage(
         ", blocked=" + std::to_string(result.blockedDamage) +
         ", hp=" + std::to_string(result.hpDamage)
     );
+
+    if (eventBus_ != nullptr) {
+        GameEvent dealt;
+        dealt.type = GameEventType::DamageDealt;
+        dealt.source = source;
+        dealt.target = target;
+        dealt.cardDefinitionId = cardId;
+        dealt.effectType = EffectType::Damage;
+        dealt.amount = result.hpDamage;
+        dealt.turn = state.turn;
+        eventBus_->emit(dealt);
+
+        GameEvent taken = dealt;
+        taken.type = GameEventType::DamageTaken;
+        eventBus_->emit(taken);
+
+        if (result.killed && state.isEnemy(target)) {
+            GameEvent killed;
+            killed.type = GameEventType::EnemyKilled;
+            killed.source = source;
+            killed.target = target;
+            killed.cardDefinitionId = cardId;
+            killed.amount = result.hpDamage;
+            killed.turn = state.turn;
+            eventBus_->emit(killed);
+        }
+    }
 
     return result;
 }

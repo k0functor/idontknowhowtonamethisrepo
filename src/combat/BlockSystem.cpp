@@ -4,8 +4,9 @@
 
 #include <string>
 
-BlockSystem::BlockSystem(const ModifierSystem& modifierSystem)
-    : modifierSystem_(modifierSystem) {}
+BlockSystem::BlockSystem(const ModifierSystem& modifierSystem, const GameEventBus* eventBus)
+    : modifierSystem_(modifierSystem),
+      eventBus_(eventBus) {}
 
 BlockResult BlockSystem::gainBlock(
     CombatState& state,
@@ -35,6 +36,18 @@ BlockResult BlockSystem::gainBlock(
         "Block: raw=" + std::to_string(rawBlock) +
         ", modified=" + std::to_string(modified.modified)
     );
+
+    if (eventBus_ != nullptr) {
+        GameEvent event;
+        event.type = GameEventType::BlockGained;
+        event.source = source;
+        event.target = target;
+        event.cardDefinitionId = cardId;
+        event.effectType = EffectType::Block;
+        event.amount = modified.modified;
+        event.turn = state.turn;
+        eventBus_->emit(event);
+    }
 
     return BlockResult{rawBlock, modified.modified};
 }

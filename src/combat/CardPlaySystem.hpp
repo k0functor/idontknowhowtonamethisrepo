@@ -7,6 +7,7 @@
 #include "core/Random.hpp"
 #include "data/CardDatabase.hpp"
 #include "entities/EntityId.hpp"
+#include "game/GameEventBus.hpp"
 
 #include <optional>
 #include <string>
@@ -28,7 +29,8 @@ public:
         const CardDatabase& cardDatabase,
         const CardPlayValidator& validator,
         const EnergySystem& energySystem,
-        const EffectSystem& effectSystem
+        const EffectSystem& effectSystem,
+        const GameEventBus* eventBus = nullptr
     );
 
     PlayCardResult playCard(
@@ -42,4 +44,5 @@ private:
     const CardPlayValidator& validator_;
     const EnergySystem& energySystem_;
     const EffectSystem& effectSystem_;
+    const GameEventBus* eventBus_ = nullptr;
 };

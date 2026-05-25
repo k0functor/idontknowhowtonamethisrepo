@@ -4,7 +4,10 @@
 #include "combat/CombatPhase.hpp"
 #include "effects/EffectTarget.hpp"
 #include "enemies/EnemyInstance.hpp"
+#include "relics/RelicDefinition.hpp"
 #include "ui/BasicUi.hpp"
+
+#include <algorithm>
 
 #include <iostream>
 #include <stdexcept>
@@ -29,8 +32,8 @@ CombatScene::CombatScene(
     Random& random,
     const UiFont& uiFont,
     const RunState& runState,
-    std::function<void()> onCombatWon,
-    std::function<void()> onCombatLost
+    std::function<void(const CombatResult&)> onCombatWon,
+    std::function<void(const CombatResult&)> onCombatLost
 )
     : content_(content),
       localization_(localization),
@@ -39,8 +42,9 @@ CombatScene::CombatScene(
       runState_(runState),
       onCombatWon_(std::move(onCombatWon)),
       onCombatLost_(std::move(onCombatLost)),
-      damageSystem_(modifierSystem_),
-      blockSystem_(modifierSystem_),
+      relicSystem_(content_.relics()),
+      damageSystem_(modifierSystem_, &eventBus_),
+      blockSystem_(modifierSystem_, &eventBus_),
       statusSystem_(content_.statuses()),
       effectSystem_(
           effectResolver_,
@@ -49,13 +53,15 @@ CombatScene::CombatScene(
           blockSystem_,
           energySystem_,
           drawSystem_,
-          statusSystem_
+          statusSystem_,
+          &eventBus_
       ),
       cardPlaySystem_(
           content_.cards(),
           validator_,
           energySystem_,
-          effectSystem_
+          effectSystem_,
+          &eventBus_
       ),
       previewSystem_(
           content_.cards(),
@@ -72,7 +78,8 @@ CombatScene::CombatScene(
           enemyTurnSystem_,
           enemyMoveSelector_,
           statusSystem_,
-          5
+          5,
+          &eventBus_
       ),
       cardViewModelBuilder_(
           content_.cards(),
@@ -83,7 +90,15 @@ CombatScene::CombatScene(
           localization_,
           content_.statuses(),
           cardViewModelBuilder_
-      ) {
+      ),
+      inspectModelBuilder_(content_, localization_) {
+    relicSystem_.setRelics(runState_.relicIds);
+    modifierSystem_.addProvider(relicSystem_);
+    eventBus_.subscribe([this](const GameEvent& event) {
+        relicSystem_.handleEvent(state_, event, effectSystem_, random_);
+        viewModelDirty_ = true;
+    });
+
     initializeCombat();
 }
 
@@ -93,9 +108,9 @@ void CombatScene::update(const float deltaSeconds) {
     if (combatFinished_) {
         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if (state_.phase == CombatPhase::Won) {
-                onCombatWon_();
+                onCombatWon_(finalResult_);
             } else {
-                onCombatLost_();
+                onCombatLost_(finalResult_);
             }
         }
         return;
@@ -109,6 +124,12 @@ void CombatScene::update(const float deltaSeconds) {
 
     view_.setSelectedCard(selectedCardId_);
     view_.update(deltaSeconds, mousePosition);
+
+    updateInspectInput(mousePosition);
+
+    if (relicInspectModal_.isOpen()) {
+        return;
+    }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         handleMousePressed(mousePosition);
@@ -141,6 +162,7 @@ void CombatScene::update(const float deltaSeconds) {
 
 void CombatScene::render() const {
     view_.render(uiFont_.available() ? &uiFont_.font() : nullptr);
+    renderInspectOverlay();
 
     if (combatFinished_) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 130});
@@ -164,8 +186,11 @@ void CombatScene::initializeCombat() {
     cardFactory_.reset();
     selectedCardId_.reset();
     draggedCardId_.reset();
+    inspectedCardId_.reset();
+    relicInspectModal_.close();
     lastPreviewTarget_.reset();
     combatFinished_ = false;
+    finalResult_ = CombatResult{};
 
     state_.resources.setMaxEnergy(3);
 
@@ -190,6 +215,7 @@ void CombatScene::initializeCombat() {
     }
 
     state_.log.add("Combat started");
+    relicSystem_.startCombat();
     turnSystem_.startCombat(state_, random_);
 
     viewModelDirty_ = true;
@@ -198,16 +224,170 @@ void CombatScene::initializeCombat() {
 }
 
 void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) {
-    view_.setModel(
-        combatViewModelBuilder_.build(
-            state_,
-            playerId_,
-            previewTarget
-        )
+    CombatViewModel model = combatViewModelBuilder_.build(
+        state_,
+        playerId_,
+        previewTarget
+    );
+
+    model.relics = buildRelicViewModels();
+    view_.setModel(model);
+}
+
+std::vector<RelicViewModel> CombatScene::buildRelicViewModels() const {
+    std::vector<RelicViewModel> result;
+    result.reserve(runState_.relicIds.size());
+
+    for (const std::string& relicId : runState_.relicIds) {
+        const RelicId id(relicId);
+
+        RelicViewModel model;
+        model.id = relicId;
+
+        if (content_.relics().contains(id)) {
+            const RelicDefinition& definition = content_.relics().get(id);
+            model.name = localization_.get(definition.nameTextId);
+            model.description = localization_.get(definition.descriptionTextId);
+        } else {
+            model.name = relicId;
+            model.description = {};
+        }
+
+        result.push_back(std::move(model));
+    }
+
+    return result;
+}
+
+
+void CombatScene::updateInspectInput(const Vector2 mousePosition) {
+    relicInspectModal_.update(view_.model().relics.size());
+
+    if (relicInspectModal_.isOpen()) {
+        inspectedCardId_.reset();
+        return;
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        inspectedCardId_.reset();
+        return;
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && view_.hoveredCardId().has_value()) {
+        inspectedCardId_ = *view_.hoveredCardId();
+        return;
+    }
+
+    if (IsKeyPressed(KEY_I) && selectedCardId_.has_value()) {
+        inspectedCardId_ = selectedCardId_;
+        return;
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (!view_.hoveredCardId().has_value()) {
+            inspectedCardId_.reset();
+        }
+    }
+}
+
+void CombatScene::renderInspectOverlay() const {
+    if (relicInspectModal_.isOpen()) {
+        relicInspectModal_.render(uiFont_, view_.model().relics);
+        return;
+    }
+
+    if (inspectedCardId_.has_value()) {
+        const std::optional<CardViewModel> cardModel = inspectedCardViewModel();
+        if (cardModel.has_value() && state_.hand.contains(*inspectedCardId_)) {
+            const CardInstance& instance = state_.hand.get(*inspectedCardId_);
+            const CardDefinition& definition = content_.cards().get(instance.definitionId);
+            const InspectPanelModel panel = inspectModelBuilder_.buildCard(definition, *cardModel);
+
+            const float width = std::min(440.f, static_cast<float>(GetScreenWidth()) - 60.f);
+            const Rectangle bounds{
+                static_cast<float>(GetScreenWidth()) - width - 24.f,
+                94.f,
+                width,
+                std::min(520.f, static_cast<float>(GetScreenHeight()) - 150.f)
+            };
+            inspectPanelView_.render(uiFont_, panel, bounds);
+        }
+        return;
+    }
+
+    const std::optional<EnemyViewModel> enemyModel = hoveredEnemyViewModel();
+    if (enemyModel.has_value()) {
+        const InspectPanelModel panel = inspectModelBuilder_.buildEnemy(*enemyModel);
+
+        constexpr float gap = 12.f;
+        constexpr float screenMargin = 18.f;
+        constexpr float minWidth = 220.f;
+        constexpr float preferredWidth = 300.f;
+
+        const float screenWidth = static_cast<float>(GetScreenWidth());
+        const float screenHeight = static_cast<float>(GetScreenHeight());
+
+        Rectangle bounds{
+            screenWidth - preferredWidth - screenMargin,
+            94.f,
+            preferredWidth,
+            std::min(300.f, screenHeight - 140.f)
+        };
+
+        const std::optional<Rectangle> enemyBounds = view_.hoveredEnemyBounds();
+        if (enemyBounds.has_value()) {
+            const float rightX = enemyBounds->x + enemyBounds->width + gap;
+            const float availableRightWidth = screenWidth - rightX - screenMargin;
+
+            bounds.x = rightX;
+            bounds.width = std::clamp(availableRightWidth, minWidth, preferredWidth);
+            bounds.y = std::clamp(enemyBounds->y, 82.f, screenHeight - bounds.height - screenMargin);
+
+            if (bounds.x + bounds.width > screenWidth - screenMargin) {
+                bounds.x = screenWidth - bounds.width - screenMargin;
+            }
+        }
+
+        inspectPanelView_.render(uiFont_, panel, bounds);
+    }
+
+}
+
+std::optional<EnemyViewModel> CombatScene::hoveredEnemyViewModel() const {
+    if (!view_.hoveredEnemyId().has_value()) {
+        return std::nullopt;
+    }
+
+    for (const EnemyViewModel& enemy : view_.model().enemies) {
+        if (enemy.entityId == *view_.hoveredEnemyId()) {
+            return enemy;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<CardViewModel> CombatScene::inspectedCardViewModel() const {
+    if (!inspectedCardId_.has_value() || !state_.hand.contains(*inspectedCardId_)) {
+        return std::nullopt;
+    }
+
+    const std::optional<EntityId> previewTarget = lastPreviewTarget_;
+    return cardViewModelBuilder_.build(
+        state_,
+        *inspectedCardId_,
+        playerId_,
+        previewTarget
     );
 }
 
 void CombatScene::handleMousePressed(const Vector2 mousePosition) {
+    if (view_.hoveredRelicIndex().has_value()) {
+        relicInspectModal_.open(*view_.hoveredRelicIndex());
+        inspectedCardId_.reset();
+        return;
+    }
+
     if (view_.endTurnButtonContains(mousePosition)) {
         endPlayerTurn();
         return;
@@ -273,12 +453,12 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 
     selectedCardId_.reset();
     draggedCardId_.reset();
+    inspectedCardId_.reset();
+    relicInspectModal_.close();
     lastPreviewTarget_.reset();
 
-    if (state_.aliveEnemyIds().empty()) {
-        state_.phase = CombatPhase::Won;
-        state_.enemyIntents.clear();
-        state_.log.add("Combat won");
+    if (result.played) {
+        finalResult_ = combatController_.updateAfterAction(state_);
     }
 
     viewModelDirty_ = true;
@@ -287,8 +467,11 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 void CombatScene::endPlayerTurn() {
     selectedCardId_.reset();
     draggedCardId_.reset();
+    inspectedCardId_.reset();
+    relicInspectModal_.close();
     lastPreviewTarget_.reset();
     turnSystem_.endPlayerTurn(state_, random_);
+    finalResult_ = combatController_.updateAfterAction(state_);
     viewModelDirty_ = true;
 }
 
@@ -355,7 +538,9 @@ void CombatScene::finishCombatIfNeeded() {
         return;
     }
 
-    if (state_.phase == CombatPhase::Won || state_.phase == CombatPhase::Lost) {
+    finalResult_ = combatController_.buildResult(state_);
+
+    if (finalResult_.outcome != CombatOutcome::Ongoing) {
         combatFinished_ = true;
         viewModelDirty_ = true;
     }

@@ -11,7 +11,8 @@ EffectSystem::EffectSystem(
     const BlockSystem& blockSystem,
     const EnergySystem& energySystem,
     const DrawSystem& drawSystem,
-    const StatusSystem& statusSystem
+    const StatusSystem& statusSystem,
+    const GameEventBus* eventBus
 )
     : effectResolver_(effectResolver),
       targeting_(targeting),
@@ -19,7 +20,8 @@ EffectSystem::EffectSystem(
       blockSystem_(blockSystem),
       energySystem_(energySystem),
       drawSystem_(drawSystem),
-      statusSystem_(statusSystem) {}
+      statusSystem_(statusSystem),
+      eventBus_(eventBus) {}
 
 void EffectSystem::applyEffects(
     CombatState& state,
@@ -86,6 +88,19 @@ void EffectSystem::applyEffect(
                     *effect.statusId,
                     resolvedValue.actual
                 );
+
+                if (eventBus_ != nullptr) {
+                    GameEvent event;
+                    event.type = GameEventType::StatusApplied;
+                    event.source = context.source;
+                    event.target = target;
+                    event.cardInstanceId = context.cardInstanceId;
+                    event.cardDefinitionId = context.cardDefinitionId;
+                    event.statusId = *effect.statusId;
+                    event.amount = resolvedValue.actual;
+                    event.turn = state.turn;
+                    eventBus_->emit(event);
+                }
             }
             return;
 

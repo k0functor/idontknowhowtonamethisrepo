@@ -1,6 +1,7 @@
 #pragma once
 
 #include "archetypes/PlayableArchetypeDefinition.hpp"
+#include "combat/CombatResult.hpp"
 #include "cards/CardId.hpp"
 #include "core/Random.hpp"
 #include "data/CardDatabase.hpp"
@@ -8,6 +9,7 @@
 #include "rewards/RewardSelection.hpp"
 #include "rewards/RewardState.hpp"
 #include "rewards/RewardSystem.hpp"
+#include "relics/RelicDatabase.hpp"
 #include "run/DifficultyDefinition.hpp"
 #include "run/RunFactory.hpp"
 #include "run/RunMapNode.hpp"
@@ -37,7 +39,16 @@ public:
 
     RewardState completeCombatAndCreateReward(
         int nodeId,
+        const CombatResult& combatResult,
         const CardDatabase& cards,
+        const RelicDatabase& relics,
+        Random& random
+    );
+
+    RewardState completeCombatAndCreateReward(
+        int nodeId,
+        const CardDatabase& cards,
+        const RelicDatabase& relics,
         Random& random
     );
 

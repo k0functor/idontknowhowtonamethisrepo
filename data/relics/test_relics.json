@@ -1,0 +1,109 @@
+[
+  {
+    "id": "whetstone",
+    "name": "relic.whetstone.name",
+    "description": "relic.whetstone.description",
+    "rarity": "common",
+    "modifiers": [
+      {
+        "type": "outgoing_damage_add",
+        "amount": 1,
+        "priority": 450
+      }
+    ]
+  },
+  {
+    "id": "old_bell",
+    "name": "relic.old_bell.name",
+    "description": "relic.old_bell.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cracked_clock",
+    "name": "relic.cracked_clock.name",
+    "description": "relic.cracked_clock.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "turn_started",
+        "every_n_turns": 3,
+        "effects": [
+          {
+            "type": "gain_energy",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "copper_coin",
+    "name": "relic.copper_coin.name",
+    "description": "relic.copper_coin.description",
+    "rarity": "common",
+    "modifiers": [
+      {
+        "type": "gold_reward_multiply",
+        "multiplier": 1.25
+      }
+    ]
+  },
+  {
+    "id": "bone_purse",
+    "name": "relic.bone_purse.name",
+    "description": "relic.bone_purse.description",
+    "rarity": "starter",
+    "modifiers": [
+      {
+        "type": "gold_reward_multiply",
+        "multiplier": 1.25
+      }
+    ]
+  },
+  {
+    "id": "razor_contract",
+    "name": "relic.razor_contract.name",
+    "description": "relic.razor_contract.description",
+    "rarity": "starter",
+    "modifiers": [
+      {
+        "type": "outgoing_damage_add",
+        "amount": 1,
+        "priority": 450
+      }
+    ]
+  },
+  {
+    "id": "iron_nerves",
+    "name": "relic.iron_nerves.name",
+    "description": "relic.iron_nerves.description",
+    "rarity": "starter",
+    "modifiers": [
+      {
+        "type": "block_add",
+        "amount": 1,
+        "priority": 450
+      }
+    ]
+  }
+]

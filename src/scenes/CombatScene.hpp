@@ -5,6 +5,9 @@
 #include "combat/BlockSystem.hpp"
 #include "combat/CardPlaySystem.hpp"
 #include "combat/CardPlayValidator.hpp"
+#include "combat/CombatController.hpp"
+#include "combat/CombatOutcome.hpp"
+#include "combat/CombatResult.hpp"
 #include "combat/CombatState.hpp"
 #include "combat/DamageSystem.hpp"
 #include "combat/EffectResolver.hpp"
@@ -18,14 +21,22 @@
 #include "combat/TurnSystem.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
+#include "game/GameEventBus.hpp"
+#include "relics/RelicSystem.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "preview/CardPreviewSystem.hpp"
 #include "run/RunState.hpp"
 #include "statuses/StatusSystem.hpp"
 #include "scenes/Scene.hpp"
+#include "inspect/InspectModelBuilder.hpp"
 #include "ui/CardViewModelBuilder.hpp"
+#include "ui/CardViewModel.hpp"
+#include "ui/EnemyViewModel.hpp"
+#include "ui/InspectPanelView.hpp"
+#include "ui/RelicInspectModal.hpp"
 #include "ui/CombatView.hpp"
 #include "ui/CombatViewModelBuilder.hpp"
+#include "ui/RelicViewModel.hpp"
 #include "ui/UiFont.hpp"
 
 #include <raylib.h>
@@ -33,6 +44,7 @@
 #include <filesystem>
 #include <functional>
 #include <optional>
+#include <vector>
 
 class CombatScene final : public Scene {
 public:
@@ -42,8 +54,8 @@ public:
         Random& random,
         const UiFont& uiFont,
         const RunState& runState,
-        std::function<void()> onCombatWon,
-        std::function<void()> onCombatLost
+        std::function<void(const CombatResult&)> onCombatWon,
+        std::function<void(const CombatResult&)> onCombatLost
     );
 
     void update(float deltaSeconds) override;
@@ -52,6 +64,11 @@ public:
 private:
     void initializeCombat();
     void rebuildViewModel(std::optional<EntityId> previewTarget);
+    std::vector<RelicViewModel> buildRelicViewModels() const;
+    void updateInspectInput(Vector2 mousePosition);
+    void renderInspectOverlay() const;
+    std::optional<EnemyViewModel> hoveredEnemyViewModel() const;
+    std::optional<CardViewModel> inspectedCardViewModel() const;
     void handleMousePressed(Vector2 mousePosition);
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
@@ -70,10 +87,13 @@ private:
     Random& random_;
     const UiFont& uiFont_;
     const RunState& runState_;
-    std::function<void()> onCombatWon_;
-    std::function<void()> onCombatLost_;
+    std::function<void(const CombatResult&)> onCombatWon_;
+    std::function<void(const CombatResult&)> onCombatLost_;
 
+    GameEventBus eventBus_;
     ModifierSystem modifierSystem_;
+    CombatController combatController_;
+    RelicSystem relicSystem_;
     EffectResolver effectResolver_;
     Targeting targeting_;
     DamageSystem damageSystem_;
@@ -93,8 +113,10 @@ private:
 
     CardViewModelBuilder cardViewModelBuilder_;
     CombatViewModelBuilder combatViewModelBuilder_;
+    InspectModelBuilder inspectModelBuilder_;
 
     CombatState state_;
+    CombatResult finalResult_;
     EntityIdGenerator entityIds_;
     CardInstanceFactory cardFactory_;
 
@@ -103,6 +125,9 @@ private:
     std::optional<CardInstanceId> draggedCardId_;
 
     CombatView view_;
+    InspectPanelView inspectPanelView_;
+    RelicInspectModal relicInspectModal_;
+    std::optional<CardInstanceId> inspectedCardId_;
 
     bool viewModelDirty_ = true;
     bool combatFinished_ = false;
