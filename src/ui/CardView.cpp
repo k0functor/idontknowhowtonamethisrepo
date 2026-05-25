@@ -11,10 +11,6 @@ Color cardFillColor(const CardViewModel& model) {
         return Color{80, 80, 86, 255};
     }
 
-    if (model.selected) {
-        return Color{76, 88, 112, 255};
-    }
-
     switch (model.type) {
         case CardType::Attack:
             return Color{118, 72, 72, 255};
@@ -202,8 +198,10 @@ void CardView::update(const float deltaSeconds) {
 
 void CardView::render(const Font* font) const {
     const Vector2 cardSize = size();
-    const float outlineThickness = model_.selected ? 4.f : 2.f;
-    const Color outlineColor = model_.playable ? Color{220, 220, 220, 255} : Color{130, 130, 130, 255};
+    const float outlineThickness = model_.selected ? 5.f : 2.f;
+    const Color outlineColor = model_.selected
+        ? Color{255, 218, 90, 255}
+        : (model_.playable ? Color{220, 220, 220, 255} : Color{130, 130, 130, 255});
 
     drawLocalRectangle(
         currentTransform_,

@@ -8,6 +8,7 @@
 #include "combat/EnergySystem.hpp"
 #include "combat/Targeting.hpp"
 #include "effects/EffectDefinition.hpp"
+#include "statuses/StatusSystem.hpp"
 
 #include <vector>
 
@@ -19,7 +20,8 @@ public:
         const DamageSystem& damageSystem,
         const BlockSystem& blockSystem,
         const EnergySystem& energySystem,
-        const DrawSystem& drawSystem
+        const DrawSystem& drawSystem,
+        const StatusSystem& statusSystem
     );
 
     void applyEffects(
@@ -41,4 +43,5 @@ private:
     const BlockSystem& blockSystem_;
     const EnergySystem& energySystem_;
     const DrawSystem& drawSystem_;
+    const StatusSystem& statusSystem_;
 };

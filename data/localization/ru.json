@@ -57,5 +57,15 @@
   "reward.choose_card": "Выберите карту:",
   "reward.no_card_options": "Этот архетип не получает карты после боя.",
   "reward.skip_card": "Пропустить карту",
-  "reward.continue": "Забрать награды"
+  "reward.continue": "Забрать награды",
+  "card.quick_cut.name": "Быстрый порез",
+  "card.quick_cut.description": "Наносит {damage} урона.",
+  "card.heavy_strike.name": "Тяжёлый удар",
+  "card.heavy_strike.description": "Наносит {damage} урона.",
+  "card.focus_guard.name": "Сосредоточенная защита",
+  "card.focus_guard.description": "Даёт {block} защиты.",
+  "card.risky_stab.name": "Рискованный выпад",
+  "card.risky_stab.description": "Наносит {damage} урона.",
+  "status.burn.name": "Горение",
+  "status.burn.description": "Заготовка под огненный периодический урон."
 }

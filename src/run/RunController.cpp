@@ -65,8 +65,19 @@ void RunController::startNode(const int nodeId) {
         throw std::runtime_error("Cannot start locked or completed run map node: " + std::to_string(nodeId));
     }
 
-    run().map.currentNodeId = nodeId;
-    node(nodeId).state = RunMapNodeState::Current;
+    RunMap& map = run().map;
+    RunMapNode& selectedNode = node(nodeId);
+
+    if (selectedNode.state == RunMapNodeState::Available) {
+        for (RunMapNode& candidate : map.nodes) {
+            if (candidate.id != nodeId && candidate.state == RunMapNodeState::Available) {
+                candidate.state = RunMapNodeState::Locked;
+            }
+        }
+    }
+
+    map.currentNodeId = nodeId;
+    selectedNode.state = RunMapNodeState::Current;
 }
 
 RewardState RunController::completeCombatAndCreateReward(

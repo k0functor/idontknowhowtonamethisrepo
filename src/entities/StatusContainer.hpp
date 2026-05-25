@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 class StatusContainer {
@@ -14,6 +15,7 @@ public:
     void remove(const std::string& statusId);
     void clear();
 
+    bool empty() const;
     std::vector<std::pair<std::string, int>> all() const;
 
 private:

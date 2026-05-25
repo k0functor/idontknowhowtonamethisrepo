@@ -5,6 +5,9 @@
 #include "ui/UiFont.hpp"
 
 #include <functional>
+#include <string>
+
+#include <raylib.h>
 
 class RunMapScene final : public Scene {
 public:
@@ -19,8 +22,11 @@ public:
     void render() const override;
 
 private:
+    Vector2 nodeScreenPosition(const RunMapNode& node) const;
     Rectangle nodeBounds(const RunMapNode& node) const;
     Color nodeColor(const RunMapNode& node) const;
+    Color nodeOutlineColor(const RunMapNode& node) const;
+    float nodeOutlineThickness(const RunMapNode& node) const;
     std::string nodeLabel(const RunMapNode& node) const;
 
 private:

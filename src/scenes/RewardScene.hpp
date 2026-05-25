@@ -1,7 +1,10 @@
 #pragma once
 
 #include "data/CardDatabase.hpp"
+#include "effects/EffectDefinition.hpp"
+#include "effects/EffectValue.hpp"
 #include "localization/LocalizationManager.hpp"
+#include "localization/TextFormatter.hpp"
 #include "rewards/RewardSelection.hpp"
 #include "rewards/RewardState.hpp"
 #include "scenes/Scene.hpp"
@@ -9,6 +12,7 @@
 
 #include <functional>
 #include <optional>
+#include <string>
 
 class RewardScene final : public Scene {
 public:
@@ -30,6 +34,13 @@ private:
 
     std::string cardName(const CardId& cardId) const;
     std::string cardDescription(const CardId& cardId) const;
+
+    static std::string effectValueText(const EffectValue& value);
+    static std::string rangeToString(int minimum, int maximum);
+    static void fillVariablesFromEffect(
+        TextFormatter::Variables& variables,
+        const EffectDefinition& effect
+    );
 
 private:
     const UiFont& font_;

@@ -57,5 +57,15 @@
   "reward.choose_card": "Choose a card:",
   "reward.no_card_options": "This archetype does not receive card rewards after combat.",
   "reward.skip_card": "Skip card",
-  "reward.continue": "Claim rewards"
+  "reward.continue": "Claim rewards",
+  "card.quick_cut.name": "Quick Cut",
+  "card.quick_cut.description": "Deals {damage} damage.",
+  "card.heavy_strike.name": "Heavy Strike",
+  "card.heavy_strike.description": "Deals {damage} damage.",
+  "card.focus_guard.name": "Focused Guard",
+  "card.focus_guard.description": "Gain {block} block.",
+  "card.risky_stab.name": "Risky Stab",
+  "card.risky_stab.description": "Deals {damage} damage.",
+  "status.burn.name": "Burn",
+  "status.burn.description": "Placeholder for fire damage over time."
 }

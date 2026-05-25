@@ -10,14 +10,16 @@ EffectSystem::EffectSystem(
     const DamageSystem& damageSystem,
     const BlockSystem& blockSystem,
     const EnergySystem& energySystem,
-    const DrawSystem& drawSystem
+    const DrawSystem& drawSystem,
+    const StatusSystem& statusSystem
 )
     : effectResolver_(effectResolver),
       targeting_(targeting),
       damageSystem_(damageSystem),
       blockSystem_(blockSystem),
       energySystem_(energySystem),
-      drawSystem_(drawSystem) {}
+      drawSystem_(drawSystem),
+      statusSystem_(statusSystem) {}
 
 void EffectSystem::applyEffects(
     CombatState& state,
@@ -78,10 +80,11 @@ void EffectSystem::applyEffect(
             }
 
             for (const EntityId target : targets) {
-                state.entity(target).statuses.add(*effect.statusId, resolvedValue.actual);
-                state.log.add(
-                    "Status: " + *effect.statusId +
-                    " +" + std::to_string(resolvedValue.actual)
+                statusSystem_.applyStatus(
+                    state,
+                    target,
+                    *effect.statusId,
+                    resolvedValue.actual
                 );
             }
             return;

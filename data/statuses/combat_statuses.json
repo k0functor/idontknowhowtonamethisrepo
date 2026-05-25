@@ -1,0 +1,46 @@
+[
+  {
+    "id": "strength",
+    "name": "status.strength.name",
+    "description": "status.strength.description",
+    "type": "buff",
+    "duration_rule": "persistent_combat"
+  },
+  {
+    "id": "dexterity",
+    "name": "status.dexterity.name",
+    "description": "status.dexterity.description",
+    "type": "buff",
+    "duration_rule": "persistent_combat"
+  },
+  {
+    "id": "weak",
+    "name": "status.weak.name",
+    "description": "status.weak.description",
+    "type": "debuff",
+    "duration_rule": "decrease_end_of_owner_turn"
+  },
+  {
+    "id": "vulnerable",
+    "name": "status.vulnerable.name",
+    "description": "status.vulnerable.description",
+    "type": "debuff",
+    "duration_rule": "decrease_end_of_owner_turn"
+  },
+  {
+    "id": "poison",
+    "name": "status.poison.name",
+    "description": "status.poison.description",
+    "type": "debuff",
+    "duration_rule": "custom",
+    "end_turn_effect": "poison_damage",
+    "decrease_after_trigger": true
+  },
+  {
+    "id": "burn",
+    "name": "status.burn.name",
+    "description": "status.burn.description",
+    "type": "debuff",
+    "duration_rule": "custom"
+  }
+]

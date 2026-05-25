@@ -87,6 +87,20 @@ add_executable(i_dont_know_how_to_name_this_game
     src/effects/EffectValue.cpp
     src/effects/EffectDefinition.hpp
 
+    src/statuses/StatusId.hpp
+    src/statuses/StatusType.hpp
+    src/statuses/StatusType.cpp
+    src/statuses/StatusDurationRule.hpp
+    src/statuses/StatusDurationRule.cpp
+    src/statuses/StatusDefinition.hpp
+    src/statuses/StatusDatabase.hpp
+    src/statuses/StatusDatabase.cpp
+    src/statuses/StatusSystem.hpp
+    src/statuses/StatusSystem.cpp
+
+    src/data/parsers/StatusDefinitionParser.hpp
+    src/data/parsers/StatusDefinitionParser.cpp
+
     src/cards/CardId.hpp
     src/cards/CardType.hpp
     src/cards/CardType.cpp
@@ -169,6 +183,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/preview/CardPreviewSystem.cpp
 
     src/ui/CardTransform.hpp
+    src/ui/StatusViewModel.hpp
     src/ui/CardViewModel.hpp
     src/ui/EnemyViewModel.hpp
     src/ui/PlayerViewModel.hpp

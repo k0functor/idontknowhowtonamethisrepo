@@ -21,6 +21,7 @@
 #include "localization/LocalizationManager.hpp"
 #include "preview/CardPreviewSystem.hpp"
 #include "run/RunState.hpp"
+#include "statuses/StatusSystem.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/CardViewModelBuilder.hpp"
 #include "ui/CombatView.hpp"
@@ -79,6 +80,7 @@ private:
     BlockSystem blockSystem_;
     EnergySystem energySystem_;
     DrawSystem drawSystem_;
+    StatusSystem statusSystem_;
     CardPlayValidator validator_;
     EffectSystem effectSystem_;
     CardPlaySystem cardPlaySystem_;

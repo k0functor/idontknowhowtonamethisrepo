@@ -6,6 +6,7 @@
 #include "combat/PlayerTurnSystem.hpp"
 #include "core/Random.hpp"
 #include "data/EnemyDatabase.hpp"
+#include "statuses/StatusSystem.hpp"
 
 #include <cstddef>
 
@@ -16,6 +17,7 @@ public:
         const PlayerTurnSystem& playerTurnSystem,
         const EnemyTurnSystem& enemyTurnSystem,
         const EnemyMoveSelector& enemyMoveSelector,
+        const StatusSystem& statusSystem,
         std::size_t handSize = 5
     );
 
@@ -32,5 +34,6 @@ private:
     const PlayerTurnSystem& playerTurnSystem_;
     const EnemyTurnSystem& enemyTurnSystem_;
     const EnemyMoveSelector& enemyMoveSelector_;
+    const StatusSystem& statusSystem_;
     std::size_t handSize_ = 5;
 };

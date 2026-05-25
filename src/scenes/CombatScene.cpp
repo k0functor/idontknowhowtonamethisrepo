@@ -41,13 +41,15 @@ CombatScene::CombatScene(
       onCombatLost_(std::move(onCombatLost)),
       damageSystem_(modifierSystem_),
       blockSystem_(modifierSystem_),
+      statusSystem_(content_.statuses()),
       effectSystem_(
           effectResolver_,
           targeting_,
           damageSystem_,
           blockSystem_,
           energySystem_,
-          drawSystem_
+          drawSystem_,
+          statusSystem_
       ),
       cardPlaySystem_(
           content_.cards(),
@@ -69,6 +71,7 @@ CombatScene::CombatScene(
           playerTurnSystem_,
           enemyTurnSystem_,
           enemyMoveSelector_,
+          statusSystem_,
           5
       ),
       cardViewModelBuilder_(
@@ -78,6 +81,7 @@ CombatScene::CombatScene(
       ),
       combatViewModelBuilder_(
           localization_,
+          content_.statuses(),
           cardViewModelBuilder_
       ) {
     initializeCombat();

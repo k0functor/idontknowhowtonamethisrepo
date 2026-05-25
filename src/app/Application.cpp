@@ -137,6 +137,7 @@ void Application::loadContent() {
     if (config_.debug.enabled) {
         std::cout << "Loaded cards: " << content_.cards().size() << '\n';
         std::cout << "Loaded enemies: " << content_.enemies().size() << '\n';
+        std::cout << "Loaded statuses: " << content_.statuses().size() << '\n';
         std::cout << "Loaded actors: " << content_.actors().size() << '\n';
         std::cout << "Loaded archetypes: " << content_.archetypes().size() << '\n';
         std::cout << "Loaded difficulties: " << content_.difficulties().size() << '\n';

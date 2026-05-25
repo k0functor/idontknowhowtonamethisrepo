@@ -56,12 +56,12 @@ void PlayerView::render(const Font* font, const bool hovered) const {
     }
 
     std::ostringstream statusText;
-    for (const auto& [statusId, amount] : model_.statuses) {
+    for (const StatusViewModel& status : model_.statuses) {
         if (!statusText.str().empty()) {
             statusText << "  ";
         }
 
-        statusText << statusId << ":" << amount;
+        statusText << status.name << ":" << status.amount;
     }
 
     const std::string statuses = statusText.str();

@@ -1,5 +1,7 @@
 #include "CombatViewModelBuilder.hpp"
 
+#include "statuses/StatusType.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <string>
@@ -37,9 +39,11 @@ std::string intentLabel(const EnemyIntent& intent) {
 
 CombatViewModelBuilder::CombatViewModelBuilder(
     const LocalizationManager& localization,
+    const StatusDatabase& statusDatabase,
     const CardViewModelBuilder& cardViewModelBuilder
 )
     : localization_(localization),
+      statusDatabase_(statusDatabase),
       cardViewModelBuilder_(cardViewModelBuilder) {}
 
 CombatViewModel CombatViewModelBuilder::build(
@@ -65,7 +69,7 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.currentHp = player.health.current();
         playerModel.maxHp = player.health.maximum();
         playerModel.block = player.block;
-        playerModel.statuses = player.statuses.all();
+        playerModel.statuses = buildStatuses(player.statuses);
         playerModel.alive = player.isAlive();
         model.players.push_back(std::move(playerModel));
     }
@@ -103,7 +107,7 @@ CombatViewModel CombatViewModelBuilder::build(
         enemyModel.currentHp = enemy.health.current();
         enemyModel.maxHp = enemy.health.maximum();
         enemyModel.block = enemy.block;
-        enemyModel.statuses = enemy.statuses.all();
+        enemyModel.statuses = buildStatuses(enemy.statuses);
         enemyModel.alive = enemy.isAlive();
 
         const auto intentIterator = intentsByEnemy.find(enemy.id.value);
@@ -120,6 +124,34 @@ CombatViewModel CombatViewModelBuilder::build(
 
     model.recentLogEntries = recentLogEntries(state, 6);
     return model;
+}
+
+std::vector<StatusViewModel> CombatViewModelBuilder::buildStatuses(
+    const StatusContainer& statuses
+) const {
+    std::vector<StatusViewModel> result;
+
+    const std::vector<std::pair<std::string, int>> entries = statuses.all();
+    result.reserve(entries.size());
+
+    for (const auto& [statusId, amount] : entries) {
+        StatusViewModel model;
+        model.id = statusId;
+        model.amount = amount;
+
+        if (statusDatabase_.contains(StatusId(statusId))) {
+            const StatusDefinition& definition = statusDatabase_.get(StatusId(statusId));
+            model.name = localization_.get(definition.nameTextId);
+            model.debuff = definition.type == StatusType::Debuff;
+        } else {
+            model.name = statusId;
+            model.debuff = false;
+        }
+
+        result.push_back(std::move(model));
+    }
+
+    return result;
 }
 
 std::vector<std::string> CombatViewModelBuilder::recentLogEntries(

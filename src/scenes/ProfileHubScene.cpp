@@ -7,6 +7,75 @@
 
 #include <algorithm>
 
+namespace {
+struct ProfileHubLayout {
+    Rectangle backButton{};
+    Rectangle title{};
+    Rectangle leftArrow{};
+    Rectangle rightArrow{};
+    Rectangle characterPanel{};
+    Rectangle startButton{};
+    Rectangle challengesButton{};
+    Rectangle achievementsButton{};
+    Rectangle compendiumButton{};
+    Rectangle notification{};
+};
+
+ProfileHubLayout calculateProfileHubLayout() {
+    const float screenWidth = static_cast<float>(GetScreenWidth());
+    const float screenHeight = static_cast<float>(GetScreenHeight());
+
+    constexpr float sideButtonWidth = 230.f;
+    constexpr float sideButtonHeight = 54.f;
+    constexpr float sideButtonGap = 16.f;
+    constexpr float arrowWidth = 56.f;
+    constexpr float arrowHeight = 64.f;
+    constexpr float arrowGap = 12.f;
+    constexpr float panelToButtonsGap = 18.f;
+
+    ProfileHubLayout layout;
+    layout.backButton = Rectangle{32.f, 32.f, 140.f, 48.f};
+    layout.title = Rectangle{0.f, 70.f, screenWidth, 60.f};
+
+    const float panelX = std::max(88.f, screenWidth * 0.11f);
+    const float panelY = std::max(135.f, screenHeight * 0.21f);
+
+    const float maxPanelWidthByScreen = std::max(360.f, screenWidth - panelX - sideButtonWidth - arrowWidth - arrowGap - panelToButtonsGap - 40.f);
+    const float preferredPanelWidth = std::clamp(screenWidth * 0.50f, 540.f, 760.f);
+    const float panelWidth = std::min(preferredPanelWidth, maxPanelWidthByScreen);
+    const float panelHeight = std::clamp(screenHeight * 0.64f, 420.f, 540.f);
+
+    layout.characterPanel = Rectangle{panelX, panelY, panelWidth, panelHeight};
+
+    const float arrowY = layout.characterPanel.y + layout.characterPanel.height * 0.5f - arrowHeight * 0.5f;
+    layout.leftArrow = Rectangle{
+        layout.characterPanel.x - arrowGap - arrowWidth,
+        arrowY,
+        arrowWidth,
+        arrowHeight
+    };
+
+    layout.rightArrow = Rectangle{
+        layout.characterPanel.x + layout.characterPanel.width + arrowGap,
+        arrowY,
+        arrowWidth,
+        arrowHeight
+    };
+
+    const float sideX = layout.rightArrow.x + layout.rightArrow.width + panelToButtonsGap;
+    const float sideY = layout.characterPanel.y + 20.f;
+
+    layout.startButton = Rectangle{sideX, sideY, sideButtonWidth, sideButtonHeight};
+    layout.challengesButton = Rectangle{sideX, sideY + (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
+    layout.achievementsButton = Rectangle{sideX, sideY + 2.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
+    layout.compendiumButton = Rectangle{sideX, sideY + 3.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
+
+    layout.notification = Rectangle{0.f, screenHeight - 50.f, screenWidth, 32.f};
+
+    return layout;
+}
+}
+
 ProfileHubScene::ProfileHubScene(
     const UiFont& font,
     const LocalizationManager& localization,
@@ -54,39 +123,33 @@ void ProfileHubScene::update(float) {
         return;
     }
 
-    const Rectangle leftButton{120.f, 390.f, 72.f, 64.f};
-    const Rectangle rightButton{GetScreenWidth() - 192.f, 390.f, 72.f, 64.f};
-    const Rectangle startButton{GetScreenWidth() - 300.f, 180.f, 230.f, 54.f};
-    const Rectangle challengesButton{GetScreenWidth() - 300.f, 250.f, 230.f, 54.f};
-    const Rectangle achievementsButton{GetScreenWidth() - 300.f, 320.f, 230.f, 54.f};
-    const Rectangle compendiumButton{GetScreenWidth() - 300.f, 390.f, 230.f, 54.f};
-    const Rectangle backButton{32.f, 32.f, 140.f, 48.f};
+    const ProfileHubLayout layout = calculateProfileHubLayout();
 
-    if (BasicUi::contains(leftButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(layout.leftArrow, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         moveSelection(-1);
     }
 
-    if (BasicUi::contains(rightButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(layout.rightArrow, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         moveSelection(1);
     }
 
-    if (BasicUi::contains(startButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !archetypes_.empty()) {
+    if (BasicUi::contains(layout.startButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !archetypes_.empty()) {
         onStartRun_(selectedArchetype().id);
     }
 
-    if (BasicUi::contains(backButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(layout.backButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         onBack_();
     }
 
-    if (BasicUi::contains(challengesButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(layout.challengesButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         notification_ = "Испытания появятся позже.";
     }
 
-    if (BasicUi::contains(achievementsButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(layout.achievementsButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         notification_ = "Достижения появятся позже.";
     }
 
-    if (BasicUi::contains(compendiumButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(layout.compendiumButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         notification_ = "Компендиум появится позже.";
     }
 }
@@ -94,13 +157,15 @@ void ProfileHubScene::update(float) {
 void ProfileHubScene::render() const {
     const Vector2 mouse = GetMousePosition();
 
-    BasicUi::drawButton(font_, Rectangle{32.f, 32.f, 140.f, 48.f}, "Назад", mouse);
-    BasicUi::drawCenteredText(font_, "Выбор архетипа", Rectangle{0.f, 70.f, static_cast<float>(GetScreenWidth()), 60.f}, 38.f, Color{240, 240, 250, 255});
+    const ProfileHubLayout layout = calculateProfileHubLayout();
 
-    BasicUi::drawButton(font_, Rectangle{120.f, 390.f, 72.f, 64.f}, "<", mouse, !archetypes_.empty());
-    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() - 192.f, 390.f, 72.f, 64.f}, ">", mouse, !archetypes_.empty());
+    BasicUi::drawButton(font_, layout.backButton, "Назад", mouse);
+    BasicUi::drawCenteredText(font_, "Выбор архетипа", layout.title, 38.f, Color{240, 240, 250, 255});
 
-    const Rectangle characterPanel{240.f, 160.f, GetScreenWidth() - 610.f, 470.f};
+    BasicUi::drawButton(font_, layout.leftArrow, "<", mouse, !archetypes_.empty());
+    BasicUi::drawButton(font_, layout.rightArrow, ">", mouse, !archetypes_.empty());
+
+    const Rectangle characterPanel = layout.characterPanel;
     DrawRectangleRounded(characterPanel, 0.06f, 12, Color{31, 34, 44, 255});
     DrawRectangleRoundedLinesEx(characterPanel, 0.06f, 12, 2.f, Color{100, 110, 145, 255});
 
@@ -115,13 +180,21 @@ void ProfileHubScene::render() const {
         BasicUi::drawCenteredText(font_, "Space — подробности", Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, Color{220, 220, 235, 255});
     }
 
-    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() - 300.f, 180.f, 230.f, 54.f}, "В путь", mouse, !archetypes_.empty());
-    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() - 300.f, 250.f, 230.f, 54.f}, "Испытания", mouse);
-    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() - 300.f, 320.f, 230.f, 54.f}, "Достижения", mouse);
-    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() - 300.f, 390.f, 230.f, 54.f}, "Компендиум", mouse);
+    BasicUi::drawButton(font_, layout.startButton, "В путь", mouse, !archetypes_.empty());
+    BasicUi::drawButton(font_, layout.challengesButton, "Испытания", mouse);
+    BasicUi::drawButton(font_, layout.achievementsButton, "Достижения", mouse);
+    BasicUi::drawButton(font_, layout.compendiumButton, "Компендиум", mouse);
+
+    BasicUi::drawCenteredText(
+        font_,
+        "← / → — сменить архетип    Space — подробности",
+        Rectangle{characterPanel.x, characterPanel.y + characterPanel.height + 12.f, characterPanel.width, 28.f},
+        18.f,
+        Color{165, 172, 195, 255}
+    );
 
     if (!notification_.empty()) {
-        BasicUi::drawCenteredText(font_, notification_, Rectangle{0.f, 670.f, static_cast<float>(GetScreenWidth()), 32.f}, 18.f, Color{185, 190, 210, 255});
+        BasicUi::drawCenteredText(font_, notification_, layout.notification, 18.f, Color{185, 190, 210, 255});
     }
 
     if (detailsOpen_) {

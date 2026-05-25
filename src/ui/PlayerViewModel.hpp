@@ -1,9 +1,9 @@
 #pragma once
 
 #include "entities/EntityId.hpp"
+#include "ui/StatusViewModel.hpp"
 
 #include <string>
-#include <utility>
 #include <vector>
 
 struct PlayerViewModel {
@@ -15,7 +15,7 @@ struct PlayerViewModel {
     int maxHp = 1;
     int block = 0;
 
-    std::vector<std::pair<std::string, int>> statuses;
+    std::vector<StatusViewModel> statuses;
 
     bool alive = true;
 };

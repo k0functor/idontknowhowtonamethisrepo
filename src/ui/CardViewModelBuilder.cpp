@@ -1,9 +1,38 @@
 #include "CardViewModelBuilder.hpp"
 
 #include "cards/CardDefinition.hpp"
+#include "dice/DiceExpression.hpp"
+#include "effects/EffectDefinition.hpp"
+#include "effects/EffectValue.hpp"
 #include "localization/TextFormatter.hpp"
 
 #include <string>
+
+namespace {
+constexpr const char* strengthStatusId = "strength";
+constexpr const char* dexterityStatusId = "dexterity";
+
+int statusStacks(const CombatState& state, const EntityId entityId, const std::string& statusId) {
+    if (!state.hasEntity(entityId)) {
+        return 0;
+    }
+
+    return state.entity(entityId).statuses.stacks(statusId);
+}
+
+
+std::string signedAdd(const int value) {
+    if (value > 0) {
+        return "+" + std::to_string(value);
+    }
+
+    if (value < 0) {
+        return "-" + std::to_string(-value);
+    }
+
+    return "";
+}
+}
 
 CardViewModelBuilder::CardViewModelBuilder(
     const CardDatabase& cardDatabase,
@@ -37,13 +66,29 @@ CardViewModel CardViewModelBuilder::build(
     variables.emplace("poison", "?");
     variables.emplace("value", "?");
 
-    for (const EffectPreview& effectPreview : preview.effects) {
+    for (std::size_t i = 0; i < preview.effects.size(); ++i) {
+        const EffectPreview& effectPreview = preview.effects[i];
+        const EffectDefinition* effectDefinition = i < definition.effects.size()
+            ? &definition.effects[i]
+            : nullptr;
+
         if (effectPreview.type == EffectType::Damage) {
             if (effectPreview.damage.has_value()) {
-                variables["damage"] = rangeToString(
+                std::string damageText = rangeToString(
                     effectPreview.damage->modifiedMin,
                     effectPreview.damage->modifiedMax
                 );
+
+                if (effectDefinition != nullptr) {
+                    damageText += formulaSuffixForDamage(
+                        state,
+                        source,
+                        target,
+                        *effectDefinition
+                    );
+                }
+
+                variables["damage"] = damageText;
                 variables["hp_damage"] = rangeToString(
                     effectPreview.damage->hpDamageMin,
                     effectPreview.damage->hpDamageMax
@@ -55,7 +100,13 @@ CardViewModel CardViewModelBuilder::build(
         }
 
         if (effectPreview.type == EffectType::Block) {
-            variables["block"] = effectPreview.value.toDisplayString();
+            std::string blockText = effectPreview.value.toDisplayString();
+
+            if (effectDefinition != nullptr) {
+                blockText += formulaSuffixForBlock(state, source, *effectDefinition);
+            }
+
+            variables["block"] = blockText;
         }
 
         if (effectPreview.type == EffectType::ApplyStatus) {
@@ -84,4 +135,45 @@ std::string CardViewModelBuilder::rangeToString(const int minimum, const int max
     }
 
     return std::to_string(minimum) + "-" + std::to_string(maximum);
+}
+
+std::string CardViewModelBuilder::formulaSuffixForDamage(
+    const CombatState& state,
+    const EntityId source,
+    const std::optional<EntityId> target,
+    const EffectDefinition& effect
+) {
+    (void)target;
+
+    if (!effect.value.isDice()) {
+        return "";
+    }
+
+    std::string formula = ::toString(effect.value.diceExpression());
+
+    const int strength = statusStacks(state, source, strengthStatusId);
+    if (strength != 0) {
+        formula += signedAdd(strength);
+    }
+
+    return " (" + formula + ")";
+}
+
+std::string CardViewModelBuilder::formulaSuffixForBlock(
+    const CombatState& state,
+    const EntityId source,
+    const EffectDefinition& effect
+) {
+    if (!effect.value.isDice()) {
+        return "";
+    }
+
+    std::string formula = ::toString(effect.value.diceExpression());
+
+    const int dexterity = statusStacks(state, source, dexterityStatusId);
+    if (dexterity != 0) {
+        formula += signedAdd(dexterity);
+    }
+
+    return " (" + formula + ")";
 }

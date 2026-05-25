@@ -2,9 +2,9 @@
 
 #include "entities/EntityId.hpp"
 #include "enemies/EnemyIntent.hpp"
+#include "ui/StatusViewModel.hpp"
 
 #include <string>
-#include <utility>
 #include <vector>
 
 struct EnemyViewModel {
@@ -19,7 +19,7 @@ struct EnemyViewModel {
     EnemyIntent intent;
     std::string intentText;
 
-    std::vector<std::pair<std::string, int>> statuses;
+    std::vector<StatusViewModel> statuses;
 
     bool alive = true;
 };

@@ -5,12 +5,14 @@ TurnSystem::TurnSystem(
     const PlayerTurnSystem& playerTurnSystem,
     const EnemyTurnSystem& enemyTurnSystem,
     const EnemyMoveSelector& enemyMoveSelector,
+    const StatusSystem& statusSystem,
     const std::size_t handSize
 )
     : enemyDatabase_(enemyDatabase),
       playerTurnSystem_(playerTurnSystem),
       enemyTurnSystem_(enemyTurnSystem),
       enemyMoveSelector_(enemyMoveSelector),
+      statusSystem_(statusSystem),
       handSize_(handSize) {}
 
 void TurnSystem::startCombat(CombatState& state, Random& random) const {
@@ -29,12 +31,19 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
     }
 
     playerTurnSystem_.endTurn(state);
+    statusSystem_.onTurnEndedForSide(state, EntityType::Player);
 
     if (updateCombatResult(state)) {
         return;
     }
 
     enemyTurnSystem_.executeTurn(state, enemyDatabase_, random);
+
+    if (updateCombatResult(state)) {
+        return;
+    }
+
+    statusSystem_.onTurnEndedForSide(state, EntityType::Enemy);
 
     if (updateCombatResult(state)) {
         return;

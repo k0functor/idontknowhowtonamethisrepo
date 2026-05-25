@@ -5,6 +5,7 @@
 #include "data/CardDatabase.hpp"
 #include "data/EnemyDatabase.hpp"
 #include "run/DifficultyDatabase.hpp"
+#include "statuses/StatusDatabase.hpp"
 
 #include <filesystem>
 
@@ -20,6 +21,9 @@ public:
     const EnemyDatabase& enemies() const;
     EnemyDatabase& enemies();
 
+    const StatusDatabase& statuses() const;
+    StatusDatabase& statuses();
+
     const PlayableArchetypeDatabase& archetypes() const;
     PlayableArchetypeDatabase& archetypes();
 
@@ -32,6 +36,7 @@ public:
 private:
     CardDatabase cards_;
     EnemyDatabase enemies_;
+    StatusDatabase statuses_;
     PlayableArchetypeDatabase archetypes_;
     PlayerActorDatabase actors_;
     DifficultyDatabase difficulties_;
