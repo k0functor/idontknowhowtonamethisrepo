@@ -1,6 +1,7 @@
 #include "CardPreviewSystem.hpp"
 
 #include "combat/EffectContext.hpp"
+#include "combat/CardCost.hpp"
 
 CardPreviewSystem::CardPreviewSystem(
     const CardDatabase& cardDatabase,
@@ -27,7 +28,7 @@ CardPreview CardPreviewSystem::previewCard(
     CardPreview preview;
     preview.cardInstanceId = cardInstanceId;
     preview.cardDefinitionId = definition.id;
-    preview.energyCost = definition.energyCost;
+    preview.energyCost = CardCost::effectiveEnergyCost(state, source, definition);
 
     const CardPlayValidationResult validation = validator_.validate(
         state,

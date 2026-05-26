@@ -1,6 +1,7 @@
 #include "CardPlaySystem.hpp"
 
 #include "cards/CardKeyword.hpp"
+#include "combat/CardCost.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -41,7 +42,9 @@ PlayCardResult CardPlaySystem::playCard(
         return {false, validation.reason};
     }
 
-    energySystem_.spend(state, request.source, definition.energyCost);
+    const int energyCost = CardCost::effectiveEnergyCost(state, request.source, definition);
+    energySystem_.spend(state, request.source, energyCost);
+    CardCost::consumeFreeNextCard(state, request.source, definition);
 
     EffectContext context;
     context.source = request.source;

@@ -14,6 +14,13 @@
     "duration_rule": "persistent_combat"
   },
   {
+    "id": "free_next_card",
+    "name": "status.free_next_card.name",
+    "description": "status.free_next_card.description",
+    "type": "buff",
+    "duration_rule": "persistent_combat"
+  },
+  {
     "id": "weak",
     "name": "status.weak.name",
     "description": "status.weak.description",

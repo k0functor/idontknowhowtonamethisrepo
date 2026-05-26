@@ -1,6 +1,7 @@
 #include "CardPlayValidator.hpp"
 
 #include "cards/CardKeyword.hpp"
+#include "combat/CardCost.hpp"
 
 #include <algorithm>
 
@@ -30,7 +31,9 @@ CardPlayValidationResult CardPlayValidator::validate(
         return {false, "Card is not in hand"};
     }
 
-    if (!state.resources.canSpendEnergy(source, definition.energyCost)) {
+    const int energyCost = CardCost::effectiveEnergyCost(state, source, definition);
+
+    if (!state.resources.canSpendEnergy(source, energyCost)) {
         return {false, "Not enough energy"};
     }
 

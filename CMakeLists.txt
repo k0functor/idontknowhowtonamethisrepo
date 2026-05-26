@@ -209,6 +209,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/combat/BlockSystem.cpp
     src/combat/EnergySystem.hpp
     src/combat/EnergySystem.cpp
+    src/combat/CardCost.hpp
+    src/combat/CardCost.cpp
     src/combat/EffectSystem.hpp
     src/combat/EffectSystem.cpp
     src/combat/CardPlayValidator.hpp
