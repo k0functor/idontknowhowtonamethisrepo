@@ -69,6 +69,17 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
         std::to_string(player.currentHp) + "/" + std::to_string(player.maxHp)
     });
 
+    if (player.maxEnergy > 0) {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.player.energy.name", "Energy"),
+            std::to_string(player.currentEnergy) + "/" + std::to_string(player.maxEnergy) + "\n" +
+                rawTextOrFallback(
+                    "inspect.player.energy.description",
+                    "Energy is spent to play cards belonging to this actor."
+                )
+        });
+    }
+
     if (player.block > 0) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.combat.block.name", "Block"),
@@ -91,7 +102,7 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
         });
     }
 
-    if (model.entries.size() == 1) {
+    if (model.entries.size() <= 2) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.player.no_effects.name", "No active effects"),
             rawTextOrFallback(

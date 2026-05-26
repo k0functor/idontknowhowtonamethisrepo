@@ -38,5 +38,11 @@
   "ui.play": "Играть",
   "ui.settings": "Настройки",
   "ui.to_the_road": "В путь",
-  "ui.turn": "Ход"
+  "ui.turn": "Ход",
+  "drone.bomber.description": "При использовании наносит 8 урона всем врагам.",
+  "drone.empty.description": "Этот слот дрона пуст.",
+  "drone.guardian.description": "Даёт 4 блока в конце вашего хода.",
+  "drone.striker.description": "Наносит 3 урона первому живому врагу в конце вашего хода.",
+  "drone.unknown.description": "У этого типа дрона пока нет описания.",
+  "ui.drone_slots": "Слоты дронов"
 }

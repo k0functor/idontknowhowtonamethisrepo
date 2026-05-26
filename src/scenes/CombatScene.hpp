@@ -77,11 +77,14 @@ private:
     EntityId sourceForCard(const CardInstance& card) const;
     EntityId sourceForCard(CardInstanceId cardInstanceId) const;
     bool isSadistMasochistParty() const;
+    bool isDroneCyborgParty() const;
     std::vector<RelicViewModel> buildRelicViewModels() const;
+    std::vector<DroneSlotViewModel> buildDroneSlotViewModels() const;
 
     void updateInspectInput(Vector2 mousePosition);
     void renderInspectOverlay() const;
     std::optional<EnemyViewModel> hoveredEnemyViewModel() const;
+    std::optional<PlayerViewModel> hoveredPlayerViewModel() const;
     std::optional<CardViewModel> inspectedCardViewModel() const;
 
     void handleMousePressed(Vector2 mousePosition);

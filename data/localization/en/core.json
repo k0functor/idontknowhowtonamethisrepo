@@ -38,5 +38,11 @@
   "ui.play": "Play",
   "ui.settings": "Settings",
   "ui.to_the_road": "Set Out",
-  "ui.turn": "Turn"
+  "ui.turn": "Turn",
+  "drone.bomber.description": "When used, deals 8 damage to all enemies.",
+  "drone.empty.description": "This drone slot is empty.",
+  "drone.guardian.description": "Grants 4 block at the end of your turn.",
+  "drone.striker.description": "Deals 3 damage to the first alive enemy at the end of your turn.",
+  "drone.unknown.description": "This drone type has no description yet.",
+  "ui.drone_slots": "Drone slots"
 }

@@ -438,6 +438,9 @@ void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) 
     );
 
     model.relics = buildRelicViewModels();
+    model.droneSlotsLabel = localizedOrFallback(TextId("ui.drone_slots"), "Drone slots");
+    model.emptyLabel = localizedOrFallback(TextId("ui.empty"), "Empty");
+    model.droneSlots = buildDroneSlotViewModels();
     model.consumables.clear();
     model.consumables.reserve(static_cast<std::size_t>(runState_.maxConsumables));
     for (int i = 0; i < runState_.maxConsumables; ++i) {
@@ -498,6 +501,12 @@ EntityId CombatScene::sourceForCard(const CardInstance& card) const {
         }
     }
 
+    if (cardId.rfind("cyborg_", 0) == 0) {
+        if (const std::optional<EntityId> id = actorByDefinition("drone_cyborg")) {
+            return *id;
+        }
+    }
+
     if (cardId.rfind("wanderer_", 0) == 0) {
         if (const std::optional<EntityId> id = actorByDefinition("wanderer")) {
             return *id;
@@ -517,6 +526,10 @@ EntityId CombatScene::sourceForCard(const CardInstanceId cardInstanceId) const {
 
 bool CombatScene::isSadistMasochistParty() const {
     return runState_.archetypeMechanicId == "sadist_masochist_party";
+}
+
+bool CombatScene::isDroneCyborgParty() const {
+    return runState_.archetypeMechanicId == "drone_cyborg";
 }
 
 std::vector<RelicViewModel> CombatScene::buildRelicViewModels() const {
@@ -539,6 +552,62 @@ std::vector<RelicViewModel> CombatScene::buildRelicViewModels() const {
         }
 
         result.push_back(std::move(model));
+    }
+
+    return result;
+}
+
+std::vector<DroneSlotViewModel> CombatScene::buildDroneSlotViewModels() const {
+    if (!isDroneCyborgParty() && state_.droneSlots.empty()) {
+        return {};
+    }
+
+    auto droneNameKey = [](const std::string& droneType) {
+        if (droneType == "drone_striker") {
+            return TextId("drone.striker");
+        }
+        if (droneType == "drone_guardian") {
+            return TextId("drone.guardian");
+        }
+        if (droneType == "drone_bomber") {
+            return TextId("drone.bomber");
+        }
+        return TextId(droneType);
+    };
+
+    auto droneDescriptionKey = [](const std::string& droneType) {
+        if (droneType == "drone_striker") {
+            return TextId("drone.striker.description");
+        }
+        if (droneType == "drone_guardian") {
+            return TextId("drone.guardian.description");
+        }
+        if (droneType == "drone_bomber") {
+            return TextId("drone.bomber.description");
+        }
+        return TextId("drone.unknown.description");
+    };
+
+    const std::size_t slotCount = std::max<std::size_t>(state_.maxDroneSlots, state_.droneSlots.size());
+    std::vector<DroneSlotViewModel> result;
+    result.reserve(slotCount);
+
+    for (std::size_t i = 0; i < slotCount; ++i) {
+        DroneSlotViewModel slot;
+
+        if (i < state_.droneSlots.size()) {
+            slot.filled = true;
+            slot.type = state_.droneSlots[i].type;
+            slot.name = localizedOrFallback(droneNameKey(slot.type), slot.type);
+            slot.description = localizedOrFallback(droneDescriptionKey(slot.type), slot.type);
+        } else {
+            slot.filled = false;
+            slot.type = {};
+            slot.name = localizedOrFallback(TextId("drone.empty"), "Empty");
+            slot.description = localizedOrFallback(TextId("drone.empty.description"), "This drone slot is empty.");
+        }
+
+        result.push_back(std::move(slot));
     }
 
     return result;
@@ -592,6 +661,46 @@ void CombatScene::renderInspectOverlay() const {
         return;
     }
 
+    const std::optional<PlayerViewModel> playerModel = hoveredPlayerViewModel();
+    if (playerModel.has_value()) {
+        const InspectPanelModel panel = inspectModelBuilder_.buildPlayer(*playerModel);
+
+        constexpr float gap = 12.f;
+        constexpr float screenMargin = 18.f;
+        constexpr float minWidth = 220.f;
+        constexpr float preferredWidth = 300.f;
+
+        const float screenWidth = static_cast<float>(GetScreenWidth());
+        const float screenHeight = static_cast<float>(GetScreenHeight());
+
+        Rectangle bounds{
+            screenMargin,
+            94.f,
+            preferredWidth,
+            std::min(300.f, screenHeight - 140.f)
+        };
+
+        const std::optional<Rectangle> playerBounds = view_.hoveredPlayerBounds();
+        if (playerBounds.has_value()) {
+            const float rightX = playerBounds->x + playerBounds->width + gap;
+            const float availableRightWidth = screenWidth - rightX - screenMargin;
+
+            if (availableRightWidth >= minWidth) {
+                bounds.x = rightX;
+                bounds.width = std::clamp(availableRightWidth, minWidth, preferredWidth);
+            } else {
+                const float availableLeftWidth = playerBounds->x - gap - screenMargin;
+                bounds.width = std::clamp(availableLeftWidth, minWidth, preferredWidth);
+                bounds.x = std::max(screenMargin, playerBounds->x - gap - bounds.width);
+            }
+
+            bounds.y = std::clamp(playerBounds->y, 82.f, screenHeight - bounds.height - screenMargin);
+        }
+
+        inspectPanelView_.render(uiFont_, panel, bounds);
+        return;
+    }
+
     const std::optional<EnemyViewModel> enemyModel = hoveredEnemyViewModel();
     if (enemyModel.has_value()) {
         const InspectPanelModel panel = inspectModelBuilder_.buildEnemy(*enemyModel);
@@ -637,6 +746,20 @@ std::optional<EnemyViewModel> CombatScene::hoveredEnemyViewModel() const {
     for (const EnemyViewModel& enemy : view_.model().enemies) {
         if (enemy.entityId == *view_.hoveredEnemyId()) {
             return enemy;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<PlayerViewModel> CombatScene::hoveredPlayerViewModel() const {
+    if (!view_.hoveredPlayerId().has_value()) {
+        return std::nullopt;
+    }
+
+    for (const PlayerViewModel& player : view_.model().players) {
+        if (player.entityId == *view_.hoveredPlayerId()) {
+            return player;
         }
     }
 

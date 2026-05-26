@@ -84,6 +84,8 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.name = localization_.get(player.nameTextId);
         playerModel.currentHp = player.health.current();
         playerModel.maxHp = player.health.maximum();
+        playerModel.currentEnergy = state.resources.energyFor(player.id);
+        playerModel.maxEnergy = state.resources.maxEnergyFor(player.id);
         playerModel.block = player.block;
         playerModel.statuses = buildStatuses(player.statuses);
         playerModel.alive = player.isAlive();

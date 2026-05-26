@@ -335,7 +335,6 @@ void CombatView::renderDronePanel(const Font* font) const {
     }
 
     const float slotWidth = 118.f;
-    const float slotHeight = 44.f;
     const float gap = 10.f;
     const float totalWidth = slotWidth * static_cast<float>(model_.droneSlots.size()) + gap * static_cast<float>(model_.droneSlots.size() - 1);
     const float x = static_cast<float>(GetScreenWidth()) * 0.5f - totalWidth * 0.5f;

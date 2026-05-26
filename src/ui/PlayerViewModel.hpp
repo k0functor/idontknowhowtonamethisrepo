@@ -13,6 +13,8 @@ struct PlayerViewModel {
 
     int currentHp = 1;
     int maxHp = 1;
+    int currentEnergy = 0;
+    int maxEnergy = 0;
     int block = 0;
 
     std::string blockLabel = "Block";
