@@ -8,7 +8,12 @@
 #include "entities/CombatEntity.hpp"
 #include "combat/EnemyIntentState.hpp"
 
+#include <string>
 #include <vector>
+
+struct DroneSlot {
+    std::string type;
+};
 
 class CombatState {
 public:
@@ -25,6 +30,11 @@ public:
     std::vector<CombatEntity> players;
     std::vector<CombatEntity> enemies;
     std::vector<EnemyIntentState> enemyIntents;
+
+    // Used by the Drone Cyborg archetype. Three slots by default.
+    // New summons overflow by using/removing the oldest drone first.
+    std::vector<DroneSlot> droneSlots;
+    std::size_t maxDroneSlots = 3;
 
     Deck deck;
     Hand hand;

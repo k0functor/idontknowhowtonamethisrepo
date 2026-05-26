@@ -2,12 +2,14 @@
 
 #include "cards/CardDefinition.hpp"
 #include "cards/CardInstance.hpp"
+#include "combat/CombatPhase.hpp"
 #include "combat/CombatState.hpp"
+#include "entities/EntityId.hpp"
 
 #include <string>
 
 struct CardPlayValidationResult {
-    bool valid = true;
+    bool valid = false;
     std::string reason;
 };
 
@@ -17,5 +19,12 @@ public:
         const CombatState& state,
         const CardDefinition& definition,
         const CardInstance& instance
+    ) const;
+
+    CardPlayValidationResult validate(
+        const CombatState& state,
+        const CardDefinition& definition,
+        const CardInstance& instance,
+        EntityId source
     ) const;
 };

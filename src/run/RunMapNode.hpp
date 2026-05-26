@@ -10,6 +10,7 @@ enum class RunMapNodeType {
     Elite,
     Event,
     Shop,
+    Chest,
     Rest,
     Boss
 };

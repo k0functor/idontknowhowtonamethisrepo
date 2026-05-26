@@ -1,26 +1,31 @@
 #include "CombatScene.hpp"
 
+#include "actors/PlayerActorDefinition.hpp"
 #include "cards/CardDefinition.hpp"
 #include "combat/CombatPhase.hpp"
 #include "effects/EffectTarget.hpp"
 #include "enemies/EnemyInstance.hpp"
 #include "relics/RelicDefinition.hpp"
+#include "consumables/ConsumableDefinition.hpp"
+#include "run/RunMapNode.hpp"
 #include "ui/BasicUi.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace {
-CombatEntity makeDebugPlayer(const EntityId id) {
+CombatEntity makePlayerFromActor(const PlayerActorDefinition& actor, const EntityId id) {
     CombatEntity player;
     player.id = id;
     player.type = EntityType::Player;
-    player.definitionId = "debug_player";
-    player.nameTextId = TextId("debug.player.name");
-    player.health = Health(70);
+    player.definitionId = actor.id.value;
+    player.nameTextId = actor.nameTextId;
+    player.health = Health(actor.maxHp);
     player.block = 0;
-    player.statuses.add("strength", 3);
     return player;
 }
 
@@ -30,6 +35,109 @@ Vector2 blockedMousePosition() {
 
 void drawModalBackdrop() {
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 155});
+}
+
+RunMapNodeType currentNodeType(const RunState& runState) {
+    if (runState.map.currentNodeId < 0) {
+        return RunMapNodeType::Combat;
+    }
+
+    for (const RunMapNode& node : runState.map.nodes) {
+        if (node.id == runState.map.currentNodeId) {
+            return node.type;
+        }
+    }
+
+    return RunMapNodeType::Combat;
+}
+
+std::vector<std::vector<std::string>> normalEncounters() {
+    return {
+        {"rat_cultist"},
+        {"ash_hound"},
+        {"plague_spider"},
+        {"shield_bearer", "knife_acolyte"},
+        {"rat_cultist", "grave_lamp"},
+        {"knife_acolyte", "plague_spider"}
+    };
+}
+
+std::vector<std::vector<std::string>> eliteEncounters() {
+    return {
+        {"grave_knight"},
+        {"choir_executioner"},
+        {"glass_collector"}
+    };
+}
+
+std::vector<std::vector<std::string>> bossEncounters() {
+    return {
+        {"baron_of_ashes"}
+    };
+}
+
+std::vector<std::string> chooseEncounter(
+    const std::vector<std::vector<std::string>>& encounters,
+    Random& random
+) {
+    if (encounters.empty()) {
+        return {"training_dummy"};
+    }
+
+    const int index = random.rangeInclusive(0, static_cast<int>(encounters.size()) - 1);
+    return encounters[static_cast<std::size_t>(index)];
+}
+
+std::vector<std::string> enemyIdsForNode(
+    const RunState& runState,
+    Random& random
+) {
+    switch (currentNodeType(runState)) {
+        case RunMapNodeType::Elite:
+            return chooseEncounter(eliteEncounters(), random);
+
+        case RunMapNodeType::Boss:
+            return chooseEncounter(bossEncounters(), random);
+
+        case RunMapNodeType::Combat:
+            return chooseEncounter(normalEncounters(), random);
+
+        case RunMapNodeType::Chest:
+        case RunMapNodeType::Event:
+        case RunMapNodeType::Shop:
+        case RunMapNodeType::Rest:
+            return {};
+        default:
+            throw std::runtime_error("Unknown run state");
+    }
+
+    return chooseEncounter(normalEncounters(), random);
+}
+
+void addEnemyToCombat(
+    CombatState& state,
+    EntityIdGenerator& entityIds,
+    const EnemyDatabase& enemies,
+    const std::string& enemyId,
+    const float hpMultiplier
+) {
+    if (!enemies.contains(EnemyId(enemyId))) {
+        throw std::runtime_error("Unknown enemy in encounter: " + enemyId);
+    }
+
+    const EnemyDefinition& definition = enemies.get(EnemyId(enemyId));
+    CombatEntity enemy = makeEnemyEntity(definition, entityIds.create());
+
+    if (hpMultiplier != 1.f) {
+        const int scaledMaximum = std::max(
+            1,
+            static_cast<int>(static_cast<float>(enemy.health.maximum()) * hpMultiplier + 0.5f)
+        );
+        enemy.health.setMaximum(scaledMaximum);
+        enemy.health.setCurrent(scaledMaximum);
+    }
+
+    state.enemies.push_back(std::move(enemy));
 }
 }
 
@@ -55,6 +163,7 @@ CombatScene::CombatScene(
       damageSystem_(modifierSystem_, &eventBus_),
       blockSystem_(modifierSystem_, &eventBus_),
       statusSystem_(content_.statuses()),
+      consumableSystem_(content_.consumables()),
       effectSystem_(
           effectResolver_,
           targeting_,
@@ -105,6 +214,36 @@ CombatScene::CombatScene(
     modifierSystem_.addProvider(relicSystem_);
     eventBus_.subscribe([this](const GameEvent& event) {
         relicSystem_.handleEvent(state_, event, effectSystem_, random_);
+
+        if (isSadistMasochistParty() &&
+            event.type == GameEventType::DamageDealt &&
+            event.source.has_value() &&
+            event.target.has_value() &&
+            event.amount > 0 &&
+            state_.hasEntity(*event.source) &&
+            state_.hasEntity(*event.target)) {
+            CombatEntity& source = state_.entity(*event.source);
+            CombatEntity& target = state_.entity(*event.target);
+
+            if (source.definitionId == "sadist" && target.definitionId == "masochist") {
+                source.statuses.add("strength", 1);
+                state_.log.add("Sadist gains 1 Strength for hurting Masochist");
+            }
+        }
+
+        if (isSadistMasochistParty() &&
+            event.type == GameEventType::DamageTaken &&
+            event.target.has_value() &&
+            event.amount > 0 &&
+            state_.hasEntity(*event.target)) {
+            CombatEntity& target = state_.entity(*event.target);
+            if (target.definitionId == "masochist") {
+                target.statuses.add("strength", 1);
+                target.statuses.add("dexterity", 1);
+                state_.log.add("Masochist gains 1 Strength and 1 Dexterity after taking pain");
+            }
+        }
+
         viewModelDirty_ = true;
     });
 
@@ -226,13 +365,6 @@ void CombatScene::render() const {
 }
 
 void CombatScene::initializeCombat() {
-    if (!content_.cards().contains(CardId("strike")) ||
-        !content_.cards().contains(CardId("defend")) ||
-        !content_.cards().contains(CardId("poisoned_guard")) ||
-        !content_.enemies().contains(EnemyId("training_dummy"))) {
-        throw std::runtime_error("CombatScene requires strike, defend, poisoned_guard and training_dummy content");
-    }
-
     state_ = CombatState{};
     entityIds_.reset();
     cardFactory_.reset();
@@ -244,20 +376,42 @@ void CombatScene::initializeCombat() {
     combatFinished_ = false;
     finalResult_ = CombatResult{};
     reward_.reset();
+    rewardSelection_ = RewardSelection{};
+    activeRewardOptionIndex_.reset();
     selectedRewardCardIndex_.reset();
-    rewardGoldTaken_ = false;
-    rewardCardChooserOpen_ = false;
+    rewardCardChoiceOpen_ = false;
     rewardAccepted_ = false;
 
-    state_.resources.setMaxEnergy(3);
+    state_.resources.clearActorEnergy();
 
-    playerId_ = entityIds_.create();
-    state_.players.push_back(makeDebugPlayer(playerId_));
+    if (runState_.actorDefinitionIds.empty()) {
+        throw std::runtime_error("Cannot initialize combat: run has no player actors");
+    }
 
-    const EntityId enemyId = entityIds_.create();
-    const EnemyDefinition& enemyDefinition = content_.enemies().get(EnemyId("training_dummy"));
-    state_.enemies.push_back(makeEnemyEntity(enemyDefinition, enemyId));
-    state_.entity(enemyId).statuses.add("vulnerable", 2);
+    for (const std::string& actorId : runState_.actorDefinitionIds) {
+        const PlayerActorDefinition& actor = content_.actors().get(PlayerActorId(actorId));
+        const EntityId entityId = entityIds_.create();
+        state_.players.push_back(makePlayerFromActor(actor, entityId));
+        state_.resources.setMaxEnergy(entityId, actor.startingEnergy);
+    }
+
+    playerId_ = state_.players.front().id;
+    combatConsumableIds_ = runState_.consumableIds;
+
+    const std::vector<std::string> encounterEnemyIds = enemyIdsForNode(runState_, random_);
+    for (const std::string& enemyId : encounterEnemyIds) {
+        addEnemyToCombat(
+            state_,
+            entityIds_,
+            content_.enemies(),
+            enemyId,
+            runState_.enemyHpMultiplier
+        );
+    }
+
+    if (state_.enemies.empty()) {
+        throw std::runtime_error("Cannot initialize combat: encounter has no enemies");
+    }
 
     if (runState_.deckCardIds.empty()) {
         throw std::runtime_error("Cannot initialize combat: run deck is empty");
@@ -283,12 +437,91 @@ void CombatScene::initializeCombat() {
 void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) {
     CombatViewModel model = combatViewModelBuilder_.build(
         state_,
-        playerId_,
-        previewTarget
+        primaryPlayerId(),
+        previewTarget,
+        [this](const CardInstance& card) { return sourceForCard(card); }
     );
 
     model.relics = buildRelicViewModels();
+    model.consumables.clear();
+    model.consumables.reserve(static_cast<std::size_t>(runState_.maxConsumables));
+    for (int i = 0; i < runState_.maxConsumables; ++i) {
+        ConsumableViewModel consumable;
+        if (i < static_cast<int>(combatConsumableIds_.size())) {
+            consumable.id = combatConsumableIds_[static_cast<std::size_t>(i)];
+            if (content_.consumables().contains(ConsumableId(consumable.id))) {
+                const ConsumableDefinition& definition = content_.consumables().get(ConsumableId(consumable.id));
+                consumable.name = localization_.get(definition.nameTextId);
+                consumable.description = localization_.get(definition.descriptionTextId);
+                consumable.filled = true;
+            }
+        }
+        model.consumables.push_back(std::move(consumable));
+    }
     view_.setModel(model);
+}
+
+EntityId CombatScene::primaryPlayerId() const {
+    if (!state_.alivePlayerIds().empty()) {
+        return state_.alivePlayerIds().front();
+    }
+
+    if (!state_.players.empty()) {
+        return state_.players.front().id;
+    }
+
+    return playerId_;
+}
+
+EntityId CombatScene::sourceForCard(const CardInstance& card) const {
+    const std::string& cardId = card.definitionId.value;
+
+    auto actorByDefinition = [this](const std::string& definitionId) -> std::optional<EntityId> {
+        for (const CombatEntity& player : state_.players) {
+            if (player.definitionId == definitionId && player.isAlive()) {
+                return player.id;
+            }
+        }
+        return std::nullopt;
+    };
+
+    if (cardId.rfind("sadist_", 0) == 0) {
+        if (const std::optional<EntityId> id = actorByDefinition("sadist")) {
+            return *id;
+        }
+    }
+
+    if (cardId.rfind("masochist_", 0) == 0) {
+        if (const std::optional<EntityId> id = actorByDefinition("masochist")) {
+            return *id;
+        }
+    }
+
+    if (cardId.rfind("merchant_", 0) == 0) {
+        if (const std::optional<EntityId> id = actorByDefinition("bone_merchant")) {
+            return *id;
+        }
+    }
+
+    if (cardId.rfind("wanderer_", 0) == 0) {
+        if (const std::optional<EntityId> id = actorByDefinition("wanderer")) {
+            return *id;
+        }
+    }
+
+    return primaryPlayerId();
+}
+
+EntityId CombatScene::sourceForCard(const CardInstanceId cardInstanceId) const {
+    if (!state_.hand.contains(cardInstanceId)) {
+        return primaryPlayerId();
+    }
+
+    return sourceForCard(state_.hand.get(cardInstanceId));
+}
+
+bool CombatScene::isSadistMasochistParty() const {
+    return runState_.archetypeMechanicId == "sadist_masochist_party";
 }
 
 std::vector<RelicViewModel> CombatScene::buildRelicViewModels() const {
@@ -398,6 +631,45 @@ void CombatScene::renderInspectOverlay() const {
         }
 
         inspectPanelView_.render(uiFont_, panel, bounds);
+        return;
+    }
+
+    if (!selectedCardId_.has_value() && !draggedCardId_.has_value()) {
+        const std::optional<PlayerViewModel> playerModel = hoveredPlayerViewModel();
+        if (playerModel.has_value()) {
+            const InspectPanelModel panel = inspectModelBuilder_.buildPlayer(*playerModel);
+
+            constexpr float gap = 12.f;
+            constexpr float screenMargin = 18.f;
+            constexpr float preferredWidth = 320.f;
+            constexpr float minWidth = 240.f;
+
+            const float screenWidth = static_cast<float>(GetScreenWidth());
+            const float screenHeight = static_cast<float>(GetScreenHeight());
+
+            Rectangle bounds{
+                screenMargin,
+                94.f,
+                preferredWidth,
+                std::min(330.f, screenHeight - 140.f)
+            };
+
+            const std::optional<Rectangle> playerBounds = view_.hoveredPlayerBounds();
+            if (playerBounds.has_value()) {
+                const float rightX = playerBounds->x + playerBounds->width + gap;
+                const float availableRightWidth = screenWidth - rightX - screenMargin;
+
+                bounds.x = rightX;
+                bounds.width = std::clamp(availableRightWidth, minWidth, preferredWidth);
+                bounds.y = std::clamp(playerBounds->y, 82.f, screenHeight - bounds.height - screenMargin);
+
+                if (bounds.x + bounds.width > screenWidth - screenMargin) {
+                    bounds.x = std::max(screenMargin, playerBounds->x - bounds.width - gap);
+                }
+            }
+
+            inspectPanelView_.render(uiFont_, panel, bounds);
+        }
     }
 }
 
@@ -415,6 +687,20 @@ std::optional<EnemyViewModel> CombatScene::hoveredEnemyViewModel() const {
     return std::nullopt;
 }
 
+std::optional<PlayerViewModel> CombatScene::hoveredPlayerViewModel() const {
+    if (!view_.hoveredPlayerId().has_value()) {
+        return std::nullopt;
+    }
+
+    for (const PlayerViewModel& player : view_.model().players) {
+        if (player.entityId == *view_.hoveredPlayerId()) {
+            return player;
+        }
+    }
+
+    return std::nullopt;
+}
+
 std::optional<CardViewModel> CombatScene::inspectedCardViewModel() const {
     if (!inspectedCardId_.has_value() || !state_.hand.contains(*inspectedCardId_)) {
         return std::nullopt;
@@ -424,7 +710,7 @@ std::optional<CardViewModel> CombatScene::inspectedCardViewModel() const {
     return cardViewModelBuilder_.build(
         state_,
         *inspectedCardId_,
-        playerId_,
+        sourceForCard(*inspectedCardId_),
         previewTarget
     );
 }
@@ -435,6 +721,11 @@ void CombatScene::handleMousePressed(const Vector2 mousePosition) {
         inspectedCardId_.reset();
         selectedCardId_.reset();
         draggedCardId_.reset();
+        return;
+    }
+
+    if (view_.hoveredConsumableIndex().has_value()) {
+        tryUseHoveredConsumable();
         return;
     }
 
@@ -465,6 +756,34 @@ void CombatScene::handleMousePressed(const Vector2 mousePosition) {
     viewModelDirty_ = true;
 }
 
+void CombatScene::tryUseHoveredConsumable() {
+    if (!view_.hoveredConsumableIndex().has_value()) {
+        return;
+    }
+
+    const std::size_t index = *view_.hoveredConsumableIndex();
+    if (index >= combatConsumableIds_.size()) {
+        return;
+    }
+
+    const std::string consumableId = combatConsumableIds_[index];
+    if (consumableSystem_.useConsumable(
+            state_,
+            consumableId,
+            primaryPlayerId(),
+            effectSystem_,
+            random_
+        )) {
+        combatConsumableIds_.erase(combatConsumableIds_.begin() + static_cast<std::ptrdiff_t>(index));
+        selectedCardId_.reset();
+        draggedCardId_.reset();
+        inspectedCardId_.reset();
+        lastPreviewTarget_.reset();
+        finalResult_ = combatController_.updateAfterAction(state_);
+        viewModelDirty_ = true;
+    }
+}
+
 void CombatScene::handleMouseReleased(const Vector2) {
     if (!draggedCardId_.has_value()) {
         return;
@@ -493,7 +812,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 
     const PlayCardResult result = cardPlaySystem_.playCard(
         state_,
-        PlayCardRequest{*selectedCardId_, playerId_, target},
+        PlayCardRequest{*selectedCardId_, sourceForCard(*selectedCardId_), target},
         random_
     );
 
@@ -611,9 +930,10 @@ void CombatScene::openRewardModalIfNeeded() {
     }
 
     reward_ = createRewardOnVictory_(finalResult_);
+    rewardSelection_ = RewardSelection{};
+    activeRewardOptionIndex_.reset();
     selectedRewardCardIndex_.reset();
-    rewardGoldTaken_ = reward_->gold <= 0;
-    rewardCardChooserOpen_ = false;
+    rewardCardChoiceOpen_ = false;
 }
 
 void CombatScene::updateRewardModalInput(const Vector2 mousePosition) {
@@ -621,58 +941,72 @@ void CombatScene::updateRewardModalInput(const Vector2 mousePosition) {
         return;
     }
 
-    if (rewardCardChooserOpen_) {
-        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE)) {
-            rewardCardChooserOpen_ = false;
-            return;
-        }
-
-        if (BasicUi::contains(rewardCardCancelButtonBounds(), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            rewardCardChooserOpen_ = false;
-            return;
-        }
-
-        for (std::size_t i = 0; i < reward_->cardOptions.size(); ++i) {
-            if (BasicUi::contains(rewardCardOptionBounds(i), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                selectedRewardCardIndex_ = i;
-                rewardCardChooserOpen_ = false;
-                return;
-            }
-        }
-
+    if (rewardCardChoiceOpen_) {
+        updateRewardCardChoiceInput(mousePosition);
         return;
     }
 
     if (IsKeyPressed(KEY_ESCAPE)) {
+        rewardAccepted_ = true;
+        onRewardAccepted_(*reward_, rewardSelection_);
         return;
     }
 
-    if (!rewardGoldTaken_ && reward_->gold > 0 &&
-        BasicUi::contains(rewardGoldRowBounds(), mousePosition) &&
-        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        rewardGoldTaken_ = true;
-        return;
-    }
-
-    if (!reward_->cardOptions.empty() &&
-        BasicUi::contains(rewardCardRowBounds(), mousePosition) &&
-        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        rewardCardChooserOpen_ = true;
-        return;
-    }
-
-    if (BasicUi::contains(rewardContinueButtonBounds(), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        RewardSelection selection;
-        selection.takeGold = rewardGoldTaken_;
-        selection.skippedCardReward = !selectedRewardCardIndex_.has_value();
-
-        if (selectedRewardCardIndex_.has_value()) {
-            selection.selectedCardId = reward_->cardOptions[*selectedRewardCardIndex_].cardId;
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        for (std::size_t i = 0; i < reward_->options.size(); ++i) {
+            if (BasicUi::contains(rewardOptionRowBounds(i), mousePosition)) {
+                takeRewardOption(i);
+                return;
+            }
         }
 
-        rewardAccepted_ = true;
-        onRewardAccepted_(*reward_, selection);
+        if (BasicUi::contains(rewardContinueButtonBounds(), mousePosition)) {
+            rewardAccepted_ = true;
+            onRewardAccepted_(*reward_, rewardSelection_);
+            return;
+        }
     }
+}
+
+
+void CombatScene::renderDefeatModal() const {
+    drawModalBackdrop();
+
+    const float width = std::min(560.f, static_cast<float>(GetScreenWidth()) - 72.f);
+    const float height = 260.f;
+    const Rectangle panel{
+        static_cast<float>(GetScreenWidth()) * 0.5f - width * 0.5f,
+        static_cast<float>(GetScreenHeight()) * 0.5f - height * 0.5f,
+        width,
+        height
+    };
+
+    DrawRectangleRounded(panel, 0.045f, 14, Color{29, 31, 42, 248});
+    DrawRectangleRoundedLinesEx(panel, 0.045f, 14, 3.f, Color{180, 70, 75, 255});
+
+    BasicUi::drawCenteredText(
+        uiFont_,
+        localizedOrFallback(TextId("combat.defeat.title"), "Defeat"),
+        Rectangle{panel.x + 24.f, panel.y + 28.f, panel.width - 48.f, 44.f},
+        34.f,
+        Color{255, 210, 210, 255}
+    );
+
+    BasicUi::drawCenteredText(
+        uiFont_,
+        localizedOrFallback(TextId("combat.defeat.description"), "Your run has ended."),
+        Rectangle{panel.x + 42.f, panel.y + 96.f, panel.width - 84.f, 56.f},
+        22.f,
+        Color{215, 220, 235, 255}
+    );
+
+    BasicUi::drawCenteredText(
+        uiFont_,
+        localizedOrFallback(TextId("combat.defeat.continue_hint"), "Press Enter, Space, or click to continue."),
+        Rectangle{panel.x + 42.f, panel.y + 176.f, panel.width - 84.f, 42.f},
+        18.f,
+        Color{170, 178, 205, 255}
+    );
 }
 
 void CombatScene::renderRewardModal() const {
@@ -698,107 +1032,52 @@ void CombatScene::renderRewardModal() const {
 
     BasicUi::drawText(
         uiFont_,
-        localizedOrFallback(TextId("reward.optional_hint"), "All rewards are optional. Take what you want, then continue."),
+        localizedOrFallback(TextId("reward.optional_hint"), "Take what you want, then continue."),
         Vector2{panel.x + 38.f, panel.y + 68.f},
         18.f,
-        Color{190, 197, 215, 255}
+        Color{190, 196, 215, 255}
     );
 
-    const Rectangle goldRow = rewardGoldRowBounds();
-    DrawRectangleRounded(goldRow, 0.06f, 10, Color{38, 41, 54, 255});
-    DrawRectangleRoundedLinesEx(
-        goldRow,
-        0.06f,
-        10,
-        2.f,
-        rewardGoldTaken_ ? Color{238, 196, 86, 255} : Color{92, 101, 128, 255}
-    );
-
-    BasicUi::drawText(
-        uiFont_,
-        localization_.format(TextId("reward.gold"), {{"amount", std::to_string(reward_->gold)}}),
-        Vector2{goldRow.x + 22.f, goldRow.y + 18.f},
-        24.f,
-        Color{238, 226, 150, 255}
-    );
-
-    BasicUi::drawButton(
-        uiFont_,
-        Rectangle{goldRow.x + goldRow.width - 190.f, goldRow.y + 12.f, 166.f, 44.f},
-        rewardGoldTaken_
-            ? localizedOrFallback(TextId("reward.collected"), "Collected")
-            : localizedOrFallback(TextId("reward.collect"), "Take"),
-        mouse,
-        !rewardGoldTaken_ && reward_->gold > 0,
-        BasicUi::ButtonStyle{
-            Color{50, 54, 70, 255},
-            Color{72, 78, 96, 255},
-            Color{35, 37, 46, 255},
-            rewardGoldTaken_ ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255},
-            Color{245, 245, 250, 255},
-            Color{165, 170, 184, 255}
-        }
-    );
-
-    const Rectangle cardRow = rewardCardRowBounds();
-    DrawRectangleRounded(cardRow, 0.06f, 10, Color{38, 41, 54, 255});
-    DrawRectangleRoundedLinesEx(
-        cardRow,
-        0.06f,
-        10,
-        2.f,
-        selectedRewardCardIndex_.has_value() ? Color{238, 196, 86, 255} : Color{92, 101, 128, 255}
-    );
-
-    std::string cardRowTitle = localizedOrFallback(TextId("reward.take_card"), "Take a card");
-    std::string cardRowSubtitle = reward_->cardOptions.empty()
-        ? localizedOrFallback(TextId("reward.no_card_options"), "No card reward.")
-        : localizedOrFallback(TextId("reward.card_optional"), "Choose one of three cards or skip this reward.");
-
-    if (selectedRewardCardIndex_.has_value()) {
-        const CardId& cardId = reward_->cardOptions[*selectedRewardCardIndex_].cardId;
-        cardRowSubtitle = localization_.format(
-            TextId("reward.card_selected"),
-            {{"card", rewardCardName(cardId)}}
+    if (reward_->options.empty()) {
+        BasicUi::drawCenteredText(
+            uiFont_,
+            localizedOrFallback(TextId("reward.no_rewards_remaining"), "No rewards remaining."),
+            Rectangle{panel.x + 40.f, panel.y + 136.f, panel.width - 80.f, 56.f},
+            24.f,
+            Color{205, 210, 225, 255}
         );
+    } else {
+        for (std::size_t i = 0; i < reward_->options.size(); ++i) {
+            const RewardOption& option = reward_->options[i];
+            const Rectangle row = rewardOptionRowBounds(i);
+            const bool hovered = BasicUi::contains(row, mouse);
+
+            const Color fill = hovered ? Color{55, 59, 78, 255} : Color{41, 44, 58, 255};
+            const Color border = hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255};
+
+            DrawRectangleRounded(row, 0.08f, 10, fill);
+            DrawRectangleRoundedLinesEx(row, 0.08f, 10, 2.5f, border);
+
+            BasicUi::drawText(
+                uiFont_,
+                rewardOptionTitle(option),
+                Vector2{row.x + 22.f, row.y + 14.f},
+                23.f,
+                Color{245, 245, 250, 255}
+            );
+
+            const std::string description = rewardOptionDescription(option);
+            if (!description.empty()) {
+                BasicUi::drawText(
+                    uiFont_,
+                    description,
+                    Vector2{row.x + 22.f, row.y + 47.f},
+                    16.f,
+                    Color{190, 198, 220, 255}
+                );
+            }
+        }
     }
-
-    BasicUi::drawText(
-        uiFont_,
-        cardRowTitle,
-        Vector2{cardRow.x + 22.f, cardRow.y + 12.f},
-        24.f,
-        Color{232, 236, 248, 255}
-    );
-
-    BasicUi::drawText(
-        uiFont_,
-        cardRowSubtitle,
-        Vector2{cardRow.x + 22.f, cardRow.y + 43.f},
-        17.f,
-        Color{185, 194, 215, 255}
-    );
-
-    BasicUi::drawButton(
-        uiFont_,
-        Rectangle{cardRow.x + cardRow.width - 190.f, cardRow.y + 18.f, 166.f, 44.f},
-        selectedRewardCardIndex_.has_value()
-            ? localizedOrFallback(TextId("reward.change"), "Change")
-            : localizedOrFallback(TextId("reward.choose"), "Choose"),
-        mouse,
-        !reward_->cardOptions.empty()
-    );
-
-    const Rectangle consumableRow = rewardConsumableRowBounds(0);
-    DrawRectangleRounded(consumableRow, 0.06f, 10, Color{32, 34, 44, 255});
-    DrawRectangleRoundedLinesEx(consumableRow, 0.06f, 10, 2.f, Color{70, 78, 98, 255});
-    BasicUi::drawText(
-        uiFont_,
-        localizedOrFallback(TextId("reward.consumables_none"), "Consumables: none"),
-        Vector2{consumableRow.x + 22.f, consumableRow.y + 20.f},
-        22.f,
-        Color{145, 153, 175, 255}
-    );
 
     BasicUi::drawButton(
         uiFont_,
@@ -807,26 +1086,34 @@ void CombatScene::renderRewardModal() const {
         mouse
     );
 
-    if (!rewardCardChooserOpen_) {
+    if (rewardCardChoiceOpen_) {
+        renderRewardCardChoiceModal();
+    }
+}
+
+void CombatScene::renderRewardCardChoiceModal() const {
+    const RewardOption* option = activeRewardOption();
+    if (option == nullptr || option->type != RewardOptionType::CardChoice) {
         return;
     }
 
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 115});
+    const Vector2 mouse = GetMousePosition();
+    const Rectangle panel = rewardCardChoiceModalBounds();
 
-    const Rectangle chooser = rewardCardChoiceModalBounds();
-    DrawRectangleRounded(chooser, 0.045f, 14, Color{25, 27, 38, 252});
-    DrawRectangleRoundedLinesEx(chooser, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 95});
+    DrawRectangleRounded(panel, 0.045f, 14, Color{25, 27, 38, 252});
+    DrawRectangleRoundedLinesEx(panel, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
 
     BasicUi::drawCenteredText(
         uiFont_,
         localizedOrFallback(TextId("reward.card_choice_title"), "Choose one card"),
-        Rectangle{chooser.x + 24.f, chooser.y + 18.f, chooser.width - 48.f, 42.f},
+        Rectangle{panel.x + 24.f, panel.y + 18.f, panel.width - 48.f, 38.f},
         30.f,
         Color{255, 235, 175, 255}
     );
 
-    for (std::size_t i = 0; i < reward_->cardOptions.size(); ++i) {
-        const Rectangle bounds = rewardCardOptionBounds(i);
+    for (std::size_t i = 0; i < option->cardOptions.size(); ++i) {
+        const Rectangle bounds = rewardCardChoiceOptionBounds(i);
         const bool hovered = BasicUi::contains(bounds, mouse);
         const bool selected = selectedRewardCardIndex_.has_value() && *selectedRewardCardIndex_ == i;
 
@@ -836,7 +1123,7 @@ void CombatScene::renderRewardModal() const {
         DrawRectangleRounded(bounds, 0.08f, 10, fill);
         DrawRectangleRoundedLinesEx(bounds, 0.08f, 10, selected ? 4.f : 2.f, border);
 
-        const CardId& cardId = reward_->cardOptions[i].cardId;
+        const CardId& cardId = option->cardOptions[i].cardId;
         BasicUi::drawCenteredText(
             uiFont_,
             rewardCardName(cardId),
@@ -881,56 +1168,58 @@ void CombatScene::renderRewardModal() const {
 
     BasicUi::drawButton(
         uiFont_,
-        rewardCardCancelButtonBounds(),
+        rewardCardChoiceCancelBounds(),
         localizedOrFallback(TextId("reward.cancel"), "Cancel"),
+        mouse
+    );
+
+    BasicUi::drawButton(
+        uiFont_,
+        rewardCardChoiceConfirmBounds(),
+        localizedOrFallback(TextId("reward.confirm"), "Confirm"),
         mouse,
-        true,
-        BasicUi::ButtonStyle{
-            Color{42, 43, 50, 255},
-            Color{60, 62, 72, 255},
-            Color{35, 36, 42, 255},
-            Color{120, 130, 160, 255},
-            Color{235, 235, 242, 255},
-            Color{120, 124, 140, 255}
-        }
+        selectedRewardCardIndex_.has_value()
     );
 }
 
-void CombatScene::renderDefeatModal() const {
-    drawModalBackdrop();
+void CombatScene::updateRewardCardChoiceInput(const Vector2 mousePosition) {
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        closeRewardCardChoice();
+        return;
+    }
 
-    const float screenWidth = static_cast<float>(GetScreenWidth());
-    const float screenHeight = static_cast<float>(GetScreenHeight());
-    const Rectangle bounds{
-        screenWidth * 0.5f - 280.f,
-        screenHeight * 0.5f - 110.f,
-        560.f,
-        220.f
-    };
+    RewardOption* option = activeRewardOption();
+    if (option == nullptr || option->type != RewardOptionType::CardChoice) {
+        closeRewardCardChoice();
+        return;
+    }
 
-    DrawRectangleRounded(bounds, 0.08f, 12, Color{28, 26, 34, 248});
-    DrawRectangleRoundedLinesEx(bounds, 0.08f, 12, 3.f, Color{190, 80, 85, 255});
+    if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        return;
+    }
 
-    BasicUi::drawCenteredText(
-        uiFont_,
-        "Поражение",
-        Rectangle{bounds.x + 24.f, bounds.y + 42.f, bounds.width - 48.f, 52.f},
-        34.f,
-        Color{255, 210, 210, 255}
-    );
+    for (std::size_t i = 0; i < option->cardOptions.size(); ++i) {
+        if (BasicUi::contains(rewardCardChoiceOptionBounds(i), mousePosition)) {
+            selectedRewardCardIndex_ = i;
+            return;
+        }
+    }
 
-    BasicUi::drawCenteredText(
-        uiFont_,
-        "Нажми Enter, Space или ЛКМ, чтобы вернуться.",
-        Rectangle{bounds.x + 36.f, bounds.y + 118.f, bounds.width - 72.f, 44.f},
-        18.f,
-        Color{220, 224, 235, 255}
-    );
+    if (BasicUi::contains(rewardCardChoiceCancelBounds(), mousePosition)) {
+        closeRewardCardChoice();
+        return;
+    }
+
+    if (selectedRewardCardIndex_.has_value() &&
+        BasicUi::contains(rewardCardChoiceConfirmBounds(), mousePosition)) {
+        confirmRewardCardChoice();
+        return;
+    }
 }
 
 Rectangle CombatScene::rewardModalBounds() const {
-    const float width = std::min(760.f, static_cast<float>(GetScreenWidth()) - 72.f);
-    const float height = std::min(470.f, static_cast<float>(GetScreenHeight()) - 72.f);
+    const float width = std::min(620.f, static_cast<float>(GetScreenWidth()) - 72.f);
+    const float height = std::min(460.f, static_cast<float>(GetScreenHeight()) - 72.f);
 
     return Rectangle{
         static_cast<float>(GetScreenWidth()) * 0.5f - width * 0.5f,
@@ -940,33 +1229,23 @@ Rectangle CombatScene::rewardModalBounds() const {
     };
 }
 
-Rectangle CombatScene::rewardGoldRowBounds() const {
-    const Rectangle panel = rewardModalBounds();
-    return Rectangle{panel.x + 38.f, panel.y + 106.f, panel.width - 76.f, 68.f};
-}
-
-Rectangle CombatScene::rewardCardRowBounds() const {
-    const Rectangle panel = rewardModalBounds();
-    return Rectangle{panel.x + 38.f, panel.y + 190.f, panel.width - 76.f, 78.f};
-}
-
-Rectangle CombatScene::rewardConsumableRowBounds(const std::size_t index) const {
+Rectangle CombatScene::rewardOptionRowBounds(const std::size_t index) const {
     const Rectangle panel = rewardModalBounds();
     return Rectangle{
         panel.x + 38.f,
-        panel.y + 284.f + static_cast<float>(index) * 72.f,
+        panel.y + 112.f + static_cast<float>(index) * 78.f,
         panel.width - 76.f,
-        64.f
+        62.f
     };
 }
 
 Rectangle CombatScene::rewardContinueButtonBounds() const {
     const Rectangle panel = rewardModalBounds();
-    return Rectangle{panel.x + panel.width * 0.5f - 190.f, panel.y + panel.height - 68.f, 380.f, 52.f};
+    return Rectangle{panel.x + panel.width * 0.5f - 160.f, panel.y + panel.height - 68.f, 320.f, 50.f};
 }
 
 Rectangle CombatScene::rewardCardChoiceModalBounds() const {
-    const float width = std::min(1080.f, static_cast<float>(GetScreenWidth()) - 72.f);
+    const float width = std::min(1040.f, static_cast<float>(GetScreenWidth()) - 72.f);
     const float height = std::min(560.f, static_cast<float>(GetScreenHeight()) - 72.f);
 
     return Rectangle{
@@ -977,34 +1256,160 @@ Rectangle CombatScene::rewardCardChoiceModalBounds() const {
     };
 }
 
-Rectangle CombatScene::rewardCardOptionBounds(const std::size_t index) const {
+Rectangle CombatScene::rewardCardChoiceOptionBounds(const std::size_t index) const {
     const Rectangle panel = rewardCardChoiceModalBounds();
-    const std::size_t optionCount = reward_.has_value()
-        ? std::min<std::size_t>(3, reward_->cardOptions.size())
+    const RewardOption* option = activeRewardOption();
+    const std::size_t optionCount = option != nullptr
+        ? std::min<std::size_t>(3, option->cardOptions.size())
         : 0;
 
     if (optionCount == 0) {
-        return Rectangle{panel.x + 40.f, panel.y + 120.f, 260.f, 220.f};
+        return Rectangle{panel.x + 40.f, panel.y + 100.f, 260.f, 220.f};
     }
 
     const float spacing = 24.f;
     const float availableWidth = panel.width - 80.f;
     const float cardWidth = std::min(285.f, (availableWidth - spacing * static_cast<float>(optionCount - 1)) / static_cast<float>(optionCount));
-    const float cardHeight = std::min(285.f, panel.height - 220.f);
+    const float cardHeight = std::min(260.f, panel.height - 210.f);
     const float totalWidth = cardWidth * static_cast<float>(optionCount) + spacing * static_cast<float>(optionCount - 1);
     const float startX = panel.x + panel.width * 0.5f - totalWidth * 0.5f;
 
     return Rectangle{
         startX + static_cast<float>(index) * (cardWidth + spacing),
-        panel.y + 88.f,
+        panel.y + 90.f,
         cardWidth,
         cardHeight
     };
 }
 
-Rectangle CombatScene::rewardCardCancelButtonBounds() const {
+Rectangle CombatScene::rewardCardChoiceCancelBounds() const {
     const Rectangle panel = rewardCardChoiceModalBounds();
-    return Rectangle{panel.x + panel.width * 0.5f - 150.f, panel.y + panel.height - 66.f, 300.f, 48.f};
+    return Rectangle{panel.x + panel.width * 0.5f - 250.f, panel.y + panel.height - 66.f, 220.f, 48.f};
+}
+
+Rectangle CombatScene::rewardCardChoiceConfirmBounds() const {
+    const Rectangle panel = rewardCardChoiceModalBounds();
+    return Rectangle{panel.x + panel.width * 0.5f + 30.f, panel.y + panel.height - 66.f, 220.f, 48.f};
+}
+
+void CombatScene::openRewardCardChoice(const std::size_t optionIndex) {
+    activeRewardOptionIndex_ = optionIndex;
+    selectedRewardCardIndex_.reset();
+    rewardCardChoiceOpen_ = true;
+}
+
+void CombatScene::closeRewardCardChoice() {
+    activeRewardOptionIndex_.reset();
+    selectedRewardCardIndex_.reset();
+    rewardCardChoiceOpen_ = false;
+}
+
+void CombatScene::confirmRewardCardChoice() {
+    RewardOption* option = activeRewardOption();
+    if (option == nullptr || option->type != RewardOptionType::CardChoice || !selectedRewardCardIndex_.has_value()) {
+        return;
+    }
+
+    const std::size_t selectedIndex = *selectedRewardCardIndex_;
+    if (selectedIndex >= option->cardOptions.size()) {
+        return;
+    }
+
+    rewardSelection_.selectedCardIds.push_back(option->cardOptions[selectedIndex].cardId);
+
+    if (reward_.has_value() && activeRewardOptionIndex_.has_value() && *activeRewardOptionIndex_ < reward_->options.size()) {
+        reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(*activeRewardOptionIndex_));
+    }
+
+    closeRewardCardChoice();
+}
+
+void CombatScene::takeRewardOption(const std::size_t optionIndex) {
+    if (!reward_.has_value() || optionIndex >= reward_->options.size()) {
+        return;
+    }
+
+    RewardOption& option = reward_->options[optionIndex];
+
+    switch (option.type) {
+        case RewardOptionType::Gold:
+            if (option.gold > 0) {
+                rewardSelection_.goldTaken += option.gold;
+            }
+            reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
+            break;
+
+        case RewardOptionType::CardChoice:
+            openRewardCardChoice(optionIndex);
+            break;
+
+        case RewardOptionType::Consumable:
+            if (!option.consumableId.empty()) {
+                rewardSelection_.selectedConsumableIds.push_back(option.consumableId);
+            }
+            reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
+            break;
+    }
+}
+
+const RewardOption* CombatScene::activeRewardOption() const {
+    if (!reward_.has_value() || !activeRewardOptionIndex_.has_value()) {
+        return nullptr;
+    }
+
+    if (*activeRewardOptionIndex_ >= reward_->options.size()) {
+        return nullptr;
+    }
+
+    return &reward_->options[*activeRewardOptionIndex_];
+}
+
+RewardOption* CombatScene::activeRewardOption() {
+    if (!reward_.has_value() || !activeRewardOptionIndex_.has_value()) {
+        return nullptr;
+    }
+
+    if (*activeRewardOptionIndex_ >= reward_->options.size()) {
+        return nullptr;
+    }
+
+    return &reward_->options[*activeRewardOptionIndex_];
+}
+
+std::string CombatScene::rewardOptionTitle(const RewardOption& option) const {
+    switch (option.type) {
+        case RewardOptionType::Gold:
+            return localization_.format(
+                TextId("reward.take_gold"),
+                {{"amount", std::to_string(option.gold)}}
+            );
+
+        case RewardOptionType::CardChoice:
+            return localizedOrFallback(TextId("reward.take_card"), "Take a card");
+
+        case RewardOptionType::Consumable:
+            return localizedOrFallback(TextId("reward.take_consumable"), "Take consumable");
+    }
+
+    return {};
+}
+
+std::string CombatScene::rewardOptionDescription(const RewardOption& option) const {
+    switch (option.type) {
+        case RewardOptionType::Gold:
+            return localizedOrFallback(TextId("reward.gold_description"), "Add this gold to your run.");
+
+        case RewardOptionType::CardChoice:
+            return localization_.format(
+                TextId("reward.card_choice_description"),
+                {{"count", std::to_string(option.cardOptions.size())}}
+            );
+
+        case RewardOptionType::Consumable:
+            return option.consumableId;
+    }
+
+    return {};
 }
 
 std::string CombatScene::rewardCardName(const CardId& cardId) const {

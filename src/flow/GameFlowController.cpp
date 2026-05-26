@@ -1,5 +1,6 @@
 #include "GameFlowController.hpp"
 
+#include "relics/RelicId.hpp"
 #include "scenes/CombatScene.hpp"
 #include "scenes/DifficultySelectScene.hpp"
 #include "scenes/MainMenuScene.hpp"
@@ -123,6 +124,8 @@ void GameFlowController::setRunMapScene() {
             uiFont_,
             runController_.run(),
             [this](const int nodeId) { startMapNode(nodeId); },
+            [this](const int nodeId) { restHeal(nodeId); },
+            [this](const int nodeId) { restUpgrade(nodeId); },
             [this]() { queueTransition([this]() { setProfileHubScene(); }); }
         )
     );
@@ -199,8 +202,54 @@ void GameFlowController::selectDifficulty(DifficultyId difficultyId) {
 
 void GameFlowController::startMapNode(const int nodeId) {
     queueTransition([this, nodeId]() {
+        const RunMapNodeType nodeType = runController_.node(nodeId).type;
         runController_.startNode(nodeId);
-        setCombatScene(nodeId);
+
+        switch (nodeType) {
+            case RunMapNodeType::Combat:
+            case RunMapNodeType::Elite:
+            case RunMapNodeType::Boss:
+                setCombatScene(nodeId);
+                return;
+
+            case RunMapNodeType::Chest: {
+                const std::optional<RelicId> relic = runController_.chooseChestRelic(content_.relics(), random_);
+                if (relic.has_value()) {
+                    runController_.completeChestAndTakeRelic(nodeId, *relic);
+                } else {
+                    runController_.completeEventNode(nodeId);
+                }
+                setRunMapScene();
+                return;
+            }
+
+            case RunMapNodeType::Event:
+            case RunMapNodeType::Shop:
+                runController_.completeEventNode(nodeId);
+                setRunMapScene();
+                return;
+
+            case RunMapNodeType::Rest:
+                // Rest is normally handled inside RunMapScene through its modal.
+                setRunMapScene();
+                return;
+        }
+    });
+}
+
+void GameFlowController::restHeal(const int nodeId) {
+    queueTransition([this, nodeId]() {
+        runController_.startNode(nodeId);
+        runController_.completeRestHeal(nodeId);
+        setRunMapScene();
+    });
+}
+
+void GameFlowController::restUpgrade(const int nodeId) {
+    queueTransition([this, nodeId]() {
+        runController_.startNode(nodeId);
+        runController_.completeRestUpgrade(nodeId);
+        setRunMapScene();
     });
 }
 

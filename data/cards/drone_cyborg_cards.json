@@ -1,0 +1,133 @@
+[
+  {
+    "id": "cyborg_striker_drone",
+    "name": "card.cyborg_striker_drone.name",
+    "description": "card.cyborg_striker_drone.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "drone_cyborg",
+    "effects": [
+      {
+        "type": "summon_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "drone_striker"
+      }
+    ]
+  },
+  {
+    "id": "cyborg_guardian_drone",
+    "name": "card.cyborg_guardian_drone.name",
+    "description": "card.cyborg_guardian_drone.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "drone_cyborg",
+    "effects": [
+      {
+        "type": "summon_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "drone_guardian"
+      }
+    ]
+  },
+  {
+    "id": "cyborg_bomber_drone",
+    "name": "card.cyborg_bomber_drone.name",
+    "description": "card.cyborg_bomber_drone.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "drone_cyborg",
+    "effects": [
+      {
+        "type": "summon_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "drone_bomber"
+      }
+    ]
+  },
+  {
+    "id": "cyborg_trigger_drone",
+    "name": "card.cyborg_trigger_drone.name",
+    "description": "card.cyborg_trigger_drone.description",
+    "rarity": "starter",
+    "energy_cost": 0,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "drone_cyborg",
+    "effects": [
+      {
+        "type": "use_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "cyborg_wrench_hit",
+    "name": "card.cyborg_wrench_hit.name",
+    "description": "card.cyborg_wrench_hit.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "drone_cyborg",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "cyborg_overclock",
+    "name": "card.cyborg_overclock.name",
+    "description": "card.cyborg_overclock.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "drone_cyborg",
+    "effects": [
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  }
+]

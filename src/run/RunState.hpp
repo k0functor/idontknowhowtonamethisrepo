@@ -25,7 +25,15 @@ struct RunState {
     float goldRewardMultiplier = 1.f;
 
     std::vector<CardId> deckCardIds;
+    std::vector<CardId> upgradedCardIds;
+
     std::vector<std::string> relicIds;
+
+    // Consumables / potions owned by the current run.
+    // Most archetypes start with 3 slots, but relics / events / archetype mechanics may change this.
+    std::vector<std::string> consumableIds;
+    int maxConsumables = 3;
+
     std::vector<std::string> actorDefinitionIds;
 
     RunMap map;

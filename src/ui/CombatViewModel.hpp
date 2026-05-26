@@ -5,9 +5,17 @@
 #include "ui/EnemyViewModel.hpp"
 #include "ui/PlayerViewModel.hpp"
 #include "ui/RelicViewModel.hpp"
+#include "ui/ConsumableViewModel.hpp"
 
 #include <string>
 #include <vector>
+
+struct DroneSlotViewModel {
+    bool filled = false;
+    std::string type;
+    std::string name;
+    std::string description;
+};
 
 struct CombatViewModel {
     CombatPhase phase = CombatPhase::NotStarted;
@@ -31,4 +39,6 @@ struct CombatViewModel {
     std::vector<EnemyViewModel> enemies;
     std::vector<std::string> recentLogEntries;
     std::vector<RelicViewModel> relics;
+    std::vector<ConsumableViewModel> consumables;
+    std::vector<DroneSlotViewModel> droneSlots;
 };

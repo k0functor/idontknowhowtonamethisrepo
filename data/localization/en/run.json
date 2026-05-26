@@ -1,0 +1,6 @@
+{
+  "difficulty.hard.description": "Enemies have more health and apply more pressure.",
+  "difficulty.hard.name": "Hard",
+  "difficulty.normal.description": "The baseline mode for a regular run.",
+  "difficulty.normal.name": "Normal"
+}

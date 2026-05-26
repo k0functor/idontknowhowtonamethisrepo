@@ -42,5 +42,26 @@
     "description": "status.burn.description",
     "type": "debuff",
     "duration_rule": "custom"
+  },
+  {
+    "id": "stance_flame",
+    "name": "status.stance_flame.name",
+    "description": "status.stance_flame.description",
+    "type": "buff",
+    "duration_rule": "persistent_combat"
+  },
+  {
+    "id": "stance_ash",
+    "name": "status.stance_ash.name",
+    "description": "status.stance_ash.description",
+    "type": "buff",
+    "duration_rule": "persistent_combat"
+  },
+  {
+    "id": "stance_smoke",
+    "name": "status.stance_smoke.name",
+    "description": "status.stance_smoke.description",
+    "type": "buff",
+    "duration_rule": "persistent_combat"
   }
 ]

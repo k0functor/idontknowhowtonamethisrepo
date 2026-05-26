@@ -32,7 +32,8 @@ CardPreview CardPreviewSystem::previewCard(
     const CardPlayValidationResult validation = validator_.validate(
         state,
         definition,
-        instance
+        instance,
+        source
     );
 
     preview.playable = validation.valid;

@@ -105,5 +105,51 @@
         "priority": 450
       }
     ]
+  },
+  {
+    "id": "copper_inhaler",
+    "name": "relic.copper_inhaler.name",
+    "description": "relic.copper_inhaler.description",
+    "rarity": "starter"
+  },
+  {
+    "id": "coal_rosary",
+    "name": "relic.coal_rosary.name",
+    "description": "relic.coal_rosary.description",
+    "rarity": "starter",
+    "triggers": [
+      {
+        "event": "turn_started",
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "empty_dock",
+    "name": "relic.empty_dock.name",
+    "description": "relic.empty_dock.description",
+    "rarity": "starter"
+  },
+  {
+    "id": "bastion_seal",
+    "name": "relic.bastion_seal.name",
+    "description": "relic.bastion_seal.description",
+    "rarity": "starter",
+    "modifiers": [
+      {
+        "type": "block_add",
+        "amount": 1,
+        "priority": 440
+      }
+    ]
   }
 ]

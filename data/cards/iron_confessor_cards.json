@@ -1,0 +1,139 @@
+[
+  {
+    "id": "confessor_shield_bash",
+    "name": "card.confessor_shield_bash.name",
+    "description": "card.confessor_shield_bash.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "iron_confessor",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "confessor_bastion",
+    "name": "card.confessor_bastion.name",
+    "description": "card.confessor_bastion.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "iron_confessor",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "confessor_rebuke",
+    "name": "card.confessor_rebuke.name",
+    "description": "card.confessor_rebuke.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "iron_confessor",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ]
+  },
+  {
+    "id": "confessor_hold_line",
+    "name": "card.confessor_hold_line.name",
+    "description": "card.confessor_hold_line.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "iron_confessor",
+    "keywords": [
+      "retain"
+    ],
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "dexterity"
+      }
+    ]
+  },
+  {
+    "id": "confessor_weight_of_oath",
+    "name": "card.confessor_weight_of_oath.name",
+    "description": "card.confessor_weight_of_oath.description",
+    "rarity": "common",
+    "energy_cost": 2,
+    "gold_cost": 90,
+    "type": "attack",
+    "owner_actor": "iron_confessor",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  }
+]

@@ -3,7 +3,7 @@
     "id": "wanderer",
     "name": "actor.wanderer.name",
     "description": "actor.wanderer.description",
-    "max_hp": 70,
+    "max_hp": 72,
     "starting_energy": 3,
     "starting_traits": [],
     "starting_relics": []
@@ -15,24 +15,74 @@
     "max_hp": 64,
     "starting_energy": 3,
     "starting_traits": [],
-    "starting_relics": ["bone_purse"]
+    "starting_relics": [
+      "bone_purse"
+    ]
   },
   {
     "id": "sadist",
     "name": "actor.sadist.name",
     "description": "actor.sadist.description",
-    "max_hp": 36,
+    "max_hp": 38,
     "starting_energy": 2,
     "starting_traits": [],
-    "starting_relics": ["razor_contract"]
+    "starting_relics": [
+      "razor_contract"
+    ]
   },
   {
     "id": "masochist",
     "name": "actor.masochist.name",
     "description": "actor.masochist.description",
-    "max_hp": 44,
+    "max_hp": 48,
     "starting_energy": 2,
     "starting_traits": [],
-    "starting_relics": ["iron_nerves"]
+    "starting_relics": [
+      "iron_nerves"
+    ]
+  },
+  {
+    "id": "plague_anatomist",
+    "name": "actor.plague_anatomist.name",
+    "description": "actor.plague_anatomist.description",
+    "max_hp": 62,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": [
+      "copper_inhaler"
+    ]
+  },
+  {
+    "id": "ash_monk",
+    "name": "actor.ash_monk.name",
+    "description": "actor.ash_monk.description",
+    "max_hp": 68,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": [
+      "coal_rosary"
+    ]
+  },
+  {
+    "id": "drone_cyborg",
+    "name": "actor.drone_cyborg.name",
+    "description": "actor.drone_cyborg.description",
+    "max_hp": 66,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": [
+      "empty_dock"
+    ]
+  },
+  {
+    "id": "iron_confessor",
+    "name": "actor.iron_confessor.name",
+    "description": "actor.iron_confessor.description",
+    "max_hp": 82,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": [
+      "bastion_seal"
+    ]
   }
 ]

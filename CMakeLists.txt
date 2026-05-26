@@ -110,6 +110,18 @@ add_executable(i_dont_know_how_to_name_this_game
 
     src/data/parsers/RelicDefinitionParser.hpp
     src/data/parsers/RelicDefinitionParser.cpp
+
+    src/consumables/ConsumableId.hpp
+    src/consumables/ConsumableRarity.hpp
+    src/consumables/ConsumableRarity.cpp
+    src/consumables/ConsumableDefinition.hpp
+    src/consumables/ConsumableDatabase.hpp
+    src/consumables/ConsumableDatabase.cpp
+    src/consumables/ConsumableSystem.hpp
+    src/consumables/ConsumableSystem.cpp
+
+    src/data/parsers/ConsumableDefinitionParser.hpp
+    src/data/parsers/ConsumableDefinitionParser.cpp
     src/statuses/StatusId.hpp
     src/statuses/StatusType.hpp
     src/statuses/StatusType.cpp
@@ -215,6 +227,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/CardViewModel.hpp
     src/ui/EnemyViewModel.hpp
     src/ui/PlayerViewModel.hpp
+    src/ui/ConsumableViewModel.hpp
     src/ui/CombatViewModel.hpp
     src/ui/UiFont.hpp
     src/ui/UiFont.cpp
@@ -278,6 +291,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/run/RunController.cpp
 
     src/rewards/CardRewardOption.hpp
+    src/rewards/RewardOption.hpp
     src/rewards/RewardContext.hpp
     src/rewards/RewardSelection.hpp
     src/rewards/RewardState.hpp

@@ -1,5 +1,6 @@
 #include "RunFactory.hpp"
 
+#include "core/Random.hpp"
 #include "run/RunMapGenerator.hpp"
 
 RunState RunFactory::createRun(
@@ -8,6 +9,7 @@ RunState RunFactory::createRun(
     const std::uint32_t seed
 ) const {
     RunMapGenerator generator;
+    Random mapRandom(seed);
 
     RunState run;
     run.archetypeId = archetype.id;
@@ -27,6 +29,6 @@ RunState RunFactory::createRun(
         run.deckCardIds.emplace_back(cardId);
     }
 
-    run.map = generator.generateTestMap();
+    run.map = generator.generateActOneMap(mapRandom);
     return run;
 }

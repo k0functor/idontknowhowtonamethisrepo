@@ -1,0 +1,653 @@
+[
+  {
+    "id": "merchant_invoice_cut",
+    "name": "card.merchant_invoice_cut.name",
+    "description": "card.merchant_invoice_cut.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_discount_guard",
+    "name": "card.merchant_discount_guard.name",
+    "description": "card.merchant_discount_guard.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_coin_flip",
+    "name": "card.merchant_coin_flip.name",
+    "description": "card.merchant_coin_flip.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d8"
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_receipt_shield",
+    "name": "card.merchant_receipt_shield.name",
+    "description": "card.merchant_receipt_shield.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d6",
+          "bonus": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_poisoned_contract",
+    "name": "card.merchant_poisoned_contract.name",
+    "description": "card.merchant_poisoned_contract.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "poison",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_loaned_strength",
+    "name": "card.merchant_loaned_strength.name",
+    "description": "card.merchant_loaned_strength.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "strength",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "merchant_emergency_fund",
+    "name": "card.merchant_emergency_fund.name",
+    "description": "card.merchant_emergency_fund.description",
+    "rarity": "common",
+    "energy_cost": 0,
+    "gold_cost": 55,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "merchant_cut_corners",
+    "name": "card.merchant_cut_corners.name",
+    "description": "card.merchant_cut_corners.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 9
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_black_market_map",
+    "name": "card.merchant_black_market_map.name",
+    "description": "card.merchant_black_market_map.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 90,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "merchant_interest_rate",
+    "name": "card.merchant_interest_rate.name",
+    "description": "card.merchant_interest_rate.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 90,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_audit",
+    "name": "card.merchant_audit.name",
+    "description": "card.merchant_audit.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 95,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 13
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_marked_price",
+    "name": "card.merchant_marked_price.name",
+    "description": "card.merchant_marked_price.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 90,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_silver_barrier",
+    "name": "card.merchant_silver_barrier.name",
+    "description": "card.merchant_silver_barrier.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 95,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 16
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_loaded_dice",
+    "name": "card.merchant_loaded_dice.name",
+    "description": "card.merchant_loaded_dice.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 95,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 2,
+          "die": "d6"
+        }
+      }
+    ],
+    "dice_corruption": {
+      "type": "unstable"
+    }
+  },
+  {
+    "id": "merchant_final_notice",
+    "name": "card.merchant_final_notice.name",
+    "description": "card.merchant_final_notice.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 130,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 2,
+          "die": "d8"
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_liquid_assets",
+    "name": "card.merchant_liquid_assets.name",
+    "description": "card.merchant_liquid_assets.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 120,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "merchant_exclusive_offer",
+    "name": "card.merchant_exclusive_offer.name",
+    "description": "card.merchant_exclusive_offer.description",
+    "rarity": "rare",
+    "energy_cost": 0,
+    "gold_cost": 125,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "free_next_card",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "merchant_debt_collector",
+    "name": "card.merchant_debt_collector.name",
+    "description": "card.merchant_debt_collector.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 130,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_gilded_bandage",
+    "name": "card.merchant_gilded_bandage.name",
+    "description": "card.merchant_gilded_bandage.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 120,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "heal",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_risk_clause",
+    "name": "card.merchant_risk_clause.name",
+    "description": "card.merchant_risk_clause.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 125,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d12"
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "poison",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ],
+    "dice_corruption": {
+      "type": "cursed"
+    }
+  },
+  {
+    "id": "merchant_debt_slash",
+    "name": "card.merchant_debt_slash.name",
+    "description": "card.merchant_debt_slash.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 50,
+    "type": "attack",
+    "owner_actor": "bone_merchant",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "vulnerable"
+      }
+    ]
+  },
+  {
+    "id": "merchant_cash_guard",
+    "name": "card.merchant_cash_guard.name",
+    "description": "card.merchant_cash_guard.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 45,
+    "type": "skill",
+    "owner_actor": "bone_merchant",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_quick_deal",
+    "name": "card.merchant_quick_deal.name",
+    "description": "card.merchant_quick_deal.description",
+    "rarity": "common",
+    "energy_cost": 0,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "bone_merchant",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_hired_knives",
+    "name": "card.merchant_hired_knives.name",
+    "description": "card.merchant_hired_knives.description",
+    "rarity": "common",
+    "energy_cost": 2,
+    "gold_cost": 90,
+    "type": "attack",
+    "owner_actor": "bone_merchant",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 14
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_insurance",
+    "name": "card.merchant_insurance.name",
+    "description": "card.merchant_insurance.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 75,
+    "type": "skill",
+    "owner_actor": "bone_merchant",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "dexterity"
+      }
+    ]
+  }
+]

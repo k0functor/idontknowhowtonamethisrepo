@@ -2,10 +2,15 @@
 
 #include "cards/CardId.hpp"
 
-#include <optional>
+#include <string>
+#include <vector>
 
 struct RewardSelection {
-    bool takeGold = false;
-    std::optional<CardId> selectedCardId;
-    bool skippedCardReward = false;
+    int goldTaken = 0;
+    std::vector<CardId> selectedCardIds;
+    std::vector<std::string> selectedConsumableIds;
+
+    bool empty() const {
+        return goldTaken == 0 && selectedCardIds.empty() && selectedConsumableIds.empty();
+    }
 };

@@ -5,11 +5,13 @@
 #include "effects/EffectValue.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "localization/TextFormatter.hpp"
+#include "rewards/RewardOption.hpp"
 #include "rewards/RewardSelection.hpp"
 #include "rewards/RewardState.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <optional>
 #include <string>
@@ -28,10 +30,22 @@ public:
     void render() const override;
 
 private:
-    Rectangle cardOptionBounds(std::size_t index) const;
-    Rectangle skipCardBounds() const;
+    Rectangle rewardOptionBounds(std::size_t index) const;
     Rectangle continueButtonBounds() const;
 
+    Rectangle cardChoiceModalBounds() const;
+    Rectangle cardOptionBounds(std::size_t index) const;
+    Rectangle cancelButtonBounds() const;
+    Rectangle confirmButtonBounds() const;
+
+    void takeOption(std::size_t index);
+    void updateCardChoice(Vector2 mouse);
+    void renderCardChoice() const;
+
+    const RewardOption* activeOption() const;
+    RewardOption* activeOption();
+
+    std::string optionTitle(const RewardOption& option) const;
     std::string cardName(const CardId& cardId) const;
     std::string cardDescription(const CardId& cardId) const;
 
@@ -47,8 +61,10 @@ private:
     const LocalizationManager& localization_;
     const CardDatabase& cards_;
     RewardState reward_;
+    RewardSelection selection_;
     std::function<void(RewardSelection)> onContinue_;
 
+    std::optional<std::size_t> activeOptionIndex_;
     std::optional<std::size_t> selectedCardIndex_;
-    bool skipCardReward_ = false;
+    bool cardChoiceOpen_ = false;
 };

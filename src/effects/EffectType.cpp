@@ -26,6 +26,12 @@ std::string toString(const EffectType& effect) {
             return "lose_stress";
         case EffectType::LoseHp:
             return "lose_hp";
+        case EffectType::EnterStance:
+            return "enter_stance";
+        case EffectType::SummonDrone:
+            return "summon_drone";
+        case EffectType::UseDrone:
+            return "use_drone";
     }
 
     throw std::runtime_error("Unknown EffectType");
@@ -74,6 +80,18 @@ EffectType effectTypeFromString(const std::string_view value) {
 
     if (value == "lose_hp" || value == "LoseHp") {
         return EffectType::LoseHp;
+    }
+
+    if (value == "enter_stance" || value == "EnterStance") {
+        return EffectType::EnterStance;
+    }
+
+    if (value == "summon_drone" || value == "SummonDrone") {
+        return EffectType::SummonDrone;
+    }
+
+    if (value == "use_drone" || value == "UseDrone" || value == "detonate_drone") {
+        return EffectType::UseDrone;
     }
 
     throw std::runtime_error("Unknown effect type: " + std::string(value));

@@ -8,6 +8,7 @@
 #include "effects/EffectDefinition.hpp"
 #include "localization/TextId.hpp"
 
+#include <string>
 #include <vector>
 
 struct CardDefinition {
@@ -21,6 +22,11 @@ struct CardDefinition {
 
     int energyCost = 0;
     int goldCost = 0;
+
+    // Empty means: use the default/first player actor.
+    // Sadist/Masochist and other multi-actor archetypes use this to route
+    // card source, modifiers and actor-specific energy.
+    std::string ownerActorId;
 
     std::vector<CardKeyword> keywords;
 

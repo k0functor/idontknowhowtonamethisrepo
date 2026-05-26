@@ -10,6 +10,9 @@ constexpr const char* strengthStatusId = "strength";
 constexpr const char* weakStatusId = "weak";
 constexpr const char* vulnerableStatusId = "vulnerable";
 constexpr const char* dexterityStatusId = "dexterity";
+constexpr const char* stanceFlameStatusId = "stance_flame";
+constexpr const char* stanceAshStatusId = "stance_ash";
+constexpr const char* stanceSmokeStatusId = "stance_smoke";
 }
 
 void ModifierSystem::addProvider(const IModifierProvider& provider) {
@@ -124,6 +127,28 @@ void ModifierSystem::collectBuiltInStatusModifiers(
             });
         }
 
+        if (source.statuses.has(stanceFlameStatusId)) {
+            output.push_back({
+                stanceFlameStatusId,
+                "Flame stance increases outgoing damage by 25%",
+                ModifierOperation::Multiply,
+                0,
+                1.25,
+                150
+            });
+        }
+
+        if (source.statuses.has(stanceAshStatusId)) {
+            output.push_back({
+                stanceAshStatusId,
+                "Ash stance reduces outgoing damage by 15%",
+                ModifierOperation::Multiply,
+                0,
+                0.85,
+                150
+            });
+        }
+
         if (source.statuses.has(weakStatusId)) {
             output.push_back({
                 weakStatusId,
@@ -132,6 +157,28 @@ void ModifierSystem::collectBuiltInStatusModifiers(
                 0,
                 0.75,
                 200
+            });
+        }
+
+        if (target != nullptr && target->statuses.has(stanceFlameStatusId)) {
+            output.push_back({
+                stanceFlameStatusId,
+                "Flame stance increases incoming damage by 25%",
+                ModifierOperation::Multiply,
+                0,
+                1.25,
+                250
+            });
+        }
+
+        if (target != nullptr && target->statuses.has(stanceSmokeStatusId)) {
+            output.push_back({
+                stanceSmokeStatusId,
+                "Smoke stance reduces incoming damage by 25%",
+                ModifierOperation::Multiply,
+                0,
+                0.75,
+                250
             });
         }
 
@@ -149,6 +196,17 @@ void ModifierSystem::collectBuiltInStatusModifiers(
 
     if (context.effectType == EffectType::Block) {
         const int dexterity = source.statuses.stacks(dexterityStatusId);
+        if (source.statuses.has(stanceAshStatusId)) {
+            output.push_back({
+                stanceAshStatusId,
+                "Ash stance adds block",
+                ModifierOperation::Add,
+                2,
+                1.0,
+                90
+            });
+        }
+
         if (dexterity > 0) {
             output.push_back({
                 dexterityStatusId,

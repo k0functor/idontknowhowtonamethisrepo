@@ -1,16 +1,15 @@
 #pragma once
 
-#include "rewards/CardRewardOption.hpp"
+#include "rewards/RewardOption.hpp"
 #include "run/RunMapNode.hpp"
 
 #include <vector>
 
 struct RewardState {
-    int gold = 0;
     RunMapNodeType sourceNodeType = RunMapNodeType::Combat;
-    std::vector<CardRewardOption> cardOptions;
+    std::vector<RewardOption> options;
 
     bool empty() const {
-        return gold == 0 && cardOptions.empty();
+        return options.empty();
     }
 };

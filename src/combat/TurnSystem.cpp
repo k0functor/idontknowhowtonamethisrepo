@@ -1,5 +1,8 @@
 #include "TurnSystem.hpp"
 
+#include <string>
+#include <vector>
+
 TurnSystem::TurnSystem(
     const EnemyDatabase& enemyDatabase,
     const PlayerTurnSystem& playerTurnSystem,
@@ -18,6 +21,29 @@ TurnSystem::TurnSystem(
       eventBus_(eventBus) {}
 
 namespace {
+void processDronesAtEndOfPlayerTurn(CombatState& state) {
+    if (state.droneSlots.empty()) {
+        return;
+    }
+
+    for (const DroneSlot& drone : state.droneSlots) {
+        if (drone.type == "drone_striker") {
+            const std::vector<EntityId> enemies = state.aliveEnemyIds();
+            if (!enemies.empty()) {
+                CombatEntity& enemy = state.entity(enemies.front());
+                const int damage = enemy.health.takeDamage(3);
+                state.log.add("Striker drone end-turn damage: " + std::to_string(damage));
+            }
+        } else if (drone.type == "drone_guardian") {
+            const std::vector<EntityId> players = state.alivePlayerIds();
+            if (!players.empty()) {
+                state.entity(players.front()).block += 4;
+                state.log.add("Guardian drone grants 4 block at end of turn");
+            }
+        }
+    }
+}
+
 void emitTurnEvent(const GameEventBus* eventBus, GameEventType type, const CombatState& state) {
     if (eventBus == nullptr) {
         return;
@@ -53,6 +79,7 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
     }
 
     playerTurnSystem_.endTurn(state);
+    processDronesAtEndOfPlayerTurn(state);
     emitTurnEvent(eventBus_, GameEventType::TurnEnded, state);
     statusSystem_.onTurnEndedForSide(state, EntityType::Player);
 

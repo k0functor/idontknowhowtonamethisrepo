@@ -1,0 +1,316 @@
+[
+  {
+    "id": "rat_cultist",
+    "name": "enemy.rat_cultist.name",
+    "max_hp": 24,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "rat_cultist_knife",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ]
+      },
+      {
+        "id": "rat_cultist_curse",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "rat_cultist_hide",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ash_hound",
+    "name": "enemy.ash_hound.name",
+    "max_hp": 28,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "ash_hound_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          }
+        ]
+      },
+      {
+        "id": "ash_hound_ember_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "burn",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "plague_spider",
+    "name": "enemy.plague_spider.name",
+    "max_hp": 22,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "plague_spider_venom",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "plague_spider_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "plague_spider_web",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "shield_bearer",
+    "name": "enemy.shield_bearer.name",
+    "max_hp": 34,
+    "starting_block": 6,
+    "actions": [
+      {
+        "id": "shield_bearer_guard",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ]
+      },
+      {
+        "id": "shield_bearer_bash",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "shield_bearer_rally",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "knife_acolyte",
+    "name": "enemy.knife_acolyte.name",
+    "max_hp": 26,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "knife_acolyte_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "knife_acolyte_dirty_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "knife_acolyte_sharpen",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grave_lamp",
+    "name": "enemy.grave_lamp.name",
+    "max_hp": 20,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "grave_lamp_singe",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "burn",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "grave_lamp_flare",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

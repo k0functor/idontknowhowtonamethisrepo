@@ -38,6 +38,7 @@ PlayableArchetypeDefinition PlayableArchetypeParser::parse(
     definition.actorDefinitionIds = reader.requiredStringArray("actors");
     definition.startingDeckCardIds = reader.requiredStringArray("starting_deck");
     definition.startingRelicIds = reader.optionalStringArray("starting_relics");
+    definition.startingConsumableIds = reader.optionalStringArray("starting_consumables");
     definition.startingGold = reader.requiredInt("starting_gold");
     definition.strengthTextIds = parseTextIds(reader, "strengths");
     definition.weaknessTextIds = parseTextIds(reader, "weaknesses");

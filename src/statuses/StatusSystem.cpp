@@ -6,6 +6,13 @@
 
 namespace {
 constexpr const char* poisonDamageEffect = "poison_damage";
+constexpr const char* stanceFlame = "stance_flame";
+constexpr const char* stanceAsh = "stance_ash";
+constexpr const char* stanceSmoke = "stance_smoke";
+
+bool isStanceStatus(const std::string& statusId) {
+    return statusId == stanceFlame || statusId == stanceAsh || statusId == stanceSmoke;
+}
 }
 
 StatusSystem::StatusSystem(const StatusDatabase& statusDatabase)
@@ -26,7 +33,15 @@ void StatusSystem::applyStatus(
     }
 
     CombatEntity& targetEntity = state.entity(target);
-    targetEntity.statuses.add(statusId, amount);
+
+    if (isStanceStatus(statusId)) {
+        targetEntity.statuses.remove(stanceFlame);
+        targetEntity.statuses.remove(stanceAsh);
+        targetEntity.statuses.remove(stanceSmoke);
+        targetEntity.statuses.set(statusId, 1);
+    } else {
+        targetEntity.statuses.add(statusId, amount);
+    }
 
     state.log.add(
         "Status: " + statusId +

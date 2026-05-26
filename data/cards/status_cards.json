@@ -1,0 +1,46 @@
+[
+  {
+    "id": "burn_status",
+    "name": "card.burn_status.name",
+    "description": "card.burn_status.description",
+    "rarity": "special",
+    "energy_cost": 0,
+    "gold_cost": 0,
+    "type": "status",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ],
+    "keywords": [
+      "unplayable"
+    ]
+  },
+  {
+    "id": "wound_status",
+    "name": "card.wound_status.name",
+    "description": "card.wound_status.description",
+    "rarity": "special",
+    "energy_cost": 0,
+    "gold_cost": 0,
+    "type": "status",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "unplayable"
+    ]
+  }
+]

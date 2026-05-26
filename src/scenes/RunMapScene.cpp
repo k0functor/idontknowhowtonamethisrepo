@@ -58,15 +58,24 @@ RunMapScene::RunMapScene(
     const UiFont& font,
     const RunState& runState,
     std::function<void(int)> onNodeSelected,
+    std::function<void(int)> onRestHeal,
+    std::function<void(int)> onRestUpgrade,
     std::function<void()> onBackToHub
 )
     : font_(font),
       runState_(runState),
       onNodeSelected_(std::move(onNodeSelected)),
+      onRestHeal_(std::move(onRestHeal)),
+      onRestUpgrade_(std::move(onRestUpgrade)),
       onBackToHub_(std::move(onBackToHub)) {}
 
 void RunMapScene::update(float) {
     const Vector2 mouse = GetMousePosition();
+
+    if (restModalNodeId_.has_value()) {
+        updateRestModal(mouse);
+        return;
+    }
 
     if (IsKeyPressed(KEY_ESCAPE)) {
         onBackToHub_();
@@ -84,10 +93,17 @@ void RunMapScene::update(float) {
             continue;
         }
 
-        if (BasicUi::contains(nodeBounds(node), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            onNodeSelected_(node.id);
+        if (!BasicUi::contains(nodeBounds(node), mouse) || !IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            continue;
+        }
+
+        if (node.type == RunMapNodeType::Rest) {
+            restModalNodeId_ = node.id;
             return;
         }
+
+        onNodeSelected_(node.id);
+        return;
     }
 }
 
@@ -113,7 +129,9 @@ void RunMapScene::render() const {
 
     for (const RunMapNode& node : runState_.map.nodes) {
         const Rectangle bounds = nodeBounds(node);
-        const bool isHovered = node.state == RunMapNodeState::Available && BasicUi::contains(bounds, mouse);
+        const bool isHovered = node.state == RunMapNodeState::Available &&
+            !restModalNodeId_.has_value() &&
+            BasicUi::contains(bounds, mouse);
 
         DrawRectangleRounded(bounds, 0.3f, 16, nodeColor(node));
         DrawRectangleRoundedLinesEx(
@@ -126,6 +144,10 @@ void RunMapScene::render() const {
 
         BasicUi::drawCenteredText(font_, nodeLabel(node), bounds, 18.f, Color{240, 240, 250, 255});
     }
+
+    if (restModalNodeId_.has_value()) {
+        renderRestModal();
+    }
 }
 
 Vector2 RunMapScene::nodeScreenPosition(const RunMapNode& node) const {
@@ -137,8 +159,8 @@ Vector2 RunMapScene::nodeScreenPosition(const RunMapNode& node) const {
     const float screenWidth = static_cast<float>(GetScreenWidth());
     const float screenHeight = static_cast<float>(GetScreenHeight());
 
-    const float horizontalPadding = std::max(180.f, screenWidth * 0.12f);
-    const float verticalPadding = std::max(120.f, screenHeight * 0.16f);
+    const float horizontalPadding = std::max(150.f, screenWidth * 0.08f);
+    const float verticalPadding = std::max(110.f, screenHeight * 0.14f);
 
     const float availableWidth = std::max(1.f, screenWidth - horizontalPadding * 2.f);
     const float availableHeight = std::max(1.f, screenHeight - verticalPadding * 2.f);
@@ -169,6 +191,29 @@ Rectangle RunMapScene::nodeBounds(const RunMapNode& node) const {
         NODE_WIDTH,
         NODE_HEIGHT
     };
+}
+
+Rectangle RunMapScene::restModalBounds() const {
+    const float width = 520.f;
+    const float height = 310.f;
+    return Rectangle{
+        (static_cast<float>(GetScreenWidth()) - width) * 0.5f,
+        (static_cast<float>(GetScreenHeight()) - height) * 0.5f,
+        width,
+        height
+    };
+}
+
+Rectangle RunMapScene::restHealButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + 42.f, modal.y + 118.f, modal.width - 84.f, 52.f};
+}
+
+Rectangle RunMapScene::restUpgradeButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + 42.f, modal.y + 184.f, modal.width - 84.f, 52.f};
+}
+
+Rectangle RunMapScene::restCancelButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + modal.width - 150.f, modal.y + modal.height - 58.f, 112.f, 38.f};
 }
 
 Color RunMapScene::nodeColor(const RunMapNode& node) const {
@@ -217,6 +262,8 @@ std::string RunMapScene::nodeLabel(const RunMapNode& node) const {
             return "?";
         case RunMapNodeType::Shop:
             return "Магазин";
+        case RunMapNodeType::Chest:
+            return "Сундук";
         case RunMapNodeType::Rest:
             return "Отдых";
         case RunMapNodeType::Boss:
@@ -224,4 +271,67 @@ std::string RunMapScene::nodeLabel(const RunMapNode& node) const {
     }
 
     return "?";
+}
+
+void RunMapScene::updateRestModal(const Vector2 mousePosition) {
+    if (!restModalNodeId_.has_value()) {
+        return;
+    }
+
+    const Rectangle modal = restModalBounds();
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        restModalNodeId_ = std::nullopt;
+        return;
+    }
+
+    if (BasicUi::contains(restHealButtonBounds(modal), mousePosition) &&
+        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        const int nodeId = *restModalNodeId_;
+        restModalNodeId_ = std::nullopt;
+        onRestHeal_(nodeId);
+        return;
+    }
+
+    if (BasicUi::contains(restUpgradeButtonBounds(modal), mousePosition) &&
+        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        const int nodeId = *restModalNodeId_;
+        restModalNodeId_ = std::nullopt;
+        onRestUpgrade_(nodeId);
+        return;
+    }
+
+    if (BasicUi::contains(restCancelButtonBounds(modal), mousePosition) &&
+        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        restModalNodeId_ = std::nullopt;
+    }
+}
+
+void RunMapScene::renderRestModal() const {
+    const Vector2 mouse = GetMousePosition();
+    const Rectangle modal = restModalBounds();
+
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 150});
+    DrawRectangleRounded(modal, 0.08f, 14, Color{28, 30, 38, 245});
+    DrawRectangleRoundedLinesEx(modal, 0.08f, 14, 3.f, Color{220, 190, 105, 255});
+
+    BasicUi::drawCenteredText(
+        font_,
+        "Отдых",
+        Rectangle{modal.x, modal.y + 24.f, modal.width, 34.f},
+        30.f,
+        Color{245, 232, 180, 255}
+    );
+
+    BasicUi::drawCenteredText(
+        font_,
+        "Выберите одно действие. Ничего больше. Да, дисциплина добралась и сюда.",
+        Rectangle{modal.x + 34.f, modal.y + 70.f, modal.width - 68.f, 32.f},
+        17.f,
+        Color{190, 194, 210, 255}
+    );
+
+    BasicUi::drawButton(font_, restHealButtonBounds(modal), "Восстановить здоровье", mouse);
+    BasicUi::drawButton(font_, restUpgradeButtonBounds(modal), "Улучшить карту", mouse);
+    BasicUi::drawButton(font_, restCancelButtonBounds(modal), "Назад", mouse);
 }

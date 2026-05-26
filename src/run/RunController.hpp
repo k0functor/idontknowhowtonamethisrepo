@@ -10,6 +10,7 @@
 #include "rewards/RewardState.hpp"
 #include "rewards/RewardSystem.hpp"
 #include "relics/RelicDatabase.hpp"
+#include "relics/RelicId.hpp"
 #include "run/DifficultyDefinition.hpp"
 #include "run/RunFactory.hpp"
 #include "run/RunMapNode.hpp"
@@ -56,6 +57,16 @@ public:
         const RewardState& reward,
         const RewardSelection& selection
     );
+
+    std::optional<RelicId> chooseChestRelic(
+        const RelicDatabase& relics,
+        Random& random
+    ) const;
+
+    void completeChestAndTakeRelic(int nodeId, const RelicId& relicId);
+    void completeEventNode(int nodeId);
+    void completeRestHeal(int nodeId);
+    void completeRestUpgrade(int nodeId);
 
 private:
     void markNodeCompletedAndUnlockNext(int nodeId);

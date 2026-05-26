@@ -33,14 +33,15 @@ PlayCardResult CardPlaySystem::playCard(
     const CardPlayValidationResult validation = validator_.validate(
         state,
         definition,
-        instanceInHand
+        instanceInHand,
+        request.source
     );
 
     if (!validation.valid) {
         return {false, validation.reason};
     }
 
-    energySystem_.spend(state, definition.energyCost);
+    energySystem_.spend(state, request.source, definition.energyCost);
 
     EffectContext context;
     context.source = request.source;

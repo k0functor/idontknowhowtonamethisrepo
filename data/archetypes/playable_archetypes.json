@@ -14,8 +14,9 @@
       "strike",
       "defend",
       "defend",
-      "defend",
-      "poisoned_guard"
+      "wanderer_clean_cut",
+      "wanderer_breathe",
+      "wanderer_risky_stab"
     ],
     "starting_relics": [
       "whetstone",
@@ -40,18 +41,19 @@
       "bone_merchant"
     ],
     "starting_deck": [
-      "strike",
-      "strike",
+      "merchant_debt_slash",
+      "merchant_debt_slash",
+      "merchant_cash_guard",
+      "merchant_cash_guard",
+      "merchant_quick_deal",
       "defend",
-      "defend",
-      "defend",
-      "poisoned_guard"
+      "strike"
     ],
     "starting_relics": [
       "bone_purse",
       "copper_coin"
     ],
-    "starting_gold": 120,
+    "starting_gold": 140,
     "strengths": [
       "archetype.bone_merchant.strength.gold_income",
       "archetype.bone_merchant.strength.rest_shop"
@@ -73,12 +75,13 @@
       "masochist"
     ],
     "starting_deck": [
-      "strike",
-      "strike",
-      "strike",
-      "defend",
-      "defend",
-      "poisoned_guard"
+      "sadist_clean_cut",
+      "sadist_clean_cut",
+      "sadist_blood_lesson",
+      "masochist_endure",
+      "masochist_endure",
+      "masochist_grin",
+      "shared_violent_rhythm"
     ],
     "starting_relics": [
       "razor_contract",
@@ -94,5 +97,129 @@
       "archetype.sadist_masochist.weakness.low_individual_hp"
     ],
     "mechanic_id": "sadist_masochist_party"
+  },
+  {
+    "id": "plague_anatomist",
+    "name": "archetype.plague_anatomist.name",
+    "short_description": "archetype.plague_anatomist.short_description",
+    "details_description": "archetype.plague_anatomist.details_description",
+    "unique_mechanic": "archetype.plague_anatomist.unique_mechanic",
+    "actors": [
+      "plague_anatomist"
+    ],
+    "starting_deck": [
+      "plague_scalpel",
+      "plague_scalpel",
+      "plague_vial",
+      "plague_vial",
+      "plague_mask",
+      "defend",
+      "strike"
+    ],
+    "starting_relics": [
+      "copper_inhaler"
+    ],
+    "starting_gold": 65,
+    "strengths": [
+      "archetype.plague_anatomist.strength.long_fights",
+      "archetype.plague_anatomist.strength.debuffs"
+    ],
+    "weaknesses": [
+      "archetype.plague_anatomist.weakness.slow_start"
+    ],
+    "mechanic_id": "poison_mastery"
+  },
+  {
+    "id": "ash_monk",
+    "name": "archetype.ash_monk.name",
+    "short_description": "archetype.ash_monk.short_description",
+    "details_description": "archetype.ash_monk.details_description",
+    "unique_mechanic": "archetype.ash_monk.unique_mechanic",
+    "actors": [
+      "ash_monk"
+    ],
+    "starting_deck": [
+      "monk_enter_flame",
+      "monk_enter_ash",
+      "monk_enter_smoke",
+      "monk_palm_strike",
+      "monk_ash_guard",
+      "monk_smoke_step",
+      "strike"
+    ],
+    "starting_relics": [
+      "coal_rosary"
+    ],
+    "starting_gold": 70,
+    "strengths": [
+      "archetype.ash_monk.strength.stances",
+      "archetype.ash_monk.strength.flexible_tempo"
+    ],
+    "weaknesses": [
+      "archetype.ash_monk.weakness.misstance"
+    ],
+    "mechanic_id": "stance_monk"
+  },
+  {
+    "id": "drone_cyborg",
+    "name": "archetype.drone_cyborg.name",
+    "short_description": "archetype.drone_cyborg.short_description",
+    "details_description": "archetype.drone_cyborg.details_description",
+    "unique_mechanic": "archetype.drone_cyborg.unique_mechanic",
+    "actors": [
+      "drone_cyborg"
+    ],
+    "starting_deck": [
+      "cyborg_striker_drone",
+      "cyborg_guardian_drone",
+      "cyborg_bomber_drone",
+      "cyborg_trigger_drone",
+      "cyborg_wrench_hit",
+      "defend",
+      "strike"
+    ],
+    "starting_relics": [
+      "empty_dock"
+    ],
+    "starting_gold": 60,
+    "strengths": [
+      "archetype.drone_cyborg.strength.drones",
+      "archetype.drone_cyborg.strength.end_turn_value"
+    ],
+    "weaknesses": [
+      "archetype.drone_cyborg.weakness.slot_pressure"
+    ],
+    "mechanic_id": "drone_cyborg"
+  },
+  {
+    "id": "iron_confessor",
+    "name": "archetype.iron_confessor.name",
+    "short_description": "archetype.iron_confessor.short_description",
+    "details_description": "archetype.iron_confessor.details_description",
+    "unique_mechanic": "archetype.iron_confessor.unique_mechanic",
+    "actors": [
+      "iron_confessor"
+    ],
+    "starting_deck": [
+      "confessor_shield_bash",
+      "confessor_shield_bash",
+      "confessor_bastion",
+      "confessor_bastion",
+      "confessor_rebuke",
+      "defend",
+      "strike"
+    ],
+    "starting_relics": [
+      "bastion_seal"
+    ],
+    "starting_gold": 55,
+    "strengths": [
+      "archetype.iron_confessor.strength.block",
+      "archetype.iron_confessor.strength.safe"
+    ],
+    "weaknesses": [
+      "archetype.iron_confessor.weakness.slow"
+    ],
+    "mechanic_id": "bulwark"
   }
 ]

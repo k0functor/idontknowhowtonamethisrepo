@@ -2,9 +2,11 @@
 
 #include "data/JsonLoader.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 LocalizationBundle::LocalizationBundle(Locale locale) : locale_(std::move(locale)) {}
 
@@ -13,10 +15,44 @@ const Locale& LocalizationBundle::locale() const {
 }
 
 void LocalizationBundle::loadFromFile(const std::filesystem::path& filePath) {
-    const Json root = JsonLoader::loadObjectFromFile(filePath);
-
     std::unordered_map<std::string, std::string> loadedTexts;
-    loadedTexts.reserve(root.size());
+
+    if (std::filesystem::is_directory(filePath)) {
+        std::vector<std::filesystem::path> files;
+
+        for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(filePath)) {
+            if (!entry.is_regular_file()) {
+                continue;
+            }
+
+            if (entry.path().extension() == ".json") {
+                files.push_back(entry.path());
+            }
+        }
+
+        std::sort(files.begin(), files.end());
+
+        if (files.empty()) {
+            throw std::runtime_error(
+                "Localization directory '" + filePath.string() + "' does not contain any .json files"
+            );
+        }
+
+        for (const std::filesystem::path& file : files) {
+            mergeFileInto(file, loadedTexts);
+        }
+    } else {
+        mergeFileInto(filePath, loadedTexts);
+    }
+
+    texts_ = std::move(loadedTexts);
+}
+
+void LocalizationBundle::mergeFileInto(
+    const std::filesystem::path& filePath,
+    std::unordered_map<std::string, std::string>& targetTexts
+) const {
+    const Json root = JsonLoader::loadObjectFromFile(filePath);
 
     for (const auto& [textId, value] : root.items()) {
         if (textId.empty()) {
@@ -29,10 +65,15 @@ void LocalizationBundle::loadFromFile(const std::filesystem::path& filePath) {
             );
         }
 
-        loadedTexts.emplace(textId, value.get<std::string>());
-    }
+        const auto [iterator, inserted] = targetTexts.emplace(textId, value.get<std::string>());
 
-    texts_ = std::move(loadedTexts);
+        if (!inserted) {
+            throw std::runtime_error(
+                filePath.string() + ": duplicate localization text id '" + textId + "' while loading locale '" +
+                locale_.code() + "'"
+            );
+        }
+    }
 }
 
 bool LocalizationBundle::contains(const std::string& textId) const {
@@ -50,4 +91,3 @@ const std::string& LocalizationBundle::get(const std::string& textId) const {
 
     return iterator->second;
 }
-

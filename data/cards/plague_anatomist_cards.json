@@ -1,0 +1,141 @@
+[
+  {
+    "id": "plague_scalpel",
+    "name": "card.plague_scalpel.name",
+    "description": "card.plague_scalpel.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "plague_anatomist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        },
+        "status": "poison"
+      }
+    ]
+  },
+  {
+    "id": "plague_vial",
+    "name": "card.plague_vial.name",
+    "description": "card.plague_vial.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "plague_anatomist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        },
+        "status": "poison"
+      }
+    ]
+  },
+  {
+    "id": "plague_mask",
+    "name": "card.plague_mask.name",
+    "description": "card.plague_mask.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "plague_anatomist",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ]
+  },
+  {
+    "id": "plague_autopsy",
+    "name": "card.plague_autopsy.name",
+    "description": "card.plague_autopsy.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "owner_actor": "plague_anatomist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d6"
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "vulnerable"
+      }
+    ]
+  },
+  {
+    "id": "plague_cloud",
+    "name": "card.plague_cloud.name",
+    "description": "card.plague_cloud.description",
+    "rarity": "common",
+    "energy_cost": 2,
+    "gold_cost": 95,
+    "type": "skill",
+    "owner_actor": "plague_anatomist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        },
+        "status": "poison"
+      },
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ]
+  }
+]

@@ -1,0 +1,93 @@
+[
+  {
+    "id": "baron_of_ashes",
+    "name": "enemy.baron_of_ashes.name",
+    "max_hp": 160,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "baron_ash_tax",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "burn",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "baron_royal_guard",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "baron_decree",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ]
+      },
+      {
+        "id": "baron_execution",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

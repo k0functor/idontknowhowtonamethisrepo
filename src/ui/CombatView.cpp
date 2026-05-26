@@ -20,6 +20,18 @@ std::string phaseText(const CombatPhase phase) {
 
     return "Unknown";
 }
+
+std::string shorten(const std::string& text, const std::size_t maxLength) {
+    if (text.size() <= maxLength) {
+        return text;
+    }
+
+    if (maxLength <= 3) {
+        return text.substr(0, maxLength);
+    }
+
+    return text.substr(0, maxLength - 3) + "...";
+}
 }
 
 void CombatView::setModel(const CombatViewModel& model) {
@@ -72,6 +84,14 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
         }
     }
 
+    hoveredConsumableIndex_.reset();
+    for (std::size_t i = 0; i < model_.consumables.size(); ++i) {
+        if (CheckCollisionPointRec(mousePosition, consumableBounds(i))) {
+            hoveredConsumableIndex_ = i;
+            break;
+        }
+    }
+
     hoveredPlayerId_.reset();
     for (const PlayerView& playerView : playerViews_) {
         if (playerView.contains(mousePosition)) {
@@ -112,7 +132,7 @@ void CombatView::render(const Font* font) const {
         const std::string energyText =
             "Turn: " + std::to_string(model_.turn) +
             "   " + phaseText(model_.phase) +
-            "   Energy: " + std::to_string(model_.energy) + "/" + std::to_string(model_.maxEnergy) +
+            "   Total energy: " + std::to_string(model_.energy) + "/" + std::to_string(model_.maxEnergy) +
             "   Draw: " + std::to_string(model_.drawPileSize) +
             "   Discard: " + std::to_string(model_.discardPileSize) +
             "   Exhaust: " + std::to_string(model_.exhaustPileSize);
@@ -129,11 +149,23 @@ void CombatView::render(const Font* font) const {
 
             DrawRectangleRounded(bounds, 0.22f, 6, fill);
             DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
+            DrawTextEx(*font, shorten(relic.name, 15).c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
+        }
 
-            const std::string text = relic.name.size() > 15
-                ? relic.name.substr(0, 14) + "…"
-                : relic.name;
-            DrawTextEx(*font, text.c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
+        for (std::size_t i = 0; i < model_.consumables.size(); ++i) {
+            const ConsumableViewModel& consumable = model_.consumables[i];
+            const Rectangle bounds = consumableBounds(i);
+            const bool hovered = hoveredConsumableIndex_.has_value() && *hoveredConsumableIndex_ == i;
+            const Color fill = !consumable.filled
+                ? Color{38, 40, 48, 255}
+                : (hovered ? Color{50, 82, 104, 255} : Color{38, 62, 82, 255});
+            const Color border = hovered ? Color{130, 220, 255, 255} : Color{105, 150, 190, 255};
+
+            DrawRectangleRounded(bounds, 0.22f, 6, fill);
+            DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
+
+            const std::string text = consumable.filled ? shorten(consumable.name, 12) : "Empty";
+            DrawTextEx(*font, text.c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{220, 235, 245, 255});
         }
 
         float logY = battlefield.y + 10.f;
@@ -154,6 +186,7 @@ void CombatView::render(const Font* font) const {
         enemyView.render(font, hovered);
     }
 
+    renderDronePanel(font);
     handView_.render(font);
 }
 
@@ -201,8 +234,48 @@ std::optional<EntityId> CombatView::hoveredPlayerId() const {
     return hoveredPlayerId_;
 }
 
+std::optional<Rectangle> CombatView::hoveredPlayerBounds() const {
+    if (!hoveredPlayerId_.has_value()) {
+        return std::nullopt;
+    }
+
+    const Rectangle battlefield = battlefieldBounds();
+    const float viewWidth = std::clamp(
+        battlefield.width * (playerViews_.size() > 1 ? 0.16f : 0.20f),
+        160.f,
+        235.f
+    );
+    const float viewHeight = 180.f;
+    const float spacingX = viewWidth + 24.f;
+
+    const float totalWidth = playerViews_.empty()
+        ? 0.f
+        : viewWidth * static_cast<float>(playerViews_.size()) + 24.f * static_cast<float>(playerViews_.size() - 1);
+
+    const float centerX = battlefield.x + battlefield.width * 0.27f;
+    const float startX = centerX - totalWidth * 0.5f;
+    const float y = battlefield.y + battlefield.height * 0.48f - viewHeight * 0.5f;
+
+    for (std::size_t i = 0; i < playerViews_.size(); ++i) {
+        if (playerViews_[i].model().entityId == *hoveredPlayerId_) {
+            return Rectangle{
+                startX + spacingX * static_cast<float>(i),
+                y,
+                viewWidth,
+                viewHeight
+            };
+        }
+    }
+
+    return std::nullopt;
+}
+
 std::optional<std::size_t> CombatView::hoveredRelicIndex() const {
     return hoveredRelicIndex_;
+}
+
+std::optional<std::size_t> CombatView::hoveredConsumableIndex() const {
+    return hoveredConsumableIndex_;
 }
 
 bool CombatView::endTurnButtonContains(const Vector2 mousePosition) const {
@@ -220,23 +293,21 @@ void CombatView::applyResponsiveLayout() {
 
 void CombatView::layoutPlayers() {
     const Rectangle battlefield = battlefieldBounds();
-    const float viewWidth = std::clamp(battlefield.width * 0.20f, 190.f, 250.f);
+    const float viewWidth = std::clamp(battlefield.width * (playerViews_.size() > 1 ? 0.16f : 0.20f), 160.f, 235.f);
     const float viewHeight = 180.f;
-    const float centerX = battlefield.x + battlefield.width * 0.23f;
-    const float startY = battlefield.y + battlefield.height * 0.48f - viewHeight * 0.5f;
-    const float spacingY = viewHeight + 18.f;
+    const float spacingX = viewWidth + 24.f;
 
-    const float totalHeight = playerViews_.empty()
+    const float totalWidth = playerViews_.empty()
         ? 0.f
-        : viewHeight * static_cast<float>(playerViews_.size()) + spacingY * static_cast<float>(playerViews_.size() - 1);
-    const float firstY = battlefield.y + battlefield.height * 0.5f - totalHeight * 0.5f;
+        : viewWidth * static_cast<float>(playerViews_.size()) + 24.f * static_cast<float>(playerViews_.size() - 1);
+
+    const float centerX = battlefield.x + battlefield.width * 0.27f;
+    const float startX = centerX - totalWidth * 0.5f;
+    const float y = battlefield.y + battlefield.height * 0.48f - viewHeight * 0.5f;
 
     for (std::size_t i = 0; i < playerViews_.size(); ++i) {
         playerViews_[i].setSize(Vector2{viewWidth, viewHeight});
-        playerViews_[i].setPosition(Vector2{
-            centerX - viewWidth * 0.5f,
-            playerViews_.size() == 1 ? startY : firstY + spacingY * static_cast<float>(i)
-        });
+        playerViews_[i].setPosition(Vector2{startX + spacingX * static_cast<float>(i), y});
     }
 }
 
@@ -255,6 +326,32 @@ void CombatView::layoutEnemies() {
 
     for (std::size_t i = 0; i < enemyViews_.size(); ++i) {
         enemyViews_[i].setPosition(Vector2{startX + spacingX * static_cast<float>(i), y});
+    }
+}
+
+void CombatView::renderDronePanel(const Font* font) const {
+    if (model_.droneSlots.empty() || font == nullptr) {
+        return;
+    }
+
+    const float slotWidth = 118.f;
+    const float slotHeight = 44.f;
+    const float gap = 10.f;
+    const float totalWidth = slotWidth * static_cast<float>(model_.droneSlots.size()) + gap * static_cast<float>(model_.droneSlots.size() - 1);
+    const float x = static_cast<float>(GetScreenWidth()) * 0.5f - totalWidth * 0.5f;
+    const float y = 82.f;
+
+    DrawTextEx(*font, "Drone slots", Vector2{x, y - 22.f}, 14.f, 1.f, Color{170, 220, 230, 255});
+
+    for (std::size_t i = 0; i < model_.droneSlots.size(); ++i) {
+        const DroneSlotViewModel& slot = model_.droneSlots[i];
+        const Rectangle bounds = droneSlotBounds(i);
+        const Color fill = slot.filled ? Color{38, 68, 78, 255} : Color{34, 36, 44, 255};
+        const Color border = slot.filled ? Color{120, 220, 235, 255} : Color{85, 95, 110, 255};
+
+        DrawRectangleRounded(bounds, 0.18f, 8, fill);
+        DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, 2.f, border);
+        DrawTextEx(*font, shorten(slot.name, 13).c_str(), Vector2{bounds.x + 8.f, bounds.y + 13.f}, 14.f, 1.f, Color{220, 245, 250, 255});
     }
 }
 
@@ -297,4 +394,20 @@ Rectangle CombatView::endTurnButtonBounds() const {
 Rectangle CombatView::relicBounds(const std::size_t index) const {
     const float x = 24.f + static_cast<float>(index) * 148.f;
     return Rectangle{x, 44.f, 136.f, 24.f};
+}
+
+Rectangle CombatView::consumableBounds(const std::size_t index) const {
+    const float width = 136.f;
+    const float height = 24.f;
+    const float x = static_cast<float>(GetScreenWidth()) - 24.f - width - static_cast<float>(index) * 148.f;
+    return Rectangle{x, 44.f, width, height};
+}
+
+Rectangle CombatView::droneSlotBounds(const std::size_t index) const {
+    const float slotWidth = 118.f;
+    const float slotHeight = 44.f;
+    const float gap = 10.f;
+    const float totalWidth = slotWidth * static_cast<float>(model_.droneSlots.size()) + gap * static_cast<float>(model_.droneSlots.size() - 1);
+    const float x = static_cast<float>(GetScreenWidth()) * 0.5f - totalWidth * 0.5f + static_cast<float>(index) * (slotWidth + gap);
+    return Rectangle{x, 82.f, slotWidth, slotHeight};
 }

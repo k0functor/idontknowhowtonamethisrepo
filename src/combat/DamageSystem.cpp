@@ -44,6 +44,22 @@ DamageResult DamageSystem::dealDamage(
     targetEntity.health.takeDamage(result.hpDamage);
     result.killed = targetEntity.health.isDead();
 
+    if (result.hpDamage > 0 && state.hasEntity(source) && state.hasEntity(target)) {
+        CombatEntity& sourceEntity = state.entity(source);
+        CombatEntity& targetAfterDamage = state.entity(target);
+
+        if (sourceEntity.definitionId == "sadist" && targetAfterDamage.definitionId == "masochist") {
+            sourceEntity.statuses.add("strength", 1);
+            state.log.add("Sadist gains strength from hurting Masochist");
+        }
+
+        if (targetAfterDamage.definitionId == "masochist") {
+            targetAfterDamage.statuses.add("strength", 1);
+            targetAfterDamage.statuses.add("dexterity", 1);
+            state.log.add("Masochist thrives on pain");
+        }
+    }
+
     state.log.add(
         "Damage: raw=" + std::to_string(result.rawDamage) +
         ", modified=" + std::to_string(result.modifiedDamage) +

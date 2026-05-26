@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <limits>
 #include <stdexcept>
@@ -109,17 +110,32 @@ void Application::applyWindowSettings() {
     }
 }
 
+namespace {
+std::filesystem::path localizationSourceFor(
+    const std::filesystem::path& localizationRoot,
+    const std::string& localeCode
+) {
+    const std::filesystem::path directoryPath = localizationRoot / localeCode;
+
+    if (std::filesystem::is_directory(directoryPath)) {
+        return directoryPath;
+    }
+
+    return localizationRoot / (localeCode + ".json");
+}
+}
+
 void Application::loadLocalization() {
     const auto localizationPath = config_.paths.data / "localization";
 
     localization_.loadBundle(
         Locale::russian(),
-        localizationPath / "ru.json"
+        localizationSourceFor(localizationPath, "ru")
     );
 
     localization_.loadBundle(
         Locale::english(),
-        localizationPath / "en.json"
+        localizationSourceFor(localizationPath, "en")
     );
 
     localization_.setMissingTextPolicy(
@@ -142,6 +158,7 @@ void Application::loadContent() {
         std::cout << "Loaded actors: " << content_.actors().size() << '\n';
         std::cout << "Loaded archetypes: " << content_.archetypes().size() << '\n';
         std::cout << "Loaded difficulties: " << content_.difficulties().size() << '\n';
+        std::cout << "Loaded consumables: " << content_.consumables().size() << '\n';
     }
 }
 

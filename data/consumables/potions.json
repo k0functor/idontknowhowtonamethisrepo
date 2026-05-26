@@ -1,0 +1,203 @@
+[
+  {
+    "id": "strength_potion",
+    "name": "consumable.strength_potion.name",
+    "description": "consumable.strength_potion.description",
+    "rarity": "common",
+    "gold_cost": 45,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "strength"
+      }
+    ]
+  },
+  {
+    "id": "guard_potion",
+    "name": "consumable.guard_potion.name",
+    "description": "consumable.guard_potion.description",
+    "rarity": "common",
+    "gold_cost": 40,
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      }
+    ]
+  },
+  {
+    "id": "swift_potion",
+    "name": "consumable.swift_potion.name",
+    "description": "consumable.swift_potion.description",
+    "rarity": "common",
+    "gold_cost": 45,
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "free_draw_potion",
+    "name": "consumable.free_draw_potion.name",
+    "description": "consumable.free_draw_potion.description",
+    "rarity": "uncommon",
+    "gold_cost": 65,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "free_next_card"
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "energy_potion",
+    "name": "consumable.energy_potion.name",
+    "description": "consumable.energy_potion.description",
+    "rarity": "common",
+    "gold_cost": 45,
+    "effects": [
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "antidote_potion",
+    "name": "consumable.antidote_potion.name",
+    "description": "consumable.antidote_potion.description",
+    "rarity": "common",
+    "gold_cost": 35,
+    "effects": [
+      {
+        "type": "heal",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "fire_bottle",
+    "name": "consumable.fire_bottle.name",
+    "description": "consumable.fire_bottle.description",
+    "rarity": "uncommon",
+    "gold_cost": 60,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        },
+        "status": "burn"
+      }
+    ]
+  },
+  {
+    "id": "venom_vial",
+    "name": "consumable.venom_vial.name",
+    "description": "consumable.venom_vial.description",
+    "rarity": "uncommon",
+    "gold_cost": 60,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        },
+        "status": "poison"
+      }
+    ]
+  },
+  {
+    "id": "iron_skin_potion",
+    "name": "consumable.iron_skin_potion.name",
+    "description": "consumable.iron_skin_potion.description",
+    "rarity": "rare",
+    "gold_cost": 75,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "dexterity"
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "rage_potion",
+    "name": "consumable.rage_potion.name",
+    "description": "consumable.rage_potion.description",
+    "rarity": "rare",
+    "gold_cost": 80,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        },
+        "status": "strength"
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ]
+  }
+]

@@ -1,0 +1,721 @@
+[
+  {
+    "id": "sadist_clean_cut",
+    "name": "card.sadist_clean_cut.name",
+    "description": "card.sadist_clean_cut.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_teasing_blade",
+    "name": "card.sadist_teasing_blade.name",
+    "description": "card.sadist_teasing_blade.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_order_to_bleed",
+    "name": "card.sadist_order_to_bleed.name",
+    "description": "card.sadist_order_to_bleed.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "ally",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "strength",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_hook_pull",
+    "name": "card.sadist_hook_pull.name",
+    "description": "card.sadist_hook_pull.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_cruel_rhythm",
+    "name": "card.sadist_cruel_rhythm.name",
+    "description": "card.sadist_cruel_rhythm.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "strength",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_needled_mercy",
+    "name": "card.sadist_needled_mercy.name",
+    "description": "card.sadist_needled_mercy.description",
+    "rarity": "common",
+    "energy_cost": 0,
+    "gold_cost": 55,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "poison",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "sadist_red_lesson",
+    "name": "card.sadist_red_lesson.name",
+    "description": "card.sadist_red_lesson.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 85,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "ally",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d6"
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "strength",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_open_wound",
+    "name": "card.sadist_open_wound.name",
+    "description": "card.sadist_open_wound.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 85,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "poison",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_pain_tax",
+    "name": "card.sadist_pain_tax.name",
+    "description": "card.sadist_pain_tax.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 90,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "ally",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_laughter",
+    "name": "card.sadist_laughter.name",
+    "description": "card.sadist_laughter.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 90,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_carving_arc",
+    "name": "card.sadist_carving_arc.name",
+    "description": "card.sadist_carving_arc.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 125,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "dice",
+          "count": 2,
+          "die": "d6"
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_symphony_of_knives",
+    "name": "card.sadist_symphony_of_knives.name",
+    "description": "card.sadist_symphony_of_knives.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 135,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_commanding_smile",
+    "name": "card.sadist_commanding_smile.name",
+    "description": "card.sadist_commanding_smile.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 120,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "strength",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "sadist_wicked_bargain",
+    "name": "card.sadist_wicked_bargain.name",
+    "description": "card.sadist_wicked_bargain.description",
+    "rarity": "rare",
+    "energy_cost": 0,
+    "gold_cost": 130,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "ally",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "free_next_card",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "sadist_final_instruction",
+    "name": "card.sadist_final_instruction.name",
+    "description": "card.sadist_final_instruction.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 140,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 2,
+          "die": "d8"
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_endure",
+    "name": "card.masochist_endure.name",
+    "description": "card.masochist_endure.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_invitation",
+    "name": "card.masochist_invitation.name",
+    "description": "card.masochist_invitation.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "vulnerable",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_sweet_agony",
+    "name": "card.masochist_sweet_agony.name",
+    "description": "card.masochist_sweet_agony.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_breathe_through",
+    "name": "card.masochist_breathe_through.name",
+    "description": "card.masochist_breathe_through.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 85,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "heal",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "dexterity",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_blood_smile",
+    "name": "card.masochist_blood_smile.name",
+    "description": "card.masochist_blood_smile.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 120,
+    "type": "skill",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "strength",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "dexterity",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "keywords": [
+      "retain"
+    ]
+  },
+  {
+    "id": "sadist_blood_lesson",
+    "name": "card.sadist_blood_lesson.name",
+    "description": "card.sadist_blood_lesson.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "sadist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "ally",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_twist_blade",
+    "name": "card.sadist_twist_blade.name",
+    "description": "card.sadist_twist_blade.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "owner_actor": "sadist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d6",
+          "bonus": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_grin",
+    "name": "card.masochist_grin.name",
+    "description": "card.masochist_grin.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "masochist",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_invite_pain",
+    "name": "card.masochist_invite_pain.name",
+    "description": "card.masochist_invite_pain.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "skill",
+    "owner_actor": "masochist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "vulnerable"
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      }
+    ]
+  },
+  {
+    "id": "shared_violent_rhythm",
+    "name": "card.shared_violent_rhythm.name",
+    "description": "card.shared_violent_rhythm.description",
+    "rarity": "starter",
+    "energy_cost": 0,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "sadist",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  }
+]

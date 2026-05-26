@@ -6,6 +6,7 @@
 #include "localization/LocalizationManager.hpp"
 #include "ui/CardViewModel.hpp"
 #include "ui/EnemyViewModel.hpp"
+#include "ui/PlayerViewModel.hpp"
 
 class InspectModelBuilder {
 public:
@@ -15,6 +16,8 @@ public:
     );
 
     InspectPanelModel buildEnemy(const EnemyViewModel& enemy) const;
+
+    InspectPanelModel buildPlayer(const PlayerViewModel& player) const;
 
     InspectPanelModel buildCard(
         const CardDefinition& definition,

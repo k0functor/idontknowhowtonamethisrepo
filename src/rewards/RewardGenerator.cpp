@@ -2,6 +2,7 @@
 
 #include "cards/CardRarity.hpp"
 #include "cards/CardType.hpp"
+#include "rewards/RewardOption.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -31,11 +32,15 @@ RewardState RewardGenerator::generateCombatReward(
     reward.sourceNodeType = context.nodeType;
 
     const int baseGold = baseGoldForNode(context.nodeType);
-    reward.gold = static_cast<int>(static_cast<float>(baseGold) * context.run.goldRewardMultiplier);
-    reward.gold = static_cast<int>(static_cast<double>(reward.gold) * relicGoldMultiplier(context, relics));
+    int gold = static_cast<int>(static_cast<float>(baseGold) * context.run.goldRewardMultiplier);
+    gold = static_cast<int>(static_cast<double>(gold) * relicGoldMultiplier(context, relics));
 
     if (context.run.archetypeMechanicId == "merchant_progression") {
-        reward.gold = static_cast<int>(static_cast<float>(reward.gold) * 1.25f);
+        gold = static_cast<int>(static_cast<float>(gold) * 1.25f);
+    }
+
+    if (gold > 0) {
+        reward.options.push_back(RewardOption::goldReward(gold));
     }
 
     if (!shouldOfferCards(context)) {
@@ -54,13 +59,19 @@ RewardState RewardGenerator::generateCombatReward(
     }
 
     const int optionCount = std::min<int>(cardRewardCount(context), static_cast<int>(candidates.size()));
+    std::vector<CardRewardOption> cardOptions;
+    cardOptions.reserve(static_cast<std::size_t>(optionCount));
 
     for (int i = 0; i < optionCount; ++i) {
         const int pickedIndex = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
         const CardDefinition* picked = candidates[static_cast<std::size_t>(pickedIndex)];
 
-        reward.cardOptions.push_back(CardRewardOption{picked->id});
+        cardOptions.push_back(CardRewardOption{picked->id});
         candidates.erase(candidates.begin() + pickedIndex);
+    }
+
+    if (!cardOptions.empty()) {
+        reward.options.push_back(RewardOption::cardChoice(std::move(cardOptions)));
     }
 
     return reward;
@@ -74,6 +85,7 @@ int RewardGenerator::baseGoldForNode(const RunMapNodeType nodeType) const {
             return 35;
         case RunMapNodeType::Boss:
             return 75;
+        case RunMapNodeType::Chest:
         case RunMapNodeType::Event:
         case RunMapNodeType::Shop:
         case RunMapNodeType::Rest:

@@ -17,6 +17,7 @@ struct PlayableArchetypeDefinition {
     std::vector<std::string> actorDefinitionIds;
     std::vector<std::string> startingDeckCardIds;
     std::vector<std::string> startingRelicIds;
+    std::vector<std::string> startingConsumableIds;
 
     int startingGold = 0;
 

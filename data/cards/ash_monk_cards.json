@@ -1,0 +1,154 @@
+[
+  {
+    "id": "monk_enter_flame",
+    "name": "card.monk_enter_flame.name",
+    "description": "card.monk_enter_flame.description",
+    "rarity": "starter",
+    "energy_cost": 0,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "ash_monk",
+    "effects": [
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_flame"
+      }
+    ]
+  },
+  {
+    "id": "monk_enter_ash",
+    "name": "card.monk_enter_ash.name",
+    "description": "card.monk_enter_ash.description",
+    "rarity": "starter",
+    "energy_cost": 0,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "ash_monk",
+    "effects": [
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_ash"
+      }
+    ]
+  },
+  {
+    "id": "monk_enter_smoke",
+    "name": "card.monk_enter_smoke.name",
+    "description": "card.monk_enter_smoke.description",
+    "rarity": "starter",
+    "energy_cost": 0,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "ash_monk",
+    "effects": [
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_smoke"
+      }
+    ]
+  },
+  {
+    "id": "monk_palm_strike",
+    "name": "card.monk_palm_strike.name",
+    "description": "card.monk_palm_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "ash_monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_ash_guard",
+    "name": "card.monk_ash_guard.name",
+    "description": "card.monk_ash_guard.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "ash_monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_smoke_step",
+    "name": "card.monk_smoke_step.name",
+    "description": "card.monk_smoke_step.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "ash_monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_burning_kick",
+    "name": "card.monk_burning_kick.name",
+    "description": "card.monk_burning_kick.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 75,
+    "type": "attack",
+    "owner_actor": "ash_monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d10"
+        }
+      }
+    ]
+  }
+]

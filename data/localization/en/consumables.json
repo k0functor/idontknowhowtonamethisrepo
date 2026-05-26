@@ -1,0 +1,22 @@
+{
+  "consumable.antidote_potion.description": "Restore 8 HP.",
+  "consumable.antidote_potion.name": "Antidote",
+  "consumable.energy_potion.description": "Gain 2 energy.",
+  "consumable.energy_potion.name": "Energy Potion",
+  "consumable.fire_bottle.description": "Apply {burn} burn.",
+  "consumable.fire_bottle.name": "Fire Bottle",
+  "consumable.free_draw_potion.description": "Apply {free_next_card} free_next_card. Draw 1 card(s).",
+  "consumable.free_draw_potion.name": "Free Draw Potion",
+  "consumable.guard_potion.description": "Gain {block} block.",
+  "consumable.guard_potion.name": "Guard Potion",
+  "consumable.iron_skin_potion.description": "Apply {dexterity} dexterity. Gain {block} block.",
+  "consumable.iron_skin_potion.name": "Iron Skin Potion",
+  "consumable.rage_potion.description": "Apply {strength} strength. Apply {weak} weak.",
+  "consumable.rage_potion.name": "Rage Potion",
+  "consumable.strength_potion.description": "Apply {strength} strength.",
+  "consumable.strength_potion.name": "Strength Potion",
+  "consumable.swift_potion.description": "Draw 2 card(s).",
+  "consumable.swift_potion.name": "Swift Potion",
+  "consumable.venom_vial.description": "Apply {poison} poison.",
+  "consumable.venom_vial.name": "Venom Vial"
+}

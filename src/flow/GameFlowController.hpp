@@ -50,6 +50,8 @@ private:
     void selectArchetype(PlayableArchetypeId archetypeId);
     void selectDifficulty(DifficultyId difficultyId);
     void startMapNode(int nodeId);
+    void restHeal(int nodeId);
+    void restUpgrade(int nodeId);
     void finishReward(const RewardState& reward, RewardSelection selection);
     void requestExit();
 

@@ -1,0 +1,22 @@
+{
+  "consumable.antidote_potion.description": "Восстанавливает 8 здоровья.",
+  "consumable.antidote_potion.name": "Антидот",
+  "consumable.energy_potion.description": "Получите 2 энергии.",
+  "consumable.energy_potion.name": "Энергетическое зелье",
+  "consumable.fire_bottle.description": "Накладывает {burn} ожог.",
+  "consumable.fire_bottle.name": "Огненная бутылка",
+  "consumable.free_draw_potion.description": "Накладывает {free_next_card} free_next_card. Доберите 1 карт.",
+  "consumable.free_draw_potion.name": "Зелье свободного добора",
+  "consumable.guard_potion.description": "Даёт {block} защиты.",
+  "consumable.guard_potion.name": "Зелье защиты",
+  "consumable.iron_skin_potion.description": "Накладывает {dexterity} ловкость. Даёт {block} защиты.",
+  "consumable.iron_skin_potion.name": "Зелье железной кожи",
+  "consumable.rage_potion.description": "Накладывает {strength} сила. Накладывает {weak} слабость.",
+  "consumable.rage_potion.name": "Зелье ярости",
+  "consumable.strength_potion.description": "Накладывает {strength} сила.",
+  "consumable.strength_potion.name": "Зелье силы",
+  "consumable.swift_potion.description": "Доберите 2 карт.",
+  "consumable.swift_potion.name": "Зелье проворства",
+  "consumable.venom_vial.description": "Накладывает {poison} яд.",
+  "consumable.venom_vial.name": "Флакон яда"
+}

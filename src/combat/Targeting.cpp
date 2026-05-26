@@ -9,6 +9,9 @@ std::vector<EntityId> Targeting::resolveTargets(
 ) const {
     switch (target) {
         case EffectTarget::Self:
+            if (context.explicitTarget.has_value() && state.hasEntity(*context.explicitTarget) && state.isPlayer(*context.explicitTarget)) {
+                return {*context.explicitTarget};
+            }
             return {context.source};
 
         case EffectTarget::SingleEnemy:

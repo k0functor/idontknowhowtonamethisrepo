@@ -2,16 +2,22 @@
 
 void RewardSystem::applyReward(
     RunState& run,
-    const RewardState& reward,
+    const RewardState&,
     const RewardSelection& selection
 ) const {
-    if (selection.takeGold) {
-        run.gold += reward.gold;
-        run.stats.goldGained += reward.gold;
+    if (selection.goldTaken > 0) {
+        run.gold += selection.goldTaken;
+        run.stats.goldGained += selection.goldTaken;
     }
 
-    if (selection.selectedCardId.has_value()) {
-        run.deckCardIds.push_back(*selection.selectedCardId);
+    for (const CardId& cardId : selection.selectedCardIds) {
+        run.deckCardIds.push_back(cardId);
         ++run.stats.cardsAdded;
+    }
+
+    for (const std::string& consumableId : selection.selectedConsumableIds) {
+        if (static_cast<int>(run.consumableIds.size()) < run.maxConsumables) {
+            run.consumableIds.push_back(consumableId);
+        }
     }
 }

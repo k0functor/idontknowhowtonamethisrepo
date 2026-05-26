@@ -19,6 +19,7 @@
 #include "combat/PlayerTurnSystem.hpp"
 #include "combat/Targeting.hpp"
 #include "combat/TurnSystem.hpp"
+#include "consumables/ConsumableSystem.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
 #include "effects/EffectDefinition.hpp"
@@ -46,6 +47,7 @@
 
 #include <raylib.h>
 
+#include <cstddef>
 #include <filesystem>
 #include <functional>
 #include <optional>
@@ -71,14 +73,20 @@ public:
 private:
     void initializeCombat();
     void rebuildViewModel(std::optional<EntityId> previewTarget);
+    EntityId primaryPlayerId() const;
+    EntityId sourceForCard(const CardInstance& card) const;
+    EntityId sourceForCard(CardInstanceId cardInstanceId) const;
+    bool isSadistMasochistParty() const;
     std::vector<RelicViewModel> buildRelicViewModels() const;
 
     void updateInspectInput(Vector2 mousePosition);
     void renderInspectOverlay() const;
     std::optional<EnemyViewModel> hoveredEnemyViewModel() const;
+    std::optional<PlayerViewModel> hoveredPlayerViewModel() const;
     std::optional<CardViewModel> inspectedCardViewModel() const;
 
     void handleMousePressed(Vector2 mousePosition);
+    void tryUseHoveredConsumable();
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
     void endPlayerTurn();
@@ -96,15 +104,27 @@ private:
     void renderDefeatModal() const;
 
     Rectangle rewardModalBounds() const;
-    Rectangle rewardGoldRowBounds() const;
-    Rectangle rewardCardRowBounds() const;
-    Rectangle rewardConsumableRowBounds(std::size_t index) const;
+    Rectangle rewardOptionRowBounds(std::size_t index) const;
     Rectangle rewardContinueButtonBounds() const;
 
     Rectangle rewardCardChoiceModalBounds() const;
-    Rectangle rewardCardOptionBounds(std::size_t index) const;
-    Rectangle rewardCardCancelButtonBounds() const;
+    Rectangle rewardCardChoiceOptionBounds(std::size_t index) const;
+    Rectangle rewardCardChoiceCancelBounds() const;
+    Rectangle rewardCardChoiceConfirmBounds() const;
 
+    void openRewardCardChoice(std::size_t optionIndex);
+    void closeRewardCardChoice();
+    void confirmRewardCardChoice();
+    void takeRewardOption(std::size_t optionIndex);
+
+    void updateRewardCardChoiceInput(Vector2 mousePosition);
+    void renderRewardCardChoiceModal() const;
+
+    const RewardOption* activeRewardOption() const;
+    RewardOption* activeRewardOption();
+
+    std::string rewardOptionTitle(const RewardOption& option) const;
+    std::string rewardOptionDescription(const RewardOption& option) const;
     std::string rewardCardName(const CardId& cardId) const;
     std::string rewardCardDescription(const CardId& cardId) const;
     std::string localizedOrFallback(const TextId& textId, const std::string& fallback) const;
@@ -138,6 +158,7 @@ private:
     EnergySystem energySystem_;
     DrawSystem drawSystem_;
     StatusSystem statusSystem_;
+    ConsumableSystem consumableSystem_;
     CardPlayValidator validator_;
     EffectSystem effectSystem_;
     CardPlaySystem cardPlaySystem_;
@@ -158,6 +179,7 @@ private:
     CardInstanceFactory cardFactory_;
 
     EntityId playerId_;
+    std::vector<std::string> combatConsumableIds_;
     std::optional<CardInstanceId> selectedCardId_;
     std::optional<CardInstanceId> draggedCardId_;
 
@@ -167,9 +189,10 @@ private:
     std::optional<CardInstanceId> inspectedCardId_;
 
     std::optional<RewardState> reward_;
+    RewardSelection rewardSelection_;
+    std::optional<std::size_t> activeRewardOptionIndex_;
     std::optional<std::size_t> selectedRewardCardIndex_;
-    bool rewardGoldTaken_ = false;
-    bool rewardCardChooserOpen_ = false;
+    bool rewardCardChoiceOpen_ = false;
     bool rewardAccepted_ = false;
 
     bool viewModelDirty_ = true;

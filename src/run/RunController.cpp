@@ -1,7 +1,9 @@
 #include "RunController.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 void RunController::startNewRun(
     const PlayableArchetypeDefinition& archetype,
@@ -130,6 +132,71 @@ void RunController::applyReward(
     const RewardSelection& selection
 ) {
     rewardSystem_.applyReward(run(), reward, selection);
+}
+
+std::optional<RelicId> RunController::chooseChestRelic(
+    const RelicDatabase& relics,
+    Random& random
+) const {
+    const RunState& state = run();
+    std::vector<const RelicDefinition*> candidates;
+
+    for (const RelicDefinition* relic : relics.all()) {
+        if (relic == nullptr) {
+            continue;
+        }
+
+        const bool alreadyOwned = std::find(
+            state.relicIds.begin(),
+            state.relicIds.end(),
+            relic->id.value
+        ) != state.relicIds.end();
+
+        if (!alreadyOwned) {
+            candidates.push_back(relic);
+        }
+    }
+
+    if (candidates.empty()) {
+        return std::nullopt;
+    }
+
+    const int index = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
+    return candidates[static_cast<std::size_t>(index)]->id;
+}
+
+void RunController::completeChestAndTakeRelic(const int nodeId, const RelicId& relicId) {
+    run().relicIds.push_back(relicId.value);
+    markNodeCompletedAndUnlockNext(nodeId);
+}
+
+void RunController::completeEventNode(const int nodeId) {
+    // Event rooms are a placeholder for now. They still consume the route choice.
+    markNodeCompletedAndUnlockNext(nodeId);
+}
+
+void RunController::completeRestHeal(const int nodeId) {
+    // Persistent actor HP is not fully modelled yet. This is the correct flow hook.
+    markNodeCompletedAndUnlockNext(nodeId);
+}
+
+void RunController::completeRestUpgrade(const int nodeId) {
+    RunState& state = run();
+
+    for (const CardId& cardId : state.deckCardIds) {
+        const bool alreadyUpgraded = std::find(
+            state.upgradedCardIds.begin(),
+            state.upgradedCardIds.end(),
+            cardId
+        ) != state.upgradedCardIds.end();
+
+        if (!alreadyUpgraded) {
+            state.upgradedCardIds.push_back(cardId);
+            break;
+        }
+    }
+
+    markNodeCompletedAndUnlockNext(nodeId);
 }
 
 void RunController::markNodeCompletedAndUnlockNext(const int nodeId) {

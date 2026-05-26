@@ -10,6 +10,8 @@ std::string toString(const RunMapNodeType type) {
             return "Event";
         case RunMapNodeType::Shop:
             return "Shop";
+        case RunMapNodeType::Chest:
+            return "Chest";
         case RunMapNodeType::Rest:
             return "Rest";
         case RunMapNodeType::Boss:

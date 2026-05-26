@@ -14,7 +14,10 @@ enum class EffectType {
     GainStress,
     LoseEnergy,
     LoseStress,
-    LoseHp
+    LoseHp,
+    EnterStance,
+    SummonDrone,
+    UseDrone
 };
 
 std::string toString(const EffectType& effect);

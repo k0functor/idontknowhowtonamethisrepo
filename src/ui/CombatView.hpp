@@ -28,7 +28,9 @@ public:
     std::optional<EntityId> hoveredEnemyId() const;
     std::optional<Rectangle> hoveredEnemyBounds() const;
     std::optional<EntityId> hoveredPlayerId() const;
+    std::optional<Rectangle> hoveredPlayerBounds() const;
     std::optional<std::size_t> hoveredRelicIndex() const;
+    std::optional<std::size_t> hoveredConsumableIndex() const;
 
     bool endTurnButtonContains(Vector2 mousePosition) const;
 
@@ -36,10 +38,13 @@ private:
     void applyResponsiveLayout();
     void layoutPlayers();
     void layoutEnemies();
+    void renderDronePanel(const Font* font) const;
     Rectangle battlefieldBounds() const;
     Rectangle handBounds() const;
     Rectangle endTurnButtonBounds() const;
     Rectangle relicBounds(std::size_t index) const;
+    Rectangle consumableBounds(std::size_t index) const;
+    Rectangle droneSlotBounds(std::size_t index) const;
 
 private:
     CombatViewModel model_;
@@ -50,6 +55,7 @@ private:
     std::optional<EntityId> hoveredEnemyId_;
     std::optional<EntityId> hoveredPlayerId_;
     std::optional<std::size_t> hoveredRelicIndex_;
+    std::optional<std::size_t> hoveredConsumableIndex_;
     bool hoveredEndTurnButton_ = false;
     std::optional<CardInstanceId> draggedCardId_;
     Vector2 dragPosition_{0.f, 0.f};
