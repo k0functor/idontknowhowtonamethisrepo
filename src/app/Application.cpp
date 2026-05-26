@@ -1,5 +1,7 @@
 #include "Application.hpp"
 
+#include "data/ContentValidator.hpp"
+
 #include <raylib.h>
 
 #include <algorithm>
@@ -154,6 +156,7 @@ void Application::loadLocalization() {
 
 void Application::loadContent() {
     content_.loadFromDataDirectory(config_.paths.data);
+    ContentValidator::validate(content_);
 
     if (config_.debug.enabled) {
         std::cout << "Loaded cards: " << content_.cards().size() << '\n';

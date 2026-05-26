@@ -22,6 +22,7 @@
 #include "consumables/ConsumableSystem.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
+#include "drones/DroneSystem.hpp"
 #include "effects/EffectDefinition.hpp"
 #include "effects/EffectValue.hpp"
 #include "game/GameEventBus.hpp"
@@ -87,11 +88,26 @@ private:
     std::optional<PlayerViewModel> hoveredPlayerViewModel() const;
     std::optional<CardViewModel> inspectedCardViewModel() const;
 
+    void handleKeyboardCombatInput();
+    void selectCardByOffset(int offset);
+    void selectCard(CardInstanceId cardInstanceId);
+    void cycleKeyboardTarget(int offset);
+    void ensureKeyboardTargetForSelectedCard();
+    void clearCardSelection();
+
     void handleMousePressed(Vector2 mousePosition);
     void tryUseHoveredConsumable();
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
     void endPlayerTurn();
+
+    std::vector<CardInstanceId> handCardIds() const;
+    std::optional<std::size_t> handCardIndex(CardInstanceId cardInstanceId) const;
+    std::vector<EntityId> targetCandidatesForCard(CardInstanceId cardInstanceId) const;
+    std::optional<EntityId> preferredTargetForCard(CardInstanceId cardInstanceId) const;
+    std::optional<EntityId> previewTargetForSelectedCard() const;
+    std::optional<EntityId> arrowTargetForCard(CardInstanceId cardInstanceId) const;
+    void renderTargetingArrow() const;
 
     bool selectedCardCanTargetEnemy() const;
     bool selectedCardCanTargetPlayer() const;
@@ -161,6 +177,7 @@ private:
     DrawSystem drawSystem_;
     StatusSystem statusSystem_;
     ConsumableSystem consumableSystem_;
+    DroneSystem droneSystem_;
     CardPlayValidator validator_;
     EffectSystem effectSystem_;
     CardPlaySystem cardPlaySystem_;
@@ -184,6 +201,7 @@ private:
     std::vector<std::string> combatConsumableIds_;
     std::optional<CardInstanceId> selectedCardId_;
     std::optional<CardInstanceId> draggedCardId_;
+    std::optional<EntityId> keyboardTargetId_;
 
     CombatView view_;
     InspectPanelView inspectPanelView_;

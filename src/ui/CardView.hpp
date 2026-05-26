@@ -24,6 +24,7 @@ public:
     bool contains(Vector2 worldPosition) const;
     bool containsAtTransform(Vector2 worldPosition, const CardTransform& transform) const;
 
+    Vector2 center() const;
     int zIndex() const;
 
     static Vector2 size();

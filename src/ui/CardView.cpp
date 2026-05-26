@@ -290,6 +290,10 @@ bool CardView::containsAtTransform(
            local.y <= cardSize.y * 0.5f;
 }
 
+Vector2 CardView::center() const {
+    return currentTransform_.position;
+}
+
 int CardView::zIndex() const {
     return currentTransform_.zIndex;
 }

@@ -9,6 +9,7 @@
 #include "combat/Targeting.hpp"
 #include "effects/EffectDefinition.hpp"
 #include "statuses/StatusSystem.hpp"
+#include "drones/DroneSystem.hpp"
 #include "game/GameEventBus.hpp"
 
 #include <vector>
@@ -23,6 +24,7 @@ public:
         const EnergySystem& energySystem,
         const DrawSystem& drawSystem,
         const StatusSystem& statusSystem,
+        const DroneSystem& droneSystem,
         const GameEventBus* eventBus = nullptr
     );
 
@@ -46,5 +48,6 @@ private:
     const EnergySystem& energySystem_;
     const DrawSystem& drawSystem_;
     const StatusSystem& statusSystem_;
+    const DroneSystem& droneSystem_;
     const GameEventBus* eventBus_ = nullptr;
 };

@@ -102,6 +102,16 @@ std::optional<CardInstanceId> HandView::hoveredCardId() const {
     return hoveredCardId_;
 }
 
+std::optional<Vector2> HandView::cardCenter(const CardInstanceId cardId) const {
+    for (const CardView& card : cards_) {
+        if (card.model().instanceId == cardId) {
+            return card.center();
+        }
+    }
+
+    return std::nullopt;
+}
+
 void HandView::rebuildIfNeeded(const std::vector<CardViewModel>& models) {
     bool rebuild = cards_.size() != models.size();
 

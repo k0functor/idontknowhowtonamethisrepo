@@ -4,6 +4,8 @@
 #include "effects/EffectDefinition.hpp"
 #include "statuses/StatusDefinition.hpp"
 #include "dice/DiceExpression.hpp"
+#include "drones/DroneDefinition.hpp"
+#include "drones/DroneId.hpp"
 
 #include <sstream>
 
@@ -112,6 +114,58 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
         });
     }
 
+    return model;
+}
+
+InspectPanelModel InspectModelBuilder::buildConsumable(const ConsumableViewModel& consumable) const {
+    InspectPanelModel model;
+
+    if (!consumable.filled) {
+        model.header = rawTextOrFallback("inspect.consumable.empty.name", "Empty slot");
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.consumable.empty.name", "Empty slot"),
+            rawTextOrFallback(
+                "inspect.consumable.empty.description",
+                "This consumable slot is empty."
+            )
+        });
+        return model;
+    }
+
+    model.header = consumable.name;
+    model.subheader = consumable.description;
+    model.entries.push_back(InspectEntry{
+        rawTextOrFallback("inspect.consumable.use_hint.name", "Use"),
+        rawTextOrFallback(
+            "inspect.consumable.use_hint.description",
+            "Left-click uses this consumable."
+        )
+    });
+    return model;
+}
+
+InspectPanelModel InspectModelBuilder::buildDroneSlot(const DroneSlotViewModel& droneSlot) const {
+    InspectPanelModel model;
+    model.header = rawTextOrFallback("inspect.drone.slot.name", "Drone slot");
+
+    if (!droneSlot.filled) {
+        model.subheader = droneSlot.name.empty()
+            ? rawTextOrFallback("inspect.drone.empty.name", "Empty slot")
+            : droneSlot.name;
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.drone.empty.name", "Empty slot"),
+            droneSlot.description.empty()
+                ? rawTextOrFallback("inspect.drone.empty.description", "This drone slot is empty.")
+                : droneSlot.description
+        });
+        return model;
+    }
+
+    model.subheader = droneSlot.name;
+    model.entries.push_back(InspectEntry{
+        rawTextOrFallback("inspect.drone.active.name", "Active drone"),
+        droneSlot.description
+    });
     return model;
 }
 
@@ -237,9 +291,32 @@ std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) c
         case EffectType::GainStress:
             out << rawTextOrFallback("inspect.effect.gain_stress", "Gains stress");
             break;
+        case EffectType::LoseEnergy:
+            out << rawTextOrFallback("inspect.effect.lose_energy", "Loses energy");
+            break;
+        case EffectType::LoseStress:
+            out << rawTextOrFallback("inspect.effect.lose_stress", "Loses stress");
+            break;
         case EffectType::LoseHp:
             out << rawTextOrFallback("inspect.effect.lose_hp", "Loses HP");
             break;
+        case EffectType::EnterStance:
+            out << rawTextOrFallback("inspect.effect.enter_stance", "Enters stance");
+            break;
+        case EffectType::SummonDrone:
+            out << rawTextOrFallback("inspect.effect.summon_drone", "Summons drone");
+            if (effect.statusId.has_value()) {
+                const DroneId droneId(*effect.statusId);
+                if (content_.drones().contains(droneId)) {
+                    const DroneDefinition& definition = content_.drones().get(droneId);
+                    out << ": " << textOrFallback(definition.nameTextId, *effect.statusId);
+                } else {
+                    out << ": " << *effect.statusId;
+                }
+            }
+            return out.str();
+        case EffectType::UseDrone:
+            return rawTextOrFallback("inspect.effect.use_drone", "Uses the oldest drone");
         default:
             out << rawTextOrFallback("inspect.effect.unknown", "Effect");
             break;

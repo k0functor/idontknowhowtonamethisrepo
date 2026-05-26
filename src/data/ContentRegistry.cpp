@@ -9,6 +9,7 @@ void ContentRegistry::clear() {
     actors_.clear();
     difficulties_.clear();
     consumables_.clear();
+    drones_.clear();
 }
 
 void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDirectory) {
@@ -22,6 +23,7 @@ void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDir
     archetypes_.loadFromDirectory(dataDirectory / "archetypes");
     difficulties_.loadFromDirectory(dataDirectory / "run");
     consumables_.loadFromDirectory(dataDirectory / "consumables");
+    drones_.loadFromDirectory(dataDirectory / "drones");
 }
 
 const CardDatabase& ContentRegistry::cards() const {
@@ -86,4 +88,13 @@ const ConsumableDatabase& ContentRegistry::consumables() const {
 
 ConsumableDatabase& ContentRegistry::consumables() {
     return consumables_;
+}
+
+
+const DroneDatabase& ContentRegistry::drones() const {
+    return drones_;
+}
+
+DroneDatabase& ContentRegistry::drones() {
+    return drones_;
 }

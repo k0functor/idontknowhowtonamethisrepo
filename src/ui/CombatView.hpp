@@ -25,12 +25,17 @@ public:
     void render(const Font* font) const;
 
     std::optional<CardInstanceId> hoveredCardId() const;
+    std::optional<Vector2> cardCenter(CardInstanceId cardId) const;
     std::optional<EntityId> hoveredEnemyId() const;
     std::optional<Rectangle> hoveredEnemyBounds() const;
+    std::optional<Rectangle> enemyBounds(EntityId entityId) const;
     std::optional<EntityId> hoveredPlayerId() const;
     std::optional<Rectangle> hoveredPlayerBounds() const;
+    std::optional<Rectangle> playerBounds(EntityId entityId) const;
     std::optional<std::size_t> hoveredRelicIndex() const;
     std::optional<std::size_t> hoveredConsumableIndex() const;
+    std::optional<std::size_t> hoveredDroneSlotIndex() const;
+    std::optional<Rectangle> hoveredDroneSlotBounds() const;
 
     bool endTurnButtonContains(Vector2 mousePosition) const;
 
@@ -40,6 +45,7 @@ private:
     void layoutEnemies();
     void renderDronePanel(const Font* font) const;
 
+    Rectangle contentBounds() const;
     Rectangle battlefieldBounds() const;
     Rectangle handBounds() const;
     Rectangle endTurnButtonBounds() const;
@@ -57,6 +63,7 @@ private:
     std::optional<EntityId> hoveredPlayerId_;
     std::optional<std::size_t> hoveredRelicIndex_;
     std::optional<std::size_t> hoveredConsumableIndex_;
+    std::optional<std::size_t> hoveredDroneSlotIndex_;
     bool hoveredEndTurnButton_ = false;
     std::optional<CardInstanceId> draggedCardId_;
     Vector2 dragPosition_{0.f, 0.f};

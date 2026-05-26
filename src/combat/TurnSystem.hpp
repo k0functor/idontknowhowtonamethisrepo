@@ -7,6 +7,7 @@
 #include "core/Random.hpp"
 #include "data/EnemyDatabase.hpp"
 #include "statuses/StatusSystem.hpp"
+#include "drones/DroneSystem.hpp"
 #include "game/GameEventBus.hpp"
 
 #include <cstddef>
@@ -19,6 +20,7 @@ public:
         const EnemyTurnSystem& enemyTurnSystem,
         const EnemyMoveSelector& enemyMoveSelector,
         const StatusSystem& statusSystem,
+        const DroneSystem& droneSystem,
         std::size_t handSize = 5,
         const GameEventBus* eventBus = nullptr
     );
@@ -37,6 +39,7 @@ private:
     const EnemyTurnSystem& enemyTurnSystem_;
     const EnemyMoveSelector& enemyMoveSelector_;
     const StatusSystem& statusSystem_;
+    const DroneSystem& droneSystem_;
     std::size_t handSize_ = 5;
     const GameEventBus* eventBus_ = nullptr;
 };

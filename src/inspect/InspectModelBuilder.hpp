@@ -5,6 +5,8 @@
 #include "data/ContentRegistry.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "ui/CardViewModel.hpp"
+#include "ui/CombatViewModel.hpp"
+#include "ui/ConsumableViewModel.hpp"
 #include "ui/EnemyViewModel.hpp"
 #include "ui/PlayerViewModel.hpp"
 
@@ -17,6 +19,8 @@ public:
 
     InspectPanelModel buildEnemy(const EnemyViewModel& enemy) const;
     InspectPanelModel buildPlayer(const PlayerViewModel& player) const;
+    InspectPanelModel buildConsumable(const ConsumableViewModel& consumable) const;
+    InspectPanelModel buildDroneSlot(const DroneSlotViewModel& droneSlot) const;
 
     InspectPanelModel buildCard(
         const CardDefinition& definition,

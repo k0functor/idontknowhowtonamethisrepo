@@ -44,6 +44,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/JsonReader.cpp
     src/data/ContentRegistry.hpp
     src/data/ContentRegistry.cpp
+    src/data/ContentValidator.hpp
+    src/data/ContentValidator.cpp
     src/data/CardDatabase.hpp
     src/data/CardDatabase.cpp
     src/data/EnemyDatabase.hpp
@@ -133,7 +135,17 @@ add_executable(i_dont_know_how_to_name_this_game
     src/statuses/StatusSystem.hpp
     src/statuses/StatusSystem.cpp
 
+    src/drones/DroneId.hpp
+    src/drones/DroneActionDefinition.hpp
+    src/drones/DroneDefinition.hpp
+    src/drones/DroneDatabase.hpp
+    src/drones/DroneDatabase.cpp
+    src/drones/DroneSystem.hpp
+    src/drones/DroneSystem.cpp
+
     src/data/parsers/StatusDefinitionParser.hpp
+    src/data/parsers/DroneDefinitionParser.hpp
+    src/data/parsers/DroneDefinitionParser.cpp
     src/data/parsers/StatusDefinitionParser.cpp
 
     src/cards/CardId.hpp

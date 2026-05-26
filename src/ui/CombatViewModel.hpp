@@ -42,6 +42,7 @@ struct CombatViewModel {
     std::string endTurnLabel = "End Turn";
     std::string emptyLabel = "Empty";
     std::string droneSlotsLabel = "Drone slots";
+    std::string keyboardHintLabel;
 
     bool canEndTurn = false;
 

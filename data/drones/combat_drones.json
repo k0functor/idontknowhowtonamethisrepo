@@ -1,0 +1,100 @@
+[
+  {
+    "id": "drone_striker",
+    "name": "drone.striker",
+    "description": "drone.striker.description",
+    "type": "damage",
+    "target": "single_enemy",
+    "value": {
+      "type": "fixed",
+      "amount": 3
+    },
+    "manual": {
+      "fallback_log": "Striker drone deals damage",
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ]
+    },
+    "end_turn": {
+      "fallback_log": "Striker drone deals damage",
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "drone_guardian",
+    "name": "drone.guardian",
+    "description": "drone.guardian.description",
+    "type": "block",
+    "target": "self",
+    "value": {
+      "type": "fixed",
+      "amount": 4
+    },
+    "manual": {
+      "fallback_log": "Guardian drone grants 4 block",
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          }
+        }
+      ]
+    },
+    "end_turn": {
+      "fallback_log": "Guardian drone grants 4 block",
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "drone_bomber",
+    "name": "drone.bomber",
+    "description": "drone.bomber.description",
+    "type": "damage",
+    "target": "all_enemies",
+    "value": {
+      "type": "fixed",
+      "amount": 8
+    },
+    "manual": {
+      "fallback_log": "Bomber drone explodes for 8 damage to all enemies",
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
+  }
+]

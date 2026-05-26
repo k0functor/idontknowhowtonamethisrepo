@@ -16,65 +16,6 @@ void clearStances(CombatEntity& entity) {
     entity.statuses.remove(stanceSmoke);
 }
 
-EntityId firstAlivePlayer(const CombatState& state) {
-    const std::vector<EntityId> players = state.alivePlayerIds();
-    if (!players.empty()) {
-        return players.front();
-    }
-
-    if (!state.players.empty()) {
-        return state.players.front().id;
-    }
-
-    return EntityId{};
-}
-
-void useDrone(CombatState& state, const std::string& droneType) {
-    if (droneType == "drone_striker") {
-        const std::vector<EntityId> enemies = state.aliveEnemyIds();
-        if (!enemies.empty()) {
-            CombatEntity& enemy = state.entity(enemies.front());
-            const int damage = enemy.health.takeDamage(3);
-            state.log.add("Striker drone deals " + std::to_string(damage) + " damage");
-        }
-        return;
-    }
-
-    if (droneType == "drone_guardian") {
-        const EntityId owner = firstAlivePlayer(state);
-        if (state.hasEntity(owner)) {
-            state.entity(owner).block += 4;
-            state.log.add("Guardian drone grants 4 block");
-        }
-        return;
-    }
-
-    if (droneType == "drone_bomber") {
-        for (const EntityId enemyId : state.aliveEnemyIds()) {
-            CombatEntity& enemy = state.entity(enemyId);
-            enemy.health.takeDamage(8);
-        }
-        state.log.add("Bomber drone explodes for 8 damage to all enemies");
-        return;
-    }
-
-    state.log.add("Unknown drone used: " + droneType);
-}
-
-void summonDrone(CombatState& state, const std::string& droneType) {
-    if (droneType.empty()) {
-        return;
-    }
-
-    if (state.droneSlots.size() >= state.maxDroneSlots && !state.droneSlots.empty()) {
-        const std::string oldest = state.droneSlots.front().type;
-        state.droneSlots.erase(state.droneSlots.begin());
-        useDrone(state, oldest);
-    }
-
-    state.droneSlots.push_back(DroneSlot{droneType});
-    state.log.add("Summoned drone: " + droneType);
-}
 }
 
 EffectSystem::EffectSystem(
@@ -85,6 +26,7 @@ EffectSystem::EffectSystem(
     const EnergySystem& energySystem,
     const DrawSystem& drawSystem,
     const StatusSystem& statusSystem,
+    const DroneSystem& droneSystem,
     const GameEventBus* eventBus
 )
     : effectResolver_(effectResolver),
@@ -94,6 +36,7 @@ EffectSystem::EffectSystem(
       energySystem_(energySystem),
       drawSystem_(drawSystem),
       statusSystem_(statusSystem),
+      droneSystem_(droneSystem),
       eventBus_(eventBus) {}
 
 void EffectSystem::applyEffects(
@@ -194,17 +137,11 @@ void EffectSystem::applyEffect(
                 throw std::runtime_error("summon_drone effect requires drone id in status field");
             }
 
-            summonDrone(state, *effect.statusId);
+            droneSystem_.summonDrone(state, *effect.statusId, context.source, context.random);
             return;
 
         case EffectType::UseDrone:
-            if (!state.droneSlots.empty()) {
-                const std::string droneType = state.droneSlots.front().type;
-                state.droneSlots.erase(state.droneSlots.begin());
-                useDrone(state, droneType);
-            } else {
-                state.log.add("No drone to use");
-            }
+            droneSystem_.useOldestDrone(state, context.random);
             return;
 
         case EffectType::Heal:

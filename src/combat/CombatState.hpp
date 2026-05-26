@@ -12,7 +12,8 @@
 #include <vector>
 
 struct DroneSlot {
-    std::string type;
+    std::string droneId;
+    EntityId owner;
 };
 
 class CombatState {
@@ -31,8 +32,9 @@ public:
     std::vector<CombatEntity> enemies;
     std::vector<EnemyIntentState> enemyIntents;
 
-    // Used by the Drone Cyborg archetype. Three slots by default.
+    // Used by drone-based archetypes. Three slots by default.
     // New summons overflow by using/removing the oldest drone first.
+    // Each slot stores a data-driven drone id plus the actor that summoned it.
     std::vector<DroneSlot> droneSlots;
     std::size_t maxDroneSlots = 3;
 

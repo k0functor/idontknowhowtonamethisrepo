@@ -5,6 +5,7 @@
 #include "data/CardDatabase.hpp"
 #include "data/EnemyDatabase.hpp"
 #include "consumables/ConsumableDatabase.hpp"
+#include "drones/DroneDatabase.hpp"
 #include "relics/RelicDatabase.hpp"
 #include "run/DifficultyDatabase.hpp"
 #include "statuses/StatusDatabase.hpp"
@@ -41,6 +42,9 @@ public:
     const ConsumableDatabase& consumables() const;
     ConsumableDatabase& consumables();
 
+    const DroneDatabase& drones() const;
+    DroneDatabase& drones();
+
 private:
     CardDatabase cards_;
     EnemyDatabase enemies_;
@@ -50,4 +54,5 @@ private:
     PlayerActorDatabase actors_;
     DifficultyDatabase difficulties_;
     ConsumableDatabase consumables_;
+    DroneDatabase drones_;
 };

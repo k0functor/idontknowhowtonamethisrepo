@@ -20,6 +20,7 @@ public:
     void render(const Font* font) const;
 
     std::optional<CardInstanceId> hoveredCardId() const;
+    std::optional<Vector2> cardCenter(CardInstanceId cardId) const;
 
 private:
     void rebuildIfNeeded(const std::vector<CardViewModel>& models);

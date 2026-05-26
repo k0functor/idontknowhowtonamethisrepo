@@ -11,6 +11,7 @@
 #include "ui/BasicUi.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <stdexcept>
 #include <string>
@@ -102,6 +103,7 @@ std::vector<std::string> enemyIdsForNode(
         case RunMapNodeType::Combat:
         case RunMapNodeType::Event:
         case RunMapNodeType::Shop:
+        case RunMapNodeType::Chest:
         case RunMapNodeType::Rest:
             return chooseEncounter(normalEncounters(), random);
     }
@@ -134,6 +136,63 @@ void addEnemyToCombat(
 
     state.enemies.push_back(std::move(enemy));
 }
+
+Vector2 rectangleCenter(const Rectangle bounds) {
+    return Vector2{bounds.x + bounds.width * 0.5f, bounds.y + bounds.height * 0.5f};
+}
+
+Vector2 arrowTipOnBounds(const Rectangle bounds, const Vector2 from) {
+    const Vector2 center = rectangleCenter(bounds);
+    const float halfWidth = bounds.width * 0.5f;
+    const float halfHeight = bounds.height * 0.5f;
+    const float dx = center.x - from.x;
+    const float dy = center.y - from.y;
+
+    if (std::abs(dx) < 0.001f && std::abs(dy) < 0.001f) {
+        return center;
+    }
+
+    const float scaleX = std::abs(dx) > 0.001f ? halfWidth / std::abs(dx) : 100000.f;
+    const float scaleY = std::abs(dy) > 0.001f ? halfHeight / std::abs(dy) : 100000.f;
+    const float scale = std::min(scaleX, scaleY);
+
+    return Vector2{center.x - dx * scale, center.y - dy * scale};
+}
+
+void drawTargetArrow(const Vector2 from, const Rectangle targetBounds) {
+    const Vector2 tip = arrowTipOnBounds(targetBounds, from);
+    const float dx = tip.x - from.x;
+    const float dy = tip.y - from.y;
+    const float length = std::sqrt(dx * dx + dy * dy);
+
+    if (length < 8.f) {
+        return;
+    }
+
+    const Vector2 direction{dx / length, dy / length};
+    const Vector2 normal{-direction.y, direction.x};
+    const Vector2 lineEnd{tip.x - direction.x * 18.f, tip.y - direction.y * 18.f};
+
+    const Color lineColor{255, 215, 92, 225};
+    const Color shadowColor{0, 0, 0, 125};
+
+    DrawLineEx(Vector2{from.x + 2.f, from.y + 2.f}, Vector2{lineEnd.x + 2.f, lineEnd.y + 2.f}, 7.f, shadowColor);
+    DrawLineEx(from, lineEnd, 5.f, lineColor);
+
+    const Vector2 left{
+        tip.x - direction.x * 24.f + normal.x * 10.f,
+        tip.y - direction.y * 24.f + normal.y * 10.f
+    };
+    const Vector2 right{
+        tip.x - direction.x * 24.f - normal.x * 10.f,
+        tip.y - direction.y * 24.f - normal.y * 10.f
+    };
+
+    DrawTriangle(Vector2{tip.x + 2.f, tip.y + 2.f}, Vector2{left.x + 2.f, left.y + 2.f}, Vector2{right.x + 2.f, right.y + 2.f}, shadowColor);
+    DrawTriangle(tip, left, right, lineColor);
+
+    DrawRectangleRoundedLinesEx(targetBounds, 0.08f, 10, 4.f, Color{255, 218, 90, 230});
+}
 }
 
 CombatScene::CombatScene(
@@ -159,6 +218,17 @@ CombatScene::CombatScene(
       blockSystem_(modifierSystem_, &eventBus_),
       statusSystem_(content_.statuses()),
       consumableSystem_(content_.consumables()),
+      droneSystem_(
+          content_.drones(),
+          effectResolver_,
+          targeting_,
+          damageSystem_,
+          blockSystem_,
+          energySystem_,
+          drawSystem_,
+          statusSystem_,
+          &eventBus_
+      ),
       effectSystem_(
           effectResolver_,
           targeting_,
@@ -167,6 +237,7 @@ CombatScene::CombatScene(
           energySystem_,
           drawSystem_,
           statusSystem_,
+          droneSystem_,
           &eventBus_
       ),
       cardPlaySystem_(
@@ -191,6 +262,7 @@ CombatScene::CombatScene(
           enemyTurnSystem_,
           enemyMoveSelector_,
           statusSystem_,
+          droneSystem_,
           5,
           &eventBus_
       ),
@@ -202,6 +274,7 @@ CombatScene::CombatScene(
       combatViewModelBuilder_(
           localization_,
           content_.statuses(),
+          content_.drones(),
           cardViewModelBuilder_
       ),
       inspectModelBuilder_(content_, localization_) {
@@ -251,6 +324,7 @@ void CombatScene::update(const float deltaSeconds) {
     if (combatFinished_) {
         selectedCardId_.reset();
         draggedCardId_.reset();
+        keyboardTargetId_.reset();
         inspectedCardId_.reset();
         relicInspectModal_.close();
         lastPreviewTarget_.reset();
@@ -274,6 +348,7 @@ void CombatScene::update(const float deltaSeconds) {
 
         selectedCardId_.reset();
         draggedCardId_.reset();
+        keyboardTargetId_.reset();
         inspectedCardId_.reset();
         lastPreviewTarget_.reset();
 
@@ -293,10 +368,12 @@ void CombatScene::update(const float deltaSeconds) {
     view_.update(deltaSeconds, mousePosition);
 
     updateInspectInput(mousePosition);
+    handleKeyboardCombatInput();
 
     if (relicInspectModal_.isOpen()) {
         selectedCardId_.reset();
         draggedCardId_.reset();
+        keyboardTargetId_.reset();
         inspectedCardId_.reset();
         lastPreviewTarget_.reset();
         view_.setSelectedCard(std::nullopt);
@@ -310,6 +387,7 @@ void CombatScene::update(const float deltaSeconds) {
         if (relicInspectModal_.isOpen()) {
             selectedCardId_.reset();
             draggedCardId_.reset();
+            keyboardTargetId_.reset();
             inspectedCardId_.reset();
             lastPreviewTarget_.reset();
             view_.setSelectedCard(std::nullopt);
@@ -323,11 +401,7 @@ void CombatScene::update(const float deltaSeconds) {
         handleMouseReleased(mousePosition);
     }
 
-    const std::optional<EntityId> previewTarget = selectedCardId_.has_value()
-        ? (view_.hoveredEnemyId().has_value()
-            ? view_.hoveredEnemyId()
-            : view_.hoveredPlayerId())
-        : std::nullopt;
+    const std::optional<EntityId> previewTarget = previewTargetForSelectedCard();
 
     if (previewTarget != lastPreviewTarget_) {
         lastPreviewTarget_ = previewTarget;
@@ -348,6 +422,7 @@ void CombatScene::render() const {
     view_.render(uiFont_.available() ? &uiFont_.font() : nullptr);
 
     if (!combatFinished_) {
+        renderTargetingArrow();
         renderInspectOverlay();
         return;
     }
@@ -365,6 +440,7 @@ void CombatScene::initializeCombat() {
     cardFactory_.reset();
     selectedCardId_.reset();
     draggedCardId_.reset();
+    keyboardTargetId_.reset();
     inspectedCardId_.reset();
     relicInspectModal_.close();
     lastPreviewTarget_.reset();
@@ -562,32 +638,6 @@ std::vector<DroneSlotViewModel> CombatScene::buildDroneSlotViewModels() const {
         return {};
     }
 
-    auto droneNameKey = [](const std::string& droneType) {
-        if (droneType == "drone_striker") {
-            return TextId("drone.striker");
-        }
-        if (droneType == "drone_guardian") {
-            return TextId("drone.guardian");
-        }
-        if (droneType == "drone_bomber") {
-            return TextId("drone.bomber");
-        }
-        return TextId(droneType);
-    };
-
-    auto droneDescriptionKey = [](const std::string& droneType) {
-        if (droneType == "drone_striker") {
-            return TextId("drone.striker.description");
-        }
-        if (droneType == "drone_guardian") {
-            return TextId("drone.guardian.description");
-        }
-        if (droneType == "drone_bomber") {
-            return TextId("drone.bomber.description");
-        }
-        return TextId("drone.unknown.description");
-    };
-
     const std::size_t slotCount = std::max<std::size_t>(state_.maxDroneSlots, state_.droneSlots.size());
     std::vector<DroneSlotViewModel> result;
     result.reserve(slotCount);
@@ -597,9 +647,17 @@ std::vector<DroneSlotViewModel> CombatScene::buildDroneSlotViewModels() const {
 
         if (i < state_.droneSlots.size()) {
             slot.filled = true;
-            slot.type = state_.droneSlots[i].type;
-            slot.name = localizedOrFallback(droneNameKey(slot.type), slot.type);
-            slot.description = localizedOrFallback(droneDescriptionKey(slot.type), slot.type);
+            slot.type = state_.droneSlots[i].droneId;
+
+            const DroneId droneId(slot.type);
+            if (content_.drones().contains(droneId)) {
+                const DroneDefinition& definition = content_.drones().get(droneId);
+                slot.name = localizedOrFallback(definition.nameTextId, slot.type);
+                slot.description = localizedOrFallback(definition.descriptionTextId, slot.type);
+            } else {
+                slot.name = slot.type;
+                slot.description = localizedOrFallback(TextId("drone.unknown.description"), slot.type);
+            }
         } else {
             slot.filled = false;
             slot.type = {};
@@ -661,6 +719,66 @@ void CombatScene::renderInspectOverlay() const {
         return;
     }
 
+    if (view_.hoveredConsumableIndex().has_value()) {
+        const std::size_t index = *view_.hoveredConsumableIndex();
+        if (index < view_.model().consumables.size()) {
+            const InspectPanelModel panel = inspectModelBuilder_.buildConsumable(view_.model().consumables[index]);
+            const float screenWidth = static_cast<float>(GetScreenWidth());
+            const float screenHeight = static_cast<float>(GetScreenHeight());
+            constexpr float screenMargin = 18.f;
+            const float width = std::min(320.f, screenWidth - screenMargin * 2.f);
+            const Rectangle bounds{
+                std::max(screenMargin, screenWidth - width - screenMargin),
+                78.f,
+                width,
+                std::min(240.f, screenHeight - 120.f)
+            };
+            inspectPanelView_.render(uiFont_, panel, bounds);
+            return;
+        }
+    }
+
+    if (view_.hoveredDroneSlotIndex().has_value()) {
+        const std::size_t index = *view_.hoveredDroneSlotIndex();
+        if (index < view_.model().droneSlots.size()) {
+            const InspectPanelModel panel = inspectModelBuilder_.buildDroneSlot(view_.model().droneSlots[index]);
+
+            constexpr float gap = 12.f;
+            constexpr float screenMargin = 18.f;
+            constexpr float minWidth = 220.f;
+            constexpr float preferredWidth = 300.f;
+
+            const float screenWidth = static_cast<float>(GetScreenWidth());
+            const float screenHeight = static_cast<float>(GetScreenHeight());
+            Rectangle bounds{
+                screenWidth * 0.5f - preferredWidth * 0.5f,
+                136.f,
+                preferredWidth,
+                std::min(230.f, screenHeight - 160.f)
+            };
+
+            const std::optional<Rectangle> slotBounds = view_.hoveredDroneSlotBounds();
+            if (slotBounds.has_value()) {
+                const float rightX = slotBounds->x + slotBounds->width + gap;
+                const float availableRightWidth = screenWidth - rightX - screenMargin;
+
+                if (availableRightWidth >= minWidth) {
+                    bounds.x = rightX;
+                    bounds.width = std::clamp(availableRightWidth, minWidth, preferredWidth);
+                } else {
+                    const float availableLeftWidth = slotBounds->x - gap - screenMargin;
+                    bounds.width = std::clamp(availableLeftWidth, minWidth, preferredWidth);
+                    bounds.x = std::max(screenMargin, slotBounds->x - gap - bounds.width);
+                }
+
+                bounds.y = std::clamp(slotBounds->y, 82.f, screenHeight - bounds.height - screenMargin);
+            }
+
+            inspectPanelView_.render(uiFont_, panel, bounds);
+            return;
+        }
+    }
+
     const std::optional<PlayerViewModel> playerModel = hoveredPlayerViewModel();
     if (playerModel.has_value()) {
         const InspectPanelModel panel = inspectModelBuilder_.buildPlayer(*playerModel);
@@ -670,7 +788,6 @@ void CombatScene::renderInspectOverlay() const {
         constexpr float minWidth = 220.f;
         constexpr float preferredWidth = 300.f;
 
-        const float screenWidth = static_cast<float>(GetScreenWidth());
         const float screenHeight = static_cast<float>(GetScreenHeight());
 
         Rectangle bounds{
@@ -682,18 +799,9 @@ void CombatScene::renderInspectOverlay() const {
 
         const std::optional<Rectangle> playerBounds = view_.hoveredPlayerBounds();
         if (playerBounds.has_value()) {
-            const float rightX = playerBounds->x + playerBounds->width + gap;
-            const float availableRightWidth = screenWidth - rightX - screenMargin;
-
-            if (availableRightWidth >= minWidth) {
-                bounds.x = rightX;
-                bounds.width = std::clamp(availableRightWidth, minWidth, preferredWidth);
-            } else {
-                const float availableLeftWidth = playerBounds->x - gap - screenMargin;
-                bounds.width = std::clamp(availableLeftWidth, minWidth, preferredWidth);
-                bounds.x = std::max(screenMargin, playerBounds->x - gap - bounds.width);
-            }
-
+            const float availableLeftWidth = playerBounds->x - gap - screenMargin;
+            bounds.width = std::clamp(availableLeftWidth, minWidth, preferredWidth);
+            bounds.x = std::max(screenMargin, playerBounds->x - gap - bounds.width);
             bounds.y = std::clamp(playerBounds->y, 82.f, screenHeight - bounds.height - screenMargin);
         }
 
@@ -724,14 +832,10 @@ void CombatScene::renderInspectOverlay() const {
         if (enemyBounds.has_value()) {
             const float rightX = enemyBounds->x + enemyBounds->width + gap;
             const float availableRightWidth = screenWidth - rightX - screenMargin;
-
-            bounds.x = rightX;
             bounds.width = std::clamp(availableRightWidth, minWidth, preferredWidth);
+            bounds.x = std::min(rightX, screenWidth - bounds.width - screenMargin);
+            bounds.x = std::max(screenMargin, bounds.x);
             bounds.y = std::clamp(enemyBounds->y, 82.f, screenHeight - bounds.height - screenMargin);
-
-            if (bounds.x + bounds.width > screenWidth - screenMargin) {
-                bounds.x = screenWidth - bounds.width - screenMargin;
-            }
         }
 
         inspectPanelView_.render(uiFont_, panel, bounds);
@@ -780,12 +884,293 @@ std::optional<CardViewModel> CombatScene::inspectedCardViewModel() const {
     );
 }
 
+void CombatScene::handleKeyboardCombatInput() {
+    if (state_.phase != CombatPhase::PlayerTurn) {
+        return;
+    }
+
+    if (IsKeyPressed(KEY_RIGHT)) {
+        selectCardByOffset(1);
+    }
+
+    if (IsKeyPressed(KEY_LEFT)) {
+        selectCardByOffset(-1);
+    }
+
+    if (selectedCardId_.has_value()) {
+        if (IsKeyPressed(KEY_D)) {
+            cycleKeyboardTarget(1);
+        }
+
+        if (IsKeyPressed(KEY_A)) {
+            cycleKeyboardTarget(-1);
+        }
+
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER)) {
+            ensureKeyboardTargetForSelectedCard();
+            const std::optional<EntityId> target = previewTargetForSelectedCard();
+            if (target.has_value()) {
+                playSelectedCardOn(*target);
+            }
+        }
+    }
+}
+
+void CombatScene::selectCardByOffset(const int offset) {
+    const std::vector<CardInstanceId> ids = handCardIds();
+    if (ids.empty()) {
+        clearCardSelection();
+        return;
+    }
+
+    std::size_t index = 0;
+    if (selectedCardId_.has_value()) {
+        if (const std::optional<std::size_t> current = handCardIndex(*selectedCardId_)) {
+            index = *current;
+        }
+    } else if (offset < 0) {
+        index = ids.size() - 1;
+    }
+
+    if (selectedCardId_.has_value()) {
+        const int size = static_cast<int>(ids.size());
+        const int current = static_cast<int>(index);
+        index = static_cast<std::size_t>((current + offset + size) % size);
+    }
+
+    selectCard(ids[index]);
+}
+
+void CombatScene::selectCard(const CardInstanceId cardInstanceId) {
+    if (!state_.hand.contains(cardInstanceId)) {
+        clearCardSelection();
+        return;
+    }
+
+    selectedCardId_ = cardInstanceId;
+    draggedCardId_.reset();
+    inspectedCardId_.reset();
+    ensureKeyboardTargetForSelectedCard();
+    viewModelDirty_ = true;
+}
+
+void CombatScene::cycleKeyboardTarget(const int offset) {
+    if (!selectedCardId_.has_value()) {
+        keyboardTargetId_.reset();
+        return;
+    }
+
+    const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+    if (candidates.empty()) {
+        keyboardTargetId_.reset();
+        return;
+    }
+
+    std::size_t index = 0;
+    if (keyboardTargetId_.has_value()) {
+        const auto iterator = std::find(candidates.begin(), candidates.end(), *keyboardTargetId_);
+        if (iterator != candidates.end()) {
+            index = static_cast<std::size_t>(std::distance(candidates.begin(), iterator));
+        }
+    }
+
+    const int size = static_cast<int>(candidates.size());
+    const int current = static_cast<int>(index);
+    index = static_cast<std::size_t>((current + offset + size) % size);
+    keyboardTargetId_ = candidates[index];
+    lastPreviewTarget_.reset();
+    viewModelDirty_ = true;
+}
+
+void CombatScene::ensureKeyboardTargetForSelectedCard() {
+    if (!selectedCardId_.has_value()) {
+        keyboardTargetId_.reset();
+        return;
+    }
+
+    const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+    if (candidates.empty()) {
+        keyboardTargetId_.reset();
+        return;
+    }
+
+    if (keyboardTargetId_.has_value() &&
+        std::find(candidates.begin(), candidates.end(), *keyboardTargetId_) != candidates.end()) {
+        return;
+    }
+
+    keyboardTargetId_ = candidates.front();
+}
+
+void CombatScene::clearCardSelection() {
+    selectedCardId_.reset();
+    draggedCardId_.reset();
+    keyboardTargetId_.reset();
+    lastPreviewTarget_.reset();
+    viewModelDirty_ = true;
+}
+
+std::vector<CardInstanceId> CombatScene::handCardIds() const {
+    std::vector<CardInstanceId> result;
+    result.reserve(state_.hand.cards().size());
+
+    for (const CardInstance& card : state_.hand.cards()) {
+        result.push_back(card.instanceId);
+    }
+
+    return result;
+}
+
+std::optional<std::size_t> CombatScene::handCardIndex(const CardInstanceId cardInstanceId) const {
+    const std::vector<CardInstanceId> ids = handCardIds();
+    for (std::size_t i = 0; i < ids.size(); ++i) {
+        if (ids[i] == cardInstanceId) {
+            return i;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::vector<EntityId> CombatScene::targetCandidatesForCard(const CardInstanceId cardInstanceId) const {
+    if (!state_.hand.contains(cardInstanceId)) {
+        return {};
+    }
+
+    if (cardCanTargetEnemy(cardInstanceId)) {
+        return state_.aliveEnemyIds();
+    }
+
+    if (cardCanTargetPlayer(cardInstanceId)) {
+        const CardInstance& instance = state_.hand.get(cardInstanceId);
+        const CardDefinition& definition = content_.cards().get(instance.definitionId);
+        const EntityId source = sourceForCard(cardInstanceId);
+
+        bool hasAllyTarget = false;
+        bool hasAllAlliesTarget = false;
+        for (const EffectDefinition& effect : definition.effects) {
+            if (effect.target == EffectTarget::Ally) {
+                hasAllyTarget = true;
+            }
+            if (effect.target == EffectTarget::AllAllies || effect.target == EffectTarget::RandomAlly) {
+                hasAllAlliesTarget = true;
+            }
+        }
+
+        if (hasAllyTarget || hasAllAlliesTarget) {
+            return state_.alivePlayerIds();
+        }
+
+        if (state_.hasEntity(source) && state_.isPlayer(source)) {
+            return {source};
+        }
+
+        return state_.alivePlayerIds();
+    }
+
+    const EntityId source = sourceForCard(cardInstanceId);
+    if (state_.hasEntity(source)) {
+        return {source};
+    }
+
+    return {};
+}
+
+std::optional<EntityId> CombatScene::preferredTargetForCard(const CardInstanceId cardInstanceId) const {
+    const std::vector<EntityId> candidates = targetCandidatesForCard(cardInstanceId);
+    if (candidates.empty()) {
+        return std::nullopt;
+    }
+
+    return candidates.front();
+}
+
+std::optional<EntityId> CombatScene::previewTargetForSelectedCard() const {
+    if (!selectedCardId_.has_value()) {
+        return std::nullopt;
+    }
+
+    if (view_.hoveredEnemyId().has_value() && selectedCardCanTargetEnemy()) {
+        return view_.hoveredEnemyId();
+    }
+
+    if (view_.hoveredPlayerId().has_value() && selectedCardCanTargetPlayer()) {
+        return view_.hoveredPlayerId();
+    }
+
+    if (keyboardTargetId_.has_value()) {
+        const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+        if (std::find(candidates.begin(), candidates.end(), *keyboardTargetId_) != candidates.end()) {
+            return keyboardTargetId_;
+        }
+    }
+
+    return preferredTargetForCard(*selectedCardId_);
+}
+
+std::optional<EntityId> CombatScene::arrowTargetForCard(const CardInstanceId cardInstanceId) const {
+    if (!state_.hand.contains(cardInstanceId)) {
+        return std::nullopt;
+    }
+
+    if (selectedCardId_.has_value() && cardInstanceId == *selectedCardId_) {
+        return previewTargetForSelectedCard();
+    }
+
+    if (view_.hoveredEnemyId().has_value() && cardCanTargetEnemy(cardInstanceId)) {
+        return view_.hoveredEnemyId();
+    }
+
+    if (view_.hoveredPlayerId().has_value() && cardCanTargetPlayer(cardInstanceId)) {
+        return view_.hoveredPlayerId();
+    }
+
+    return std::nullopt;
+}
+
+void CombatScene::renderTargetingArrow() const {
+    std::optional<CardInstanceId> sourceCardId;
+    if (selectedCardId_.has_value()) {
+        sourceCardId = selectedCardId_;
+    } else if (view_.hoveredCardId().has_value()) {
+        sourceCardId = view_.hoveredCardId();
+    }
+
+    if (!sourceCardId.has_value()) {
+        return;
+    }
+
+    const std::optional<EntityId> target = arrowTargetForCard(*sourceCardId);
+    if (!target.has_value()) {
+        return;
+    }
+
+    const std::optional<Vector2> sourceCenter = view_.cardCenter(*sourceCardId);
+    if (!sourceCenter.has_value()) {
+        return;
+    }
+
+    std::optional<Rectangle> targetBounds;
+    if (state_.isEnemy(*target)) {
+        targetBounds = view_.enemyBounds(*target);
+    } else if (state_.isPlayer(*target)) {
+        targetBounds = view_.playerBounds(*target);
+    }
+
+    if (!targetBounds.has_value()) {
+        return;
+    }
+
+    drawTargetArrow(*sourceCenter, *targetBounds);
+}
+
 void CombatScene::handleMousePressed(const Vector2 mousePosition) {
     if (view_.hoveredRelicIndex().has_value()) {
         relicInspectModal_.open(*view_.hoveredRelicIndex());
         inspectedCardId_.reset();
         selectedCardId_.reset();
         draggedCardId_.reset();
+        keyboardTargetId_.reset();
         return;
     }
 
@@ -800,7 +1185,7 @@ void CombatScene::handleMousePressed(const Vector2 mousePosition) {
     }
 
     if (view_.hoveredCardId().has_value()) {
-        selectedCardId_ = *view_.hoveredCardId();
+        selectCard(*view_.hoveredCardId());
         draggedCardId_ = selectedCardId_;
         viewModelDirty_ = true;
         return;
@@ -816,9 +1201,7 @@ void CombatScene::handleMousePressed(const Vector2 mousePosition) {
         return;
     }
 
-    selectedCardId_.reset();
-    draggedCardId_.reset();
-    viewModelDirty_ = true;
+    clearCardSelection();
 }
 
 void CombatScene::tryUseHoveredConsumable() {
@@ -842,6 +1225,7 @@ void CombatScene::tryUseHoveredConsumable() {
         combatConsumableIds_.erase(combatConsumableIds_.begin() + static_cast<std::ptrdiff_t>(index));
         selectedCardId_.reset();
         draggedCardId_.reset();
+        keyboardTargetId_.reset();
         inspectedCardId_.reset();
         lastPreviewTarget_.reset();
         finalResult_ = combatController_.updateAfterAction(state_);
@@ -865,7 +1249,7 @@ void CombatScene::handleMouseReleased(const Vector2) {
     }
 
     draggedCardId_.reset();
-    selectedCardId_.reset();
+    ensureKeyboardTargetForSelectedCard();
     lastPreviewTarget_.reset();
     viewModelDirty_ = true;
 }
@@ -887,6 +1271,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 
     selectedCardId_.reset();
     draggedCardId_.reset();
+    keyboardTargetId_.reset();
     inspectedCardId_.reset();
     relicInspectModal_.close();
     lastPreviewTarget_.reset();
@@ -901,6 +1286,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 void CombatScene::endPlayerTurn() {
     selectedCardId_.reset();
     draggedCardId_.reset();
+    keyboardTargetId_.reset();
     inspectedCardId_.reset();
     relicInspectModal_.close();
     lastPreviewTarget_.reset();
@@ -978,6 +1364,7 @@ void CombatScene::finishCombatIfNeeded() {
         combatFinished_ = true;
         selectedCardId_.reset();
         draggedCardId_.reset();
+        keyboardTargetId_.reset();
         inspectedCardId_.reset();
         relicInspectModal_.close();
         lastPreviewTarget_.reset();
