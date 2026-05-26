@@ -1,6 +1,5 @@
 #pragma once
 
-#include "cards/CardInstance.hpp"
 #include "combat/CombatState.hpp"
 #include "entities/EntityId.hpp"
 #include "localization/LocalizationManager.hpp"
@@ -12,6 +11,8 @@
 #include <cstddef>
 #include <functional>
 #include <optional>
+#include <string>
+#include <vector>
 
 class CombatViewModelBuilder {
 public:
@@ -23,15 +24,15 @@ public:
 
     CombatViewModel build(
         const CombatState& state,
-        EntityId fallbackSource,
-        std::optional<EntityId> previewTarget,
-        const std::function<EntityId(const CardInstance&)>& cardSourceResolver
+        EntityId source,
+        std::optional<EntityId> previewTarget
     ) const;
 
     CombatViewModel build(
         const CombatState& state,
-        EntityId fallbackSource,
-        std::optional<EntityId> previewTarget
+        EntityId source,
+        std::optional<EntityId> previewTarget,
+        const std::function<EntityId(const CardInstance&)>& sourceForCard
     ) const;
 
 private:

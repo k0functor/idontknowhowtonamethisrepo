@@ -25,6 +25,7 @@
   "archetype.bone_merchant.details_description": "Этот архетип строится вокруг экономики. Он начинает с большим количеством золота и лучше получает деньги, но развитие колоды завязано на магазины и особые варианты отдыха.",
   "archetype.bone_merchant.name": "Костяной торговец",
   "archetype.bone_merchant.short_description": "Получает новые карты в основном через покупки.",
+  "archetype.bone_merchant.strength.control": "Много карт управляют добором, энергией и уязвимостью врагов.",
   "archetype.bone_merchant.strength.gold_income": "После боя получает на 25% больше золота.",
   "archetype.bone_merchant.strength.rest_shop": "Вместо отдыха сможет покупать 2 карты из 5 предложенных.",
   "archetype.bone_merchant.unique_mechanic": "После обычных боёв враги дают на 25% больше золота, но не предлагают карты. Вместо стандартного отдыха он сможет открыть выбор из пяти карт и купить две. Сейчас часть механики уже учитывается в наградах, остальное будет подключено через mechanic_id.",
@@ -54,6 +55,7 @@
   "archetype.sadist_masochist.details_description": "Этот архетип создаёт party из двух отдельных акторов. У каждого своё здоровье, энергия, реликвии и будущие статусы. Никаких main/support, только два существа и вдвое больше способов всё испортить.",
   "archetype.sadist_masochist.name": "Садист и Мазохист",
   "archetype.sadist_masochist.short_description": "Один выбор, два отдельных боевых актора.",
+  "archetype.sadist_masochist.strength.pain_engine": "Боль между персонажами превращается в силу и ловкость.",
   "archetype.sadist_masochist.strength.split_resources": "Раздельные ресурсы дают больше тактических окон.",
   "archetype.sadist_masochist.strength.two_bodies": "Два отдельных тела позволяют гибче распределять угрозы.",
   "archetype.sadist_masochist.unique_mechanic": "Садист и Мазохист существуют как два отдельных актора. Их ресурсы и здоровье разделены. Позже часть карт и реликвий будет работать только с одним из них или с их взаимодействием.",
@@ -62,7 +64,11 @@
   "archetype.wanderer.details_description": "Странник не меняет фундаментальные правила игры. У него обычная энергия, обычные награды и понятная стартовая колода.",
   "archetype.wanderer.name": "Странник",
   "archetype.wanderer.short_description": "Базовый архетип для первого нормального забега.",
+  "archetype.wanderer.strength.dice": "Много карт с кубами: значения меняются, но preview показывает диапазон.",
   "archetype.wanderer.strength.flexible": "Гибкая стартовая колода без жёстких слабостей.",
   "archetype.wanderer.unique_mechanic": "Нет особой механики. Этот архетип нужен как контрольная точка баланса и обучения.",
-  "archetype.wanderer.weakness.no_specialization": "Нет сильной специализации и взрывного масштабирования."
+  "archetype.wanderer.weakness.no_specialization": "Нет сильной специализации и взрывного масштабирования.",
+  "profile_hub.details_hint": "Space - подробности",
+  "profile_hub.navigation_hint": "Left / Right или A / D - сменить персонажа",
+  "ui.portrait_placeholder": "Портрет будет позже"
 }

@@ -111,31 +111,36 @@ void Application::applyWindowSettings() {
 }
 
 namespace {
-std::filesystem::path localizationSourceFor(
+std::filesystem::path requiredLocalizationDirectory(
     const std::filesystem::path& localizationRoot,
     const std::string& localeCode
 ) {
     const std::filesystem::path directoryPath = localizationRoot / localeCode;
 
-    if (std::filesystem::is_directory(directoryPath)) {
-        return directoryPath;
+    if (!std::filesystem::is_directory(directoryPath)) {
+        throw std::runtime_error(
+            "Missing localization directory '" + directoryPath.string() +
+            "'. Localization is split by domain and must be stored in directories like "
+            "data/localization/ru/core.json, data/localization/ru/cards.json, etc."
+        );
     }
 
-    return localizationRoot / (localeCode + ".json");
+    return directoryPath;
 }
 }
+
 
 void Application::loadLocalization() {
     const auto localizationPath = config_.paths.data / "localization";
 
     localization_.loadBundle(
         Locale::russian(),
-        localizationSourceFor(localizationPath, "ru")
+        requiredLocalizationDirectory(localizationPath, "ru")
     );
 
     localization_.loadBundle(
         Locale::english(),
-        localizationSourceFor(localizationPath, "en")
+        requiredLocalizationDirectory(localizationPath, "en")
     );
 
     localization_.setMissingTextPolicy(

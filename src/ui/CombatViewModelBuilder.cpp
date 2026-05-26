@@ -1,6 +1,5 @@
 #include "CombatViewModelBuilder.hpp"
 
-#include "cards/CardInstance.hpp"
 #include "statuses/StatusType.hpp"
 
 #include <algorithm>
@@ -36,90 +35,6 @@ std::string intentLabel(const EnemyIntent& intent) {
 
     return "Unknown";
 }
-
-bool isStanceStatus(const std::string& id) {
-    return id == "stance_flame" || id == "stance_ash" || id == "stance_smoke";
-}
-
-std::string droneName(const std::string& type) {
-    if (type == "drone_striker") {
-        return "Striker";
-    }
-
-    if (type == "drone_guardian") {
-        return "Guardian";
-    }
-
-    if (type == "drone_bomber") {
-        return "Bomber";
-    }
-
-    if (type.empty()) {
-        return "Empty";
-    }
-
-    return type;
-}
-
-std::string droneDescription(const std::string& type) {
-    if (type == "drone_striker") {
-        return "Deals 3 damage to the first enemy at end of turn.";
-    }
-
-    if (type == "drone_guardian") {
-        return "Grants 4 block at end of turn.";
-    }
-
-    if (type == "drone_bomber") {
-        return "When used, deals 8 damage to all enemies.";
-    }
-
-    if (type.empty()) {
-        return "Empty drone slot.";
-    }
-
-    return "Unknown drone.";
-}
-
-bool hasDroneActor(const CombatState& state) {
-    for (const CombatEntity& player : state.players) {
-        if (player.definitionId == "drone_cyborg") {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-template <typename Resources>
-auto actorEnergyImpl(const Resources& resources, const EntityId owner, int) -> decltype(resources.energyFor(owner)) {
-    return resources.energyFor(owner);
-}
-
-template <typename Resources>
-auto actorEnergyImpl(const Resources& resources, const EntityId owner, long) -> decltype(resources.energy(owner)) {
-    return resources.energy(owner);
-}
-
-template <typename Resources>
-int actorEnergy(const Resources& resources, const EntityId owner) {
-    return actorEnergyImpl(resources, owner, 0);
-}
-
-template <typename Resources>
-auto actorMaxEnergyImpl(const Resources& resources, const EntityId owner, int) -> decltype(resources.maxEnergyFor(owner)) {
-    return resources.maxEnergyFor(owner);
-}
-
-template <typename Resources>
-auto actorMaxEnergyImpl(const Resources& resources, const EntityId owner, long) -> decltype(resources.maxEnergy(owner)) {
-    return resources.maxEnergy(owner);
-}
-
-template <typename Resources>
-int actorMaxEnergy(const Resources& resources, const EntityId owner) {
-    return actorMaxEnergyImpl(resources, owner, 0);
-}
 }
 
 CombatViewModelBuilder::CombatViewModelBuilder(
@@ -133,9 +48,24 @@ CombatViewModelBuilder::CombatViewModelBuilder(
 
 CombatViewModel CombatViewModelBuilder::build(
     const CombatState& state,
-    const EntityId fallbackSource,
+    const EntityId source,
+    const std::optional<EntityId> previewTarget
+) const {
+    return build(
+        state,
+        source,
+        previewTarget,
+        [source](const CardInstance&) {
+            return source;
+        }
+    );
+}
+
+CombatViewModel CombatViewModelBuilder::build(
+    const CombatState& state,
+    const EntityId source,
     const std::optional<EntityId> previewTarget,
-    const std::function<EntityId(const CardInstance&)>& cardSourceResolver
+    const std::function<EntityId(const CardInstance&)>& sourceForCard
 ) const {
     CombatViewModel model;
     model.phase = state.phase;
@@ -155,18 +85,8 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.currentHp = player.health.current();
         playerModel.maxHp = player.health.maximum();
         playerModel.block = player.block;
-        playerModel.energy = actorEnergy(state.resources, player.id);
-        playerModel.maxEnergy = actorMaxEnergy(state.resources, player.id);
         playerModel.statuses = buildStatuses(player.statuses);
         playerModel.alive = player.isAlive();
-
-        for (const StatusViewModel& status : playerModel.statuses) {
-            if (isStanceStatus(status.id)) {
-                playerModel.stanceName = status.name;
-                break;
-            }
-        }
-
         model.players.push_back(std::move(playerModel));
     }
 
@@ -183,7 +103,7 @@ CombatViewModel CombatViewModelBuilder::build(
             cardViewModelBuilder_.build(
                 state,
                 card.instanceId,
-                cardSourceResolver ? cardSourceResolver(card) : fallbackSource,
+                sourceForCard(card),
                 previewTarget
             )
         );
@@ -218,44 +138,8 @@ CombatViewModel CombatViewModelBuilder::build(
         model.enemies.push_back(std::move(enemyModel));
     }
 
-    if (hasDroneActor(state) || !state.droneSlots.empty()) {
-        const std::size_t slotCount = std::max<std::size_t>(state.maxDroneSlots, 3);
-        model.droneSlots.reserve(slotCount);
-
-        for (std::size_t i = 0; i < slotCount; ++i) {
-            DroneSlotViewModel slot;
-            if (i < state.droneSlots.size()) {
-                slot.filled = true;
-                slot.type = state.droneSlots[i].type;
-                slot.name = droneName(slot.type);
-                slot.description = droneDescription(slot.type);
-            } else {
-                slot.filled = false;
-                slot.name = "Empty";
-                slot.description = "Empty drone slot.";
-            }
-
-            model.droneSlots.push_back(std::move(slot));
-        }
-    }
-
     model.recentLogEntries = recentLogEntries(state, 6);
     return model;
-}
-
-CombatViewModel CombatViewModelBuilder::build(
-    const CombatState& state,
-    const EntityId fallbackSource,
-    const std::optional<EntityId> previewTarget
-) const {
-    return build(
-        state,
-        fallbackSource,
-        previewTarget,
-        [fallbackSource](const CardInstance&) {
-            return fallbackSource;
-        }
-    );
 }
 
 std::vector<StatusViewModel> CombatViewModelBuilder::buildStatuses(

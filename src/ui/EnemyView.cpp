@@ -55,7 +55,7 @@ void EnemyView::render(const Font* font, const bool hovered) const {
     DrawTextEx(*font, hpText.c_str(), Vector2{position_.x + 18.f, position_.y + size_.y - 38.f}, 14.f, 1.f, WHITE);
 
     if (model_.block > 0) {
-        const std::string blockText = "Block: " + std::to_string(model_.block);
+        const std::string blockText = model_.blockLabel + ": " + std::to_string(model_.block);
         DrawTextEx(*font, blockText.c_str(), Vector2{position_.x + 14.f, position_.y + 68.f}, 15.f, 1.f, Color{180, 215, 255, 255});
     }
 

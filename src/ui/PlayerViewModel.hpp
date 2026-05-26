@@ -15,10 +15,7 @@ struct PlayerViewModel {
     int maxHp = 1;
     int block = 0;
 
-    int energy = 0;
-    int maxEnergy = 0;
-
-    std::string stanceName;
+    std::string blockLabel = "Block";
 
     std::vector<StatusViewModel> statuses;
 

@@ -130,15 +130,15 @@ void CombatView::render(const Font* font) const {
 
     if (font != nullptr) {
         const std::string energyText =
-            "Turn: " + std::to_string(model_.turn) +
-            "   " + phaseText(model_.phase) +
-            "   Total energy: " + std::to_string(model_.energy) + "/" + std::to_string(model_.maxEnergy) +
-            "   Draw: " + std::to_string(model_.drawPileSize) +
-            "   Discard: " + std::to_string(model_.discardPileSize) +
-            "   Exhaust: " + std::to_string(model_.exhaustPileSize);
+            model_.turnLabel + ": " + std::to_string(model_.turn) +
+            "   " + model_.phaseText +
+            "   " + model_.totalEnergyLabel + ": " + std::to_string(model_.energy) + "/" + std::to_string(model_.maxEnergy) +
+            "   " + model_.drawPileLabel + ": " + std::to_string(model_.drawPileSize) +
+            "   " + model_.discardPileLabel + ": " + std::to_string(model_.discardPileSize) +
+            "   " + model_.exhaustPileLabel + ": " + std::to_string(model_.exhaustPileSize);
 
         DrawTextEx(*font, energyText.c_str(), Vector2{24.f, 20.f}, 18.f, 1.f, WHITE);
-        DrawTextEx(*font, "End Turn", Vector2{endTurnBounds.x + 30.f, endTurnBounds.y + 18.f}, 18.f, 1.f, WHITE);
+        DrawTextEx(*font, model_.endTurnLabel.c_str(), Vector2{endTurnBounds.x + 24.f, endTurnBounds.y + 18.f}, 18.f, 1.f, WHITE);
 
         for (std::size_t i = 0; i < model_.relics.size(); ++i) {
             const RelicViewModel& relic = model_.relics[i];
@@ -164,7 +164,7 @@ void CombatView::render(const Font* font) const {
             DrawRectangleRounded(bounds, 0.22f, 6, fill);
             DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
 
-            const std::string text = consumable.filled ? shorten(consumable.name, 12) : "Empty";
+            const std::string text = consumable.filled ? shorten(consumable.name, 12) : model_.emptyLabel;
             DrawTextEx(*font, text.c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{220, 235, 245, 255});
         }
 
@@ -341,7 +341,7 @@ void CombatView::renderDronePanel(const Font* font) const {
     const float x = static_cast<float>(GetScreenWidth()) * 0.5f - totalWidth * 0.5f;
     const float y = 82.f;
 
-    DrawTextEx(*font, "Drone slots", Vector2{x, y - 22.f}, 14.f, 1.f, Color{170, 220, 230, 255});
+    DrawTextEx(*font, model_.droneSlotsLabel.c_str(), Vector2{x, y - 22.f}, 14.f, 1.f, Color{170, 220, 230, 255});
 
     for (std::size_t i = 0; i < model_.droneSlots.size(); ++i) {
         const DroneSlotViewModel& slot = model_.droneSlots[i];

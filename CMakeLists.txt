@@ -352,6 +352,10 @@ target_link_libraries(i_dont_know_how_to_name_this_game PRIVATE
 )
 
 add_custom_command(TARGET i_dont_know_how_to_name_this_game POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove_directory
+        $<TARGET_FILE_DIR:i_dont_know_how_to_name_this_game>/config
+    COMMAND ${CMAKE_COMMAND} -E remove_directory
+        $<TARGET_FILE_DIR:i_dont_know_how_to_name_this_game>/data
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/config
         $<TARGET_FILE_DIR:i_dont_know_how_to_name_this_game>/config

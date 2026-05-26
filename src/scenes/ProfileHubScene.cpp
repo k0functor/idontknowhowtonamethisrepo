@@ -175,9 +175,9 @@ void ProfileHubScene::render() const {
         BasicUi::drawCenteredText(font_, localization_.get(archetype.shortDescriptionTextId), Rectangle{characterPanel.x + 50.f, characterPanel.y + 100.f, characterPanel.width - 100.f, 60.f}, 20.f, Color{190, 198, 220, 255});
 
         DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 92.f, Color{75, 79, 96, 255});
-        BasicUi::drawCenteredText(font_, "portrait", Rectangle{characterPanel.x, characterPanel.y + 240.f, characterPanel.width, 40.f}, 18.f, Color{160, 166, 190, 255});
+        BasicUi::drawCenteredText(font_, localization_.get(TextId("ui.portrait_placeholder")), Rectangle{characterPanel.x, characterPanel.y + 240.f, characterPanel.width, 40.f}, 18.f, Color{160, 166, 190, 255});
 
-        BasicUi::drawCenteredText(font_, "Space — подробности", Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, Color{220, 220, 235, 255});
+        BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.details_hint")), Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, Color{220, 220, 235, 255});
     }
 
     BasicUi::drawButton(font_, layout.startButton, "В путь", mouse, !archetypes_.empty());
@@ -187,7 +187,7 @@ void ProfileHubScene::render() const {
 
     BasicUi::drawCenteredText(
         font_,
-        "← / → — сменить архетип    Space — подробности",
+        localization_.get(TextId("profile_hub.navigation_hint")),
         Rectangle{characterPanel.x, characterPanel.y + characterPanel.height + 12.f, characterPanel.width, 28.f},
         18.f,
         Color{165, 172, 195, 255}

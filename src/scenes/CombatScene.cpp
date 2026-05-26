@@ -100,15 +100,10 @@ std::vector<std::string> enemyIdsForNode(
             return chooseEncounter(bossEncounters(), random);
 
         case RunMapNodeType::Combat:
-            return chooseEncounter(normalEncounters(), random);
-
-        case RunMapNodeType::Chest:
         case RunMapNodeType::Event:
         case RunMapNodeType::Shop:
         case RunMapNodeType::Rest:
-            return {};
-        default:
-            throw std::runtime_error("Unknown run state");
+            return chooseEncounter(normalEncounters(), random);
     }
 
     return chooseEncounter(normalEncounters(), random);
@@ -631,45 +626,6 @@ void CombatScene::renderInspectOverlay() const {
         }
 
         inspectPanelView_.render(uiFont_, panel, bounds);
-        return;
-    }
-
-    if (!selectedCardId_.has_value() && !draggedCardId_.has_value()) {
-        const std::optional<PlayerViewModel> playerModel = hoveredPlayerViewModel();
-        if (playerModel.has_value()) {
-            const InspectPanelModel panel = inspectModelBuilder_.buildPlayer(*playerModel);
-
-            constexpr float gap = 12.f;
-            constexpr float screenMargin = 18.f;
-            constexpr float preferredWidth = 320.f;
-            constexpr float minWidth = 240.f;
-
-            const float screenWidth = static_cast<float>(GetScreenWidth());
-            const float screenHeight = static_cast<float>(GetScreenHeight());
-
-            Rectangle bounds{
-                screenMargin,
-                94.f,
-                preferredWidth,
-                std::min(330.f, screenHeight - 140.f)
-            };
-
-            const std::optional<Rectangle> playerBounds = view_.hoveredPlayerBounds();
-            if (playerBounds.has_value()) {
-                const float rightX = playerBounds->x + playerBounds->width + gap;
-                const float availableRightWidth = screenWidth - rightX - screenMargin;
-
-                bounds.x = rightX;
-                bounds.width = std::clamp(availableRightWidth, minWidth, preferredWidth);
-                bounds.y = std::clamp(playerBounds->y, 82.f, screenHeight - bounds.height - screenMargin);
-
-                if (bounds.x + bounds.width > screenWidth - screenMargin) {
-                    bounds.x = std::max(screenMargin, playerBounds->x - bounds.width - gap);
-                }
-            }
-
-            inspectPanelView_.render(uiFont_, panel, bounds);
-        }
     }
 }
 
@@ -681,20 +637,6 @@ std::optional<EnemyViewModel> CombatScene::hoveredEnemyViewModel() const {
     for (const EnemyViewModel& enemy : view_.model().enemies) {
         if (enemy.entityId == *view_.hoveredEnemyId()) {
             return enemy;
-        }
-    }
-
-    return std::nullopt;
-}
-
-std::optional<PlayerViewModel> CombatScene::hoveredPlayerViewModel() const {
-    if (!view_.hoveredPlayerId().has_value()) {
-        return std::nullopt;
-    }
-
-    for (const PlayerViewModel& player : view_.model().players) {
-        if (player.entityId == *view_.hoveredPlayerId()) {
-            return player;
         }
     }
 

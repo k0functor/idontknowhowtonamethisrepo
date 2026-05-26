@@ -14,9 +14,9 @@ public:
 
     bool contains(Vector2 worldPosition) const;
     void render(const Font* font, bool hovered) const;
+    Rectangle bounds() const;
 
 private:
-    Rectangle bounds() const;
 
 private:
     PlayerViewModel model_;

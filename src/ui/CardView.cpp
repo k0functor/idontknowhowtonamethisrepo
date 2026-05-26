@@ -274,7 +274,14 @@ void CardView::render(const Font* font) const {
 }
 
 bool CardView::contains(const Vector2 worldPosition) const {
-    const Vector2 local = worldToLocal(worldPosition);
+    return containsAtTransform(worldPosition, currentTransform_);
+}
+
+bool CardView::containsAtTransform(
+    const Vector2 worldPosition,
+    const CardTransform& transform
+) const {
+    const Vector2 local = worldToLocalUsingTransform(worldPosition, transform);
     const Vector2 cardSize = size();
 
     return local.x >= -cardSize.x * 0.5f &&
@@ -308,13 +315,20 @@ Vector2 CardView::localToWorld(const Vector2 localPosition) const {
 }
 
 Vector2 CardView::worldToLocal(const Vector2 worldPosition) const {
-    const float radians = -currentTransform_.rotationDegrees * DEG2RAD;
+    return worldToLocalUsingTransform(worldPosition, currentTransform_);
+}
+
+Vector2 CardView::worldToLocalUsingTransform(
+    const Vector2 worldPosition,
+    const CardTransform& transform
+) {
+    const float radians = -transform.rotationDegrees * DEG2RAD;
     const float cosValue = std::cos(radians);
     const float sinValue = std::sin(radians);
 
     const Vector2 translated{
-        worldPosition.x - currentTransform_.position.x,
-        worldPosition.y - currentTransform_.position.y
+        worldPosition.x - transform.position.x,
+        worldPosition.y - transform.position.y
     };
 
     const Vector2 unrotated{
@@ -323,8 +337,8 @@ Vector2 CardView::worldToLocal(const Vector2 worldPosition) const {
     };
 
     return Vector2{
-        currentTransform_.scale.x == 0.f ? 0.f : unrotated.x / currentTransform_.scale.x,
-        currentTransform_.scale.y == 0.f ? 0.f : unrotated.y / currentTransform_.scale.y
+        transform.scale.x == 0.f ? 0.f : unrotated.x / transform.scale.x,
+        transform.scale.y == 0.f ? 0.f : unrotated.y / transform.scale.y
     };
 }
 

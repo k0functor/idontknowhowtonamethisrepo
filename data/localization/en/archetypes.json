@@ -25,6 +25,7 @@
   "archetype.bone_merchant.details_description": "This archetype is built around economy. It starts with more gold and earns more money, but deck growth depends heavily on shops and special rest options.",
   "archetype.bone_merchant.name": "Bone Merchant",
   "archetype.bone_merchant.short_description": "Gets new cards mostly through purchases.",
+  "archetype.bone_merchant.strength.control": "Many cards control draw, energy and enemy Vulnerable.",
   "archetype.bone_merchant.strength.gold_income": "Gains 25% more gold after combat.",
   "archetype.bone_merchant.strength.rest_shop": "At rest sites, will be able to buy 2 cards from 5 offered cards.",
   "archetype.bone_merchant.unique_mechanic": "Normal combats grant 25% more gold but no card rewards. At rest sites, this archetype will be able to open a five-card offer and buy two cards. Part of this behavior is already handled in rewards; the rest will attach through mechanic_id.",
@@ -54,6 +55,7 @@
   "archetype.sadist_masochist.details_description": "This archetype creates a party with two separate actors. Each has their own health, energy, relic pool, and future statuses. No main/support split, just two bodies and twice the ways to cause trouble.",
   "archetype.sadist_masochist.name": "Sadist & Masochist",
   "archetype.sadist_masochist.short_description": "One selection, two separate combat actors.",
+  "archetype.sadist_masochist.strength.pain_engine": "Pain between characters turns into Strength and Dexterity.",
   "archetype.sadist_masochist.strength.split_resources": "Split resources create more tactical windows.",
   "archetype.sadist_masochist.strength.two_bodies": "Two separate bodies allow more flexible threat distribution.",
   "archetype.sadist_masochist.unique_mechanic": "Sadist and Masochist exist as two separate actors. Their resources and health are split. Later, cards and relics can target one of them or their interaction.",
@@ -62,7 +64,11 @@
   "archetype.wanderer.details_description": "The Wanderer does not change the core rules. Regular energy, regular rewards, and a readable starting deck.",
   "archetype.wanderer.name": "Wanderer",
   "archetype.wanderer.short_description": "A basic archetype for the first proper run.",
+  "archetype.wanderer.strength.dice": "Many dice cards: values vary, but preview shows the range.",
   "archetype.wanderer.strength.flexible": "Flexible starting deck with no harsh weakness.",
   "archetype.wanderer.unique_mechanic": "No special mechanic. This archetype is a baseline for balance and onboarding.",
-  "archetype.wanderer.weakness.no_specialization": "No strong specialization or explosive scaling."
+  "archetype.wanderer.weakness.no_specialization": "No strong specialization or explosive scaling.",
+  "profile_hub.details_hint": "Space - details",
+  "profile_hub.navigation_hint": "Left / Right or A / D - change character",
+  "ui.portrait_placeholder": "Portrait coming later"
 }

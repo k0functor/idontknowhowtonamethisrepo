@@ -16,7 +16,6 @@ public:
     );
 
     InspectPanelModel buildEnemy(const EnemyViewModel& enemy) const;
-
     InspectPanelModel buildPlayer(const PlayerViewModel& player) const;
 
     InspectPanelModel buildCard(

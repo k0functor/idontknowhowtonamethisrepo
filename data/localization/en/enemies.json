@@ -5,9 +5,22 @@
   "enemy.glass_collector.name": "Glass Collector",
   "enemy.grave_knight.name": "Grave Knight",
   "enemy.grave_lamp.name": "Grave Lamp",
+  "enemy.intent.attack": "Attack {amount}",
+  "enemy.intent.block": "Block {amount}",
+  "enemy.intent.buff": "Buff",
+  "enemy.intent.debuff": "Debuff",
+  "enemy.intent.pending": "Preparing",
+  "enemy.intent.special": "Special action",
+  "enemy.intent.unknown": "Unknown",
   "enemy.knife_acolyte.name": "Knife Acolyte",
   "enemy.plague_spider.name": "Plague Spider",
   "enemy.rat_cultist.name": "Rat Cultist",
   "enemy.shield_bearer.name": "Shield Bearer",
-  "enemy.training_dummy.name": "Training Dummy"
+  "enemy.training_dummy.name": "Training Dummy",
+  "inspect.enemy.boss.name": "Boss",
+  "inspect.enemy.elite.name": "Elite enemy",
+  "inspect.enemy.intent": "Intent",
+  "inspect.enemy.no_details.description": "This enemy currently has no visible intent details or statuses.",
+  "inspect.enemy.no_details.name": "No visible effects",
+  "inspect.enemy.normal.name": "Normal enemy"
 }

@@ -176,6 +176,8 @@ void HandView::updateTargets() {
 }
 
 std::optional<std::size_t> HandView::findHoveredIndex(const Vector2 mousePosition) const {
+    const std::vector<CardTransform> baseTransforms = layout_.calculateBaseTransforms(cards_.size());
+
     std::vector<std::size_t> order(cards_.size());
     std::iota(order.begin(), order.end(), 0);
 
@@ -184,7 +186,7 @@ std::optional<std::size_t> HandView::findHoveredIndex(const Vector2 mousePositio
     });
 
     for (const std::size_t index : order) {
-        if (cards_[index].contains(mousePosition)) {
+        if (index < baseTransforms.size() && cards_[index].containsAtTransform(mousePosition, baseTransforms[index])) {
             return index;
         }
     }

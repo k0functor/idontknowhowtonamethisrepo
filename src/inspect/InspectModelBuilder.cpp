@@ -60,40 +60,13 @@ InspectPanelModel InspectModelBuilder::buildEnemy(const EnemyViewModel& enemy) c
     return model;
 }
 
-
 InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player) const {
     InspectPanelModel model;
     model.header = player.name;
 
-    std::ostringstream summary;
-    summary << "HP " << player.currentHp << "/" << player.maxHp;
-
-    if (player.block > 0) {
-        summary << " | "
-                << rawTextOrFallback("inspect.combat.block.name", "Block")
-                << " " << player.block;
-    }
-
-    summary << " | "
-            << rawTextOrFallback("inspect.player.energy.name", "Energy")
-            << " " << player.energy << "/" << player.maxEnergy;
-
-    model.subheader = summary.str();
-
     model.entries.push_back(InspectEntry{
-        rawTextOrFallback("inspect.player.health.name", "Health"),
-        rawTextOrFallback(
-            "inspect.player.health.description",
-            "When HP reaches 0, this actor is defeated."
-        )
-    });
-
-    model.entries.push_back(InspectEntry{
-        rawTextOrFallback("inspect.player.energy.name", "Energy"),
-        rawTextOrFallback(
-            "inspect.player.energy.description",
-            "Energy is spent to play cards belonging to this actor. It refreshes at the start of your turn."
-        )
+        rawTextOrFallback("inspect.player.hp.name", "HP"),
+        std::to_string(player.currentHp) + "/" + std::to_string(player.maxHp)
     });
 
     if (player.block > 0) {
@@ -101,12 +74,11 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
             rawTextOrFallback("inspect.combat.block.name", "Block"),
             rawTextOrFallback(
                 "inspect.combat.block.description",
-                "Prevents incoming damage before HP is lost. Usually resets at the start of the next turn."
+                "Prevents incoming damage before HP is lost."
             )
         });
     }
 
-    bool hasVisibleStatus = false;
     for (const StatusViewModel& status : player.statuses) {
         std::string title = status.name;
         if (status.amount > 0) {
@@ -117,15 +89,14 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
             title,
             statusDescription(status.id)
         });
-        hasVisibleStatus = true;
     }
 
-    if (!hasVisibleStatus && player.block <= 0) {
+    if (model.entries.size() == 1) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.player.no_effects.name", "No active effects"),
             rawTextOrFallback(
                 "inspect.player.no_effects.description",
-                "This actor currently has no statuses, stance effects, or temporary combat modifiers."
+                "This actor currently has no active statuses or special visible effects."
             )
         });
     }
@@ -269,7 +240,7 @@ std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) c
         out << " " << statusName(*effect.statusId);
     }
 
-    out << " → " << targetText(effect.target);
+    out << " -> " << targetText(effect.target);
     return out.str();
 }
 

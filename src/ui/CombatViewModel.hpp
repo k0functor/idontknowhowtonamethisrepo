@@ -2,10 +2,10 @@
 
 #include "combat/CombatPhase.hpp"
 #include "ui/CardViewModel.hpp"
+#include "ui/ConsumableViewModel.hpp"
 #include "ui/EnemyViewModel.hpp"
 #include "ui/PlayerViewModel.hpp"
 #include "ui/RelicViewModel.hpp"
-#include "ui/ConsumableViewModel.hpp"
 
 #include <string>
 #include <vector>
@@ -31,6 +31,17 @@ struct CombatViewModel {
     int drawPileSize = 0;
     int discardPileSize = 0;
     int exhaustPileSize = 0;
+
+    std::string turnLabel = "Turn";
+    std::string phaseText = "Not started";
+    std::string energyLabel = "Energy";
+    std::string totalEnergyLabel = "Total energy";
+    std::string drawPileLabel = "Draw";
+    std::string discardPileLabel = "Discard";
+    std::string exhaustPileLabel = "Exhaust";
+    std::string endTurnLabel = "End Turn";
+    std::string emptyLabel = "Empty";
+    std::string droneSlotsLabel = "Drone slots";
 
     bool canEndTurn = false;
 

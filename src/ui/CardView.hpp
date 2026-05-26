@@ -22,6 +22,7 @@ public:
     void render(const Font* font) const;
 
     bool contains(Vector2 worldPosition) const;
+    bool containsAtTransform(Vector2 worldPosition, const CardTransform& transform) const;
 
     int zIndex() const;
 
@@ -30,6 +31,7 @@ public:
 private:
     Vector2 localToWorld(Vector2 localPosition) const;
     Vector2 worldToLocal(Vector2 worldPosition) const;
+    static Vector2 worldToLocalUsingTransform(Vector2 worldPosition, const CardTransform& transform);
 
     static float approach(float current, float target, float alpha);
 
