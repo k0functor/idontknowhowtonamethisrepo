@@ -85,6 +85,10 @@ void TurnSystem::refreshEnemyIntents(CombatState& state, Random& random) const {
     enemyMoveSelector_.refreshIntents(state, enemyDatabase_, random);
 }
 
+void TurnSystem::refreshEnemyIntentValues(CombatState& state) const {
+    enemyMoveSelector_.refreshIntentValues(state, enemyDatabase_);
+}
+
 bool TurnSystem::updateCombatResult(CombatState& state) const {
     if (state.aliveEnemyIds().empty()) {
         state.phase = CombatPhase::Won;

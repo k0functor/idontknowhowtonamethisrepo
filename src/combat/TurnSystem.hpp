@@ -28,6 +28,7 @@ public:
     void startCombat(CombatState& state, Random& random) const;
     void endPlayerTurn(CombatState& state, Random& random) const;
     void refreshEnemyIntents(CombatState& state, Random& random) const;
+    void refreshEnemyIntentValues(CombatState& state) const;
 
 private:
     bool updateCombatResult(CombatState& state) const;

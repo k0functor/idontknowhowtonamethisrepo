@@ -13,6 +13,7 @@ struct EffectPreview {
     EffectTarget target = EffectTarget::SingleEnemy;
 
     PreviewValue value;
+    int repeatCount = 1;
     std::optional<DamagePreview> damage;
 
     std::optional<std::string> statusId;

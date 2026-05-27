@@ -59,6 +59,59 @@ std::vector<EffectDefinition> parseEffects(
 
     return effects;
 }
+
+
+CardUpgradeDefinition parseUpgrade(
+    const JsonReader& reader,
+    const std::filesystem::path& sourcePath
+) {
+    CardUpgradeDefinition upgrade;
+
+    if (!reader.has("upgrade")) {
+        return upgrade;
+    }
+
+    const Json& json = reader.requiredObject("upgrade");
+    JsonReader upgradeReader(json, sourcePath);
+
+    if (upgradeReader.has("name")) {
+        upgrade.nameTextId = TextId(upgradeReader.requiredString("name"));
+    }
+    if (upgradeReader.has("description")) {
+        upgrade.descriptionTextId = TextId(upgradeReader.requiredString("description"));
+    }
+    if (upgradeReader.has("energy_cost")) {
+        upgrade.energyCost = upgradeReader.requiredInt("energy_cost");
+    }
+    if (upgradeReader.has("gold_cost")) {
+        upgrade.goldCost = upgradeReader.requiredInt("gold_cost");
+    }
+    if (upgradeReader.has("keywords")) {
+        upgrade.keywords = parseKeywords(upgradeReader);
+    }
+    if (upgradeReader.has("dice_corruption")) {
+        upgrade.diceCorruption = parseDiceCorruption(upgradeReader, sourcePath);
+    }
+    if (upgradeReader.has("effects")) {
+        upgrade.effects = parseEffects(upgradeReader, sourcePath);
+    }
+
+    if (upgrade.energyCost.has_value() && *upgrade.energyCost < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() +
+            "': card upgrade energy_cost must not be negative"
+        );
+    }
+
+    if (upgrade.goldCost.has_value() && *upgrade.goldCost < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() +
+            "': card upgrade gold_cost must not be negative"
+        );
+    }
+
+    return upgrade;
+}
 }
 
 CardDefinition CardDefinitionParser::parse(
@@ -98,6 +151,7 @@ CardDefinition CardDefinitionParser::parse(
     definition.keywords = parseKeywords(reader);
     definition.diceCorruption = parseDiceCorruption(reader, sourcePath);
     definition.effects = parseEffects(reader, sourcePath);
+    definition.upgrade = parseUpgrade(reader, sourcePath);
 
     if (definition.effects.empty()) {
         throw std::runtime_error(

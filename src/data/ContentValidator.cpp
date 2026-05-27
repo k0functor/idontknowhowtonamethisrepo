@@ -74,6 +74,9 @@ void ContentValidator::validate(const ContentRegistry& content) {
 
         const std::string owner = "Card '" + card->id.value + "'";
         validateEffectList(errors, content, owner, card->effects);
+        if (card->upgrade.effects.has_value()) {
+            validateEffectList(errors, content, owner + " upgrade", *card->upgrade.effects);
+        }
 
         if (!card->ownerActorId.empty() && !content.actors().contains(PlayerActorId(card->ownerActorId))) {
             addError(errors, owner + " references unknown owner actor '" + card->ownerActorId + "'");

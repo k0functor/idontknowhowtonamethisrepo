@@ -7,8 +7,7 @@
 
 class CardInstanceFactory {
 public:
-    CardInstance create(const CardId& definitionId);
-
+    CardInstance create(const CardId& definitionId, bool upgraded = false);
     void reset(std::uint64_t nextId = 1);
 
 private:

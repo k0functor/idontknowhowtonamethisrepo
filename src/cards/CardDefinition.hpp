@@ -8,8 +8,21 @@
 #include "effects/EffectDefinition.hpp"
 #include "localization/TextId.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
+
+struct CardUpgradeDefinition {
+    std::optional<TextId> nameTextId;
+    std::optional<TextId> descriptionTextId;
+    std::optional<int> energyCost;
+    std::optional<int> goldCost;
+    std::optional<std::vector<CardKeyword>> keywords;
+    std::optional<DiceCorruption> diceCorruption;
+    std::optional<std::vector<EffectDefinition>> effects;
+
+    bool empty() const;
+};
 
 struct CardDefinition {
     CardId id;
@@ -33,4 +46,6 @@ struct CardDefinition {
     DiceCorruption diceCorruption;
 
     std::vector<EffectDefinition> effects;
+
+    CardUpgradeDefinition upgrade;
 };

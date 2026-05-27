@@ -120,5 +120,15 @@
   "combat.log.lose_stress": "Снят стресс",
   "combat.log.stress_breakdown": "Срыв от стресса",
   "combat.log.stress_resolve": "Проверка решимости",
-  "combat.log.stress_collapse": "Смерть от стресса"
+  "combat.log.stress_collapse": "Смерть от стресса",
+  "profile_hub.starting_resources": "Стартовые ресурсы",
+  "profile_hub.gold_value": "Золото: {gold}",
+  "profile_hub.party": "Состав",
+  "profile_hub.starting_relics": "Стартовая реликвия",
+  "profile_hub.none_bullet": "• нет",
+  "profile_hub.starting_deck": "Стартовая колода",
+  "profile_hub.strengths": "Сильные стороны",
+  "profile_hub.weaknesses": "Слабые стороны",
+  "profile_hub.unique_mechanic": "Уникальная механика",
+  "ui.close": "Закрыть"
 }

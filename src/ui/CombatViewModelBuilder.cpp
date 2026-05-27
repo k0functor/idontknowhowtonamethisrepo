@@ -71,11 +71,18 @@ std::string valueRangeText(const EnemyIntent& intent) {
         return {};
     }
 
+    std::string value;
     if (intent.valueMin == intent.valueMax) {
-        return std::to_string(intent.valueMax);
+        value = std::to_string(intent.valueMax);
+    } else {
+        value = std::to_string(intent.valueMin) + "-" + std::to_string(intent.valueMax);
     }
 
-    return std::to_string(intent.valueMin) + "-" + std::to_string(intent.valueMax);
+    if (intent.hitCount > 1) {
+        value += " x" + std::to_string(intent.hitCount);
+    }
+
+    return value;
 }
 
 std::string intentLabel(

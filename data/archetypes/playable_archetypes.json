@@ -9,11 +9,11 @@
       "rusted_knight"
     ],
     "starting_deck": [
-      "confessor_shield_bash",
-      "confessor_shield_bash",
-      "confessor_bastion",
-      "confessor_bastion",
-      "confessor_rebuke",
+      "rusted_shield_bash",
+      "rusted_shield_bash",
+      "rusted_bastion",
+      "rusted_punishing_swing",
+      "rusted_hold_line",
       "defend",
       "strike"
     ],

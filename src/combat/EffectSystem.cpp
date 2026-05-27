@@ -96,142 +96,144 @@ void EffectSystem::applyEffect(
     const EffectDefinition& effect,
     const EffectContext& context
 ) const {
-    const ResolvedEffectValue resolvedValue = effectResolver_.resolveForApply(
-        effect.value,
-        context
-    );
+    for (int repeatIndex = 0; repeatIndex < effect.repeatCount; ++repeatIndex) {
+        const ResolvedEffectValue resolvedValue = effectResolver_.resolveForApply(
+            effect.value,
+            context
+        );
 
-    const std::vector<EntityId> targets = targeting_.resolveTargets(
-        state,
-        effect.target,
-        context
-    );
+        const std::vector<EntityId> targets = targeting_.resolveTargets(
+            state,
+            effect.target,
+            context
+        );
 
-    switch (effect.type) {
-        case EffectType::Damage:
-            for (const EntityId target : targets) {
-                damageSystem_.dealDamage(
-                    state,
-                    context.source,
-                    target,
-                    resolvedValue.actual,
-                    context.cardDefinitionId,
-                    context.diceCorruption
-                );
-            }
-            return;
-
-        case EffectType::Block:
-            for (const EntityId target : targets) {
-                blockSystem_.gainBlock(
-                    state,
-                    context.source,
-                    target,
-                    resolvedValue.actual,
-                    context.cardDefinitionId,
-                    context.diceCorruption
-                );
-            }
-            return;
-
-        case EffectType::ApplyStatus:
-            if (!effect.statusId.has_value()) {
-                throw std::runtime_error("apply_status effect requires status id");
-            }
-
-            for (const EntityId target : targets) {
-                statusSystem_.applyStatus(
-                    state,
-                    target,
-                    *effect.statusId,
-                    resolvedValue.actual
-                );
-
-                if (eventBus_ != nullptr) {
-                    GameEvent event;
-                    event.type = GameEventType::StatusApplied;
-                    event.source = context.source;
-                    event.target = target;
-                    event.cardInstanceId = context.cardInstanceId;
-                    event.cardDefinitionId = context.cardDefinitionId;
-                    event.statusId = *effect.statusId;
-                    event.amount = resolvedValue.actual;
-                    event.turn = state.turn;
-                    eventBus_->emit(event);
+        switch (effect.type) {
+            case EffectType::Damage:
+                for (const EntityId target : targets) {
+                    damageSystem_.dealDamage(
+                        state,
+                        context.source,
+                        target,
+                        resolvedValue.actual,
+                        context.cardDefinitionId,
+                        context.diceCorruption
+                    );
                 }
-            }
-            return;
+                continue;
 
-        case EffectType::EnterStance:
-            if (!effect.statusId.has_value()) {
-                throw std::runtime_error("enter_stance effect requires status id");
-            }
+            case EffectType::Block:
+                for (const EntityId target : targets) {
+                    blockSystem_.gainBlock(
+                        state,
+                        context.source,
+                        target,
+                        resolvedValue.actual,
+                        context.cardDefinitionId,
+                        context.diceCorruption
+                    );
+                }
+                continue;
 
-            for (const EntityId target : targets) {
-                CombatEntity& entity = state.entity(target);
-                clearStances(entity);
-                statusSystem_.applyStatus(state, target, *effect.statusId, 1);
-            }
-            return;
+            case EffectType::ApplyStatus:
+                if (!effect.statusId.has_value()) {
+                    throw std::runtime_error("apply_status effect requires status id");
+                }
 
-        case EffectType::SummonDrone:
-            if (!effect.statusId.has_value()) {
-                throw std::runtime_error("summon_drone effect requires drone id in status field");
-            }
+                for (const EntityId target : targets) {
+                    statusSystem_.applyStatus(
+                        state,
+                        target,
+                        *effect.statusId,
+                        resolvedValue.actual
+                    );
 
-            droneSystem_.summonDrone(state, *effect.statusId, context.source, context.random);
-            return;
+                    if (eventBus_ != nullptr) {
+                        GameEvent event;
+                        event.type = GameEventType::StatusApplied;
+                        event.source = context.source;
+                        event.target = target;
+                        event.cardInstanceId = context.cardInstanceId;
+                        event.cardDefinitionId = context.cardDefinitionId;
+                        event.statusId = *effect.statusId;
+                        event.amount = resolvedValue.actual;
+                        event.turn = state.turn;
+                        eventBus_->emit(event);
+                    }
+                }
+                continue;
 
-        case EffectType::UseDrone:
-            droneSystem_.useOldestDrone(state, context.random);
-            return;
+            case EffectType::EnterStance:
+                if (!effect.statusId.has_value()) {
+                    throw std::runtime_error("enter_stance effect requires status id");
+                }
 
-        case EffectType::Heal:
-            for (const EntityId target : targets) {
-                state.entity(target).health.heal(resolvedValue.actual);
-                state.log.add("Heal: " + std::to_string(resolvedValue.actual));
-            }
-            return;
+                for (const EntityId target : targets) {
+                    CombatEntity& entity = state.entity(target);
+                    clearStances(entity);
+                    statusSystem_.applyStatus(state, target, *effect.statusId, 1);
+                }
+                continue;
 
-        case EffectType::DrawCards:
-            drawSystem_.drawCards(
-                state.deck,
-                state.hand,
-                static_cast<std::size_t>(resolvedValue.actual),
-                *context.random
-            );
-            state.log.add("Draw cards: " + std::to_string(resolvedValue.actual));
-            return;
+            case EffectType::SummonDrone:
+                if (!effect.statusId.has_value()) {
+                    throw std::runtime_error("summon_drone effect requires drone id in status field");
+                }
 
-        case EffectType::GainEnergy:
-            energySystem_.gain(state, context.source, resolvedValue.actual);
-            state.log.add("Gain energy: " + std::to_string(resolvedValue.actual));
-            return;
+                droneSystem_.summonDrone(state, *effect.statusId, context.source, context.random);
+                continue;
 
-        case EffectType::LoseHp:
-            for (const EntityId target : targets) {
-                const int hpDamage = state.entity(target).health.takeDamage(resolvedValue.actual);
-                state.log.add("Lose HP: " + std::to_string(hpDamage));
-            }
-            return;
+            case EffectType::UseDrone:
+                droneSystem_.useOldestDrone(state, context.random);
+                continue;
 
-        case EffectType::GainStress:
-            for (const EntityId target : targets) {
-                adjustStress(state, target, resolvedValue.actual, context.random);
-            }
-            return;
+            case EffectType::Heal:
+                for (const EntityId target : targets) {
+                    state.entity(target).health.heal(resolvedValue.actual);
+                    state.log.add("Heal: " + std::to_string(resolvedValue.actual));
+                }
+                continue;
 
-        case EffectType::LoseStress:
-            for (const EntityId target : targets) {
-                adjustStress(state, target, -resolvedValue.actual, context.random);
-            }
-            return;
+            case EffectType::DrawCards:
+                drawSystem_.drawCards(
+                    state.deck,
+                    state.hand,
+                    static_cast<std::size_t>(resolvedValue.actual),
+                    *context.random
+                );
+                state.log.add("Draw cards: " + std::to_string(resolvedValue.actual));
+                continue;
 
-        case EffectType::DiscardCards:
-        case EffectType::LoseEnergy:
-            state.log.add("Effect not implemented yet: " + toString(effect.type));
-            return;
+            case EffectType::GainEnergy:
+                energySystem_.gain(state, context.source, resolvedValue.actual);
+                state.log.add("Gain energy: " + std::to_string(resolvedValue.actual));
+                continue;
+
+            case EffectType::LoseHp:
+                for (const EntityId target : targets) {
+                    const int hpDamage = state.entity(target).health.takeDamage(resolvedValue.actual);
+                    state.log.add("Lose HP: " + std::to_string(hpDamage));
+                }
+                continue;
+
+            case EffectType::GainStress:
+                for (const EntityId target : targets) {
+                    adjustStress(state, target, resolvedValue.actual, context.random);
+                }
+                continue;
+
+            case EffectType::LoseStress:
+                for (const EntityId target : targets) {
+                    adjustStress(state, target, -resolvedValue.actual, context.random);
+                }
+                continue;
+
+            case EffectType::DiscardCards:
+            case EffectType::LoseEnergy:
+                state.log.add("Effect not implemented yet: " + toString(effect.type));
+                continue;
+        }
+
+        throw std::runtime_error("Unknown effect type");
     }
-
-    throw std::runtime_error("Unknown effect type");
 }

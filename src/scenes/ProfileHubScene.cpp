@@ -289,12 +289,12 @@ void ProfileHubScene::renderDetailsModal() const {
     }
 
     y += 18.f;
-    BasicUi::drawText(font_, "Стартовые ресурсы", Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.starting_resources")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
     y += 34.f;
-    BasicUi::drawText(font_, "Золото: " + std::to_string(archetype.startingGold), Vector2{modal.x + 62.f, y}, 19.f, Color{220, 224, 238, 255});
+    BasicUi::drawText(font_, localization_.format(TextId("profile_hub.gold_value"), {{"gold", std::to_string(archetype.startingGold)}}), Vector2{modal.x + 62.f, y}, 19.f, Color{220, 224, 238, 255});
     y += 28.f;
 
-    BasicUi::drawText(font_, "Состав", Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.party")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
     y += 32.f;
     for (const std::string& actorId : archetype.actorDefinitionIds) {
         BasicUi::drawText(font_, "• " + actorName(actorId), Vector2{modal.x + 62.f, y}, 18.f, Color{220, 224, 238, 255});
@@ -302,10 +302,10 @@ void ProfileHubScene::renderDetailsModal() const {
     }
 
     y += 10.f;
-    BasicUi::drawText(font_, "Стартовая реликвия", Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.starting_relics")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
     y += 32.f;
     if (archetype.startingRelicIds.empty()) {
-        BasicUi::drawText(font_, "• нет", Vector2{modal.x + 62.f, y}, 18.f, Color{190, 196, 216, 255});
+        BasicUi::drawText(font_, localization_.get(TextId("profile_hub.none_bullet")), Vector2{modal.x + 62.f, y}, 18.f, Color{190, 196, 216, 255});
         y += 24.f;
     } else {
         for (const std::string& relicId : archetype.startingRelicIds) {
@@ -315,7 +315,7 @@ void ProfileHubScene::renderDetailsModal() const {
     }
 
     y += 10.f;
-    BasicUi::drawText(font_, "Стартовая колода", Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.starting_deck")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
     y += 32.f;
     int shownCards = 0;
     for (const std::string& cardId : archetype.startingDeckCardIds) {
@@ -324,7 +324,7 @@ void ProfileHubScene::renderDetailsModal() const {
     }
     y += 24.f * static_cast<float>(std::min(6, std::max(1, shownCards))) + 18.f;
 
-    BasicUi::drawText(font_, "Сильные стороны", Vector2{modal.x + 40.f, y}, 23.f, Color{180, 235, 190, 255});
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.strengths")), Vector2{modal.x + 40.f, y}, 23.f, Color{180, 235, 190, 255});
     y += 32.f;
     for (const TextId& textId : archetype.strengthTextIds) {
         BasicUi::drawText(font_, "+ " + localization_.get(textId), Vector2{modal.x + 62.f, y}, 17.f, Color{210, 235, 216, 255});
@@ -332,7 +332,7 @@ void ProfileHubScene::renderDetailsModal() const {
     }
 
     y += 10.f;
-    BasicUi::drawText(font_, "Слабые стороны", Vector2{modal.x + 40.f, y}, 23.f, Color{235, 190, 185, 255});
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.weaknesses")), Vector2{modal.x + 40.f, y}, 23.f, Color{235, 190, 185, 255});
     y += 32.f;
     for (const TextId& textId : archetype.weaknessTextIds) {
         BasicUi::drawText(font_, "- " + localization_.get(textId), Vector2{modal.x + 62.f, y}, 17.f, Color{235, 210, 208, 255});
@@ -340,14 +340,14 @@ void ProfileHubScene::renderDetailsModal() const {
     }
 
     y += 10.f;
-    BasicUi::drawText(font_, "Уникальная механика", Vector2{modal.x + 40.f, y}, 23.f, Color{220, 210, 255, 255});
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.unique_mechanic")), Vector2{modal.x + 40.f, y}, 23.f, Color{220, 210, 255, 255});
     y += 32.f;
     for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.uniqueMechanicTextId), 17.f, modal.width - 100.f)) {
         BasicUi::drawText(font_, line, Vector2{modal.x + 62.f, y}, 17.f, Color{220, 224, 238, 255});
         y += 23.f;
     }
 
-    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() * 0.5f - 90.f, GetScreenHeight() - 96.f, 180.f, 48.f}, "Закрыть", GetMousePosition());
+    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() * 0.5f - 90.f, GetScreenHeight() - 96.f, 180.f, 48.f}, localization_.get(TextId("ui.close")), GetMousePosition());
 }
 
 std::string ProfileHubScene::cardName(const std::string& cardId) const {

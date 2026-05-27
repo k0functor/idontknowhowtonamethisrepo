@@ -1,6 +1,7 @@
 #include "CardPlaySystem.hpp"
 
 #include "cards/CardKeyword.hpp"
+#include "cards/CardUpgrade.hpp"
 #include "combat/CardCost.hpp"
 
 #include <algorithm>
@@ -29,7 +30,7 @@ PlayCardResult CardPlaySystem::playCard(
     }
 
     const CardInstance& instanceInHand = state.hand.get(request.cardInstanceId);
-    const CardDefinition& definition = cardDatabase_.get(instanceInHand.definitionId);
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(cardDatabase_.get(instanceInHand.definitionId), instanceInHand.upgraded);
 
     const CardPlayValidationResult validation = validator_.validate(
         state,

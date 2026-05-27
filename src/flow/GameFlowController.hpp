@@ -1,6 +1,7 @@
 #pragma once
 
 #include "archetypes/PlayableArchetypeId.hpp"
+#include "cards/CardId.hpp"
 #include "combat/CombatResult.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
@@ -82,7 +83,7 @@ private:
     void selectDifficulty(DifficultyId difficultyId);
     void startMapNode(int nodeId);
     void restHeal(int nodeId);
-    void restUpgrade(int nodeId);
+    void restUpgrade(int nodeId, CardId cardId);
     void restSkip(int nodeId);
     bool purchaseShopItem(const ShopPurchase& purchase);
     void updatePendingShopState(int nodeId, const ShopState& shopState);

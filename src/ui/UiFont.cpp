@@ -95,6 +95,7 @@ std::vector<int> UiFont::buildCodepoints() {
     codepoints.push_back(0x2019);
     codepoints.push_back(0x201C);
     codepoints.push_back(0x201D);
+    codepoints.push_back(0x2022); // bullet point used by modal lists
     codepoints.push_back(0x2026); // ellipsis
     codepoints.push_back(0x2116); // numero sign
 

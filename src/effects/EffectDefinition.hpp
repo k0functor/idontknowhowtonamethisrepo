@@ -13,5 +13,9 @@ struct EffectDefinition {
 
     EffectValue value = EffectValue::fixed(0);
 
+    // Number of times this effect is applied. Damage repeat_count=4 means four separate hits,
+    // so block, on-hit triggers and future reactive effects see each hit independently.
+    int repeatCount = 1;
+
     std::optional<std::string> statusId;
 };

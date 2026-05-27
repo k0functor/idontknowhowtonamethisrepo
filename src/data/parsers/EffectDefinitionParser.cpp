@@ -3,6 +3,8 @@
 #include "data/JsonReader.hpp"
 #include "data/parsers/EffectValueParser.hpp"
 
+#include <stdexcept>
+
 EffectDefinition EffectDefinitionParser::parse(
     const Json& json,
     const std::filesystem::path& sourcePath
@@ -20,6 +22,18 @@ EffectDefinition EffectDefinitionParser::parse(
         definition.value = EffectValueParser::parse(
             reader.requiredObject("value"),
             sourcePath
+        );
+    }
+
+    if (reader.has("repeat_count")) {
+        definition.repeatCount = reader.requiredInt("repeat_count");
+    } else if (reader.has("times")) {
+        definition.repeatCount = reader.requiredInt("times");
+    }
+
+    if (definition.repeatCount <= 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': effect repeat_count must be positive"
         );
     }
 

@@ -65,8 +65,9 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 7
-            }
+              "amount": 2
+            },
+            "repeat_count": 4
           }
         ]
       },

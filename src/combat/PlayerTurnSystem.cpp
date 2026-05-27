@@ -1,6 +1,7 @@
 #include "PlayerTurnSystem.hpp"
 
 #include "cards/CardKeyword.hpp"
+#include "cards/CardUpgrade.hpp"
 
 #include <algorithm>
 #include <string>
@@ -40,7 +41,7 @@ void PlayerTurnSystem::discardHand(CombatState& state) const {
     state.hand.clear();
 
     for (CardInstance& card : cards) {
-        const CardDefinition& definition = cardDatabase_.get(card.definitionId);
+        const CardDefinition definition = CardUpgrade::effectiveDefinition(cardDatabase_.get(card.definitionId), card.upgraded);
         const bool retains = std::find(
             definition.keywords.begin(),
             definition.keywords.end(),

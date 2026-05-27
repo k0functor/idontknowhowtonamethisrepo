@@ -76,6 +76,7 @@ TextFormatter::Variables CardDescriptionFormatter::defaultVariables() const {
     variables.emplace("weak", "?");
     variables.emplace("free_next_card", "?");
     variables.emplace("value", "?");
+    variables.emplace("times", "?");
 
     return variables;
 }
@@ -85,6 +86,7 @@ void CardDescriptionFormatter::fillVariablesFromStaticEffect(
     const EffectDefinition& effect
 ) const {
     const std::string value = effectValueText(effect.value);
+    variables["times"] = std::to_string(effect.repeatCount);
 
     switch (effect.type) {
         case EffectType::Damage:
@@ -202,6 +204,7 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
         }
 
         const std::string valueText = effectPreview.value.toDisplayString();
+        variables["times"] = std::to_string(effectPreview.repeatCount);
 
         switch (effectPreview.type) {
             case EffectType::Heal:

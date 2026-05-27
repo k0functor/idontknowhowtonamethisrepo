@@ -3,6 +3,7 @@
 #include "actors/PlayerActorDefinition.hpp"
 #include "cards/CardDefinition.hpp"
 #include "cards/CardDescriptionFormatter.hpp"
+#include "cards/CardUpgrade.hpp"
 #include "combat/CombatPhase.hpp"
 #include "effects/EffectTarget.hpp"
 #include "enemies/EnemyInstance.hpp"
@@ -287,6 +288,7 @@ CombatScene::CombatScene(
           damageSystem_,
           blockSystem_
       ),
+      enemyMoveSelector_(modifierSystem_),
       playerTurnSystem_(drawSystem_, content_.cards()),
       enemyTurnSystem_(enemyMoveSelector_, effectSystem_),
       turnSystem_(
@@ -376,6 +378,20 @@ void CombatScene::update(const float deltaSeconds) {
         return;
     }
 
+    if (pileOverlayMode_ != PileOverlayMode::None) {
+        selectedCardId_.reset();
+        draggedCardId_.reset();
+        keyboardTargetId_.reset();
+        inspectedCardId_.reset();
+        lastPreviewTarget_.reset();
+
+        view_.setSelectedCard(std::nullopt);
+        view_.setDraggedCard(std::nullopt, blockedMousePosition());
+        view_.update(deltaSeconds, blockedMousePosition());
+        updatePileOverlay(mousePosition);
+        return;
+    }
+
     if (pendingConsumableIndex_.has_value()) {
         selectedCardId_.reset();
         draggedCardId_.reset();
@@ -430,6 +446,19 @@ void CombatScene::update(const float deltaSeconds) {
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (BasicUi::contains(drawPileButtonBounds(), mousePosition)) {
+            openPileOverlay(PileOverlayMode::DrawPile);
+            return;
+        }
+        if (BasicUi::contains(discardPileButtonBounds(), mousePosition)) {
+            openPileOverlay(PileOverlayMode::DiscardPile);
+            return;
+        }
+        if (BasicUi::contains(exhaustPileButtonBounds(), mousePosition)) {
+            openPileOverlay(PileOverlayMode::ExhaustPile);
+            return;
+        }
+
         handleMousePressed(mousePosition);
         if (relicInspectModal_.isOpen()) {
             selectedCardId_.reset();
@@ -469,6 +498,12 @@ void CombatScene::render() const {
     view_.render(uiFont_.available() ? &uiFont_.font() : nullptr);
 
     if (!combatFinished_) {
+        renderPileButtons();
+        if (pileOverlayMode_ != PileOverlayMode::None) {
+            renderPileOverlay();
+            return;
+        }
+
         if (pendingConsumableIndex_.has_value()) {
             renderConsumableConfirmationModal();
             return;
@@ -548,6 +583,7 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         }
 
         statusSystem_.applyStatus(state_, *target, statusId, amount);
+        turnSystem_.refreshEnemyIntentValues(state_);
         viewModelDirty_ = true;
         output = "Applied status '" + statusId + "' x" + std::to_string(amount) + " to " + side;
         return true;
@@ -695,6 +731,8 @@ void CombatScene::initializeCombat() {
     keyboardTargetId_.reset();
     inspectedCardId_.reset();
     pendingConsumableIndex_.reset();
+    pileOverlayMode_ = PileOverlayMode::None;
+    pileOverlayScrollOffset_ = 0.f;
     relicInspectModal_.close();
     lastPreviewTarget_.reset();
     combatFinished_ = false;
@@ -746,7 +784,12 @@ void CombatScene::initializeCombat() {
             throw std::runtime_error("Run deck contains unknown card id: " + cardId.value);
         }
 
-        state_.deck.drawPile.addTop(cardFactory_.create(cardId));
+        const bool upgraded = std::find(
+            runState_.upgradedCardIds.begin(),
+            runState_.upgradedCardIds.end(),
+            cardId
+        ) != runState_.upgradedCardIds.end();
+        state_.deck.drawPile.addTop(cardFactory_.create(cardId, upgraded));
     }
 
     state_.log.add("Combat started");
@@ -765,6 +808,10 @@ void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) 
         previewTarget,
         [this](const CardInstance& card) { return sourceForCard(card); }
     );
+
+    if (isSadistMasochistParty()) {
+        model.turnOrderLabel = localizedOrFallback(TextId("ui.turn_order.sadist_masochist"), "Turn order: Sadist -> Masochist -> Enemy");
+    }
 
     model.relics = buildRelicViewModels();
     model.droneSlotsLabel = localizedOrFallback(TextId("ui.drone_slots"), "Drone slots");
@@ -931,7 +978,7 @@ void CombatScene::renderInspectOverlay() const {
         const std::optional<CardViewModel> cardModel = inspectedCardViewModel();
         if (cardModel.has_value() && state_.hand.contains(*inspectedCardId_)) {
             const CardInstance& instance = state_.hand.get(*inspectedCardId_);
-            const CardDefinition& definition = content_.cards().get(instance.definitionId);
+            const CardDefinition definition = CardUpgrade::effectiveDefinition(content_.cards().get(instance.definitionId), instance.upgraded);
             const InspectPanelModel panel = inspectModelBuilder_.buildCard(definition, *cardModel);
 
             const float width = std::min(440.f, static_cast<float>(GetScreenWidth()) - 60.f);
@@ -1271,7 +1318,7 @@ std::vector<EntityId> CombatScene::targetCandidatesForCard(const CardInstanceId 
 
     if (cardCanTargetPlayer(cardInstanceId)) {
         const CardInstance& instance = state_.hand.get(cardInstanceId);
-        const CardDefinition& definition = content_.cards().get(instance.definitionId);
+        const CardDefinition definition = CardUpgrade::effectiveDefinition(content_.cards().get(instance.definitionId), instance.upgraded);
         const EntityId source = sourceForCard(cardInstanceId);
 
         bool hasAllyTarget = false;
@@ -1480,6 +1527,9 @@ void CombatScene::tryUseConsumable(const std::size_t index) {
         inspectedCardId_.reset();
         lastPreviewTarget_.reset();
         finalResult_ = combatController_.updateAfterAction(state_);
+        if (finalResult_.outcome == CombatOutcome::Ongoing) {
+            turnSystem_.refreshEnemyIntentValues(state_);
+        }
         viewModelDirty_ = true;
     }
 }
@@ -1654,6 +1704,9 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 
     if (result.played) {
         finalResult_ = combatController_.updateAfterAction(state_);
+        if (finalResult_.outcome == CombatOutcome::Ongoing) {
+            turnSystem_.refreshEnemyIntentValues(state_);
+        }
     }
 
     viewModelDirty_ = true;
@@ -1686,7 +1739,7 @@ bool CombatScene::cardCanTargetEnemy(const CardInstanceId cardInstanceId) const 
     }
 
     const CardInstance& instance = state_.hand.get(cardInstanceId);
-    const CardDefinition& definition = content_.cards().get(instance.definitionId);
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(content_.cards().get(instance.definitionId), instance.upgraded);
 
     for (const EffectDefinition& effect : definition.effects) {
         switch (effect.target) {
@@ -1708,7 +1761,7 @@ bool CombatScene::cardCanTargetPlayer(const CardInstanceId cardInstanceId) const
     }
 
     const CardInstance& instance = state_.hand.get(cardInstanceId);
-    const CardDefinition& definition = content_.cards().get(instance.definitionId);
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(content_.cards().get(instance.definitionId), instance.upgraded);
 
     bool hasPlayerTarget = false;
 
@@ -2333,4 +2386,203 @@ std::string CombatScene::localizedOrFallback(const TextId& textId, const std::st
     }
 
     return fallback;
+}
+
+Rectangle CombatScene::drawPileButtonBounds() const {
+    const float width = 126.f;
+    const float height = 34.f;
+    const float x = static_cast<float>(GetScreenWidth()) * 0.5f - width * 1.5f - 16.f;
+    return Rectangle{x, 40.f, width, height};
+}
+
+Rectangle CombatScene::discardPileButtonBounds() const {
+    const Rectangle draw = drawPileButtonBounds();
+    return Rectangle{draw.x + draw.width + 16.f, draw.y, draw.width, draw.height};
+}
+
+Rectangle CombatScene::exhaustPileButtonBounds() const {
+    const Rectangle discard = discardPileButtonBounds();
+    return Rectangle{discard.x + discard.width + 16.f, discard.y, discard.width, discard.height};
+}
+
+Rectangle CombatScene::pileOverlayBounds() const {
+    const float width = std::min(1180.f, static_cast<float>(GetScreenWidth()) - 56.f);
+    const float height = std::min(680.f, static_cast<float>(GetScreenHeight()) - 56.f);
+    return Rectangle{
+        (static_cast<float>(GetScreenWidth()) - width) * 0.5f,
+        (static_cast<float>(GetScreenHeight()) - height) * 0.5f,
+        width,
+        height
+    };
+}
+
+Rectangle CombatScene::pileOverlayGridBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + 28.f, modal.y + 86.f, modal.width - 56.f, modal.height - 158.f};
+}
+
+Rectangle CombatScene::pileOverlayCloseButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + modal.width - 146.f, modal.y + modal.height - 58.f, 112.f, 40.f};
+}
+
+Rectangle CombatScene::pileOverlayCardBounds(const Rectangle grid, const std::size_t index, const float scrollOffset) const {
+    constexpr int columns = 5;
+    constexpr float gap = 14.f;
+    const float width = (grid.width - gap * static_cast<float>(columns - 1)) / static_cast<float>(columns);
+    const float height = 210.f;
+    const int column = static_cast<int>(index % columns);
+    const int row = static_cast<int>(index / columns);
+    return Rectangle{
+        grid.x + static_cast<float>(column) * (width + gap),
+        grid.y + static_cast<float>(row) * (height + gap) - scrollOffset,
+        width,
+        height
+    };
+}
+
+float CombatScene::pileOverlayMaxScroll(const Rectangle grid, const std::size_t count) const {
+    if (count == 0) {
+        return 0.f;
+    }
+
+    constexpr int columns = 5;
+    constexpr float gap = 14.f;
+    constexpr float height = 210.f;
+    const std::size_t rows = (count + columns - 1) / columns;
+    const float totalHeight = static_cast<float>(rows) * height + static_cast<float>(rows > 0 ? rows - 1 : 0) * gap;
+    return std::max(0.f, totalHeight - grid.height);
+}
+
+const std::vector<CardInstance>& CombatScene::activePileCards() const {
+    switch (pileOverlayMode_) {
+        case PileOverlayMode::DrawPile:
+            return state_.deck.drawPile.cards();
+        case PileOverlayMode::DiscardPile:
+            return state_.deck.discardPile.cards();
+        case PileOverlayMode::ExhaustPile:
+            return state_.deck.exhaustPile.cards();
+        case PileOverlayMode::None:
+            break;
+    }
+
+    return state_.deck.drawPile.cards();
+}
+
+std::string CombatScene::activePileTitle() const {
+    switch (pileOverlayMode_) {
+        case PileOverlayMode::DrawPile:
+            return localizedOrFallback(TextId("ui.draw_pile_view_title"), "Draw pile");
+        case PileOverlayMode::DiscardPile:
+            return localizedOrFallback(TextId("ui.discard_pile_view_title"), "Discard pile");
+        case PileOverlayMode::ExhaustPile:
+            return localizedOrFallback(TextId("ui.exhaust_pile_view_title"), "Burned cards");
+        case PileOverlayMode::None:
+            break;
+    }
+
+    return {};
+}
+
+void CombatScene::openPileOverlay(const PileOverlayMode mode) {
+    pileOverlayMode_ = mode;
+    pileOverlayScrollOffset_ = 0.f;
+    clearCardSelection();
+}
+
+void CombatScene::closePileOverlay() {
+    pileOverlayMode_ = PileOverlayMode::None;
+    pileOverlayScrollOffset_ = 0.f;
+}
+
+void CombatScene::updatePileOverlay(const Vector2 mousePosition) {
+    const Rectangle modal = pileOverlayBounds();
+    const Rectangle grid = pileOverlayGridBounds(modal);
+    const float wheel = GetMouseWheelMove();
+    if (wheel != 0.f) {
+        pileOverlayScrollOffset_ = std::clamp(
+            pileOverlayScrollOffset_ - wheel * 76.f,
+            0.f,
+            pileOverlayMaxScroll(grid, activePileCards().size())
+        );
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE) ||
+        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(pileOverlayCloseButtonBounds(modal), mousePosition))) {
+        closePileOverlay();
+    }
+}
+
+void CombatScene::renderPileButtons() const {
+    const Vector2 mouse = GetMousePosition();
+    BasicUi::drawButton(
+        uiFont_,
+        drawPileButtonBounds(),
+        localizedOrFallback(TextId("ui.draw_pile"), "Draw") + ": " + std::to_string(state_.deck.drawPile.size()),
+        mouse
+    );
+    BasicUi::drawButton(
+        uiFont_,
+        discardPileButtonBounds(),
+        localizedOrFallback(TextId("ui.discard_pile"), "Discard") + ": " + std::to_string(state_.deck.discardPile.size()),
+        mouse
+    );
+    BasicUi::drawButton(
+        uiFont_,
+        exhaustPileButtonBounds(),
+        localizedOrFallback(TextId("ui.exhaust_pile"), "Burned") + ": " + std::to_string(state_.deck.exhaustPile.size()),
+        mouse
+    );
+}
+
+void CombatScene::renderPileOverlay() const {
+    const Rectangle modal = pileOverlayBounds();
+    const Rectangle grid = pileOverlayGridBounds(modal);
+    const Vector2 mouse = GetMousePosition();
+
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 165});
+    DrawRectangleRounded(modal, 0.04f, 16, Color{25, 27, 38, 252});
+    DrawRectangleRoundedLinesEx(modal, 0.04f, 16, 3.f, Color{238, 196, 86, 255});
+    BasicUi::drawCenteredText(uiFont_, activePileTitle(), Rectangle{modal.x + 24.f, modal.y + 20.f, modal.width - 48.f, 38.f}, 30.f, Color{255, 235, 175, 255});
+
+    DrawRectangleRounded(grid, 0.02f, 8, Color{20, 22, 30, 255});
+
+    const std::vector<CardInstance>& cards = activePileCards();
+    if (cards.empty()) {
+        BasicUi::drawCenteredText(uiFont_, localizedOrFallback(TextId("ui.empty"), "Empty"), grid, 24.f, Color{205, 210, 225, 255});
+    } else {
+        BeginScissorMode(static_cast<int>(grid.x), static_cast<int>(grid.y), static_cast<int>(grid.width), static_cast<int>(grid.height));
+        for (std::size_t i = 0; i < cards.size(); ++i) {
+            const Rectangle cell = pileOverlayCardBounds(grid, i, pileOverlayScrollOffset_);
+            if (cell.y + cell.height < grid.y || cell.y > grid.y + grid.height) {
+                continue;
+            }
+            renderPileCard(cards[i], cell);
+        }
+        EndScissorMode();
+    }
+
+    BasicUi::drawButton(uiFont_, pileOverlayCloseButtonBounds(modal), localizedOrFallback(TextId("ui.close"), "Close"), mouse);
+}
+
+void CombatScene::renderPileCard(const CardInstance& card, const Rectangle bounds) const {
+    const bool hovered = BasicUi::contains(bounds, GetMousePosition());
+    DrawRectangleRounded(bounds, 0.07f, 9, hovered ? Color{52, 56, 73, 255} : Color{39, 42, 55, 255});
+    DrawRectangleRoundedLinesEx(bounds, 0.07f, 9, 2.f, hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
+
+    if (!content_.cards().contains(card.definitionId)) {
+        BasicUi::drawCenteredText(uiFont_, card.definitionId.value, bounds, 16.f, Color{245, 245, 250, 255});
+        return;
+    }
+
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(content_.cards().get(card.definitionId), card.upgraded);
+    const CardDescriptionFormatter formatter(localization_);
+    BasicUi::drawText(uiFont_, std::to_string(definition.energyCost), Vector2{bounds.x + 13.f, bounds.y + 10.f}, 18.f, Color{245, 245, 250, 255});
+    BasicUi::drawCenteredText(uiFont_, localization_.get(definition.nameTextId) + (card.upgraded ? "+" : ""), Rectangle{bounds.x + 38.f, bounds.y + 8.f, bounds.width - 48.f, 40.f}, 16.f, Color{245, 245, 250, 255});
+
+    const std::vector<std::string> lines = BasicUi::wrapText(uiFont_, formatter.formatStaticDescription(definition), 12.f, bounds.width - 22.f);
+    float y = bounds.y + 66.f;
+    for (const std::string& line : lines) {
+        if (y > bounds.y + bounds.height - 18.f) break;
+        BasicUi::drawText(uiFont_, line, Vector2{bounds.x + 12.f, y}, 12.f, Color{205, 210, 225, 255});
+        y += 16.f;
+    }
 }

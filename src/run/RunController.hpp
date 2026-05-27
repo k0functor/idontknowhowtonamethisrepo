@@ -92,7 +92,7 @@ public:
     void completeChestNode(int nodeId);
     void completeEventNode(int nodeId);
     void completeRestHeal(int nodeId);
-    void completeRestUpgrade(int nodeId);
+    void completeRestUpgrade(int nodeId, CardId cardId);
     void completeRestSkip(int nodeId);
 
     bool purchaseShopItem(const ShopPurchase& purchase);

@@ -67,7 +67,7 @@
     "archetype.rusted_knight.short_description": "Orange shield aggressor: Strength, block and dangerous health trades.",
     "archetype.rusted_knight.strength.block_pressure": "Can combine shield defense with enemy pressure.",
     "archetype.rusted_knight.strength.strength_scaling": "Builds Strength quickly and converts it into high damage.",
-    "archetype.rusted_knight.unique_mechanic": "Mechanic plan: Rusted Knight cards and relics should scale Strength, turn block into pressure and reward risky HP trades. This is the main honest-combat test archetype: damage, block, Strength, Weak and enemy intents.",
+    "archetype.rusted_knight.unique_mechanic": "The Rusted Knight now uses the core honest-combat kit: Strength, block, Weak and risky HP trades. His cards scale Strength, use shield pressure and reward aggression over passive waiting for death, although death remains professionally persistent.",
     "archetype.rusted_knight.visual_identity": "Silhouette: heavy shield, old rusted armor and marks of long fights. He should look dangerous, worn down and stubborn, not like a shiny noble knight from a brochure for heroic death.",
     "archetype.rusted_knight.weakness.self_exposure": "Often has to take damage to keep tempo and scaling.",
     "archetype.sadist_masochist.details_description": "One character pick creates two separate actors: Sadist and Masochist. They have separate health, resources and relics. Their power comes from controlled violence between them, which is a balancing nightmare, but at least an honest one.",

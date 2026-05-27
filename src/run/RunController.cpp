@@ -357,20 +357,23 @@ void RunController::adjustAllActorsStress(const int delta, Random* random) {
     }
 }
 
-void RunController::completeRestUpgrade(const int nodeId) {
+void RunController::completeRestUpgrade(const int nodeId, CardId cardId) {
     RunState& state = run();
 
-    for (const CardId& cardId : state.deckCardIds) {
-        const bool alreadyUpgraded = std::find(
-            state.upgradedCardIds.begin(),
-            state.upgradedCardIds.end(),
-            cardId
-        ) != state.upgradedCardIds.end();
+    const bool cardInDeck = std::find(
+        state.deckCardIds.begin(),
+        state.deckCardIds.end(),
+        cardId
+    ) != state.deckCardIds.end();
 
-        if (!alreadyUpgraded) {
-            state.upgradedCardIds.push_back(cardId);
-            break;
-        }
+    const bool alreadyUpgraded = std::find(
+        state.upgradedCardIds.begin(),
+        state.upgradedCardIds.end(),
+        cardId
+    ) != state.upgradedCardIds.end();
+
+    if (cardInDeck && !alreadyUpgraded) {
+        state.upgradedCardIds.push_back(std::move(cardId));
     }
 
     markNodeCompletedAndUnlockNext(nodeId);

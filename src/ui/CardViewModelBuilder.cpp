@@ -2,6 +2,7 @@
 
 #include "cards/CardDefinition.hpp"
 #include "cards/CardDescriptionFormatter.hpp"
+#include "cards/CardUpgrade.hpp"
 
 CardViewModelBuilder::CardViewModelBuilder(
     const CardDatabase& cardDatabase,
@@ -19,7 +20,7 @@ CardViewModel CardViewModelBuilder::build(
     const std::optional<EntityId> target
 ) const {
     const CardInstance& instance = state.hand.get(cardInstanceId);
-    const CardDefinition& definition = cardDatabase_.get(instance.definitionId);
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(cardDatabase_.get(instance.definitionId), instance.upgraded);
 
     const CardPreview preview = previewSystem_.previewCard(
         state,
@@ -32,7 +33,7 @@ CardViewModel CardViewModelBuilder::build(
 
     CardViewModel model;
     model.instanceId = cardInstanceId;
-    model.name = localization_.get(definition.nameTextId);
+    model.name = localization_.get(definition.nameTextId) + (instance.upgraded ? "+" : "");
     model.description = descriptionFormatter.formatCombatDescription(
         definition,
         preview,

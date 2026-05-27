@@ -1,0 +1,250 @@
+[
+  {
+    "id": "rusted_shield_bash",
+    "name": "card.rusted_shield_bash.name",
+    "description": "card.rusted_shield_bash.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_bastion",
+    "name": "card.rusted_bastion.name",
+    "description": "card.rusted_bastion.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 14
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_punishing_swing",
+    "name": "card.rusted_punishing_swing.name",
+    "description": "card.rusted_punishing_swing.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "weak"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_hold_line",
+    "name": "card.rusted_hold_line.name",
+    "description": "card.rusted_hold_line.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "keywords": [
+      "retain"
+    ],
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "strength"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "strength"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_blood_oath",
+    "name": "card.rusted_blood_oath.name",
+    "description": "card.rusted_blood_oath.description",
+    "rarity": "common",
+    "energy_cost": 2,
+    "gold_cost": 90,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 15
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ],
+    "upgrade": {
+      "energy_cost": 1,
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 15
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          }
+        }
+      ]
+    }
+  }
+]

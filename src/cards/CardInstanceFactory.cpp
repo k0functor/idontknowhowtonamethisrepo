@@ -1,9 +1,10 @@
 #include "CardInstanceFactory.hpp"
 
-CardInstance CardInstanceFactory::create(const CardId& definitionId) {
+CardInstance CardInstanceFactory::create(const CardId& definitionId, const bool upgraded) {
     CardInstance instance;
     instance.instanceId = CardInstanceId{nextId_++};
     instance.definitionId = definitionId;
+    instance.upgraded = upgraded;
     return instance;
 }
 

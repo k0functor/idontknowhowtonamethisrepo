@@ -951,10 +951,13 @@ void GameFlowController::setRunMapScene() {
         std::make_unique<RunMapScene>(
             uiFont_,
             localization_,
+            content_.cards(),
+            content_.relics(),
+            content_.consumables(),
             runController_.run(),
             [this](const int nodeId) { startMapNode(nodeId); },
             [this](const int nodeId) { restHeal(nodeId); },
-            [this](const int nodeId) { restUpgrade(nodeId); },
+            [this](const int nodeId, CardId cardId) { restUpgrade(nodeId, std::move(cardId)); },
             [this](const int nodeId) { restSkip(nodeId); },
             [this]() { queueTransition([this]() { setProfileHubScene(); }); }
         )
@@ -1235,10 +1238,10 @@ void GameFlowController::restHeal(const int nodeId) {
     });
 }
 
-void GameFlowController::restUpgrade(const int nodeId) {
-    queueTransition([this, nodeId]() {
+void GameFlowController::restUpgrade(const int nodeId, CardId cardId) {
+    queueTransition([this, nodeId, cardId = std::move(cardId)]() mutable {
         runController_.startNode(nodeId);
-        runController_.completeRestUpgrade(nodeId);
+        runController_.completeRestUpgrade(nodeId, std::move(cardId));
         saveActiveRun();
         setRunMapScene();
     });

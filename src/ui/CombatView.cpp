@@ -138,6 +138,10 @@ void CombatView::render(const Font* font) const {
             DrawTextEx(*font, model_.keyboardHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 30.f}, 14.f, 1.f, Color{168, 176, 198, 255});
         }
 
+        if (!model_.turnOrderLabel.empty()) {
+            DrawTextEx(*font, model_.turnOrderLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 140.f, battlefield.y + 10.f}, 16.f, 1.f, Color{255, 224, 150, 255});
+        }
+
         for (std::size_t i = 0; i < model_.relics.size(); ++i) {
             const RelicViewModel& relic = model_.relics[i];
             const Rectangle bounds = relicBounds(i);

@@ -71,6 +71,13 @@ public:
     bool handleDebugCommand(const std::vector<std::string>& tokens, std::string& output) override;
 
 private:
+    enum class PileOverlayMode {
+        None,
+        DrawPile,
+        DiscardPile,
+        ExhaustPile
+    };
+
     void initializeCombat();
     void rebuildViewModel(std::optional<EntityId> previewTarget);
     EntityId primaryPlayerId() const;
@@ -115,6 +122,23 @@ private:
     std::optional<EntityId> previewTargetForSelectedCard() const;
     std::optional<EntityId> arrowTargetForCard(CardInstanceId cardInstanceId) const;
     void renderTargetingArrow() const;
+
+    Rectangle drawPileButtonBounds() const;
+    Rectangle discardPileButtonBounds() const;
+    Rectangle exhaustPileButtonBounds() const;
+    Rectangle pileOverlayBounds() const;
+    Rectangle pileOverlayGridBounds(Rectangle modal) const;
+    Rectangle pileOverlayCloseButtonBounds(Rectangle modal) const;
+    Rectangle pileOverlayCardBounds(Rectangle grid, std::size_t index, float scrollOffset) const;
+    float pileOverlayMaxScroll(Rectangle grid, std::size_t count) const;
+    const std::vector<CardInstance>& activePileCards() const;
+    std::string activePileTitle() const;
+    void openPileOverlay(PileOverlayMode mode);
+    void closePileOverlay();
+    void updatePileOverlay(Vector2 mousePosition);
+    void renderPileButtons() const;
+    void renderPileOverlay() const;
+    void renderPileCard(const CardInstance& card, Rectangle bounds) const;
 
     bool selectedCardCanTargetEnemy() const;
     bool selectedCardCanTargetPlayer() const;
@@ -211,6 +235,8 @@ private:
     RelicInspectModal relicInspectModal_;
     std::optional<CardInstanceId> inspectedCardId_;
     std::optional<std::size_t> pendingConsumableIndex_;
+    PileOverlayMode pileOverlayMode_ = PileOverlayMode::None;
+    float pileOverlayScrollOffset_ = 0.f;
 
     std::optional<RewardState> reward_;
     RewardSelection rewardSelection_;

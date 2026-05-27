@@ -1,13 +1,18 @@
 #pragma once
 
-#include "run/RunState.hpp"
+#include "cards/CardId.hpp"
+#include "consumables/ConsumableDatabase.hpp"
+#include "data/CardDatabase.hpp"
 #include "localization/LocalizationManager.hpp"
+#include "relics/RelicDatabase.hpp"
+#include "run/RunState.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
 
 #include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include <raylib.h>
 
@@ -16,10 +21,13 @@ public:
     RunMapScene(
         const UiFont& font,
         const LocalizationManager& localization,
+        const CardDatabase& cards,
+        const RelicDatabase& relics,
+        const ConsumableDatabase& consumables,
         const RunState& runState,
         std::function<void(int)> onNodeSelected,
         std::function<void(int)> onRestHeal,
-        std::function<void(int)> onRestUpgrade,
+        std::function<void(int, CardId)> onRestUpgrade,
         std::function<void(int)> onRestSkip,
         std::function<void()> onBackToHub
     );
@@ -28,6 +36,14 @@ public:
     void render() const override;
 
 private:
+    enum class OverlayMode {
+        None,
+        Deck,
+        Relics,
+        Consumables,
+        Upgrade
+    };
+
     Vector2 nodeScreenPosition(const RunMapNode& node) const;
     Rectangle nodeBounds(const RunMapNode& node) const;
     Rectangle restModalBounds() const;
@@ -36,6 +52,13 @@ private:
     Rectangle restSkipButtonBounds(Rectangle modal) const;
     Rectangle restCancelButtonBounds(Rectangle modal) const;
     Rectangle nodePreviewBounds(const RunMapNode& node) const;
+    Rectangle deckButtonBounds() const;
+    Rectangle relicsButtonBounds() const;
+    Rectangle consumablesButtonBounds() const;
+    Rectangle overlayBounds() const;
+    Rectangle overlayCloseButtonBounds(Rectangle modal) const;
+    Rectangle overlayGridBounds(Rectangle modal) const;
+    Rectangle upgradeConfirmButtonBounds(Rectangle modal) const;
 
     Color nodeColor(const RunMapNode& node) const;
     Color nodeOutlineColor(const RunMapNode& node) const;
@@ -50,15 +73,38 @@ private:
     std::string runHpSummaryText() const;
     std::string runStressSummaryText() const;
 
+    void openOverlay(OverlayMode mode);
+    void closeOverlay();
+    void updateOverlay(Vector2 mousePosition);
+    void renderOverlay() const;
+    void renderDeckOverlay(Rectangle modal) const;
+    void renderUpgradeOverlay(Rectangle modal) const;
+    void renderRelicsOverlay(Rectangle modal) const;
+    void renderConsumablesOverlay(Rectangle modal) const;
+    void renderCardGrid(Rectangle grid, const std::vector<CardId>& cardIds, bool selectionMode) const;
+    Rectangle cardGridCellBounds(Rectangle grid, std::size_t index, float scrollOffset) const;
+    float cardGridMaxScroll(Rectangle grid, std::size_t count) const;
+    bool isCardUpgraded(const CardId& cardId) const;
+    std::vector<CardId> upgradableCards() const;
+    std::string cardName(const CardId& cardId, bool upgraded) const;
+    std::string cardDescription(const CardId& cardId, bool upgraded) const;
+    std::string overlayTitle() const;
+
 private:
     const UiFont& font_;
     const LocalizationManager& localization_;
+    const CardDatabase& cards_;
+    const RelicDatabase& relics_;
+    const ConsumableDatabase& consumables_;
     const RunState& runState_;
     std::function<void(int)> onNodeSelected_;
     std::function<void(int)> onRestHeal_;
-    std::function<void(int)> onRestUpgrade_;
+    std::function<void(int, CardId)> onRestUpgrade_;
     std::function<void(int)> onRestSkip_;
     std::function<void()> onBackToHub_;
 
     std::optional<int> restModalNodeId_;
+    OverlayMode overlayMode_ = OverlayMode::None;
+    float overlayScrollOffset_ = 0.f;
+    std::optional<CardId> selectedUpgradeCardId_;
 };

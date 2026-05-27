@@ -2,6 +2,7 @@
 
 #include "combat/EffectContext.hpp"
 #include "combat/CardCost.hpp"
+#include "cards/CardUpgrade.hpp"
 
 CardPreviewSystem::CardPreviewSystem(
     const CardDatabase& cardDatabase,
@@ -23,7 +24,7 @@ CardPreview CardPreviewSystem::previewCard(
     const std::optional<EntityId> target
 ) const {
     const CardInstance& instance = state.hand.get(cardInstanceId);
-    const CardDefinition& definition = cardDatabase_.get(instance.definitionId);
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(cardDatabase_.get(instance.definitionId), instance.upgraded);
 
     CardPreview preview;
     preview.cardInstanceId = cardInstanceId;
@@ -47,6 +48,7 @@ CardPreview CardPreviewSystem::previewCard(
         effectPreview.type = effect.type;
         effectPreview.target = effect.target;
         effectPreview.value = PreviewValue{resolved.minimum, resolved.maximum};
+        effectPreview.repeatCount = effect.repeatCount;
         effectPreview.statusId = effect.statusId;
 
         if (effect.type == EffectType::Damage) {

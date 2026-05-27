@@ -180,6 +180,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/cards/CardDefinition.hpp
     src/cards/CardDescriptionFormatter.hpp
     src/cards/CardDescriptionFormatter.cpp
+    src/cards/CardUpgrade.hpp
+    src/cards/CardUpgrade.cpp
     src/cards/CardInstanceId.hpp
     src/cards/CardInstance.hpp
     src/cards/CardInstanceFactory.hpp
