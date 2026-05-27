@@ -6,11 +6,15 @@
 
 MainMenuScene::MainMenuScene(
     const UiFont& font,
+    const LocalizationManager& localization,
     std::function<void()> onPlay,
+    std::function<void()> onSettings,
     std::function<void()> onExit
 )
     : font_(font),
+      localization_(localization),
       onPlay_(std::move(onPlay)),
+      onSettings_(std::move(onSettings)),
       onExit_(std::move(onExit)) {}
 
 void MainMenuScene::update(float) {
@@ -32,11 +36,14 @@ void MainMenuScene::update(float) {
     }
 
     if (BasicUi::contains(settings, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = "Настройки появятся позже. Да, меню тоже требует уважения.";
+        if (onSettings_) {
+            onSettings_();
+        }
+        return;
     }
 
     if (BasicUi::contains(credits, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = "Титры появятся позже. Пока вся вина на нас.";
+        notification_ = localization_.get(TextId("ui.credits_later"));
     }
 
     if (BasicUi::contains(exit, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -54,16 +61,16 @@ void MainMenuScene::render() const {
 
     BasicUi::drawCenteredText(
         font_,
-        "Card Roguelike",
+        localization_.get(TextId("game.title")),
         Rectangle{0.f, 90.f, static_cast<float>(GetScreenWidth()), 90.f},
         48.f,
         Color{240, 240, 250, 255}
     );
 
-    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY, width, height}, "Играть", mouse);
-    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + (height + gap), width, height}, "Настройки", mouse);
-    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + 2.f * (height + gap), width, height}, "Титры", mouse);
-    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + 3.f * (height + gap), width, height}, "Выход", mouse);
+    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY, width, height}, localization_.get(TextId("ui.play")), mouse);
+    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + (height + gap), width, height}, localization_.get(TextId("ui.settings")), mouse);
+    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + 2.f * (height + gap), width, height}, localization_.get(TextId("ui.credits")), mouse);
+    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + 3.f * (height + gap), width, height}, localization_.get(TextId("ui.exit")), mouse);
 
     if (!notification_.empty()) {
         BasicUi::drawCenteredText(

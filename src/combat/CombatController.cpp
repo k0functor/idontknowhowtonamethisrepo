@@ -17,9 +17,15 @@ CombatResult CombatController::buildResult(const CombatState& state) const {
     result.outcome = checkOutcome(state);
     result.turnsTaken = state.turn;
 
+    result.actorStates.reserve(state.players.size());
     for (const CombatEntity& player : state.players) {
         result.playerHpRemaining += player.health.current();
         result.playerHpMaximum += player.health.maximum();
+        result.actorStates.push_back(RunActorState{
+            player.definitionId,
+            player.health.current(),
+            player.health.maximum()
+        });
     }
 
     for (const CombatEntity& enemy : state.enemies) {

@@ -254,7 +254,7 @@ CombatViewModel CombatViewModelBuilder::build(
     model.keyboardHintLabel = localizedOrFallback(
         localization_,
         "ui.combat_keyboard_hint",
-        "←/→ select card, A/D select target, Enter play"
+        "Left/Right select card, A/D select target, Enter play"
     );
 
     model.players.reserve(state.players.size());

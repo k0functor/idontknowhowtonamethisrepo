@@ -1,6 +1,7 @@
 #include "Application.hpp"
 
 #include "data/ContentValidator.hpp"
+#include "settings/UserSettingsRepository.hpp"
 
 #include <raylib.h>
 
@@ -13,19 +14,27 @@
 #include <thread>
 
 namespace {
-int toWindowDimension(const unsigned int value) {
-    return static_cast<int>(std::min<unsigned int>(value, static_cast<unsigned int>(std::numeric_limits<int>::max())));
-}
+    constexpr unsigned int safeWindowedWidth = 1280u;
+    constexpr unsigned int safeWindowedHeight = 720u;
 
-float clampDeltaSeconds(const float deltaSeconds) {
-    constexpr float maxDeltaSeconds = 0.1f;
-    return std::clamp(deltaSeconds, 0.f, maxDeltaSeconds);
-}
+    int toWindowDimension(const unsigned int value) {
+        return static_cast<int>(std::min<unsigned int>(value, static_cast<unsigned int>(std::numeric_limits<int>::max())));
+    }
+
+    float clampDeltaSeconds(const float deltaSeconds) {
+        constexpr float maxDeltaSeconds = 0.1f;
+        return std::clamp(deltaSeconds, 0.f, maxDeltaSeconds);
+    }
 }
 
 Application::Application()
     : config_(AppConfig::loadFromFile("config/app.json")),
+      userSettings_(UserSettingsRepository::loadOrCreate(
+          config_.paths.saves / "settings.json",
+          UserSettings::fromAppConfig(config_)
+      )),
       random_(12345u) {
+    applyUserSettingsToConfig();
     initializeWindow();
     loadLocalization();
     loadContent();
@@ -93,17 +102,41 @@ void Application::initializeWindow() {
     windowInitialized_ = true;
 
     if (config_.window.fullscreen) {
-        ToggleFullscreen();
+        enterBorderlessFullscreen();
     }
 }
 
+void Application::applyUserSettingsToConfig() {
+    userSettings_.applyTo(config_);
+}
+
 void Application::applyWindowSettings() {
-    if (config_.window.verticalSync) {
-        SetWindowState(FLAG_VSYNC_HINT);
-        return;
+    SetWindowTitle(config_.window.title.c_str());
+
+    if (config_.window.fullscreen) {
+        enterBorderlessFullscreen();
+    } else {
+        if (borderlessFullscreenActive_ || IsWindowFullscreen()) {
+            leaveBorderlessFullscreen(safeWindowedWidth, safeWindowedHeight);
+            config_.window.width = safeWindowedWidth;
+            config_.window.height = safeWindowedHeight;
+            userSettings_.window.width = safeWindowedWidth;
+            userSettings_.window.height = safeWindowedHeight;
+        } else {
+            const unsigned int width = config_.window.width;
+            const unsigned int height = config_.window.height;
+            if (GetScreenWidth() != toWindowDimension(width) || GetScreenHeight() != toWindowDimension(height)) {
+                SetWindowSize(toWindowDimension(width), toWindowDimension(height));
+                centerWindow(width, height);
+            }
+        }
     }
 
-    ClearWindowState(FLAG_VSYNC_HINT);
+    if (config_.window.verticalSync) {
+        SetWindowState(FLAG_VSYNC_HINT);
+    } else {
+        ClearWindowState(FLAG_VSYNC_HINT);
+    }
 
     if (config_.window.frameRateLimit > 0) {
         SetTargetFPS(static_cast<int>(config_.window.frameRateLimit));
@@ -112,23 +145,96 @@ void Application::applyWindowSettings() {
     }
 }
 
-namespace {
-std::filesystem::path requiredLocalizationDirectory(
-    const std::filesystem::path& localizationRoot,
-    const std::string& localeCode
-) {
-    const std::filesystem::path directoryPath = localizationRoot / localeCode;
-
-    if (!std::filesystem::is_directory(directoryPath)) {
-        throw std::runtime_error(
-            "Missing localization directory '" + directoryPath.string() +
-            "'. Localization is split by domain and must be stored in directories like "
-            "data/localization/ru/core.json, data/localization/ru/cards.json, etc."
-        );
+void Application::enterBorderlessFullscreen() {
+    if (IsWindowFullscreen()) {
+        ToggleFullscreen();
     }
 
-    return directoryPath;
+    const int monitor = GetCurrentMonitor();
+    const Vector2 monitorPosition = GetMonitorPosition(monitor);
+    const int monitorWidth = GetMonitorWidth(monitor);
+    const int monitorHeight = GetMonitorHeight(monitor);
+
+#ifdef FLAG_BORDERLESS_WINDOWED_MODE
+    SetWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
+#endif
+    SetWindowState(FLAG_WINDOW_UNDECORATED);
+    SetWindowPosition(static_cast<int>(monitorPosition.x), static_cast<int>(monitorPosition.y));
+    SetWindowSize(monitorWidth, monitorHeight);
+
+    borderlessFullscreenActive_ = true;
 }
+
+void Application::leaveBorderlessFullscreen(const unsigned int width, const unsigned int height) {
+    if (IsWindowFullscreen()) {
+        ToggleFullscreen();
+    }
+
+#ifdef FLAG_BORDERLESS_WINDOWED_MODE
+    ClearWindowState(FLAG_BORDERLESS_WINDOWED_MODE);
+#endif
+    ClearWindowState(FLAG_WINDOW_UNDECORATED);
+
+    SetWindowSize(toWindowDimension(width), toWindowDimension(height));
+    centerWindow(width, height);
+
+    borderlessFullscreenActive_ = false;
+}
+
+void Application::centerWindow(const unsigned int width, const unsigned int height) {
+    const int monitor = GetCurrentMonitor();
+    const Vector2 monitorPosition = GetMonitorPosition(monitor);
+    const int monitorWidth = GetMonitorWidth(monitor);
+    const int monitorHeight = GetMonitorHeight(monitor);
+
+    const int windowWidth = toWindowDimension(width);
+    const int windowHeight = toWindowDimension(height);
+    const int x = static_cast<int>(monitorPosition.x) + std::max(0, (monitorWidth - windowWidth) / 2);
+    const int y = static_cast<int>(monitorPosition.y) + std::max(0, (monitorHeight - windowHeight) / 2);
+
+    SetWindowPosition(x, y);
+}
+
+void Application::handleUserSettingsChanged(const UserSettings& settings) {
+    userSettings_ = settings;
+    applyUserSettingsToConfig();
+
+    if (windowInitialized_) {
+        applyWindowSettings();
+    }
+
+    UserSettingsRepository::save(config_.paths.saves / "settings.json", userSettings_);
+
+    localization_.setMissingTextPolicy(
+        config_.debug.enabled
+            ? MissingTextPolicy::Throw
+            : MissingTextPolicy::ShowTextId
+    );
+
+    localization_.setCurrentLocale(config_.locale);
+
+    if (gameFlow_ != nullptr) {
+        gameFlow_->notifyLocalizationChanged();
+    }
+}
+
+namespace {
+    std::filesystem::path requiredLocalizationDirectory(
+        const std::filesystem::path& localizationRoot,
+        const std::string& localeCode
+    ) {
+        const std::filesystem::path directoryPath = localizationRoot / localeCode;
+
+        if (!std::filesystem::is_directory(directoryPath)) {
+            throw std::runtime_error(
+                "Missing localization directory '" + directoryPath.string() +
+                "'. Localization is split by domain and must be stored in directories like "
+                "data/localization/ru/core.json, data/localization/ru/cards.json, etc."
+            );
+        }
+
+        return directoryPath;
+    }
 }
 
 
@@ -175,6 +281,9 @@ void Application::createGameFlow() {
         content_,
         localization_,
         random_,
-        config_.paths.assets
+        config_.paths.assets,
+        config_.paths.saves,
+        userSettings_,
+        [this](const UserSettings& settings) { handleUserSettingsChanged(settings); }
     );
 }

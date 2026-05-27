@@ -6,6 +6,8 @@
 RunState RunFactory::createRun(
     const PlayableArchetypeDefinition& archetype,
     const DifficultyDefinition& difficulty,
+    const PlayerActorDatabase& actors,
+    const RunMapGenerationConfig& mapGeneration,
     const std::uint32_t seed
 ) const {
     RunMapGenerator generator;
@@ -22,6 +24,11 @@ RunState RunFactory::createRun(
     run.enemyDamageMultiplier = difficulty.enemyDamageMultiplier;
     run.goldRewardMultiplier = difficulty.goldMultiplier;
     run.actorDefinitionIds = archetype.actorDefinitionIds;
+    run.actorStates.reserve(archetype.actorDefinitionIds.size());
+    for (const std::string& actorId : archetype.actorDefinitionIds) {
+        const PlayerActorDefinition& actor = actors.get(PlayerActorId(actorId));
+        run.actorStates.push_back(RunActorState{actorId, actor.maxHp, actor.maxHp});
+    }
     run.relicIds = archetype.startingRelicIds;
 
     run.deckCardIds.reserve(archetype.startingDeckCardIds.size());
@@ -29,6 +36,6 @@ RunState RunFactory::createRun(
         run.deckCardIds.emplace_back(cardId);
     }
 
-    run.map = generator.generateActOneMap(mapRandom);
+    run.map = generator.generateActOneMap(mapRandom, mapGeneration);
     return run;
 }

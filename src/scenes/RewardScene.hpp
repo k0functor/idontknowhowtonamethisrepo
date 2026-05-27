@@ -1,15 +1,14 @@
 #pragma once
 
 #include "data/CardDatabase.hpp"
-#include "effects/EffectDefinition.hpp"
-#include "effects/EffectValue.hpp"
 #include "localization/LocalizationManager.hpp"
-#include "localization/TextFormatter.hpp"
 #include "rewards/RewardOption.hpp"
 #include "rewards/RewardSelection.hpp"
 #include "rewards/RewardState.hpp"
+#include "relics/RelicDatabase.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
+#include "ui/InspectPanelView.hpp"
 
 #include <cstddef>
 #include <functional>
@@ -22,6 +21,7 @@ public:
         const UiFont& font,
         const LocalizationManager& localization,
         const CardDatabase& cards,
+        const RelicDatabase& relics,
         RewardState reward,
         std::function<void(RewardSelection)> onContinue
     );
@@ -41,6 +41,7 @@ private:
     void takeOption(std::size_t index);
     void updateCardChoice(Vector2 mouse);
     void renderCardChoice() const;
+    void renderRelicInspect(const RewardOption& option, Rectangle row) const;
 
     const RewardOption* activeOption() const;
     RewardOption* activeOption();
@@ -48,21 +49,19 @@ private:
     std::string optionTitle(const RewardOption& option) const;
     std::string cardName(const CardId& cardId) const;
     std::string cardDescription(const CardId& cardId) const;
-
-    static std::string effectValueText(const EffectValue& value);
-    static std::string rangeToString(int minimum, int maximum);
-    static void fillVariablesFromEffect(
-        TextFormatter::Variables& variables,
-        const EffectDefinition& effect
-    );
+    std::string relicName(const std::string& relicId) const;
+    std::string relicDescription(const std::string& relicId) const;
+    std::string rewardTitle() const;
 
 private:
     const UiFont& font_;
     const LocalizationManager& localization_;
     const CardDatabase& cards_;
+    const RelicDatabase& relics_;
     RewardState reward_;
     RewardSelection selection_;
     std::function<void(RewardSelection)> onContinue_;
+    InspectPanelView inspectPanelView_;
 
     std::optional<std::size_t> activeOptionIndex_;
     std::optional<std::size_t> selectedCardIndex_;

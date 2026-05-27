@@ -3,6 +3,8 @@
 #include "scenes/Scene.hpp"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 class SceneManager {
 public:
@@ -10,6 +12,8 @@ public:
 
     void update(float deltaSeconds);
     void render() const;
+    void notifyLocalizationChanged();
+    bool handleDebugCommand(const std::vector<std::string>& tokens, std::string& output);
 
     bool hasScene() const;
 

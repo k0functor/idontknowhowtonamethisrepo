@@ -1,0 +1,59 @@
+[
+  {
+    "id": "forgotten_cache",
+    "title": "event.forgotten_cache.title",
+    "description": "event.forgotten_cache.description",
+    "choices": [
+      {
+        "text": "event.forgotten_cache.choice.gold",
+        "description": "event.forgotten_cache.choice.gold.description",
+        "effects": [
+          { "type": "gain_gold", "amount": 45 }
+        ]
+      },
+      {
+        "text": "event.forgotten_cache.choice.card",
+        "description": "event.forgotten_cache.choice.card.description",
+        "effects": [
+          { "type": "gain_random_card" }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          { "type": "skip" }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rusted_vending_altar",
+    "title": "event.rusted_vending_altar.title",
+    "description": "event.rusted_vending_altar.description",
+    "choices": [
+      {
+        "text": "event.rusted_vending_altar.choice.relic",
+        "description": "event.rusted_vending_altar.choice.relic.description",
+        "effects": [
+          { "type": "lose_gold", "amount": 60 },
+          { "type": "gain_random_relic" }
+        ]
+      },
+      {
+        "text": "event.rusted_vending_altar.choice.consumable",
+        "description": "event.rusted_vending_altar.choice.consumable.description",
+        "effects": [
+          { "type": "gain_random_consumable" }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          { "type": "skip" }
+        ]
+      }
+    ]
+  }
+]

@@ -16,6 +16,20 @@ void SceneManager::render() const {
     }
 }
 
+void SceneManager::notifyLocalizationChanged() {
+    if (scene_ != nullptr) {
+        scene_->onLocalizationChanged();
+    }
+}
+
+bool SceneManager::handleDebugCommand(const std::vector<std::string>& tokens, std::string& output) {
+    if (scene_ == nullptr) {
+        return false;
+    }
+
+    return scene_->handleDebugCommand(tokens, output);
+}
+
 bool SceneManager::hasScene() const {
     return scene_ != nullptr;
 }

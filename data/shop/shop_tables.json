@@ -1,0 +1,15 @@
+{
+  "card_offers": 3,
+  "relic_offers": 2,
+  "consumable_offers": 2,
+  "card_removal_price": 75,
+  "minimum_card_price": 20,
+  "minimum_consumable_price": 25,
+  "relic_prices": {
+    "common": 150,
+    "uncommon": 175,
+    "rare": 220,
+    "boss": 300,
+    "special": 999
+  }
+}

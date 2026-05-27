@@ -1,0 +1,47 @@
+{
+  "merchant_gold_multiplier": 1.25,
+  "nodes": {
+    "combat": {
+      "gold": 18,
+      "offer_cards": true,
+      "card_choices": 3,
+      "guaranteed_relic": false
+    },
+    "elite": {
+      "gold": 35,
+      "offer_cards": true,
+      "card_choices": 3,
+      "guaranteed_relic": true
+    },
+    "boss": {
+      "gold": 75,
+      "offer_cards": true,
+      "card_choices": 3,
+      "guaranteed_relic": false
+    },
+    "chest": {
+      "gold": 0,
+      "offer_cards": false,
+      "card_choices": 0,
+      "guaranteed_relic": false
+    },
+    "event": {
+      "gold": 0,
+      "offer_cards": false,
+      "card_choices": 0,
+      "guaranteed_relic": false
+    },
+    "shop": {
+      "gold": 0,
+      "offer_cards": false,
+      "card_choices": 0,
+      "guaranteed_relic": false
+    },
+    "rest": {
+      "gold": 0,
+      "offer_cards": false,
+      "card_choices": 0,
+      "guaranteed_relic": false
+    }
+  }
+}

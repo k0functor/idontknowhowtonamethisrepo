@@ -1,7 +1,10 @@
 #include "RewardScene.hpp"
 
+#include "cards/CardDescriptionFormatter.hpp"
+
 #include "cards/CardDefinition.hpp"
-#include "localization/TextFormatter.hpp"
+#include "relics/RelicDefinition.hpp"
+#include "inspect/InspectPanelModel.hpp"
 #include "ui/BasicUi.hpp"
 
 #include <raylib.h>
@@ -15,12 +18,14 @@ RewardScene::RewardScene(
     const UiFont& font,
     const LocalizationManager& localization,
     const CardDatabase& cards,
+    const RelicDatabase& relics,
     RewardState reward,
     std::function<void(RewardSelection)> onContinue
 )
     : font_(font),
       localization_(localization),
       cards_(cards),
+      relics_(relics),
       reward_(std::move(reward)),
       onContinue_(std::move(onContinue)) {}
 
@@ -52,7 +57,7 @@ void RewardScene::render() const {
 
     BasicUi::drawCenteredText(
         font_,
-        localization_.get(TextId("reward.title")),
+        rewardTitle(),
         Rectangle{0.f, 65.f, static_cast<float>(GetScreenWidth()), 70.f},
         42.f,
         Color{240, 240, 250, 255}
@@ -79,7 +84,26 @@ void RewardScene::render() const {
             DrawRectangleRounded(row, 0.08f, 10, hovered ? Color{53, 58, 75, 255} : Color{40, 43, 56, 255});
             DrawRectangleRoundedLinesEx(row, 0.08f, 10, 2.f, hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
 
-            BasicUi::drawText(font_, optionTitle(option), Vector2{row.x + 22.f, row.y + 18.f}, 23.f, Color{245, 245, 250, 255});
+            BasicUi::drawText(font_, optionTitle(option), Vector2{row.x + 22.f, row.y + 12.f}, 23.f, Color{245, 245, 250, 255});
+
+            if (option.type == RewardOptionType::Relic) {
+                BasicUi::drawText(
+                    font_,
+                    relicDescription(option.relicId),
+                    Vector2{row.x + 22.f, row.y + 42.f},
+                    15.f,
+                    Color{190, 198, 220, 255}
+                );
+            }
+        }
+
+        for (std::size_t i = 0; i < reward_.options.size(); ++i) {
+            const RewardOption& option = reward_.options[i];
+            const Rectangle row = rewardOptionBounds(i);
+            if (option.type == RewardOptionType::Relic && BasicUi::contains(row, mouse)) {
+                renderRelicInspect(option, row);
+                break;
+            }
         }
     }
 
@@ -145,6 +169,12 @@ void RewardScene::takeOption(const std::size_t index) {
             break;
         case RewardOptionType::Consumable:
             selection_.selectedConsumableIds.push_back(option.consumableId);
+            reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
+            break;
+        case RewardOptionType::Relic:
+            if (!option.relicId.empty()) {
+                selection_.selectedRelicIds.push_back(option.relicId);
+            }
             reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
             break;
     }
@@ -221,6 +251,40 @@ void RewardScene::renderCardChoice() const {
     BasicUi::drawButton(font_, confirmButtonBounds(), localization_.get(TextId("reward.confirm")), mouse, selectedCardIndex_.has_value());
 }
 
+void RewardScene::renderRelicInspect(const RewardOption& option, const Rectangle row) const {
+    if (option.type != RewardOptionType::Relic || option.relicId.empty()) {
+        return;
+    }
+
+    InspectPanelModel panel;
+    panel.header = relicName(option.relicId);
+    panel.subheader = relicDescription(option.relicId);
+    panel.entries.push_back(InspectEntry{
+        localization_.get(TextId("inspect.relic.reward.name")),
+        localization_.get(TextId("inspect.relic.reward.description"))
+    });
+
+    constexpr float gap = 14.f;
+    constexpr float screenMargin = 18.f;
+    constexpr float preferredWidth = 340.f;
+    const float screenWidth = static_cast<float>(GetScreenWidth());
+    const float screenHeight = static_cast<float>(GetScreenHeight());
+
+    Rectangle bounds{
+        row.x + row.width + gap,
+        row.y,
+        std::min(preferredWidth, screenWidth - screenMargin * 2.f),
+        std::min(260.f, screenHeight - screenMargin * 2.f)
+    };
+
+    if (bounds.x + bounds.width > screenWidth - screenMargin) {
+        bounds.x = std::max(screenMargin, row.x - gap - bounds.width);
+    }
+
+    bounds.y = std::clamp(bounds.y, screenMargin, screenHeight - bounds.height - screenMargin);
+    inspectPanelView_.render(font_, panel, bounds);
+}
+
 const RewardOption* RewardScene::activeOption() const {
     if (!activeOptionIndex_.has_value() || *activeOptionIndex_ >= reward_.options.size()) {
         return nullptr;
@@ -243,6 +307,8 @@ std::string RewardScene::optionTitle(const RewardOption& option) const {
             return localization_.get(TextId("reward.take_card"));
         case RewardOptionType::Consumable:
             return localization_.get(TextId("reward.take_consumable"));
+        case RewardOptionType::Relic:
+            return localization_.format(TextId("reward.take_relic"), {{"relic", relicName(option.relicId)}});
     }
     return {};
 }
@@ -252,55 +318,30 @@ std::string RewardScene::cardName(const CardId& cardId) const {
 }
 
 std::string RewardScene::cardDescription(const CardId& cardId) const {
-    const CardDefinition& card = cards_.get(cardId);
-
-    TextFormatter::Variables variables;
-    variables.emplace("damage", "?");
-    variables.emplace("hp_damage", "?");
-    variables.emplace("block", "?");
-    variables.emplace("poison", "?");
-    variables.emplace("value", "?");
-
-    for (const EffectDefinition& effect : card.effects) {
-        fillVariablesFromEffect(variables, effect);
-    }
-
-    return localization_.format(card.descriptionTextId, variables);
+    const CardDescriptionFormatter descriptionFormatter(localization_);
+    return descriptionFormatter.formatStaticDescription(cards_.get(cardId));
 }
 
-std::string RewardScene::effectValueText(const EffectValue& value) {
-    const std::string range = rangeToString(value.minimumPossibleValue(), value.maximumPossibleValue());
-    if (value.isDice()) {
-        return range + " (" + ::toString(value.diceExpression()) + ")";
+std::string RewardScene::relicName(const std::string& relicId) const {
+    if (relicId.empty() || !relics_.contains(RelicId(relicId))) {
+        return relicId;
     }
-    return range;
+
+    return localization_.get(relics_.get(RelicId(relicId)).nameTextId);
 }
 
-std::string RewardScene::rangeToString(const int minimum, const int maximum) {
-    if (minimum == maximum) {
-        return std::to_string(minimum);
+std::string RewardScene::relicDescription(const std::string& relicId) const {
+    if (relicId.empty() || !relics_.contains(RelicId(relicId))) {
+        return relicId;
     }
-    return std::to_string(minimum) + "-" + std::to_string(maximum);
+
+    return localization_.get(relics_.get(RelicId(relicId)).descriptionTextId);
 }
 
-void RewardScene::fillVariablesFromEffect(TextFormatter::Variables& variables, const EffectDefinition& effect) {
-    const std::string value = effectValueText(effect.value);
-    switch (effect.type) {
-        case EffectType::Damage:
-            variables["damage"] = value;
-            variables["hp_damage"] = value;
-            break;
-        case EffectType::Block:
-            variables["block"] = value;
-            break;
-        case EffectType::ApplyStatus:
-            variables["value"] = value;
-            if (effect.statusId.has_value()) {
-                variables[*effect.statusId] = value;
-            }
-            break;
-        default:
-            variables["value"] = value;
-            break;
+std::string RewardScene::rewardTitle() const {
+    if (reward_.sourceNodeType == RunMapNodeType::Chest) {
+        return localization_.get(TextId("reward.chest_title"));
     }
+
+    return localization_.get(TextId("reward.title"));
 }

@@ -52,8 +52,8 @@ void DifficultySelectScene::render() const {
     const float startY = 250.f;
     const float gap = 24.f;
 
-    BasicUi::drawButton(font_, Rectangle{32.f, 32.f, 140.f, 48.f}, "Назад", mouse);
-    BasicUi::drawCenteredText(font_, "Выбор сложности", Rectangle{0.f, 110.f, static_cast<float>(GetScreenWidth()), 70.f}, 40.f, Color{240, 240, 250, 255});
+    BasicUi::drawButton(font_, Rectangle{32.f, 32.f, 140.f, 48.f}, localization_.get(TextId("ui.back")), mouse);
+    BasicUi::drawCenteredText(font_, localization_.get(TextId("difficulty_select.title")), Rectangle{0.f, 110.f, static_cast<float>(GetScreenWidth()), 70.f}, 40.f, Color{240, 240, 250, 255});
 
     for (std::size_t i = 0; i < difficulties_.size(); ++i) {
         const DifficultyDefinition& difficulty = *difficulties_[i];

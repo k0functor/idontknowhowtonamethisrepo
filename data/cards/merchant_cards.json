@@ -7,6 +7,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -35,6 +36,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "block",
@@ -62,6 +64,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -82,6 +85,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "block",
@@ -103,6 +107,7 @@
     "energy_cost": 1,
     "gold_cost": 70,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -131,6 +136,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "apply_status",
@@ -154,6 +160,7 @@
     "energy_cost": 0,
     "gold_cost": 55,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "block",
@@ -184,6 +191,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -212,6 +220,7 @@
     "energy_cost": 1,
     "gold_cost": 90,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "draw_cards",
@@ -234,6 +243,7 @@
     "energy_cost": 1,
     "gold_cost": 90,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "apply_status",
@@ -263,6 +273,7 @@
     "energy_cost": 2,
     "gold_cost": 95,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -291,6 +302,7 @@
     "energy_cost": 1,
     "gold_cost": 90,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -319,6 +331,7 @@
     "energy_cost": 2,
     "gold_cost": 95,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "block",
@@ -338,6 +351,7 @@
     "energy_cost": 1,
     "gold_cost": 95,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -361,6 +375,7 @@
     "energy_cost": 2,
     "gold_cost": 130,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -390,6 +405,7 @@
     "energy_cost": 1,
     "gold_cost": 120,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "gain_energy",
@@ -420,6 +436,7 @@
     "energy_cost": 0,
     "gold_cost": 125,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "apply_status",
@@ -451,6 +468,7 @@
     "energy_cost": 2,
     "gold_cost": 130,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",
@@ -470,6 +488,7 @@
     "energy_cost": 1,
     "gold_cost": 120,
     "type": "skill",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "heal",
@@ -497,6 +516,7 @@
     "energy_cost": 1,
     "gold_cost": 125,
     "type": "attack",
+    "owner_actor": "bone_merchant",
     "effects": [
       {
         "type": "damage",

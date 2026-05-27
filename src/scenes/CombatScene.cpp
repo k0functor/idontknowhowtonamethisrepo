@@ -2,6 +2,7 @@
 
 #include "actors/PlayerActorDefinition.hpp"
 #include "cards/CardDefinition.hpp"
+#include "cards/CardDescriptionFormatter.hpp"
 #include "combat/CombatPhase.hpp"
 #include "effects/EffectTarget.hpp"
 #include "enemies/EnemyInstance.hpp"
@@ -19,15 +20,37 @@
 #include <vector>
 
 namespace {
-CombatEntity makePlayerFromActor(const PlayerActorDefinition& actor, const EntityId id) {
+CombatEntity makePlayerFromActor(
+    const PlayerActorDefinition& actor,
+    const EntityId id,
+    const RunActorState* runActorState
+) {
     CombatEntity player;
     player.id = id;
     player.type = EntityType::Player;
     player.definitionId = actor.id.value;
     player.nameTextId = actor.nameTextId;
-    player.health = Health(actor.maxHp);
+
+    if (runActorState != nullptr) {
+        const int maximum = std::max(1, runActorState->maxHp);
+        const int current = std::clamp(runActorState->currentHp, 0, maximum);
+        player.health = Health(current, maximum);
+    } else {
+        player.health = Health(actor.maxHp);
+    }
+
     player.block = 0;
     return player;
+}
+
+const RunActorState* findRunActorState(const RunState& runState, const std::string& actorId) {
+    for (const RunActorState& actorState : runState.actorStates) {
+        if (actorState.definitionId == actorId) {
+            return &actorState;
+        }
+    }
+
+    return nullptr;
 }
 
 Vector2 blockedMousePosition() {
@@ -343,6 +366,20 @@ void CombatScene::update(const float deltaSeconds) {
         return;
     }
 
+    if (pendingConsumableIndex_.has_value()) {
+        selectedCardId_.reset();
+        draggedCardId_.reset();
+        keyboardTargetId_.reset();
+        inspectedCardId_.reset();
+        lastPreviewTarget_.reset();
+
+        view_.setSelectedCard(std::nullopt);
+        view_.setDraggedCard(std::nullopt, blockedMousePosition());
+        view_.update(deltaSeconds, blockedMousePosition());
+        updateConsumableConfirmationInput(mousePosition);
+        return;
+    }
+
     if (relicInspectModal_.isOpen()) {
         relicInspectModal_.update(view_.model().relics.size());
 
@@ -422,6 +459,11 @@ void CombatScene::render() const {
     view_.render(uiFont_.available() ? &uiFont_.font() : nullptr);
 
     if (!combatFinished_) {
+        if (pendingConsumableIndex_.has_value()) {
+            renderConsumableConfirmationModal();
+            return;
+        }
+
         renderTargetingArrow();
         renderInspectOverlay();
         return;
@@ -434,6 +476,176 @@ void CombatScene::render() const {
     }
 }
 
+void CombatScene::onLocalizationChanged() {
+    viewModelDirty_ = true;
+    lastPreviewTarget_.reset();
+}
+
+bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std::string& output) {
+    if (tokens.empty()) {
+        return false;
+    }
+
+    auto parseAmount = [](const std::vector<std::string>& values, const std::size_t index, const int fallback) {
+        if (index >= values.size()) {
+            return fallback;
+        }
+
+        try {
+            return std::stoi(values[index]);
+        } catch (...) {
+            return fallback;
+        }
+    };
+
+    auto firstTarget = [this](const std::string& side) -> std::optional<EntityId> {
+        if (side == "enemy" || side == "enemies") {
+            const std::vector<EntityId> enemies = state_.aliveEnemyIds();
+            if (!enemies.empty()) {
+                return enemies.front();
+            }
+            return std::nullopt;
+        }
+
+        const std::vector<EntityId> players = state_.alivePlayerIds();
+        if (!players.empty()) {
+            return players.front();
+        }
+
+        return std::nullopt;
+    };
+
+    const std::string& command = tokens.front();
+
+    if (command == "status" || (command == "apply" && tokens.size() >= 2 && tokens[1] == "status")) {
+        const std::size_t idIndex = command == "status" ? 1u : 2u;
+        if (tokens.size() <= idIndex) {
+            output = "Usage: status <status_id> [amount] [player|enemy]";
+            return true;
+        }
+
+        const std::string& statusId = tokens[idIndex];
+        const int amount = parseAmount(tokens, idIndex + 1u, 1);
+        std::string side = "player";
+        if (tokens.size() > idIndex + 2u) {
+            side = tokens[idIndex + 2u];
+        }
+
+        const std::optional<EntityId> target = firstTarget(side);
+        if (!target.has_value()) {
+            output = "No alive " + side + " target";
+            return true;
+        }
+
+        statusSystem_.applyStatus(state_, *target, statusId, amount);
+        viewModelDirty_ = true;
+        output = "Applied status '" + statusId + "' x" + std::to_string(amount) + " to " + side;
+        return true;
+    }
+
+    if (command == "heal" || command == "damage") {
+        const int amount = parseAmount(tokens, 1u, 0);
+        if (amount <= 0) {
+            output = "Usage: " + command + " <amount> [player|enemy]";
+            return true;
+        }
+
+        std::string side = "player";
+        if (tokens.size() > 2u) {
+            side = tokens[2];
+        }
+
+        const std::optional<EntityId> target = firstTarget(side);
+        if (!target.has_value()) {
+            output = "No alive " + side + " target";
+            return true;
+        }
+
+        CombatEntity& entity = state_.entity(*target);
+        if (command == "heal") {
+            entity.health.heal(amount);
+            output = "Healed " + side + " for " + std::to_string(amount);
+        } else {
+            entity.health.takeDamage(amount);
+            output = "Damaged " + side + " for " + std::to_string(amount);
+            combatController_.updateAfterAction(state_);
+            finishCombatIfNeeded();
+        }
+
+        viewModelDirty_ = true;
+        return true;
+    }
+
+    if (command == "block") {
+        const int amount = parseAmount(tokens, 1u, 0);
+        if (amount <= 0) {
+            output = "Usage: block <amount> [player|enemy]";
+            return true;
+        }
+
+        std::string side = "player";
+        if (tokens.size() > 2u) {
+            side = tokens[2];
+        }
+
+        const std::optional<EntityId> target = firstTarget(side);
+        if (!target.has_value()) {
+            output = "No alive " + side + " target";
+            return true;
+        }
+
+        state_.entity(*target).block += amount;
+        viewModelDirty_ = true;
+        output = "Added block " + std::to_string(amount) + " to " + side;
+        return true;
+    }
+
+    if (command == "energy") {
+        const int amount = parseAmount(tokens, 1u, 0);
+        if (amount == 0) {
+            output = "Usage: energy <amount>";
+            return true;
+        }
+
+        if (amount > 0) {
+            state_.resources.gainEnergy(amount);
+        } else {
+            const int spend = std::min(state_.resources.energy(), -amount);
+            if (spend > 0) {
+                state_.resources.spendEnergy(spend);
+            }
+        }
+
+        viewModelDirty_ = true;
+        output = "Adjusted combat energy by " + std::to_string(amount);
+        return true;
+    }
+
+    if (command == "win" && tokens.size() >= 2u && tokens[1] == "combat") {
+        for (CombatEntity& enemy : state_.enemies) {
+            enemy.health.setCurrent(0);
+        }
+        combatController_.updateAfterAction(state_);
+        finishCombatIfNeeded();
+        viewModelDirty_ = true;
+        output = "Combat won by debug command";
+        return true;
+    }
+
+    if (command == "lose" && tokens.size() >= 2u && tokens[1] == "combat") {
+        for (CombatEntity& player : state_.players) {
+            player.health.setCurrent(0);
+        }
+        combatController_.updateAfterAction(state_);
+        finishCombatIfNeeded();
+        viewModelDirty_ = true;
+        output = "Combat lost by debug command";
+        return true;
+    }
+
+    return false;
+}
+
 void CombatScene::initializeCombat() {
     state_ = CombatState{};
     entityIds_.reset();
@@ -442,6 +654,7 @@ void CombatScene::initializeCombat() {
     draggedCardId_.reset();
     keyboardTargetId_.reset();
     inspectedCardId_.reset();
+    pendingConsumableIndex_.reset();
     relicInspectModal_.close();
     lastPreviewTarget_.reset();
     combatFinished_ = false;
@@ -462,7 +675,7 @@ void CombatScene::initializeCombat() {
     for (const std::string& actorId : runState_.actorDefinitionIds) {
         const PlayerActorDefinition& actor = content_.actors().get(PlayerActorId(actorId));
         const EntityId entityId = entityIds_.create();
-        state_.players.push_back(makePlayerFromActor(actor, entityId));
+        state_.players.push_back(makePlayerFromActor(actor, entityId, findRunActorState(runState_, actorId)));
         state_.resources.setMaxEnergy(entityId, actor.startingEnergy);
     }
 
@@ -548,44 +761,18 @@ EntityId CombatScene::primaryPlayerId() const {
 }
 
 EntityId CombatScene::sourceForCard(const CardInstance& card) const {
-    const std::string& cardId = card.definitionId.value;
-
-    auto actorByDefinition = [this](const std::string& definitionId) -> std::optional<EntityId> {
-        for (const CombatEntity& player : state_.players) {
-            if (player.definitionId == definitionId && player.isAlive()) {
-                return player.id;
-            }
-        }
-        return std::nullopt;
-    };
-
-    if (cardId.rfind("sadist_", 0) == 0) {
-        if (const std::optional<EntityId> id = actorByDefinition("sadist")) {
-            return *id;
-        }
+    if (!content_.cards().contains(card.definitionId)) {
+        return primaryPlayerId();
     }
 
-    if (cardId.rfind("masochist_", 0) == 0) {
-        if (const std::optional<EntityId> id = actorByDefinition("masochist")) {
-            return *id;
-        }
+    const CardDefinition& definition = content_.cards().get(card.definitionId);
+    if (definition.ownerActorId.empty()) {
+        return primaryPlayerId();
     }
 
-    if (cardId.rfind("merchant_", 0) == 0) {
-        if (const std::optional<EntityId> id = actorByDefinition("bone_merchant")) {
-            return *id;
-        }
-    }
-
-    if (cardId.rfind("cyborg_", 0) == 0) {
-        if (const std::optional<EntityId> id = actorByDefinition("drone_cyborg")) {
-            return *id;
-        }
-    }
-
-    if (cardId.rfind("wanderer_", 0) == 0) {
-        if (const std::optional<EntityId> id = actorByDefinition("wanderer")) {
-            return *id;
+    for (const CombatEntity& player : state_.players) {
+        if (player.definitionId == definition.ownerActorId && player.isAlive()) {
+            return player.id;
         }
     }
 
@@ -1003,6 +1190,7 @@ void CombatScene::ensureKeyboardTargetForSelectedCard() {
 }
 
 void CombatScene::clearCardSelection() {
+    pendingConsumableIndex_.reset();
     selectedCardId_.reset();
     draggedCardId_.reset();
     keyboardTargetId_.reset();
@@ -1175,7 +1363,7 @@ void CombatScene::handleMousePressed(const Vector2 mousePosition) {
     }
 
     if (view_.hoveredConsumableIndex().has_value()) {
-        tryUseHoveredConsumable();
+        openConsumableConfirmation(*view_.hoveredConsumableIndex());
         return;
     }
 
@@ -1204,12 +1392,35 @@ void CombatScene::handleMousePressed(const Vector2 mousePosition) {
     clearCardSelection();
 }
 
-void CombatScene::tryUseHoveredConsumable() {
-    if (!view_.hoveredConsumableIndex().has_value()) {
+void CombatScene::openConsumableConfirmation(const std::size_t index) {
+    if (index >= combatConsumableIds_.size()) {
+        pendingConsumableIndex_.reset();
         return;
     }
 
-    const std::size_t index = *view_.hoveredConsumableIndex();
+    pendingConsumableIndex_ = index;
+    selectedCardId_.reset();
+    draggedCardId_.reset();
+    keyboardTargetId_.reset();
+    inspectedCardId_.reset();
+    lastPreviewTarget_.reset();
+}
+
+void CombatScene::cancelConsumableConfirmation() {
+    pendingConsumableIndex_.reset();
+}
+
+void CombatScene::confirmConsumableUse() {
+    if (!pendingConsumableIndex_.has_value()) {
+        return;
+    }
+
+    const std::size_t index = *pendingConsumableIndex_;
+    pendingConsumableIndex_.reset();
+    tryUseConsumable(index);
+}
+
+void CombatScene::tryUseConsumable(const std::size_t index) {
     if (index >= combatConsumableIds_.size()) {
         return;
     }
@@ -1231,6 +1442,129 @@ void CombatScene::tryUseHoveredConsumable() {
         finalResult_ = combatController_.updateAfterAction(state_);
         viewModelDirty_ = true;
     }
+}
+
+void CombatScene::updateConsumableConfirmationInput(const Vector2 mousePosition) {
+    if (!pendingConsumableIndex_.has_value() || *pendingConsumableIndex_ >= combatConsumableIds_.size()) {
+        cancelConsumableConfirmation();
+        return;
+    }
+
+    const Rectangle modal = consumableConfirmationBounds();
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        cancelConsumableConfirmation();
+        return;
+    }
+
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER)) {
+        confirmConsumableUse();
+        return;
+    }
+
+    if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        return;
+    }
+
+    if (BasicUi::contains(consumableConfirmButtonBounds(modal), mousePosition)) {
+        confirmConsumableUse();
+        return;
+    }
+
+    if (BasicUi::contains(consumableCancelButtonBounds(modal), mousePosition) ||
+        !BasicUi::contains(modal, mousePosition)) {
+        cancelConsumableConfirmation();
+        return;
+    }
+}
+
+void CombatScene::renderConsumableConfirmationModal() const {
+    if (!pendingConsumableIndex_.has_value() || *pendingConsumableIndex_ >= combatConsumableIds_.size()) {
+        return;
+    }
+
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 120});
+
+    const std::string consumableId = combatConsumableIds_[*pendingConsumableIndex_];
+    std::string name = consumableId;
+    std::string description;
+    if (content_.consumables().contains(ConsumableId(consumableId))) {
+        const ConsumableDefinition& definition = content_.consumables().get(ConsumableId(consumableId));
+        name = localizedOrFallback(definition.nameTextId, consumableId);
+        description = localizedOrFallback(definition.descriptionTextId, {});
+    }
+
+    const Vector2 mouse = GetMousePosition();
+    const Rectangle modal = consumableConfirmationBounds();
+    DrawRectangleRounded(modal, 0.045f, 14, Color{28, 30, 40, 250});
+    DrawRectangleRoundedLinesEx(modal, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
+
+    BasicUi::drawCenteredText(
+        uiFont_,
+        localizedOrFallback(TextId("consumable.confirm.title"), "Use consumable?"),
+        Rectangle{modal.x + 28.f, modal.y + 24.f, modal.width - 56.f, 36.f},
+        30.f,
+        Color{255, 235, 175, 255}
+    );
+
+    BasicUi::drawCenteredText(
+        uiFont_,
+        name,
+        Rectangle{modal.x + 36.f, modal.y + 74.f, modal.width - 72.f, 32.f},
+        24.f,
+        Color{245, 245, 250, 255}
+    );
+
+    const std::vector<std::string> lines = BasicUi::wrapText(
+        uiFont_,
+        description.empty()
+            ? localizedOrFallback(TextId("consumable.confirm.description"), "This will consume the item immediately.")
+            : description,
+        18.f,
+        modal.width - 72.f
+    );
+
+    float y = modal.y + 124.f;
+    for (const std::string& line : lines) {
+        if (y > modal.y + modal.height - 110.f) {
+            break;
+        }
+        BasicUi::drawText(uiFont_, line, Vector2{modal.x + 36.f, y}, 18.f, Color{205, 210, 225, 255});
+        y += 24.f;
+    }
+
+    BasicUi::drawButton(
+        uiFont_,
+        consumableCancelButtonBounds(modal),
+        localizedOrFallback(TextId("ui.cancel"), "Cancel"),
+        mouse
+    );
+
+    BasicUi::drawButton(
+        uiFont_,
+        consumableConfirmButtonBounds(modal),
+        localizedOrFallback(TextId("ui.confirm"), "Confirm"),
+        mouse
+    );
+}
+
+Rectangle CombatScene::consumableConfirmationBounds() const {
+    const float width = std::min(520.f, static_cast<float>(GetScreenWidth()) - 72.f);
+    const float height = 300.f;
+    return Rectangle{
+        static_cast<float>(GetScreenWidth()) * 0.5f - width * 0.5f,
+        static_cast<float>(GetScreenHeight()) * 0.5f - height * 0.5f,
+        width,
+        height
+    };
+}
+
+Rectangle CombatScene::consumableConfirmButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + modal.width * 0.5f + 18.f, modal.y + modal.height - 70.f, 190.f, 48.f};
+}
+
+Rectangle CombatScene::consumableCancelButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + modal.width * 0.5f - 208.f, modal.y + modal.height - 70.f, 190.f, 48.f};
 }
 
 void CombatScene::handleMouseReleased(const Vector2) {
@@ -1255,6 +1589,8 @@ void CombatScene::handleMouseReleased(const Vector2) {
 }
 
 void CombatScene::playSelectedCardOn(const EntityId target) {
+    pendingConsumableIndex_.reset();
+
     if (!selectedCardId_.has_value()) {
         return;
     }
@@ -1284,6 +1620,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 }
 
 void CombatScene::endPlayerTurn() {
+    pendingConsumableIndex_.reset();
     selectedCardId_.reset();
     draggedCardId_.reset();
     keyboardTargetId_.reset();
@@ -1367,6 +1704,7 @@ void CombatScene::finishCombatIfNeeded() {
         keyboardTargetId_.reset();
         inspectedCardId_.reset();
         relicInspectModal_.close();
+        pendingConsumableIndex_.reset();
         lastPreviewTarget_.reset();
         viewModelDirty_ = true;
 
@@ -1529,6 +1867,15 @@ void CombatScene::renderRewardModal() const {
                 );
             }
         }
+
+        for (std::size_t i = 0; i < reward_->options.size(); ++i) {
+            const RewardOption& option = reward_->options[i];
+            const Rectangle row = rewardOptionRowBounds(i);
+            if (option.type == RewardOptionType::Relic && BasicUi::contains(row, mouse)) {
+                renderRewardRelicInspect(option, row);
+                break;
+            }
+        }
     }
 
     BasicUi::drawButton(
@@ -1541,6 +1888,40 @@ void CombatScene::renderRewardModal() const {
     if (rewardCardChoiceOpen_) {
         renderRewardCardChoiceModal();
     }
+}
+
+void CombatScene::renderRewardRelicInspect(const RewardOption& option, const Rectangle row) const {
+    if (option.type != RewardOptionType::Relic || option.relicId.empty()) {
+        return;
+    }
+
+    InspectPanelModel panel;
+    panel.header = rewardRelicName(option.relicId);
+    panel.subheader = rewardRelicDescription(option.relicId);
+    panel.entries.push_back(InspectEntry{
+        localizedOrFallback(TextId("inspect.relic.reward.name"), "Relic reward"),
+        localizedOrFallback(TextId("inspect.relic.reward.description"), "Click the reward row to take this relic, or continue to skip it.")
+    });
+
+    constexpr float gap = 14.f;
+    constexpr float screenMargin = 18.f;
+    constexpr float preferredWidth = 340.f;
+    const float screenWidth = static_cast<float>(GetScreenWidth());
+    const float screenHeight = static_cast<float>(GetScreenHeight());
+
+    Rectangle bounds{
+        row.x + row.width + gap,
+        row.y,
+        std::min(preferredWidth, screenWidth - screenMargin * 2.f),
+        std::min(260.f, screenHeight - screenMargin * 2.f)
+    };
+
+    if (bounds.x + bounds.width > screenWidth - screenMargin) {
+        bounds.x = std::max(screenMargin, row.x - gap - bounds.width);
+    }
+
+    bounds.y = std::clamp(bounds.y, screenMargin, screenHeight - bounds.height - screenMargin);
+    inspectPanelView_.render(uiFont_, panel, bounds);
 }
 
 void CombatScene::renderRewardCardChoiceModal() const {
@@ -1801,6 +2182,13 @@ void CombatScene::takeRewardOption(const std::size_t optionIndex) {
             }
             reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
             break;
+
+        case RewardOptionType::Relic:
+            if (!option.relicId.empty()) {
+                rewardSelection_.selectedRelicIds.push_back(option.relicId);
+            }
+            reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
+            break;
     }
 }
 
@@ -1841,6 +2229,12 @@ std::string CombatScene::rewardOptionTitle(const RewardOption& option) const {
 
         case RewardOptionType::Consumable:
             return localizedOrFallback(TextId("reward.take_consumable"), "Take consumable");
+
+        case RewardOptionType::Relic:
+            return localization_.format(
+                TextId("reward.take_relic"),
+                {{"relic", rewardRelicName(option.relicId)}}
+            );
     }
 
     return {};
@@ -1859,6 +2253,9 @@ std::string CombatScene::rewardOptionDescription(const RewardOption& option) con
 
         case RewardOptionType::Consumable:
             return option.consumableId;
+
+        case RewardOptionType::Relic:
+            return rewardRelicDescription(option.relicId);
     }
 
     return {};
@@ -1868,21 +2265,25 @@ std::string CombatScene::rewardCardName(const CardId& cardId) const {
     return localization_.get(content_.cards().get(cardId).nameTextId);
 }
 
-std::string CombatScene::rewardCardDescription(const CardId& cardId) const {
-    const CardDefinition& card = content_.cards().get(cardId);
-
-    TextFormatter::Variables variables;
-    variables.emplace("damage", "?");
-    variables.emplace("hp_damage", "?");
-    variables.emplace("block", "?");
-    variables.emplace("poison", "?");
-    variables.emplace("value", "?");
-
-    for (const EffectDefinition& effect : card.effects) {
-        fillVariablesFromEffect(variables, effect);
+std::string CombatScene::rewardRelicName(const std::string& relicId) const {
+    if (relicId.empty() || !content_.relics().contains(RelicId(relicId))) {
+        return relicId;
     }
 
-    return localization_.format(card.descriptionTextId, variables);
+    return localization_.get(content_.relics().get(RelicId(relicId)).nameTextId);
+}
+
+std::string CombatScene::rewardRelicDescription(const std::string& relicId) const {
+    if (relicId.empty() || !content_.relics().contains(RelicId(relicId))) {
+        return relicId;
+    }
+
+    return localization_.get(content_.relics().get(RelicId(relicId)).descriptionTextId);
+}
+
+std::string CombatScene::rewardCardDescription(const CardId& cardId) const {
+    const CardDescriptionFormatter descriptionFormatter(localization_);
+    return descriptionFormatter.formatStaticDescription(content_.cards().get(cardId));
 }
 
 std::string CombatScene::localizedOrFallback(const TextId& textId, const std::string& fallback) const {
@@ -1891,54 +2292,4 @@ std::string CombatScene::localizedOrFallback(const TextId& textId, const std::st
     }
 
     return fallback;
-}
-
-std::string CombatScene::effectValueText(const EffectValue& value) {
-    const std::string range = rangeToString(
-        value.minimumPossibleValue(),
-        value.maximumPossibleValue()
-    );
-
-    if (value.isDice()) {
-        return range + " (" + ::toString(value.diceExpression()) + ")";
-    }
-
-    return range;
-}
-
-std::string CombatScene::rangeToString(const int minimum, const int maximum) {
-    if (minimum == maximum) {
-        return std::to_string(minimum);
-    }
-
-    return std::to_string(minimum) + "-" + std::to_string(maximum);
-}
-
-void CombatScene::fillVariablesFromEffect(
-    TextFormatter::Variables& variables,
-    const EffectDefinition& effect
-) {
-    const std::string value = effectValueText(effect.value);
-
-    switch (effect.type) {
-        case EffectType::Damage:
-            variables["damage"] = value;
-            variables["hp_damage"] = value;
-            break;
-
-        case EffectType::Block:
-            variables["block"] = value;
-            break;
-
-        case EffectType::ApplyStatus:
-            variables["value"] = value;
-            if (effect.statusId.has_value()) {
-                variables[*effect.statusId] = value;
-            }
-            break;
-
-        default:
-            variables["value"] = value;
-            break;
-    }
 }

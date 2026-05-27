@@ -1,58 +1,58 @@
 #include "RunMapGenerator.hpp"
 
 #include <algorithm>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
-constexpr float START_X = 120.f;
-constexpr float LAYER_STEP_X = 210.f;
-constexpr float CENTER_Y = 520.f;
+struct Slot {
+    int layer = 0;
+    int index = 0;
+};
 
-std::vector<float> offsetsForCount(const int count) {
-    switch (count) {
-        case 1:
-            return {0.f};
-        case 3:
-            return {-190.f, 0.f, 190.f};
-        case 4:
-            return {-255.f, -85.f, 85.f, 255.f};
-        default:
-            return {0.f};
+std::vector<float> offsetsForCount(const int count, const float spacing) {
+    std::vector<float> offsets;
+    offsets.reserve(static_cast<std::size_t>(std::max(0, count)));
+
+    const float center = (static_cast<float>(count) - 1.f) * 0.5f;
+    for (int i = 0; i < count; ++i) {
+        offsets.push_back((static_cast<float>(i) - center) * spacing);
     }
+
+    return offsets;
 }
 
-RunMapNodeType randomRoomType(Random& random) {
-    const int roll = random.rangeInclusive(1, 100);
+RunMapNodeType randomCombatOrEventRoomType(const RunMapGenerationConfig& config, Random& random) {
+    const int totalWeight = config.combatWeight() + config.eventWeight();
+    const int roll = random.rangeInclusive(1, totalWeight);
 
-    if (roll <= 62) {
+    if (roll <= config.combatWeight()) {
         return RunMapNodeType::Combat;
     }
 
-    if (roll <= 82) {
-        return RunMapNodeType::Event;
-    }
-
-    return RunMapNodeType::Elite;
+    return RunMapNodeType::Event;
 }
 
 std::vector<int> addLayer(
     RunMap& map,
     const int layerIndex,
     const std::vector<RunMapNodeType>& types,
-    int& nextId
+    int& nextId,
+    const RunMapLayoutConfig& layout
 ) {
     std::vector<int> ids;
     ids.reserve(types.size());
 
-    const std::vector<float> offsets = offsetsForCount(static_cast<int>(types.size()));
-    const float x = START_X + static_cast<float>(layerIndex) * LAYER_STEP_X;
+    const std::vector<float> offsets = offsetsForCount(static_cast<int>(types.size()), layout.nodeSpacingY);
+    const float x = layout.startX + static_cast<float>(layerIndex) * layout.layerStepX;
 
     for (std::size_t i = 0; i < types.size(); ++i) {
         RunMapNode node;
         node.id = nextId++;
         node.type = types[i];
         node.state = RunMapNodeState::Locked;
-        node.position = Vector2{x, CENTER_Y + offsets[i]};
+        node.position = Vector2{x, layout.centerY + offsets[i]};
 
         ids.push_back(node.id);
         map.nodes.push_back(std::move(node));
@@ -68,8 +68,7 @@ RunMapNode& nodeById(RunMap& map, const int id) {
         }
     }
 
-    // The generator owns all ids. This fallback is only here to keep release builds sane.
-    return map.nodes.front();
+    throw std::runtime_error("Generated run map references unknown node id: " + std::to_string(id));
 }
 
 bool containsId(const std::vector<int>& values, const int id) {
@@ -81,26 +80,6 @@ void addEdge(RunMap& map, const int from, const int to) {
 
     if (!containsId(next, to)) {
         next.push_back(to);
-    }
-}
-
-void connectAllToAll(RunMap& map, const std::vector<int>& fromLayer, const std::vector<int>& toLayer) {
-    for (const int from : fromLayer) {
-        for (const int to : toLayer) {
-            addEdge(map, from, to);
-        }
-    }
-}
-
-void connectAllToSingle(RunMap& map, const std::vector<int>& fromLayer, const int to) {
-    for (const int from : fromLayer) {
-        addEdge(map, from, to);
-    }
-}
-
-void connectSingleToAll(RunMap& map, const int from, const std::vector<int>& toLayer) {
-    for (const int to : toLayer) {
-        addEdge(map, from, to);
     }
 }
 
@@ -128,7 +107,7 @@ void connectRandomly(
         }
     }
 
-    // Every visible room in the next layer must be reachable. Otherwise the map lies.
+    // Every room in the next layer must be reachable from at least one previous room.
     for (std::size_t i = 0; i < toLayer.size(); ++i) {
         if (incomingCount[i] > 0) {
             continue;
@@ -142,46 +121,167 @@ void connectRandomly(
     }
 }
 
-std::vector<RunMapNodeType> randomRooms(Random& random, const int count) {
-    std::vector<RunMapNodeType> result;
-    result.reserve(static_cast<std::size_t>(count));
+bool sameSlot(const Slot& lhs, const Slot& rhs) {
+    return lhs.layer == rhs.layer && lhs.index == rhs.index;
+}
 
-    for (int i = 0; i < count; ++i) {
-        result.push_back(randomRoomType(random));
+bool containsSlot(const std::vector<Slot>& slots, const Slot& candidate) {
+    return std::any_of(slots.begin(), slots.end(), [&](const Slot& slot) {
+        return sameSlot(slot, candidate);
+    });
+}
+
+std::vector<Slot> collectSlots(
+    const std::vector<std::vector<RunMapNodeType>>& layers,
+    const int minLayer,
+    const int maxLayer,
+    const std::vector<Slot>& excluded
+) {
+    std::vector<Slot> result;
+
+    const int clampedMin = std::max(0, minLayer);
+    const int clampedMax = std::min(maxLayer, static_cast<int>(layers.size()) - 1);
+
+    for (int layer = clampedMin; layer <= clampedMax; ++layer) {
+        for (int index = 0; index < static_cast<int>(layers[static_cast<std::size_t>(layer)].size()); ++index) {
+            Slot candidate{layer, index};
+            if (!containsSlot(excluded, candidate)) {
+                result.push_back(candidate);
+            }
+        }
     }
 
     return result;
 }
+
+void placeSpecials(
+    std::vector<std::vector<RunMapNodeType>>& layers,
+    std::vector<Slot>& usedSlots,
+    std::vector<Slot> candidates,
+    const int count,
+    const RunMapNodeType type,
+    Random& random,
+    const std::string& label
+) {
+    if (count <= 0) {
+        return;
+    }
+
+    if (count > static_cast<int>(candidates.size())) {
+        throw std::runtime_error("Cannot place " + label + " nodes in generated act map: not enough candidate slots");
+    }
+
+    for (int i = 0; i < count; ++i) {
+        const int index = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
+        const Slot slot = candidates[static_cast<std::size_t>(index)];
+        candidates.erase(candidates.begin() + index);
+
+        layers[static_cast<std::size_t>(slot.layer)][static_cast<std::size_t>(slot.index)] = type;
+        usedSlots.push_back(slot);
+    }
+}
+
+void validateGeneratedActOneMap(const RunMap& map, const int expectedShopCount, const int minimumEliteCount, const int maximumEliteCount) {
+    int shopCount = 0;
+    int eliteCount = 0;
+
+    for (const RunMapNode& node : map.nodes) {
+        if (node.type == RunMapNodeType::Shop) {
+            ++shopCount;
+        } else if (node.type == RunMapNodeType::Elite) {
+            ++eliteCount;
+        }
+    }
+
+    if (shopCount != expectedShopCount) {
+        throw std::runtime_error("Generated act 1 map has invalid shop count");
+    }
+
+    if (eliteCount < minimumEliteCount || eliteCount > maximumEliteCount) {
+        throw std::runtime_error("Generated act 1 map has invalid elite count");
+    }
+}
 }
 
 RunMap RunMapGenerator::generateTestMap() const {
+    RunMapGenerationConfig config;
     Random random(1);
-    return generateActOneMap(random);
+    return generateActOneMap(random, config);
 }
 
-RunMap RunMapGenerator::generateActOneMap(Random& random) const {
+RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGenerationConfig& config) const {
     RunMap map;
     int nextId = 0;
 
-    const std::vector<int> layer0 = addLayer(map, 0, {RunMapNodeType::Combat}, nextId);
-    const std::vector<int> layer1 = addLayer(map, 1, randomRooms(random, 3), nextId);
-    const std::vector<int> layer2 = addLayer(map, 2, randomRooms(random, 4), nextId);
-    const std::vector<int> layer3 = addLayer(map, 3, {RunMapNodeType::Chest}, nextId);
-    const std::vector<int> layer4 = addLayer(map, 4, randomRooms(random, 3), nextId);
-    const std::vector<int> layer5 = addLayer(map, 5, randomRooms(random, 3), nextId);
-    const std::vector<int> layer6 = addLayer(map, 6, {RunMapNodeType::Rest}, nextId);
-    const std::vector<int> layer7 = addLayer(map, 7, {RunMapNodeType::Boss}, nextId);
+    const int layerCount = config.layerCount();
+    const int preBossLayer = layerCount - 2;
+    const int bossLayer = layerCount - 1;
+    const int firstMiddleLayer = 1;
+    const int lastMiddleLayer = layerCount - 3;
 
-    nodeById(map, layer0.front()).state = RunMapNodeState::Available;
+    std::vector<std::vector<RunMapNodeType>> layerTypes(static_cast<std::size_t>(layerCount));
+    layerTypes[0] = {RunMapNodeType::Combat};
+    layerTypes[static_cast<std::size_t>(preBossLayer)] = {RunMapNodeType::Rest};
+    layerTypes[static_cast<std::size_t>(bossLayer)] = {RunMapNodeType::Boss};
 
-    connectSingleToAll(map, layer0.front(), layer1);
-    connectRandomly(map, layer1, layer2, random);
-    connectAllToSingle(map, layer2, layer3.front());
-    connectSingleToAll(map, layer3.front(), layer4);
-    connectRandomly(map, layer4, layer5, random);
-    connectAllToSingle(map, layer5, layer6.front());
-    connectAllToSingle(map, layer6, layer7.front());
+    for (int layer = firstMiddleLayer; layer <= lastMiddleLayer; ++layer) {
+        const int nodeCount = random.rangeInclusive(config.middleMinNodes(), config.middleMaxNodes());
+        std::vector<RunMapNodeType>& types = layerTypes[static_cast<std::size_t>(layer)];
+        types.reserve(static_cast<std::size_t>(nodeCount));
+
+        for (int index = 0; index < nodeCount; ++index) {
+            types.push_back(randomCombatOrEventRoomType(config, random));
+        }
+    }
+
+    std::vector<Slot> usedSlots;
+
+    const RunMapSpecialNodeConfig& shop = config.shop();
+    placeSpecials(
+        layerTypes,
+        usedSlots,
+        collectSlots(layerTypes, shop.minLayer, shop.maxLayer, usedSlots),
+        shop.count,
+        RunMapNodeType::Shop,
+        random,
+        "shop"
+    );
+
+    const RunMapEliteConfig& elites = config.elites();
+    const int eliteCount = random.rangeInclusive(elites.minimum, elites.maximum);
+    placeSpecials(
+        layerTypes,
+        usedSlots,
+        collectSlots(layerTypes, elites.minLayer, elites.maxLayer, usedSlots),
+        eliteCount,
+        RunMapNodeType::Elite,
+        random,
+        "elite"
+    );
+
+    std::vector<std::vector<int>> layerIds(static_cast<std::size_t>(layerCount));
+    for (int layer = 0; layer < layerCount; ++layer) {
+        layerIds[static_cast<std::size_t>(layer)] = addLayer(
+            map,
+            layer,
+            layerTypes[static_cast<std::size_t>(layer)],
+            nextId,
+            config.layout()
+        );
+    }
+
+    nodeById(map, layerIds.front().front()).state = RunMapNodeState::Available;
+
+    for (int layer = 0; layer < layerCount - 1; ++layer) {
+        connectRandomly(
+            map,
+            layerIds[static_cast<std::size_t>(layer)],
+            layerIds[static_cast<std::size_t>(layer + 1)],
+            random
+        );
+    }
 
     map.currentNodeId = -1;
+    validateGeneratedActOneMap(map, shop.count, elites.minimum, elites.maximum);
     return map;
 }

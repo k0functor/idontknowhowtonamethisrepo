@@ -20,4 +20,18 @@ void RewardSystem::applyReward(
             run.consumableIds.push_back(consumableId);
         }
     }
+
+    for (const std::string& relicId : selection.selectedRelicIds) {
+        bool alreadyOwned = false;
+        for (const std::string& ownedRelicId : run.relicIds) {
+            if (ownedRelicId == relicId) {
+                alreadyOwned = true;
+                break;
+            }
+        }
+
+        if (!alreadyOwned) {
+            run.relicIds.push_back(relicId);
+        }
+    }
 }

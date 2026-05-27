@@ -4,11 +4,15 @@
 #include "archetypes/PlayableArchetypeDatabase.hpp"
 #include "data/CardDatabase.hpp"
 #include "data/EnemyDatabase.hpp"
+#include "data/EventDatabase.hpp"
 #include "consumables/ConsumableDatabase.hpp"
 #include "drones/DroneDatabase.hpp"
 #include "relics/RelicDatabase.hpp"
+#include "rewards/RewardTuning.hpp"
 #include "run/DifficultyDatabase.hpp"
+#include "run/RunMapGenerationConfig.hpp"
 #include "statuses/StatusDatabase.hpp"
+#include "shop/ShopTuning.hpp"
 
 #include <filesystem>
 
@@ -45,6 +49,18 @@ public:
     const DroneDatabase& drones() const;
     DroneDatabase& drones();
 
+    const EventDatabase& events() const;
+    EventDatabase& events();
+
+    const RewardTuning& rewardTuning() const;
+    RewardTuning& rewardTuning();
+
+    const ShopTuning& shopTuning() const;
+    ShopTuning& shopTuning();
+
+    const RunMapGenerationConfig& actOneMapGeneration() const;
+    RunMapGenerationConfig& actOneMapGeneration();
+
 private:
     CardDatabase cards_;
     EnemyDatabase enemies_;
@@ -55,4 +71,8 @@ private:
     DifficultyDatabase difficulties_;
     ConsumableDatabase consumables_;
     DroneDatabase drones_;
+    EventDatabase events_;
+    RewardTuning rewardTuning_;
+    ShopTuning shopTuning_;
+    RunMapGenerationConfig actOneMapGeneration_;
 };

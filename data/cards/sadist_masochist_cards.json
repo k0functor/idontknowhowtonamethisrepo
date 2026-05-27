@@ -7,6 +7,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -26,6 +27,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -54,6 +56,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -82,6 +85,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -110,6 +114,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "skill",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -138,6 +143,7 @@
     "energy_cost": 0,
     "gold_cost": 55,
     "type": "skill",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -169,6 +175,7 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -198,6 +205,7 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -226,6 +234,7 @@
     "energy_cost": 1,
     "gold_cost": 90,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -253,6 +262,7 @@
     "energy_cost": 1,
     "gold_cost": 90,
     "type": "skill",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -282,6 +292,7 @@
     "energy_cost": 2,
     "gold_cost": 125,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -302,6 +313,7 @@
     "energy_cost": 2,
     "gold_cost": 135,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -338,6 +350,7 @@
     "energy_cost": 1,
     "gold_cost": 120,
     "type": "skill",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -370,6 +383,7 @@
     "energy_cost": 0,
     "gold_cost": 130,
     "type": "skill",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -409,6 +423,7 @@
     "energy_cost": 2,
     "gold_cost": 140,
     "type": "attack",
+    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -438,6 +453,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
+    "owner_actor": "masochist",
     "effects": [
       {
         "type": "block",
@@ -457,6 +473,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
+    "owner_actor": "masochist",
     "effects": [
       {
         "type": "block",
@@ -485,6 +502,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
+    "owner_actor": "masochist",
     "effects": [
       {
         "type": "damage",
@@ -512,6 +530,7 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "skill",
+    "owner_actor": "masochist",
     "effects": [
       {
         "type": "heal",
@@ -540,6 +559,7 @@
     "energy_cost": 1,
     "gold_cost": 120,
     "type": "skill",
+    "owner_actor": "masochist",
     "effects": [
       {
         "type": "apply_status",

@@ -5,6 +5,8 @@
 #include "run/DifficultyId.hpp"
 #include "run/RunMap.hpp"
 #include "run/RunStats.hpp"
+#include "run/RunActorState.hpp"
+#include "run/RunPendingRoomState.hpp"
 
 #include <cstdint>
 #include <string>
@@ -35,7 +37,10 @@ struct RunState {
     int maxConsumables = 3;
 
     std::vector<std::string> actorDefinitionIds;
+    std::vector<RunActorState> actorStates;
 
     RunMap map;
     RunStats stats;
+
+    RunPendingRoomState pendingRoom;
 };

@@ -3,6 +3,9 @@
 #include "cards/CardRarity.hpp"
 #include "cards/CardType.hpp"
 #include "rewards/RewardOption.hpp"
+#include "relics/RelicDefinition.hpp"
+#include "relics/RelicRarity.hpp"
+#include "run/RunCardEligibility.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -26,87 +29,72 @@ RewardState RewardGenerator::generateCombatReward(
     const RewardContext& context,
     const CardDatabase& cards,
     const RelicDatabase& relics,
+    const RewardTuning& tuning,
     Random& random
 ) const {
     RewardState reward;
     reward.sourceNodeType = context.nodeType;
 
-    const int baseGold = baseGoldForNode(context.nodeType);
+    const NodeRewardTuning& nodeTuning = tuning.node(context.nodeType);
+    const int baseGold = nodeTuning.gold;
     int gold = static_cast<int>(static_cast<float>(baseGold) * context.run.goldRewardMultiplier);
     gold = static_cast<int>(static_cast<double>(gold) * relicGoldMultiplier(context, relics));
 
     if (context.run.archetypeMechanicId == "merchant_progression") {
-        gold = static_cast<int>(static_cast<float>(gold) * 1.25f);
+        gold = static_cast<int>(static_cast<double>(gold) * tuning.merchantGoldMultiplier());
     }
 
     if (gold > 0) {
         reward.options.push_back(RewardOption::goldReward(gold));
     }
 
-    if (!shouldOfferCards(context)) {
-        return reward;
-    }
+    if (shouldOfferCards(context, tuning)) {
+        std::vector<const CardDefinition*> candidates;
+        for (const CardDefinition* card : cards.all()) {
+            if (card != nullptr && canAppearAsCombatReward(*card) && runCanReceiveCard(context.run, *card)) {
+                candidates.push_back(card);
+            }
+        }
 
-    std::vector<const CardDefinition*> candidates;
-    for (const CardDefinition* card : cards.all()) {
-        if (card != nullptr && canAppearAsCombatReward(*card)) {
-            candidates.push_back(card);
+        if (!candidates.empty()) {
+            const int optionCount = std::min<int>(cardRewardCount(context, tuning), static_cast<int>(candidates.size()));
+            std::vector<CardRewardOption> cardOptions;
+            cardOptions.reserve(static_cast<std::size_t>(optionCount));
+
+            for (int i = 0; i < optionCount; ++i) {
+                const int pickedIndex = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
+                const CardDefinition* picked = candidates[static_cast<std::size_t>(pickedIndex)];
+
+                cardOptions.push_back(CardRewardOption{picked->id});
+                candidates.erase(candidates.begin() + pickedIndex);
+            }
+
+            if (!cardOptions.empty()) {
+                reward.options.push_back(RewardOption::cardChoice(std::move(cardOptions)));
+            }
         }
     }
 
-    if (candidates.empty()) {
-        return reward;
-    }
-
-    const int optionCount = std::min<int>(cardRewardCount(context), static_cast<int>(candidates.size()));
-    std::vector<CardRewardOption> cardOptions;
-    cardOptions.reserve(static_cast<std::size_t>(optionCount));
-
-    for (int i = 0; i < optionCount; ++i) {
-        const int pickedIndex = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
-        const CardDefinition* picked = candidates[static_cast<std::size_t>(pickedIndex)];
-
-        cardOptions.push_back(CardRewardOption{picked->id});
-        candidates.erase(candidates.begin() + pickedIndex);
-    }
-
-    if (!cardOptions.empty()) {
-        reward.options.push_back(RewardOption::cardChoice(std::move(cardOptions)));
+    if (nodeTuning.guaranteedRelic) {
+        const std::optional<RelicId> relic = chooseRelicReward(context, relics, random);
+        if (relic.has_value()) {
+            reward.options.push_back(RewardOption::relic(relic->value));
+        }
     }
 
     return reward;
 }
 
-int RewardGenerator::baseGoldForNode(const RunMapNodeType nodeType) const {
-    switch (nodeType) {
-        case RunMapNodeType::Combat:
-            return 18;
-        case RunMapNodeType::Elite:
-            return 35;
-        case RunMapNodeType::Boss:
-            return 75;
-        case RunMapNodeType::Chest:
-        case RunMapNodeType::Event:
-        case RunMapNodeType::Shop:
-        case RunMapNodeType::Rest:
-            return 0;
-    }
-
-    throw std::runtime_error("Unknown RunMapNodeType in RewardGenerator");
-}
-
-bool RewardGenerator::shouldOfferCards(const RewardContext& context) const {
+bool RewardGenerator::shouldOfferCards(const RewardContext& context, const RewardTuning& tuning) const {
     if (context.run.archetypeMechanicId == "merchant_progression") {
         return false;
     }
 
-    return context.nodeType == RunMapNodeType::Combat ||
-        context.nodeType == RunMapNodeType::Elite ||
-        context.nodeType == RunMapNodeType::Boss;
+    return tuning.node(context.nodeType).offerCards;
 }
 
-int RewardGenerator::cardRewardCount(const RewardContext&) const {
-    return 3;
+int RewardGenerator::cardRewardCount(const RewardContext& context, const RewardTuning& tuning) const {
+    return tuning.node(context.nodeType).cardChoices;
 }
 
 
@@ -133,4 +121,39 @@ double RewardGenerator::relicGoldMultiplier(
     }
 
     return result;
+}
+
+std::optional<RelicId> RewardGenerator::chooseRelicReward(
+    const RewardContext& context,
+    const RelicDatabase& relics,
+    Random& random
+) const {
+    std::vector<const RelicDefinition*> candidates;
+
+    for (const RelicDefinition* relic : relics.all()) {
+        if (relic == nullptr) {
+            continue;
+        }
+
+        if (relic->rarity == RelicRarity::Starter || relic->rarity == RelicRarity::Special) {
+            continue;
+        }
+
+        const bool alreadyOwned = std::find(
+            context.run.relicIds.begin(),
+            context.run.relicIds.end(),
+            relic->id.value
+        ) != context.run.relicIds.end();
+
+        if (!alreadyOwned) {
+            candidates.push_back(relic);
+        }
+    }
+
+    if (candidates.empty()) {
+        return std::nullopt;
+    }
+
+    const int index = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
+    return candidates[static_cast<std::size_t>(index)]->id;
 }

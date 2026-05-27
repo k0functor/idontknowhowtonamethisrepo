@@ -34,6 +34,16 @@ add_executable(i_dont_know_how_to_name_this_game
     src/app/AppConfig.hpp
     src/app/AppConfig.cpp
 
+    src/settings/UserSettings.hpp
+    src/settings/UserSettings.cpp
+    src/settings/UserSettingsRepository.hpp
+    src/settings/UserSettingsRepository.cpp
+
+    src/save/RunStateSerializer.hpp
+    src/save/RunStateSerializer.cpp
+    src/save/RunSaveSystem.hpp
+    src/save/RunSaveSystem.cpp
+
     src/core/Random.hpp
     src/core/Random.cpp
 
@@ -50,6 +60,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/CardDatabase.cpp
     src/data/EnemyDatabase.hpp
     src/data/EnemyDatabase.cpp
+    src/data/EventDatabase.hpp
+    src/data/EventDatabase.cpp
 
     src/data/parsers/EffectValueParser.hpp
     src/data/parsers/EffectValueParser.cpp
@@ -61,6 +73,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/parsers/EnemyDefinitionParser.cpp
     src/data/parsers/EnemyActionDefinitionParser.hpp
     src/data/parsers/EnemyActionDefinitionParser.cpp
+    src/data/parsers/RunEventDefinitionParser.hpp
+    src/data/parsers/RunEventDefinitionParser.cpp
 
     src/localization/Locale.hpp
     src/localization/Locale.cpp
@@ -135,6 +149,14 @@ add_executable(i_dont_know_how_to_name_this_game
     src/statuses/StatusSystem.hpp
     src/statuses/StatusSystem.cpp
 
+    src/events/RunEventEffect.hpp
+    src/events/RunEventDefinition.hpp
+
+    src/shop/ShopOffer.hpp
+    src/shop/ShopState.hpp
+    src/shop/ShopTuning.hpp
+    src/shop/ShopTuning.cpp
+
     src/drones/DroneId.hpp
     src/drones/DroneActionDefinition.hpp
     src/drones/DroneDefinition.hpp
@@ -156,6 +178,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/cards/CardKeyword.hpp
     src/cards/CardKeyword.cpp
     src/cards/CardDefinition.hpp
+    src/cards/CardDescriptionFormatter.hpp
+    src/cards/CardDescriptionFormatter.cpp
     src/cards/CardInstanceId.hpp
     src/cards/CardInstance.hpp
     src/cards/CardInstanceFactory.hpp
@@ -296,11 +320,16 @@ add_executable(i_dont_know_how_to_name_this_game
     src/run/RunMapNode.cpp
     src/run/RunMap.hpp
     src/run/RunState.hpp
+    src/run/RunMapGenerationConfig.hpp
+    src/run/RunMapGenerationConfig.cpp
     src/run/RunMapGenerator.hpp
     src/run/RunMapGenerator.cpp
     src/run/RunFactory.hpp
     src/run/RunFactory.cpp
     src/run/RunStats.hpp
+    src/run/RunActorState.hpp
+    src/run/RunCardEligibility.hpp
+    src/run/RunCardEligibility.cpp
     src/run/RunController.hpp
     src/run/RunController.cpp
 
@@ -309,6 +338,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/rewards/RewardContext.hpp
     src/rewards/RewardSelection.hpp
     src/rewards/RewardState.hpp
+    src/rewards/RewardTuning.hpp
+    src/rewards/RewardTuning.cpp
     src/rewards/RewardGenerator.hpp
     src/rewards/RewardGenerator.cpp
     src/rewards/RewardSystem.hpp
@@ -325,6 +356,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/scenes/SplashScene.cpp
     src/scenes/MainMenuScene.hpp
     src/scenes/MainMenuScene.cpp
+    src/scenes/SettingsScene.hpp
+    src/scenes/SettingsScene.cpp
     src/scenes/SaveSlotScene.hpp
     src/scenes/SaveSlotScene.cpp
     src/scenes/ProfileHubScene.hpp
@@ -337,6 +370,10 @@ add_executable(i_dont_know_how_to_name_this_game
     src/scenes/CombatScene.cpp
     src/scenes/RewardScene.hpp
     src/scenes/RewardScene.cpp
+    src/scenes/ShopScene.hpp
+    src/scenes/ShopScene.cpp
+    src/scenes/EventScene.hpp
+    src/scenes/EventScene.cpp
 )
 
 target_include_directories(i_dont_know_how_to_name_this_game PRIVATE

@@ -23,12 +23,9 @@
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
 #include "drones/DroneSystem.hpp"
-#include "effects/EffectDefinition.hpp"
-#include "effects/EffectValue.hpp"
 #include "game/GameEventBus.hpp"
 #include "inspect/InspectModelBuilder.hpp"
 #include "localization/LocalizationManager.hpp"
-#include "localization/TextFormatter.hpp"
 #include "preview/CardPreviewSystem.hpp"
 #include "relics/RelicSystem.hpp"
 #include "rewards/RewardSelection.hpp"
@@ -70,6 +67,8 @@ public:
 
     void update(float deltaSeconds) override;
     void render() const override;
+    void onLocalizationChanged() override;
+    bool handleDebugCommand(const std::vector<std::string>& tokens, std::string& output) override;
 
 private:
     void initializeCombat();
@@ -96,7 +95,15 @@ private:
     void clearCardSelection();
 
     void handleMousePressed(Vector2 mousePosition);
-    void tryUseHoveredConsumable();
+    void openConsumableConfirmation(std::size_t index);
+    void cancelConsumableConfirmation();
+    void confirmConsumableUse();
+    void tryUseConsumable(std::size_t index);
+    void updateConsumableConfirmationInput(Vector2 mousePosition);
+    void renderConsumableConfirmationModal() const;
+    Rectangle consumableConfirmationBounds() const;
+    Rectangle consumableConfirmButtonBounds(Rectangle modal) const;
+    Rectangle consumableCancelButtonBounds(Rectangle modal) const;
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
     void endPlayerTurn();
@@ -119,6 +126,7 @@ private:
     void openRewardModalIfNeeded();
     void updateRewardModalInput(Vector2 mousePosition);
     void renderRewardModal() const;
+    void renderRewardRelicInspect(const RewardOption& option, Rectangle row) const;
     void renderDefeatModal() const;
 
     Rectangle rewardModalBounds() const;
@@ -145,14 +153,9 @@ private:
     std::string rewardOptionDescription(const RewardOption& option) const;
     std::string rewardCardName(const CardId& cardId) const;
     std::string rewardCardDescription(const CardId& cardId) const;
+    std::string rewardRelicName(const std::string& relicId) const;
+    std::string rewardRelicDescription(const std::string& relicId) const;
     std::string localizedOrFallback(const TextId& textId, const std::string& fallback) const;
-
-    static std::string effectValueText(const EffectValue& value);
-    static std::string rangeToString(int minimum, int maximum);
-    static void fillVariablesFromEffect(
-        TextFormatter::Variables& variables,
-        const EffectDefinition& effect
-    );
 
 private:
     const ContentRegistry& content_;
@@ -207,6 +210,7 @@ private:
     InspectPanelView inspectPanelView_;
     RelicInspectModal relicInspectModal_;
     std::optional<CardInstanceId> inspectedCardId_;
+    std::optional<std::size_t> pendingConsumableIndex_;
 
     std::optional<RewardState> reward_;
     RewardSelection rewardSelection_;

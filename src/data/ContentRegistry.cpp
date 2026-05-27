@@ -10,6 +10,10 @@ void ContentRegistry::clear() {
     difficulties_.clear();
     consumables_.clear();
     drones_.clear();
+    events_.clear();
+    rewardTuning_ = RewardTuning{};
+    shopTuning_ = ShopTuning{};
+    actOneMapGeneration_ = RunMapGenerationConfig{};
 }
 
 void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDirectory) {
@@ -24,6 +28,10 @@ void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDir
     difficulties_.loadFromDirectory(dataDirectory / "run");
     consumables_.loadFromDirectory(dataDirectory / "consumables");
     drones_.loadFromDirectory(dataDirectory / "drones");
+    events_.loadFromDirectory(dataDirectory / "events");
+    rewardTuning_.loadFromFile(dataDirectory / "rewards" / "reward_tables.json");
+    shopTuning_.loadFromFile(dataDirectory / "shop" / "shop_tables.json");
+    actOneMapGeneration_.loadFromFile(dataDirectory / "run" / "acts" / "act1.json");
 }
 
 const CardDatabase& ContentRegistry::cards() const {
@@ -97,4 +105,37 @@ const DroneDatabase& ContentRegistry::drones() const {
 
 DroneDatabase& ContentRegistry::drones() {
     return drones_;
+}
+
+const EventDatabase& ContentRegistry::events() const {
+    return events_;
+}
+
+EventDatabase& ContentRegistry::events() {
+    return events_;
+}
+
+
+const RewardTuning& ContentRegistry::rewardTuning() const {
+    return rewardTuning_;
+}
+
+RewardTuning& ContentRegistry::rewardTuning() {
+    return rewardTuning_;
+}
+
+const ShopTuning& ContentRegistry::shopTuning() const {
+    return shopTuning_;
+}
+
+ShopTuning& ContentRegistry::shopTuning() {
+    return shopTuning_;
+}
+
+const RunMapGenerationConfig& ContentRegistry::actOneMapGeneration() const {
+    return actOneMapGeneration_;
+}
+
+RunMapGenerationConfig& ContentRegistry::actOneMapGeneration() {
+    return actOneMapGeneration_;
 }

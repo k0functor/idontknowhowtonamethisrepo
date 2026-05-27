@@ -1,0 +1,19 @@
+{
+    "audio": {
+        "master_volume": 1.0,
+        "music_volume": 0.800000011920929,
+        "sfx_volume": 0.800000011920929
+    },
+    "debug": {
+        "enabled": true
+    },
+    "locale": "ru",
+    "version": 1,
+    "window": {
+        "framerate_limit": 144,
+        "fullscreen": true,
+        "height": 720,
+        "vertical_sync": false,
+        "width": 1280
+    }
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "combat/CombatOutcome.hpp"
+#include "run/RunActorState.hpp"
 
 #include <string>
 #include <vector>
@@ -14,4 +15,6 @@ struct CombatResult {
 
     int enemiesKilled = 0;
     std::vector<std::string> killedEnemyIds;
+
+    std::vector<RunActorState> actorStates;
 };

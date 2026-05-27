@@ -1,6 +1,7 @@
 #pragma once
 
 #include "run/RunState.hpp"
+#include "localization/LocalizationManager.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
 
@@ -14,10 +15,12 @@ class RunMapScene final : public Scene {
 public:
     RunMapScene(
         const UiFont& font,
+        const LocalizationManager& localization,
         const RunState& runState,
         std::function<void(int)> onNodeSelected,
         std::function<void(int)> onRestHeal,
         std::function<void(int)> onRestUpgrade,
+        std::function<void(int)> onRestSkip,
         std::function<void()> onBackToHub
     );
 
@@ -30,7 +33,9 @@ private:
     Rectangle restModalBounds() const;
     Rectangle restHealButtonBounds(Rectangle modal) const;
     Rectangle restUpgradeButtonBounds(Rectangle modal) const;
+    Rectangle restSkipButtonBounds(Rectangle modal) const;
     Rectangle restCancelButtonBounds(Rectangle modal) const;
+    Rectangle nodePreviewBounds(const RunMapNode& node) const;
 
     Color nodeColor(const RunMapNode& node) const;
     Color nodeOutlineColor(const RunMapNode& node) const;
@@ -39,13 +44,19 @@ private:
 
     void updateRestModal(Vector2 mousePosition);
     void renderRestModal() const;
+    void renderNodePreview(const RunMapNode& node) const;
+    std::string nodePreviewTitle(const RunMapNode& node) const;
+    std::string nodePreviewDescription(const RunMapNode& node) const;
+    std::string runHpSummaryText() const;
 
 private:
     const UiFont& font_;
+    const LocalizationManager& localization_;
     const RunState& runState_;
     std::function<void(int)> onNodeSelected_;
     std::function<void(int)> onRestHeal_;
     std::function<void(int)> onRestUpgrade_;
+    std::function<void(int)> onRestSkip_;
     std::function<void()> onBackToHub_;
 
     std::optional<int> restModalNodeId_;

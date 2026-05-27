@@ -93,7 +93,7 @@ ProfileHubScene::ProfileHubScene(
       onStartRun_(std::move(onStartRun)),
       onBack_(std::move(onBack)) {
     if (archetypes_.empty()) {
-        notification_ = "Нет доступных архетипов. Даже меню не знает, кем быть.";
+        notification_ = localization_.get(TextId("profile_hub.no_archetypes"));
     }
 }
 
@@ -142,15 +142,15 @@ void ProfileHubScene::update(float) {
     }
 
     if (BasicUi::contains(layout.challengesButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = "Испытания появятся позже.";
+        notification_ = localization_.get(TextId("ui.challenges_later"));
     }
 
     if (BasicUi::contains(layout.achievementsButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = "Достижения появятся позже.";
+        notification_ = localization_.get(TextId("ui.achievements_later"));
     }
 
     if (BasicUi::contains(layout.compendiumButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = "Компендиум появится позже.";
+        notification_ = localization_.get(TextId("ui.compendium_later"));
     }
 }
 
@@ -159,8 +159,8 @@ void ProfileHubScene::render() const {
 
     const ProfileHubLayout layout = calculateProfileHubLayout();
 
-    BasicUi::drawButton(font_, layout.backButton, "Назад", mouse);
-    BasicUi::drawCenteredText(font_, "Выбор архетипа", layout.title, 38.f, Color{240, 240, 250, 255});
+    BasicUi::drawButton(font_, layout.backButton, localization_.get(TextId("ui.back")), mouse);
+    BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.title")), layout.title, 38.f, Color{240, 240, 250, 255});
 
     BasicUi::drawButton(font_, layout.leftArrow, "<", mouse, !archetypes_.empty());
     BasicUi::drawButton(font_, layout.rightArrow, ">", mouse, !archetypes_.empty());
@@ -180,10 +180,10 @@ void ProfileHubScene::render() const {
         BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.details_hint")), Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, Color{220, 220, 235, 255});
     }
 
-    BasicUi::drawButton(font_, layout.startButton, "В путь", mouse, !archetypes_.empty());
-    BasicUi::drawButton(font_, layout.challengesButton, "Испытания", mouse);
-    BasicUi::drawButton(font_, layout.achievementsButton, "Достижения", mouse);
-    BasicUi::drawButton(font_, layout.compendiumButton, "Компендиум", mouse);
+    BasicUi::drawButton(font_, layout.startButton, localization_.get(TextId("ui.to_the_road")), mouse, !archetypes_.empty());
+    BasicUi::drawButton(font_, layout.challengesButton, localization_.get(TextId("ui.challenges")), mouse);
+    BasicUi::drawButton(font_, layout.achievementsButton, localization_.get(TextId("ui.achievements")), mouse);
+    BasicUi::drawButton(font_, layout.compendiumButton, localization_.get(TextId("ui.compendium")), mouse);
 
     BasicUi::drawCenteredText(
         font_,
