@@ -194,6 +194,21 @@ std::string localizeLogEntry(
         return localizedOrFallback(localization, "combat.log.heal", "Heal") + ": " + suffixAfter(entry, healPrefix);
     }
 
+    const std::string gainStressPrefix = "Gain stress: ";
+    if (startsWith(entry, gainStressPrefix)) {
+        return localizedOrFallback(localization, "combat.log.gain_stress", "Gain stress") + ": " + suffixAfter(entry, gainStressPrefix);
+    }
+
+    const std::string loseStressPrefix = "Lose stress: ";
+    if (startsWith(entry, loseStressPrefix)) {
+        return localizedOrFallback(localization, "combat.log.lose_stress", "Lose stress") + ": " + suffixAfter(entry, loseStressPrefix);
+    }
+
+    const std::string breakdownPrefix = "Stress breakdown: ";
+    if (startsWith(entry, breakdownPrefix)) {
+        return localizedOrFallback(localization, "combat.log.stress_breakdown", "Stress breakdown") + ": " + suffixAfter(entry, breakdownPrefix);
+    }
+
     return entry;
 }
 }
@@ -267,6 +282,10 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.currentEnergy = state.resources.energyFor(player.id);
         playerModel.maxEnergy = state.resources.maxEnergyFor(player.id);
         playerModel.block = player.block;
+        playerModel.stress = player.stress;
+        playerModel.maxStress = player.maxStress;
+        playerModel.stressLabel = localizedOrFallback(localization_, "ui.stress", "Stress");
+        playerModel.traitIds = player.traitIds;
         playerModel.statuses = buildStatuses(player.statuses);
         playerModel.alive = player.isAlive();
         model.players.push_back(std::move(playerModel));

@@ -124,6 +124,13 @@ void RunMapScene::render() const {
         22.f,
         Color{235, 224, 185, 255}
     );
+    BasicUi::drawText(
+        font_,
+        runStressSummaryText(),
+        Vector2{472.f, 45.f},
+        22.f,
+        Color{220, 185, 230, 255}
+    );
 
     for (const RunMapNode& node : runState_.map.nodes) {
         const Vector2 from = nodeScreenPosition(node);
@@ -466,6 +473,26 @@ std::string RunMapScene::runHpSummaryText() const {
 
     return localization_.format(
         TextId("run.hp_summary"),
+        {{"current", std::to_string(current)}, {"maximum", std::to_string(maximum)}}
+    );
+}
+
+std::string RunMapScene::runStressSummaryText() const {
+    int current = 0;
+    int maximum = 0;
+
+    for (const RunActorState& actor : runState_.actorStates) {
+        const int actorMaximum = std::max(1, actor.maxStress);
+        current += std::clamp(actor.stress, 0, actorMaximum);
+        maximum += actorMaximum;
+    }
+
+    if (maximum <= 0) {
+        return localization_.format(TextId("run.stress_summary"), {{"current", "?"}, {"maximum", "?"}});
+    }
+
+    return localization_.format(
+        TextId("run.stress_summary"),
         {{"current", std::to_string(current)}, {"maximum", std::to_string(maximum)}}
     );
 }

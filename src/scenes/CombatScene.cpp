@@ -35,8 +35,14 @@ CombatEntity makePlayerFromActor(
         const int maximum = std::max(1, runActorState->maxHp);
         const int current = std::clamp(runActorState->currentHp, 0, maximum);
         player.health = Health(current, maximum);
+        player.maxStress = std::max(1, runActorState->maxStress);
+        player.stress = std::clamp(runActorState->stress, 0, player.maxStress);
+        player.traitIds = runActorState->traitIds;
     } else {
         player.health = Health(actor.maxHp);
+        player.maxStress = 100;
+        player.stress = 0;
+        player.traitIds = actor.startingTraitIds;
     }
 
     player.block = 0;
@@ -573,6 +579,32 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         }
 
         viewModelDirty_ = true;
+        return true;
+    }
+
+    if (command == "stress") {
+        const int amount = parseAmount(tokens, 1u, 0);
+        if (tokens.size() < 2u || amount == 0) {
+            output = "Usage: stress <delta> [player|enemy]";
+            return true;
+        }
+
+        std::string side = "player";
+        if (tokens.size() > 2u) {
+            side = tokens[2];
+        }
+
+        const std::optional<EntityId> target = firstTarget(side);
+        if (!target.has_value()) {
+            output = "No alive " + side + " target";
+            return true;
+        }
+
+        CombatEntity& entity = state_.entity(*target);
+        entity.maxStress = std::max(1, entity.maxStress);
+        entity.stress = std::clamp(entity.stress + amount, 0, entity.maxStress);
+        viewModelDirty_ = true;
+        output = "Adjusted " + side + " stress by " + std::to_string(amount);
         return true;
     }
 

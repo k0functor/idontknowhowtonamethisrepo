@@ -94,5 +94,6 @@
   "shop.remove_only_first_cards": "Only the first cards are shown for now. A full deck browser should be a later UI screen.",
   "shop.sold": "Sold",
   "shop.title": "Shop",
-  "run.hp_summary": "HP: {current}/{maximum}"
+  "run.hp_summary": "HP: {current}/{maximum}",
+  "run.stress_summary": "Stress: {current}/{maximum}"
 }

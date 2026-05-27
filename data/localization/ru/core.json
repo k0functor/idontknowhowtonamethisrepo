@@ -114,5 +114,9 @@
   "ui.settings": "Настройки",
   "ui.to_the_road": "В путь",
   "ui.total_energy": "Всего энергии",
-  "ui.turn": "Ход"
+  "ui.turn": "Ход",
+  "ui.stress": "Стресс",
+  "combat.log.gain_stress": "Получен стресс",
+  "combat.log.lose_stress": "Снят стресс",
+  "combat.log.stress_breakdown": "Срыв от стресса"
 }

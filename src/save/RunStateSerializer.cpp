@@ -223,7 +223,7 @@ RunMapNode nodeFromJson(const Json& json, const std::filesystem::path& sourcePat
     node.type = nodeTypeFromString(requiredString(json, "type", sourcePath), sourcePath);
     node.state = nodeStateFromString(requiredString(json, "state", sourcePath), sourcePath);
 
-    const Json& position = requiredField(json, "position", sourcePath);
+    const Json position = requiredField(json, "position", sourcePath);
     if (!position.is_object()) {
         throwSaveError(sourcePath, "'position' must be an object");
     }
@@ -232,7 +232,7 @@ RunMapNode nodeFromJson(const Json& json, const std::filesystem::path& sourcePat
         requiredFloat(position, "y", sourcePath)
     };
 
-    const Json& next = requiredField(json, "next", sourcePath);
+    const Json next = requiredField(json, "next", sourcePath);
     if (!next.is_array()) {
         throwSaveError(sourcePath, "'next' must be an array");
     }
@@ -263,7 +263,7 @@ RunMap mapFromJson(const Json& json, const std::filesystem::path& sourcePath) {
     RunMap map;
     map.currentNodeId = requiredInt(json, "current_node_id", sourcePath);
 
-    const Json& nodes = requiredField(json, "nodes", sourcePath);
+    const Json nodes = requiredField(json, "nodes", sourcePath);
     if (!nodes.is_array()) {
         throwSaveError(sourcePath, "'nodes' must be an array");
     }
@@ -281,7 +281,10 @@ Json actorStateToJson(const RunActorState& actor) {
     return Json{
         {"definition_id", actor.definitionId},
         {"current_hp", actor.currentHp},
-        {"max_hp", actor.maxHp}
+        {"max_hp", actor.maxHp},
+        {"stress", actor.stress},
+        {"max_stress", actor.maxStress},
+        {"trait_ids", stringArray(actor.traitIds)}
     };
 }
 
@@ -291,11 +294,43 @@ RunActorState actorStateFromJson(const Json& json, const std::filesystem::path& 
     actor.currentHp = requiredInt(json, "current_hp", sourcePath);
     actor.maxHp = requiredInt(json, "max_hp", sourcePath);
 
+    if (const Json* stress = optionalField(json, "stress", sourcePath)) {
+        if (!stress->is_number_integer()) {
+            throwSaveError(sourcePath, "'stress' must be an integer");
+        }
+        actor.stress = stress->get<int>();
+    }
+
+    if (const Json* maxStress = optionalField(json, "max_stress", sourcePath)) {
+        if (!maxStress->is_number_integer()) {
+            throwSaveError(sourcePath, "'max_stress' must be an integer");
+        }
+        actor.maxStress = maxStress->get<int>();
+    }
+
+    if (const Json* traitIds = optionalField(json, "trait_ids", sourcePath)) {
+        if (!traitIds->is_array()) {
+            throwSaveError(sourcePath, "'trait_ids' must be an array");
+        }
+
+        for (std::size_t index = 0; index < traitIds->size(); ++index) {
+            const Json& value = traitIds->at(index);
+            if (!value.is_string()) {
+                throwSaveError(sourcePath, "'trait_ids' element " + std::to_string(index) + " must be a string");
+            }
+            actor.traitIds.push_back(value.get<std::string>());
+        }
+    }
+
     if (actor.maxHp <= 0) {
         throwSaveError(sourcePath, "actor_states.max_hp must be positive");
     }
+    if (actor.maxStress <= 0) {
+        throwSaveError(sourcePath, "actor_states.max_stress must be positive");
+    }
 
     actor.currentHp = std::clamp(actor.currentHp, 0, actor.maxHp);
+    actor.stress = std::clamp(actor.stress, 0, actor.maxStress);
     return actor;
 }
 
@@ -380,7 +415,7 @@ RewardOption rewardOptionFromJson(const Json& json, const std::filesystem::path&
     option.consumableId = requiredString(json, "consumable_id", sourcePath);
     option.relicId = requiredString(json, "relic_id", sourcePath);
 
-    const Json& cardOptions = requiredField(json, "card_options", sourcePath);
+    const Json cardOptions = requiredField(json, "card_options", sourcePath);
     if (!cardOptions.is_array()) {
         throwSaveError(sourcePath, "'card_options' must be an array");
     }
@@ -411,7 +446,7 @@ RewardState rewardStateFromJson(const Json& json, const std::filesystem::path& s
     RewardState reward;
     reward.sourceNodeType = nodeTypeFromString(requiredString(json, "source_node_type", sourcePath), sourcePath);
 
-    const Json& options = requiredField(json, "options", sourcePath);
+    const Json options = requiredField(json, "options", sourcePath);
     if (!options.is_array()) {
         throwSaveError(sourcePath, "'options' must be an array");
     }
@@ -468,7 +503,7 @@ ShopOffer shopOfferFromJson(const Json& json, const std::filesystem::path& sourc
     offer.type = shopOfferTypeFromString(requiredString(json, "type", sourcePath), sourcePath);
     offer.contentId = requiredString(json, "content_id", sourcePath);
     offer.price = requiredInt(json, "price", sourcePath);
-    const Json& purchased = requiredField(json, "purchased", sourcePath);
+    const Json purchased = requiredField(json, "purchased", sourcePath);
     if (!purchased.is_boolean()) {
         throwSaveError(sourcePath, "'purchased' must be a boolean");
     }
@@ -492,13 +527,13 @@ Json shopStateToJson(const ShopState& shop) {
 ShopState shopStateFromJson(const Json& json, const std::filesystem::path& sourcePath) {
     ShopState shop;
     shop.cardRemovalPrice = requiredInt(json, "card_removal_price", sourcePath);
-    const Json& cardRemovalUsed = requiredField(json, "card_removal_used", sourcePath);
+    const Json cardRemovalUsed = requiredField(json, "card_removal_used", sourcePath);
     if (!cardRemovalUsed.is_boolean()) {
         throwSaveError(sourcePath, "'card_removal_used' must be a boolean");
     }
     shop.cardRemovalUsed = cardRemovalUsed.get<bool>();
 
-    const Json& offers = requiredField(json, "offers", sourcePath);
+    const Json offers = requiredField(json, "offers", sourcePath);
     if (!offers.is_array()) {
         throwSaveError(sourcePath, "'offers' must be an array");
     }

@@ -7,6 +7,7 @@
 #include "localization/TextId.hpp"
 
 #include <string>
+#include <vector>
 
 struct CombatEntity {
     EntityId id;
@@ -17,6 +18,10 @@ struct CombatEntity {
 
     Health health;
     int block = 0;
+
+    int stress = 0;
+    int maxStress = 100;
+    std::vector<std::string> traitIds;
 
     StatusContainer statuses;
 

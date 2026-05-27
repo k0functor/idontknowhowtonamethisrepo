@@ -104,7 +104,7 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
         });
     }
 
-    if (model.entries.size() <= 2) {
+    if (model.entries.size() <= 3) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.player.no_effects.name", "No active effects"),
             rawTextOrFallback(

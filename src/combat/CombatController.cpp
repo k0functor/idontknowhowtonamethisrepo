@@ -1,5 +1,8 @@
 #include "CombatController.hpp"
 
+#include <algorithm>
+#include <utility>
+
 CombatOutcome CombatController::checkOutcome(const CombatState& state) const {
     if (state.aliveEnemyIds().empty()) {
         return CombatOutcome::Victory;
@@ -21,11 +24,14 @@ CombatResult CombatController::buildResult(const CombatState& state) const {
     for (const CombatEntity& player : state.players) {
         result.playerHpRemaining += player.health.current();
         result.playerHpMaximum += player.health.maximum();
-        result.actorStates.push_back(RunActorState{
-            player.definitionId,
-            player.health.current(),
-            player.health.maximum()
-        });
+        RunActorState actorState;
+        actorState.definitionId = player.definitionId;
+        actorState.currentHp = player.health.current();
+        actorState.maxHp = player.health.maximum();
+        actorState.stress = std::clamp(player.stress, 0, std::max(1, player.maxStress));
+        actorState.maxStress = std::max(1, player.maxStress);
+        actorState.traitIds = player.traitIds;
+        result.actorStates.push_back(std::move(actorState));
     }
 
     for (const CombatEntity& enemy : state.enemies) {

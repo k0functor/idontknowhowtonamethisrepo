@@ -55,6 +55,12 @@ void PlayerView::render(const Font* font, const bool hovered) const {
         DrawTextEx(*font, blockText.c_str(), Vector2{position_.x + 14.f, position_.y + 44.f}, 15.f, 1.f, Color{180, 220, 255, 255});
     }
 
+    if (model_.maxStress > 0) {
+        const std::string stressText = model_.stressLabel + ": " +
+            std::to_string(std::max(0, model_.stress)) + "/" + std::to_string(model_.maxStress);
+        DrawTextEx(*font, stressText.c_str(), Vector2{position_.x + 14.f, position_.y + 62.f}, 14.f, 1.f, Color{220, 185, 230, 255});
+    }
+
     std::ostringstream statusText;
     for (const StatusViewModel& status : model_.statuses) {
         if (!statusText.str().empty()) {
@@ -66,7 +72,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
 
     const std::string statuses = statusText.str();
     if (!statuses.empty()) {
-        DrawTextEx(*font, statuses.c_str(), Vector2{position_.x + 14.f, position_.y + 72.f}, 13.f, 1.f, Color{220, 220, 180, 255});
+        DrawTextEx(*font, statuses.c_str(), Vector2{position_.x + 14.f, position_.y + 84.f}, 13.f, 1.f, Color{220, 220, 180, 255});
     }
 }
 

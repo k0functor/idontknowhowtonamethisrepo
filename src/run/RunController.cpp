@@ -318,6 +318,7 @@ void RunController::completeEventNode(const int nodeId) {
 
 void RunController::completeRestHeal(const int nodeId) {
     healAllActorsByPercent(0.30f);
+    reduceAllActorsStress(30);
     markNodeCompletedAndUnlockNext(nodeId);
 }
 
@@ -330,6 +331,22 @@ void RunController::healAllActorsByPercent(const float percent) {
 
         const int amount = std::max(1, static_cast<int>(static_cast<float>(actor.maxHp) * percent + 0.5f));
         actor.currentHp = std::clamp(actor.currentHp + amount, 0, actor.maxHp);
+    }
+}
+
+void RunController::reduceAllActorsStress(const int amount) {
+    if (amount <= 0) {
+        return;
+    }
+
+    adjustAllActorsStress(-amount);
+}
+
+void RunController::adjustAllActorsStress(const int delta) {
+    RunState& state = run();
+    for (RunActorState& actor : state.actorStates) {
+        actor.maxStress = std::max(1, actor.maxStress);
+        actor.stress = std::clamp(actor.stress + delta, 0, actor.maxStress);
     }
 }
 
@@ -479,6 +496,14 @@ void RunController::completeEventChoice(
                 }
                 break;
             }
+
+            case RunEventEffectType::GainStress:
+                adjustAllActorsStress(std::max(0, effect.amount));
+                break;
+
+            case RunEventEffectType::LoseStress:
+                reduceAllActorsStress(std::max(0, effect.amount));
+                break;
 
             case RunEventEffectType::Skip:
                 break;

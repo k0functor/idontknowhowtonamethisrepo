@@ -48,6 +48,7 @@ private:
     std::string nodePreviewTitle(const RunMapNode& node) const;
     std::string nodePreviewDescription(const RunMapNode& node) const;
     std::string runHpSummaryText() const;
+    std::string runStressSummaryText() const;
 
 private:
     const UiFont& font_;

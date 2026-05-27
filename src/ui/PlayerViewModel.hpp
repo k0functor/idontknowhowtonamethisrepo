@@ -16,10 +16,14 @@ struct PlayerViewModel {
     int currentEnergy = 0;
     int maxEnergy = 0;
     int block = 0;
+    int stress = 0;
+    int maxStress = 100;
 
     std::string blockLabel = "Block";
+    std::string stressLabel = "Stress";
 
     std::vector<StatusViewModel> statuses;
+    std::vector<std::string> traitIds;
 
     bool alive = true;
 };

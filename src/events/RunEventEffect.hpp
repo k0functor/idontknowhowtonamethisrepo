@@ -6,6 +6,8 @@ enum class RunEventEffectType {
     GainRandomCard,
     GainRandomRelic,
     GainRandomConsumable,
+    GainStress,
+    LoseStress,
     Skip
 };
 

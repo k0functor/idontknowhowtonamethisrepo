@@ -114,5 +114,9 @@
   "ui.settings": "Settings",
   "ui.to_the_road": "Set Out",
   "ui.total_energy": "Total energy",
-  "ui.turn": "Turn"
+  "ui.turn": "Turn",
+  "ui.stress": "Stress",
+  "combat.log.gain_stress": "Gain stress",
+  "combat.log.lose_stress": "Lose stress",
+  "combat.log.stress_breakdown": "Stress breakdown"
 }

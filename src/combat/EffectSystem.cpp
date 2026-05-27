@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <stdexcept>
+#include <string>
 
 namespace {
 constexpr const char* stanceFlame = "stance_flame";
@@ -14,6 +15,33 @@ void clearStances(CombatEntity& entity) {
     entity.statuses.remove(stanceFlame);
     entity.statuses.remove(stanceAsh);
     entity.statuses.remove(stanceSmoke);
+}
+
+
+void addTraitIfMissing(CombatEntity& entity, const std::string& traitId) {
+    if (std::find(entity.traitIds.begin(), entity.traitIds.end(), traitId) == entity.traitIds.end()) {
+        entity.traitIds.push_back(traitId);
+    }
+}
+
+void adjustStress(CombatState& state, const EntityId target, const int delta) {
+    CombatEntity& entity = state.entity(target);
+    entity.maxStress = std::max(1, entity.maxStress);
+
+    const int before = std::clamp(entity.stress, 0, entity.maxStress);
+    entity.stress = std::clamp(before + delta, 0, entity.maxStress);
+    const int applied = entity.stress - before;
+
+    if (applied > 0) {
+        state.log.add("Gain stress: " + std::to_string(applied));
+    } else if (applied < 0) {
+        state.log.add("Lose stress: " + std::to_string(-applied));
+    }
+
+    if (entity.type == EntityType::Player && entity.stress >= entity.maxStress) {
+        addTraitIfMissing(entity, "stress_breakdown");
+        state.log.add("Stress breakdown: " + entity.definitionId);
+    }
 }
 
 }
@@ -173,10 +201,20 @@ void EffectSystem::applyEffect(
             }
             return;
 
-        case EffectType::DiscardCards:
         case EffectType::GainStress:
-        case EffectType::LoseEnergy:
+            for (const EntityId target : targets) {
+                adjustStress(state, target, resolvedValue.actual);
+            }
+            return;
+
         case EffectType::LoseStress:
+            for (const EntityId target : targets) {
+                adjustStress(state, target, -resolvedValue.actual);
+            }
+            return;
+
+        case EffectType::DiscardCards:
+        case EffectType::LoseEnergy:
             state.log.add("Effect not implemented yet: " + toString(effect.type));
             return;
     }

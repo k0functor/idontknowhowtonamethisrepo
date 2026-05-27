@@ -3,6 +3,8 @@
 #include "core/Random.hpp"
 #include "run/RunMapGenerator.hpp"
 
+#include <utility>
+
 RunState RunFactory::createRun(
     const PlayableArchetypeDefinition& archetype,
     const DifficultyDefinition& difficulty,
@@ -27,7 +29,14 @@ RunState RunFactory::createRun(
     run.actorStates.reserve(archetype.actorDefinitionIds.size());
     for (const std::string& actorId : archetype.actorDefinitionIds) {
         const PlayerActorDefinition& actor = actors.get(PlayerActorId(actorId));
-        run.actorStates.push_back(RunActorState{actorId, actor.maxHp, actor.maxHp});
+        RunActorState actorState;
+        actorState.definitionId = actorId;
+        actorState.currentHp = actor.maxHp;
+        actorState.maxHp = actor.maxHp;
+        actorState.stress = 0;
+        actorState.maxStress = 100;
+        actorState.traitIds = actor.startingTraitIds;
+        run.actorStates.push_back(std::move(actorState));
     }
     run.relicIds = archetype.startingRelicIds;
 

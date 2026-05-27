@@ -57,6 +57,8 @@ private:
     void updateDebugPanel();
     void renderDebugPanel() const;
     void submitDebugCommand();
+    std::vector<std::string> debugAutocompleteSuggestions() const;
+    void acceptDebugAutocompleteSuggestion();
     std::string executeDebugCommand(const std::string& command);
     bool executeRunDebugCommand(const std::vector<std::string>& tokens, std::string& output);
     void addDebugMessage(std::string message);

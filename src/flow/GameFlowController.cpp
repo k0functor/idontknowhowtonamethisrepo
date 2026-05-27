@@ -21,6 +21,7 @@
 #include "scenes/SaveSlotScene.hpp"
 #include "scenes/SettingsScene.hpp"
 #include "scenes/SplashScene.hpp"
+#include "statuses/StatusDefinition.hpp"
 #include "ui/BasicUi.hpp"
 
 #include <iostream>
@@ -29,6 +30,7 @@
 #include <algorithm>
 #include <vector>
 #include <sstream>
+#include <set>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
@@ -195,6 +197,50 @@ int parseIntOr(const std::vector<std::string>& tokens, const std::size_t index, 
         return std::stoi(tokens[index]);
     } catch (...) {
         return fallback;
+    }
+}
+
+std::vector<std::string> splitLines(const std::string& text) {
+    std::vector<std::string> lines;
+    std::istringstream input(text);
+    std::string line;
+    while (std::getline(input, line)) {
+        lines.push_back(line);
+    }
+    if (lines.empty()) {
+        lines.push_back({});
+    }
+    return lines;
+}
+
+bool startsWithText(const std::string& text, const std::string& prefix) {
+    return text.rfind(prefix, 0) == 0;
+}
+
+std::string trimLeft(std::string value) {
+    value.erase(
+        value.begin(),
+        std::find_if(value.begin(), value.end(), [](const unsigned char character) {
+            return !std::isspace(character);
+        })
+    );
+    return value;
+}
+
+std::string partialAfterPrefix(const std::string& lowerInput, const std::string& prefix) {
+    if (!startsWithText(lowerInput, prefix)) {
+        return {};
+    }
+    return trimLeft(lowerInput.substr(prefix.size()));
+}
+
+void pushLimited(std::vector<std::string>& output, std::string value, const std::size_t limit) {
+    if (value.empty() || output.size() >= limit) {
+        return;
+    }
+
+    if (std::find(output.begin(), output.end(), value) == output.end()) {
+        output.push_back(std::move(value));
     }
 }
 }
@@ -415,6 +461,11 @@ void GameFlowController::updateDebugPanel() {
         debugInput_.pop_back();
     }
 
+    if (IsKeyPressed(KEY_TAB)) {
+        acceptDebugAutocompleteSuggestion();
+        return;
+    }
+
     if (IsKeyPressed(KEY_ENTER)) {
         submitDebugCommand();
         return;
@@ -467,7 +518,17 @@ void GameFlowController::renderDebugPanel() const {
     DrawRectangleRoundedLinesEx(input, 0.15f, 8, 2.f, Color{80, 86, 112, 255});
     BasicUi::drawText(uiFont_, "> " + debugInput_ + "_", Vector2{input.x + 12.f, input.y + 10.f}, 20.f, Color{235, 237, 245, 255});
 
-    const float logTop = panel.y + 148.f;
+    const std::vector<std::string> suggestions = debugAutocompleteSuggestions();
+    if (!suggestions.empty()) {
+        std::string suggestionText = "Tab: " + suggestions.front();
+        const std::size_t previewCount = std::min<std::size_t>(suggestions.size(), 4u);
+        for (std::size_t i = 1; i < previewCount; ++i) {
+            suggestionText += "  |  " + suggestions[i];
+        }
+        BasicUi::drawText(uiFont_, suggestionText, Vector2{input.x + 12.f, input.y + 48.f}, 15.f, Color{170, 188, 235, 255});
+    }
+
+    const float logTop = panel.y + 166.f;
     const float logBottom = panel.y + panel.height - 124.f;
     const int maxLines = static_cast<int>((logBottom - logTop) / 22.f);
     const int start = std::max(0, static_cast<int>(debugMessages_.size()) - maxLines);
@@ -498,8 +559,116 @@ void GameFlowController::submitDebugCommand() {
 
     const std::string command = debugInput_;
     addDebugMessage("> " + command);
-    addDebugMessage(executeDebugCommand(command));
+    for (const std::string& line : splitLines(executeDebugCommand(command))) {
+        addDebugMessage(line);
+    }
     debugInput_.clear();
+}
+
+std::vector<std::string> GameFlowController::debugAutocompleteSuggestions() const {
+    constexpr std::size_t maxSuggestions = 12u;
+    std::vector<std::string> suggestions;
+
+    const std::string lowerInput = toLowerAscii(debugInput_);
+    const std::vector<std::string> commands{
+        "help",
+        "save",
+        "fullheal",
+        "give gold 100",
+        "give card ",
+        "give relic ",
+        "give consumable ",
+        "status ",
+        "apply status ",
+        "stress 10",
+        "stress -10",
+        "heal 10",
+        "damage 10",
+        "block 10",
+        "energy 3",
+        "win combat",
+        "lose combat",
+        "clear pending",
+        "unlock map"
+    };
+
+    if (lowerInput.empty() || lowerInput.find(' ') == std::string::npos) {
+        for (const std::string& command : commands) {
+            if (lowerInput.empty() || startsWithText(command, lowerInput)) {
+                pushLimited(suggestions, command, maxSuggestions);
+            }
+        }
+        return suggestions;
+    }
+
+    auto suggestIds = [&](const std::string& prefix, const std::vector<std::string>& ids) {
+        const std::string partial = partialAfterPrefix(lowerInput, prefix);
+        if (!startsWithText(lowerInput, prefix)) {
+            return;
+        }
+
+        for (const std::string& id : ids) {
+            if (partial.empty() || startsWithText(toLowerAscii(id), partial)) {
+                pushLimited(suggestions, prefix + id, maxSuggestions);
+            }
+        }
+    };
+
+    std::vector<std::string> cardIds;
+    for (const CardDefinition* card : content_.cards().all()) {
+        if (card != nullptr) {
+            cardIds.push_back(card->id.value);
+        }
+    }
+    std::sort(cardIds.begin(), cardIds.end());
+
+    std::vector<std::string> relicIds;
+    for (const RelicDefinition* relic : content_.relics().all()) {
+        if (relic != nullptr) {
+            relicIds.push_back(relic->id.value);
+        }
+    }
+    std::sort(relicIds.begin(), relicIds.end());
+
+    std::vector<std::string> consumableIds;
+    for (const ConsumableDefinition* consumable : content_.consumables().all()) {
+        if (consumable != nullptr) {
+            consumableIds.push_back(consumable->id.value);
+        }
+    }
+    std::sort(consumableIds.begin(), consumableIds.end());
+
+    std::vector<std::string> statusIds;
+    for (const StatusDefinition* status : content_.statuses().all()) {
+        if (status != nullptr) {
+            statusIds.push_back(status->id.value);
+        }
+    }
+    std::sort(statusIds.begin(), statusIds.end());
+
+    suggestIds("give card ", cardIds);
+    suggestIds("give relic ", relicIds);
+    suggestIds("give consumable ", consumableIds);
+    suggestIds("give potion ", consumableIds);
+    suggestIds("status ", statusIds);
+    suggestIds("apply status ", statusIds);
+
+    if (suggestions.empty()) {
+        for (const std::string& command : commands) {
+            if (startsWithText(command, lowerInput)) {
+                pushLimited(suggestions, command, maxSuggestions);
+            }
+        }
+    }
+
+    return suggestions;
+}
+
+void GameFlowController::acceptDebugAutocompleteSuggestion() {
+    const std::vector<std::string> suggestions = debugAutocompleteSuggestions();
+    if (!suggestions.empty()) {
+        debugInput_ = suggestions.front();
+    }
 }
 
 std::string GameFlowController::executeDebugCommand(const std::string& command) {
@@ -529,7 +698,22 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
     const std::string& command = tokens.front();
 
     if (command == "help") {
-        output = "Commands: give gold N | give card ID [N] | give relic ID | give consumable ID | heal N | damage N | fullheal | status ID N | win combat | save | clear pending | unlock map";
+        output =
+            "Commands:\n"
+            "  give gold <amount>\n"
+            "  give card <card_id> [count]\n"
+            "  give relic <relic_id>\n"
+            "  give consumable <consumable_id>\n"
+            "  heal <amount> / damage <amount>\n"
+            "  stress <delta>\n"
+            "  fullheal\n"
+            "  status <status_id> [amount] [player|enemy]\n"
+            "  block <amount> / energy <delta>\n"
+            "  win combat / lose combat\n"
+            "  save\n"
+            "  clear pending\n"
+            "  unlock map\n"
+            "Autocomplete: press Tab after command prefixes like 'give card ' or 'status '.";
         return true;
     }
 
@@ -655,6 +839,22 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
         return true;
     }
 
+    if (command == "stress") {
+        if (!runController_.hasActiveRun()) {
+            output = "No active run";
+            return true;
+        }
+        if (tokens.size() < 2u) {
+            output = "Usage: stress <delta>";
+            return true;
+        }
+        const int delta = parseIntOr(tokens, 1u, 0);
+        runController_.adjustAllActorsStress(delta);
+        saveActiveRun();
+        output = "Run actor stress adjusted by " + std::to_string(delta);
+        return true;
+    }
+
     if (command == "fullheal") {
         if (!runController_.hasActiveRun()) {
             output = "No active run";
@@ -662,9 +862,10 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
         }
         for (RunActorState& actor : runController_.run().actorStates) {
             actor.currentHp = std::max(1, actor.maxHp);
+            actor.stress = 0;
         }
         saveActiveRun();
-        output = "Run actors fully healed";
+        output = "Run actors fully healed and stress cleared";
         return true;
     }
 

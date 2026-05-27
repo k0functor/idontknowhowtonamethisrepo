@@ -32,5 +32,8 @@
   "status.vulnerable.description": "Существо получает на 50% больше урона от атак. Уменьшается на 1 в конце хода владельца.",
   "status.vulnerable.name": "Уязвимость",
   "status.weak.description": "Атаки этого существа наносят на 25% меньше урона. Уменьшается на 1 в конце хода владельца.",
-  "status.weak.name": "Слабость"
+  "status.weak.name": "Слабость",
+  "inspect.player.stress.name": "Стресс",
+  "inspect.player.stress.description": "Постоянное давление, которое переносится между комнатами. При максимальном стрессе персонаж может получить отрицательную черту.",
+  "inspect.player.trait.name": "Черта"
 }
