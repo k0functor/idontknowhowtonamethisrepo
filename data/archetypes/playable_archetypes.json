@@ -1,68 +1,83 @@
 [
   {
-    "id": "wanderer",
-    "name": "archetype.wanderer.name",
-    "short_description": "archetype.wanderer.short_description",
-    "details_description": "archetype.wanderer.details_description",
-    "unique_mechanic": "archetype.wanderer.unique_mechanic",
+    "id": "rusted_knight",
+    "name": "archetype.rusted_knight.name",
+    "short_description": "archetype.rusted_knight.short_description",
+    "details_description": "archetype.rusted_knight.details_description",
+    "unique_mechanic": "archetype.rusted_knight.unique_mechanic",
     "actors": [
-      "wanderer"
+      "rusted_knight"
     ],
     "starting_deck": [
-      "strike",
-      "strike",
-      "strike",
-      "defend",
-      "defend",
-      "wanderer_clean_cut",
-      "wanderer_breathe",
-      "wanderer_risky_stab"
-    ],
-    "starting_relics": [
-      "whetstone",
-      "old_bell"
-    ],
-    "starting_gold": 75,
-    "strengths": [
-      "archetype.wanderer.strength.flexible"
-    ],
-    "weaknesses": [
-      "archetype.wanderer.weakness.no_specialization"
-    ],
-    "mechanic_id": "default"
-  },
-  {
-    "id": "bone_merchant",
-    "name": "archetype.bone_merchant.name",
-    "short_description": "archetype.bone_merchant.short_description",
-    "details_description": "archetype.bone_merchant.details_description",
-    "unique_mechanic": "archetype.bone_merchant.unique_mechanic",
-    "actors": [
-      "bone_merchant"
-    ],
-    "starting_deck": [
-      "merchant_debt_slash",
-      "merchant_debt_slash",
-      "merchant_cash_guard",
-      "merchant_cash_guard",
-      "merchant_quick_deal",
+      "confessor_shield_bash",
+      "confessor_shield_bash",
+      "confessor_bastion",
+      "confessor_bastion",
+      "confessor_rebuke",
       "defend",
       "strike"
     ],
     "starting_relics": [
-      "bone_purse",
-      "copper_coin"
+      "bastion_seal"
     ],
-    "starting_gold": 140,
+    "starting_gold": 55,
     "strengths": [
-      "archetype.bone_merchant.strength.gold_income",
-      "archetype.bone_merchant.strength.rest_shop"
+      "archetype.rusted_knight.strength.strength_scaling",
+      "archetype.rusted_knight.strength.block_pressure"
     ],
     "weaknesses": [
-      "archetype.bone_merchant.weakness.no_card_rewards",
-      "archetype.bone_merchant.weakness.shop_dependency"
+      "archetype.rusted_knight.weakness.self_exposure"
     ],
-    "mechanic_id": "merchant_progression"
+    "mechanic_id": "rusted_knight_strength",
+    "palette": {
+      "name": "archetype.rusted_knight.palette",
+      "accent": {
+        "r": 211,
+        "g": 112,
+        "b": 48
+      }
+    },
+    "visual_identity": "archetype.rusted_knight.visual_identity"
+  },
+  {
+    "id": "herbalist",
+    "name": "archetype.herbalist.name",
+    "short_description": "archetype.herbalist.short_description",
+    "details_description": "archetype.herbalist.details_description",
+    "unique_mechanic": "archetype.herbalist.unique_mechanic",
+    "actors": [
+      "herbalist"
+    ],
+    "starting_deck": [
+      "plague_scalpel",
+      "plague_scalpel",
+      "plague_vial",
+      "plague_vial",
+      "plague_mask",
+      "defend",
+      "strike"
+    ],
+    "starting_relics": [
+      "copper_inhaler"
+    ],
+    "starting_gold": 65,
+    "strengths": [
+      "archetype.herbalist.strength.poison",
+      "archetype.herbalist.strength.small_attacks"
+    ],
+    "weaknesses": [
+      "archetype.herbalist.weakness.slow_start"
+    ],
+    "mechanic_id": "herbalist_poison",
+    "palette": {
+      "name": "archetype.herbalist.palette",
+      "accent": {
+        "r": 80,
+        "g": 166,
+        "b": 93
+      }
+    },
+    "visual_identity": "archetype.herbalist.visual_identity"
   },
   {
     "id": "sadist_masochist",
@@ -89,85 +104,32 @@
     ],
     "starting_gold": 50,
     "strengths": [
-      "archetype.sadist_masochist.strength.two_bodies",
-      "archetype.sadist_masochist.strength.split_resources"
+      "archetype.sadist_masochist.strength.pain_engine",
+      "archetype.sadist_masochist.strength.two_bodies"
     ],
     "weaknesses": [
       "archetype.sadist_masochist.weakness.complex_management",
       "archetype.sadist_masochist.weakness.low_individual_hp"
     ],
-    "mechanic_id": "sadist_masochist_party"
+    "mechanic_id": "sadist_masochist_party",
+    "palette": {
+      "name": "archetype.sadist_masochist.palette",
+      "accent": {
+        "r": 178,
+        "g": 48,
+        "b": 58
+      }
+    },
+    "visual_identity": "archetype.sadist_masochist.visual_identity"
   },
   {
-    "id": "plague_anatomist",
-    "name": "archetype.plague_anatomist.name",
-    "short_description": "archetype.plague_anatomist.short_description",
-    "details_description": "archetype.plague_anatomist.details_description",
-    "unique_mechanic": "archetype.plague_anatomist.unique_mechanic",
+    "id": "replicant",
+    "name": "archetype.replicant.name",
+    "short_description": "archetype.replicant.short_description",
+    "details_description": "archetype.replicant.details_description",
+    "unique_mechanic": "archetype.replicant.unique_mechanic",
     "actors": [
-      "plague_anatomist"
-    ],
-    "starting_deck": [
-      "plague_scalpel",
-      "plague_scalpel",
-      "plague_vial",
-      "plague_vial",
-      "plague_mask",
-      "defend",
-      "strike"
-    ],
-    "starting_relics": [
-      "copper_inhaler"
-    ],
-    "starting_gold": 65,
-    "strengths": [
-      "archetype.plague_anatomist.strength.long_fights",
-      "archetype.plague_anatomist.strength.debuffs"
-    ],
-    "weaknesses": [
-      "archetype.plague_anatomist.weakness.slow_start"
-    ],
-    "mechanic_id": "poison_mastery"
-  },
-  {
-    "id": "ash_monk",
-    "name": "archetype.ash_monk.name",
-    "short_description": "archetype.ash_monk.short_description",
-    "details_description": "archetype.ash_monk.details_description",
-    "unique_mechanic": "archetype.ash_monk.unique_mechanic",
-    "actors": [
-      "ash_monk"
-    ],
-    "starting_deck": [
-      "monk_enter_flame",
-      "monk_enter_ash",
-      "monk_enter_smoke",
-      "monk_palm_strike",
-      "monk_ash_guard",
-      "monk_smoke_step",
-      "strike"
-    ],
-    "starting_relics": [
-      "coal_rosary"
-    ],
-    "starting_gold": 70,
-    "strengths": [
-      "archetype.ash_monk.strength.stances",
-      "archetype.ash_monk.strength.flexible_tempo"
-    ],
-    "weaknesses": [
-      "archetype.ash_monk.weakness.misstance"
-    ],
-    "mechanic_id": "stance_monk"
-  },
-  {
-    "id": "drone_cyborg",
-    "name": "archetype.drone_cyborg.name",
-    "short_description": "archetype.drone_cyborg.short_description",
-    "details_description": "archetype.drone_cyborg.details_description",
-    "unique_mechanic": "archetype.drone_cyborg.unique_mechanic",
-    "actors": [
-      "drone_cyborg"
+      "replicant"
     ],
     "starting_deck": [
       "cyborg_striker_drone",
@@ -183,43 +145,145 @@
     ],
     "starting_gold": 60,
     "strengths": [
-      "archetype.drone_cyborg.strength.drones",
-      "archetype.drone_cyborg.strength.end_turn_value"
+      "archetype.replicant.strength.drones",
+      "archetype.replicant.strength.marks"
     ],
     "weaknesses": [
-      "archetype.drone_cyborg.weakness.slot_pressure"
+      "archetype.replicant.weakness.slot_pressure"
     ],
-    "mechanic_id": "drone_cyborg"
+    "mechanic_id": "replicant_drones",
+    "palette": {
+      "name": "archetype.replicant.palette",
+      "accent": {
+        "r": 68,
+        "g": 139,
+        "b": 205
+      }
+    },
+    "visual_identity": "archetype.replicant.visual_identity"
   },
   {
-    "id": "iron_confessor",
-    "name": "archetype.iron_confessor.name",
-    "short_description": "archetype.iron_confessor.short_description",
-    "details_description": "archetype.iron_confessor.details_description",
-    "unique_mechanic": "archetype.iron_confessor.unique_mechanic",
+    "id": "monk",
+    "name": "archetype.monk.name",
+    "short_description": "archetype.monk.short_description",
+    "details_description": "archetype.monk.details_description",
+    "unique_mechanic": "archetype.monk.unique_mechanic",
     "actors": [
-      "iron_confessor"
+      "monk"
     ],
     "starting_deck": [
-      "confessor_shield_bash",
-      "confessor_shield_bash",
-      "confessor_bastion",
-      "confessor_bastion",
-      "confessor_rebuke",
+      "monk_enter_flame",
+      "monk_enter_ash",
+      "monk_enter_smoke",
+      "monk_palm_strike",
+      "monk_ash_guard",
+      "monk_smoke_step",
+      "strike"
+    ],
+    "starting_relics": [
+      "coal_rosary"
+    ],
+    "starting_gold": 70,
+    "strengths": [
+      "archetype.monk.strength.stances",
+      "archetype.monk.strength.flexible_tempo"
+    ],
+    "weaknesses": [
+      "archetype.monk.weakness.misstance"
+    ],
+    "mechanic_id": "monk_stances",
+    "palette": {
+      "name": "archetype.monk.palette",
+      "accent": {
+        "r": 137,
+        "g": 88,
+        "b": 190
+      }
+    },
+    "visual_identity": "archetype.monk.visual_identity"
+  },
+  {
+    "id": "lost_psychopath",
+    "name": "archetype.lost_psychopath.name",
+    "short_description": "archetype.lost_psychopath.short_description",
+    "details_description": "archetype.lost_psychopath.details_description",
+    "unique_mechanic": "archetype.lost_psychopath.unique_mechanic",
+    "actors": [
+      "lost_psychopath"
+    ],
+    "starting_deck": [
+      "strike",
+      "strike",
+      "strike",
+      "defend",
+      "defend",
+      "wanderer_clean_cut",
+      "wanderer_breathe",
+      "wanderer_risky_stab"
+    ],
+    "starting_relics": [
+      "whetstone",
+      "old_bell"
+    ],
+    "starting_gold": 75,
+    "strengths": [
+      "archetype.lost_psychopath.strength.stress_scaling",
+      "archetype.lost_psychopath.strength.risk_pressure"
+    ],
+    "weaknesses": [
+      "archetype.lost_psychopath.weakness.instability"
+    ],
+    "mechanic_id": "stress_psychopath",
+    "palette": {
+      "name": "archetype.lost_psychopath.palette",
+      "accent": {
+        "r": 132,
+        "g": 132,
+        "b": 142
+      }
+    },
+    "visual_identity": "archetype.lost_psychopath.visual_identity"
+  },
+  {
+    "id": "merchant",
+    "name": "archetype.merchant.name",
+    "short_description": "archetype.merchant.short_description",
+    "details_description": "archetype.merchant.details_description",
+    "unique_mechanic": "archetype.merchant.unique_mechanic",
+    "actors": [
+      "merchant"
+    ],
+    "starting_deck": [
+      "merchant_debt_slash",
+      "merchant_debt_slash",
+      "merchant_cash_guard",
+      "merchant_cash_guard",
+      "merchant_quick_deal",
       "defend",
       "strike"
     ],
     "starting_relics": [
-      "bastion_seal"
+      "bone_purse",
+      "copper_coin"
     ],
-    "starting_gold": 55,
+    "starting_gold": 140,
     "strengths": [
-      "archetype.iron_confessor.strength.block",
-      "archetype.iron_confessor.strength.safe"
+      "archetype.merchant.strength.gold_income",
+      "archetype.merchant.strength.shop_control"
     ],
     "weaknesses": [
-      "archetype.iron_confessor.weakness.slow"
+      "archetype.merchant.weakness.no_card_rewards",
+      "archetype.merchant.weakness.shop_dependency"
     ],
-    "mechanic_id": "bulwark"
+    "mechanic_id": "merchant_progression",
+    "palette": {
+      "name": "archetype.merchant.palette",
+      "accent": {
+        "r": 214,
+        "g": 177,
+        "b": 64
+      }
+    },
+    "visual_identity": "archetype.merchant.visual_identity"
   }
 ]

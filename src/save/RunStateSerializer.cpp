@@ -1,5 +1,7 @@
 #include "RunStateSerializer.hpp"
 
+#include "run/StressRules.hpp"
+
 #include "cards/CardId.hpp"
 
 #include <raylib.h>
@@ -284,6 +286,7 @@ Json actorStateToJson(const RunActorState& actor) {
         {"max_hp", actor.maxHp},
         {"stress", actor.stress},
         {"max_stress", actor.maxStress},
+        {"resolve_check_triggered", actor.resolveCheckTriggered},
         {"trait_ids", stringArray(actor.traitIds)}
     };
 }
@@ -308,6 +311,13 @@ RunActorState actorStateFromJson(const Json& json, const std::filesystem::path& 
         actor.maxStress = maxStress->get<int>();
     }
 
+    if (const Json* resolveCheckTriggered = optionalField(json, "resolve_check_triggered", sourcePath)) {
+        if (!resolveCheckTriggered->is_boolean()) {
+            throwSaveError(sourcePath, "'resolve_check_triggered' must be a boolean");
+        }
+        actor.resolveCheckTriggered = resolveCheckTriggered->get<bool>();
+    }
+
     if (const Json* traitIds = optionalField(json, "trait_ids", sourcePath)) {
         if (!traitIds->is_array()) {
             throwSaveError(sourcePath, "'trait_ids' must be an array");
@@ -330,7 +340,10 @@ RunActorState actorStateFromJson(const Json& json, const std::filesystem::path& 
     }
 
     actor.currentHp = std::clamp(actor.currentHp, 0, actor.maxHp);
-    actor.stress = std::clamp(actor.stress, 0, actor.maxStress);
+    StressRules::normalize(actor);
+    if (actor.stress >= actor.maxStress) {
+        actor.currentHp = 0;
+    }
     return actor;
 }
 

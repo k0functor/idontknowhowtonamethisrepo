@@ -81,7 +81,7 @@ public:
 
     void healAllActorsByPercent(float percent);
     void reduceAllActorsStress(int amount);
-    void adjustAllActorsStress(int delta);
+    void adjustAllActorsStress(int delta, Random* random = nullptr);
 
     std::optional<RelicId> chooseChestRelic(
         const RelicDatabase& relics,

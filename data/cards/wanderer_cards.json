@@ -7,7 +7,7 @@
     "energy_cost": 1,
     "gold_cost": 55,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -35,7 +35,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -56,7 +56,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "heal",
@@ -84,7 +84,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "apply_status",
@@ -105,7 +105,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -134,7 +134,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "block",
@@ -154,7 +154,7 @@
     "energy_cost": 0,
     "gold_cost": 55,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "draw_cards",
@@ -177,7 +177,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "apply_status",
@@ -206,7 +206,7 @@
     "energy_cost": 2,
     "gold_cost": 85,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -234,7 +234,7 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -255,7 +255,7 @@
     "energy_cost": 1,
     "gold_cost": 80,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "apply_status",
@@ -276,7 +276,7 @@
     "energy_cost": 1,
     "gold_cost": 80,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "apply_status",
@@ -305,7 +305,7 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "block",
@@ -334,7 +334,7 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -367,7 +367,7 @@
     "energy_cost": 2,
     "gold_cost": 120,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -397,7 +397,7 @@
     "energy_cost": 1,
     "gold_cost": 115,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "block",
@@ -428,7 +428,7 @@
     "energy_cost": 0,
     "gold_cost": 120,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "gain_energy",
@@ -459,7 +459,7 @@
     "energy_cost": 1,
     "gold_cost": 115,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -497,7 +497,7 @@
     "energy_cost": 2,
     "gold_cost": 130,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -518,7 +518,7 @@
     "energy_cost": 1,
     "gold_cost": 110,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "apply_status",
@@ -551,7 +551,7 @@
     "energy_cost": 1,
     "gold_cost": 50,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -571,7 +571,7 @@
     "energy_cost": 1,
     "gold_cost": 55,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "block",
@@ -599,7 +599,7 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",
@@ -621,7 +621,7 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "apply_status",
@@ -642,7 +642,7 @@
     "energy_cost": 1,
     "gold_cost": 62,
     "type": "attack",
-    "owner_actor": "wanderer",
+    "owner_actor": "lost_psychopath",
     "effects": [
       {
         "type": "damage",

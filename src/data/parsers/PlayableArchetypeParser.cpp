@@ -2,9 +2,47 @@
 
 #include "data/JsonReader.hpp"
 
+#include <cstdint>
 #include <stdexcept>
+#include <string>
 
 namespace {
+std::uint8_t parseColorChannel(
+    const JsonReader& reader,
+    const std::string& key
+) {
+    const int value = reader.requiredInt(key);
+    if (value < 0 || value > 255) {
+        throw std::runtime_error("Archetype palette color channel '" + key + "' must be between 0 and 255");
+    }
+
+    return static_cast<std::uint8_t>(value);
+}
+
+ArchetypePaletteDefinition parsePalette(
+    const JsonReader& reader,
+    const std::filesystem::path& sourcePath
+) {
+    ArchetypePaletteDefinition palette;
+    palette.nameTextId = TextId("archetype.palette.neutral");
+
+    if (!reader.has("palette")) {
+        return palette;
+    }
+
+    JsonReader paletteReader(reader.requiredObject("palette"), sourcePath);
+    palette.nameTextId = TextId(paletteReader.optionalString("name", "archetype.palette.neutral"));
+
+    if (paletteReader.has("accent")) {
+        JsonReader accentReader(paletteReader.requiredObject("accent"), sourcePath);
+        palette.accentR = parseColorChannel(accentReader, "r");
+        palette.accentG = parseColorChannel(accentReader, "g");
+        palette.accentB = parseColorChannel(accentReader, "b");
+    }
+
+    return palette;
+}
+
 std::vector<TextId> parseTextIds(
     const JsonReader& reader,
     const std::string& key
@@ -34,6 +72,8 @@ PlayableArchetypeDefinition PlayableArchetypeParser::parse(
     definition.shortDescriptionTextId = TextId(reader.requiredString("short_description"));
     definition.detailsDescriptionTextId = TextId(reader.requiredString("details_description"));
     definition.uniqueMechanicTextId = TextId(reader.requiredString("unique_mechanic"));
+    definition.visualIdentityTextId = TextId(reader.optionalString("visual_identity", ""));
+    definition.palette = parsePalette(reader, sourcePath);
 
     definition.actorDefinitionIds = reader.requiredStringArray("actors");
     definition.startingDeckCardIds = reader.requiredStringArray("starting_deck");

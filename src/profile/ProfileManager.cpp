@@ -26,8 +26,8 @@ ProfileData& ProfileManager::selectSlot(const std::size_t index) {
     profile.isEmpty = false;
 
     if (profile.unlockedArchetypeIds.empty()) {
-        profile.unlockedArchetypeIds.push_back("wanderer");
-        profile.unlockedArchetypeIds.push_back("bone_merchant");
+        profile.unlockedArchetypeIds.push_back("rusted_knight");
+        profile.unlockedArchetypeIds.push_back("herbalist");
         profile.unlockedArchetypeIds.push_back("sadist_masochist");
     }
 

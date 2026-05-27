@@ -118,5 +118,7 @@ private:
 
     bool debugPanelOpen_ = false;
     std::string debugInput_;
+    float debugBackspaceHeldSeconds_ = 0.f;
+    float debugBackspaceRepeatSeconds_ = 0.f;
     std::vector<std::string> debugMessages_;
 };

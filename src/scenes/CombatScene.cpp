@@ -9,6 +9,7 @@
 #include "relics/RelicDefinition.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "run/RunMapNode.hpp"
+#include "run/StressRules.hpp"
 #include "ui/BasicUi.hpp"
 
 #include <algorithm>
@@ -35,13 +36,16 @@ CombatEntity makePlayerFromActor(
         const int maximum = std::max(1, runActorState->maxHp);
         const int current = std::clamp(runActorState->currentHp, 0, maximum);
         player.health = Health(current, maximum);
-        player.maxStress = std::max(1, runActorState->maxStress);
+        player.maxStress = std::max(StressRules::MaximumStress, runActorState->maxStress);
         player.stress = std::clamp(runActorState->stress, 0, player.maxStress);
+        player.resolveCheckTriggered = runActorState->resolveCheckTriggered;
         player.traitIds = runActorState->traitIds;
+        StressRules::normalize(player);
     } else {
         player.health = Health(actor.maxHp);
-        player.maxStress = 100;
+        player.maxStress = StressRules::MaximumStress;
         player.stress = 0;
+        player.resolveCheckTriggered = false;
         player.traitIds = actor.startingTraitIds;
     }
 
@@ -283,7 +287,7 @@ CombatScene::CombatScene(
           damageSystem_,
           blockSystem_
       ),
-      playerTurnSystem_(drawSystem_),
+      playerTurnSystem_(drawSystem_, content_.cards()),
       enemyTurnSystem_(enemyMoveSelector_, effectSystem_),
       turnSystem_(
           content_.enemies(),
@@ -601,10 +605,14 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         }
 
         CombatEntity& entity = state_.entity(*target);
-        entity.maxStress = std::max(1, entity.maxStress);
-        entity.stress = std::clamp(entity.stress + amount, 0, entity.maxStress);
+        const StressRules::StressAdjustmentResult result = StressRules::applyDelta(entity, amount, &random_);
+        if (entity.type == EntityType::Player && result.collapsed) {
+            entity.health.setCurrent(0);
+            combatController_.updateAfterAction(state_);
+            finishCombatIfNeeded();
+        }
         viewModelDirty_ = true;
-        output = "Adjusted " + side + " stress by " + std::to_string(amount);
+        output = "Adjusted " + side + " stress by " + std::to_string(result.applied);
         return true;
     }
 
@@ -824,7 +832,7 @@ bool CombatScene::isSadistMasochistParty() const {
 }
 
 bool CombatScene::isDroneCyborgParty() const {
-    return runState_.archetypeMechanicId == "drone_cyborg";
+    return runState_.archetypeMechanicId == "replicant_drones";
 }
 
 std::vector<RelicViewModel> CombatScene::buildRelicViewModels() const {
@@ -1728,6 +1736,7 @@ void CombatScene::finishCombatIfNeeded() {
     }
 
     finalResult_ = combatController_.buildResult(state_);
+    finalResult_.remainingConsumableIds = combatConsumableIds_;
 
     if (finalResult_.outcome != CombatOutcome::Ongoing) {
         combatFinished_ = true;

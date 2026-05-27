@@ -6,8 +6,18 @@
 #include <raylib.h>
 
 #include <algorithm>
+#include <cstdint>
 
 namespace {
+Color archetypeAccentColor(const PlayableArchetypeDefinition& archetype, const std::uint8_t alpha = 255) {
+    return Color{
+        archetype.palette.accentR,
+        archetype.palette.accentG,
+        archetype.palette.accentB,
+        alpha
+    };
+}
+
 struct ProfileHubLayout {
     Rectangle backButton{};
     Rectangle title{};
@@ -174,8 +184,12 @@ void ProfileHubScene::render() const {
         BasicUi::drawCenteredText(font_, localization_.get(archetype.nameTextId), Rectangle{characterPanel.x, characterPanel.y + 40.f, characterPanel.width, 50.f}, 34.f, Color{245, 245, 250, 255});
         BasicUi::drawCenteredText(font_, localization_.get(archetype.shortDescriptionTextId), Rectangle{characterPanel.x + 50.f, characterPanel.y + 100.f, characterPanel.width - 100.f, 60.f}, 20.f, Color{190, 198, 220, 255});
 
-        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 92.f, Color{75, 79, 96, 255});
+        const Color accent = archetypeAccentColor(archetype);
+        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 96.f, archetypeAccentColor(archetype, 70));
+        DrawCircleLines(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 96.f, accent);
+        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 82.f, Color{75, 79, 96, 255});
         BasicUi::drawCenteredText(font_, localization_.get(TextId("ui.portrait_placeholder")), Rectangle{characterPanel.x, characterPanel.y + 240.f, characterPanel.width, 40.f}, 18.f, Color{160, 166, 190, 255});
+        BasicUi::drawCenteredText(font_, localization_.get(archetype.palette.nameTextId), Rectangle{characterPanel.x + 45.f, characterPanel.y + 355.f, characterPanel.width - 90.f, 28.f}, 16.f, accent);
 
         BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.details_hint")), Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, Color{220, 220, 235, 255});
     }
@@ -254,6 +268,24 @@ void ProfileHubScene::renderDetailsModal() const {
     for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.detailsDescriptionTextId), 18.f, modal.width - 80.f)) {
         BasicUi::drawText(font_, line, Vector2{modal.x + 40.f, y}, 18.f, Color{200, 206, 226, 255});
         y += 24.f;
+    }
+
+    if (!archetype.visualIdentityTextId.value.empty()) {
+        y += 18.f;
+        BasicUi::drawText(font_, localization_.get(TextId("profile_hub.visual_identity")), Vector2{modal.x + 40.f, y}, 23.f, archetypeAccentColor(archetype));
+        y += 32.f;
+        for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.visualIdentityTextId), 17.f, modal.width - 100.f)) {
+            BasicUi::drawText(font_, line, Vector2{modal.x + 62.f, y}, 17.f, Color{220, 224, 238, 255});
+            y += 23.f;
+        }
+    }
+
+    y += 14.f;
+    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.palette")), Vector2{modal.x + 40.f, y}, 23.f, archetypeAccentColor(archetype));
+    y += 32.f;
+    for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.palette.nameTextId), 17.f, modal.width - 100.f)) {
+        BasicUi::drawText(font_, line, Vector2{modal.x + 62.f, y}, 17.f, Color{220, 224, 238, 255});
+        y += 23.f;
     }
 
     y += 18.f;

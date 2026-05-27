@@ -9,7 +9,8 @@ struct RunActorState {
     int maxHp = 1;
 
     int stress = 0;
-    int maxStress = 100;
+    int maxStress = 200;
+    bool resolveCheckTriggered = false;
 
     std::vector<std::string> traitIds;
 };

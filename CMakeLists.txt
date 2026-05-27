@@ -328,6 +328,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/run/RunFactory.cpp
     src/run/RunStats.hpp
     src/run/RunActorState.hpp
+    src/run/StressRules.hpp
     src/run/RunCardEligibility.hpp
     src/run/RunCardEligibility.cpp
     src/run/RunController.hpp

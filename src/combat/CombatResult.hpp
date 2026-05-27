@@ -3,6 +3,7 @@
 #include "combat/CombatOutcome.hpp"
 #include "run/RunActorState.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -17,4 +18,6 @@ struct CombatResult {
     std::vector<std::string> killedEnemyIds;
 
     std::vector<RunActorState> actorStates;
+
+    std::optional<std::vector<std::string>> remainingConsumableIds;
 };

@@ -2,6 +2,7 @@
 
 #include "core/Random.hpp"
 #include "run/RunMapGenerator.hpp"
+#include "run/StressRules.hpp"
 
 #include <utility>
 
@@ -34,7 +35,8 @@ RunState RunFactory::createRun(
         actorState.currentHp = actor.maxHp;
         actorState.maxHp = actor.maxHp;
         actorState.stress = 0;
-        actorState.maxStress = 100;
+        actorState.maxStress = StressRules::MaximumStress;
+        actorState.resolveCheckTriggered = false;
         actorState.traitIds = actor.startingTraitIds;
         run.actorStates.push_back(std::move(actorState));
     }

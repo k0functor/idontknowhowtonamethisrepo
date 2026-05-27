@@ -1,5 +1,7 @@
 #include "CombatController.hpp"
 
+#include "run/StressRules.hpp"
+
 #include <algorithm>
 #include <utility>
 
@@ -28,9 +30,11 @@ CombatResult CombatController::buildResult(const CombatState& state) const {
         actorState.definitionId = player.definitionId;
         actorState.currentHp = player.health.current();
         actorState.maxHp = player.health.maximum();
-        actorState.stress = std::clamp(player.stress, 0, std::max(1, player.maxStress));
-        actorState.maxStress = std::max(1, player.maxStress);
+        actorState.stress = std::clamp(player.stress, 0, std::max(StressRules::MaximumStress, player.maxStress));
+        actorState.maxStress = std::max(StressRules::MaximumStress, player.maxStress);
+        actorState.resolveCheckTriggered = player.resolveCheckTriggered;
         actorState.traitIds = player.traitIds;
+        StressRules::normalize(actorState);
         result.actorStates.push_back(std::move(actorState));
     }
 

@@ -1,6 +1,7 @@
 #include "EffectSystem.hpp"
 
 #include "combat/CombatState.hpp"
+#include "run/StressRules.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -18,29 +19,42 @@ void clearStances(CombatEntity& entity) {
 }
 
 
-void addTraitIfMissing(CombatEntity& entity, const std::string& traitId) {
-    if (std::find(entity.traitIds.begin(), entity.traitIds.end(), traitId) == entity.traitIds.end()) {
-        entity.traitIds.push_back(traitId);
+void logStressResolveOutcome(CombatState& state, const CombatEntity& entity, const StressRules::StressAdjustmentResult& result) {
+    if (!result.resolveCheckTriggered) {
+        return;
+    }
+
+    switch (result.resolveOutcome) {
+        case StressRules::ResolveOutcome::Resolve:
+            state.log.add("Stress resolve: " + entity.definitionId);
+            return;
+
+        case StressRules::ResolveOutcome::Breakdown:
+            state.log.add("Stress breakdown: " + entity.definitionId);
+            return;
+
+        case StressRules::ResolveOutcome::None:
+            return;
     }
 }
 
-void adjustStress(CombatState& state, const EntityId target, const int delta) {
+void adjustStress(CombatState& state, const EntityId target, const int delta, Random* random) {
     CombatEntity& entity = state.entity(target);
-    entity.maxStress = std::max(1, entity.maxStress);
+    const StressRules::StressAdjustmentResult result = StressRules::applyDelta(entity, delta, random);
 
-    const int before = std::clamp(entity.stress, 0, entity.maxStress);
-    entity.stress = std::clamp(before + delta, 0, entity.maxStress);
-    const int applied = entity.stress - before;
-
-    if (applied > 0) {
-        state.log.add("Gain stress: " + std::to_string(applied));
-    } else if (applied < 0) {
-        state.log.add("Lose stress: " + std::to_string(-applied));
+    if (result.applied > 0) {
+        state.log.add("Gain stress: " + std::to_string(result.applied));
+    } else if (result.applied < 0) {
+        state.log.add("Lose stress: " + std::to_string(-result.applied));
     }
 
-    if (entity.type == EntityType::Player && entity.stress >= entity.maxStress) {
-        addTraitIfMissing(entity, "stress_breakdown");
-        state.log.add("Stress breakdown: " + entity.definitionId);
+    if (entity.type == EntityType::Player) {
+        logStressResolveOutcome(state, entity, result);
+
+        if (result.collapsed) {
+            entity.health.setCurrent(0);
+            state.log.add("Stress collapse: " + entity.definitionId);
+        }
     }
 }
 
@@ -203,13 +217,13 @@ void EffectSystem::applyEffect(
 
         case EffectType::GainStress:
             for (const EntityId target : targets) {
-                adjustStress(state, target, resolvedValue.actual);
+                adjustStress(state, target, resolvedValue.actual, context.random);
             }
             return;
 
         case EffectType::LoseStress:
             for (const EntityId target : targets) {
-                adjustStress(state, target, -resolvedValue.actual);
+                adjustStress(state, target, -resolvedValue.actual, context.random);
             }
             return;
 

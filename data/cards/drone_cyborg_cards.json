@@ -7,7 +7,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "drone_cyborg",
+    "owner_actor": "replicant",
     "effects": [
       {
         "type": "summon_drone",
@@ -28,7 +28,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "drone_cyborg",
+    "owner_actor": "replicant",
     "effects": [
       {
         "type": "summon_drone",
@@ -49,7 +49,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "drone_cyborg",
+    "owner_actor": "replicant",
     "effects": [
       {
         "type": "summon_drone",
@@ -70,7 +70,7 @@
     "energy_cost": 0,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "drone_cyborg",
+    "owner_actor": "replicant",
     "effects": [
       {
         "type": "use_drone",
@@ -90,7 +90,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "attack",
-    "owner_actor": "drone_cyborg",
+    "owner_actor": "replicant",
     "effects": [
       {
         "type": "damage",
@@ -110,7 +110,7 @@
     "energy_cost": 1,
     "gold_cost": 70,
     "type": "skill",
-    "owner_actor": "drone_cyborg",
+    "owner_actor": "replicant",
     "effects": [
       {
         "type": "gain_energy",

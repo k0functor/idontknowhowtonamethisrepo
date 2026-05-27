@@ -34,6 +34,6 @@
   "status.weak.description": "This creature's attacks deal 25% less damage. Decreases by 1 at the end of its owner's turn.",
   "status.weak.name": "Weak",
   "inspect.player.stress.name": "Stress",
-  "inspect.player.stress.description": "Persistent pressure carried between rooms. At maximum stress, the actor can gain a negative trait.",
+  "inspect.player.stress.description": "Persistent pressure carried between rooms. At 100 stress, the actor makes a resolve check. At 200 stress, the actor dies.",
   "inspect.player.trait.name": "Trait"
 }

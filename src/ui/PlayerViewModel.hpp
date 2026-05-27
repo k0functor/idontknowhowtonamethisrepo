@@ -17,7 +17,7 @@ struct PlayerViewModel {
     int maxEnergy = 0;
     int block = 0;
     int stress = 0;
-    int maxStress = 100;
+    int maxStress = 200;
 
     std::string blockLabel = "Block";
     std::string stressLabel = "Stress";

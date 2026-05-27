@@ -118,5 +118,7 @@
   "ui.stress": "Stress",
   "combat.log.gain_stress": "Gain stress",
   "combat.log.lose_stress": "Lose stress",
-  "combat.log.stress_breakdown": "Stress breakdown"
+  "combat.log.stress_breakdown": "Stress breakdown",
+  "combat.log.stress_resolve": "Stress resolve",
+  "combat.log.stress_collapse": "Stress collapse"
 }

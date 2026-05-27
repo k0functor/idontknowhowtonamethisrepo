@@ -204,9 +204,19 @@ std::string localizeLogEntry(
         return localizedOrFallback(localization, "combat.log.lose_stress", "Lose stress") + ": " + suffixAfter(entry, loseStressPrefix);
     }
 
+    const std::string resolvePrefix = "Stress resolve: ";
+    if (startsWith(entry, resolvePrefix)) {
+        return localizedOrFallback(localization, "combat.log.stress_resolve", "Stress resolve") + ": " + suffixAfter(entry, resolvePrefix);
+    }
+
     const std::string breakdownPrefix = "Stress breakdown: ";
     if (startsWith(entry, breakdownPrefix)) {
         return localizedOrFallback(localization, "combat.log.stress_breakdown", "Stress breakdown") + ": " + suffixAfter(entry, breakdownPrefix);
+    }
+
+    const std::string collapsePrefix = "Stress collapse: ";
+    if (startsWith(entry, collapsePrefix)) {
+        return localizedOrFallback(localization, "combat.log.stress_collapse", "Stress collapse") + ": " + suffixAfter(entry, collapsePrefix);
     }
 
     return entry;

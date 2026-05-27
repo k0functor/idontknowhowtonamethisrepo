@@ -1,22 +1,24 @@
 [
   {
-    "id": "wanderer",
-    "name": "actor.wanderer.name",
-    "description": "actor.wanderer.description",
-    "max_hp": 72,
-    "starting_energy": 3,
-    "starting_traits": [],
-    "starting_relics": []
-  },
-  {
-    "id": "bone_merchant",
-    "name": "actor.bone_merchant.name",
-    "description": "actor.bone_merchant.description",
-    "max_hp": 64,
+    "id": "rusted_knight",
+    "name": "actor.rusted_knight.name",
+    "description": "actor.rusted_knight.description",
+    "max_hp": 82,
     "starting_energy": 3,
     "starting_traits": [],
     "starting_relics": [
-      "bone_purse"
+      "bastion_seal"
+    ]
+  },
+  {
+    "id": "herbalist",
+    "name": "actor.herbalist.name",
+    "description": "actor.herbalist.description",
+    "max_hp": 62,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": [
+      "copper_inhaler"
     ]
   },
   {
@@ -42,31 +44,9 @@
     ]
   },
   {
-    "id": "plague_anatomist",
-    "name": "actor.plague_anatomist.name",
-    "description": "actor.plague_anatomist.description",
-    "max_hp": 62,
-    "starting_energy": 3,
-    "starting_traits": [],
-    "starting_relics": [
-      "copper_inhaler"
-    ]
-  },
-  {
-    "id": "ash_monk",
-    "name": "actor.ash_monk.name",
-    "description": "actor.ash_monk.description",
-    "max_hp": 68,
-    "starting_energy": 3,
-    "starting_traits": [],
-    "starting_relics": [
-      "coal_rosary"
-    ]
-  },
-  {
-    "id": "drone_cyborg",
-    "name": "actor.drone_cyborg.name",
-    "description": "actor.drone_cyborg.description",
+    "id": "replicant",
+    "name": "actor.replicant.name",
+    "description": "actor.replicant.description",
     "max_hp": 66,
     "starting_energy": 3,
     "starting_traits": [],
@@ -75,14 +55,34 @@
     ]
   },
   {
-    "id": "iron_confessor",
-    "name": "actor.iron_confessor.name",
-    "description": "actor.iron_confessor.description",
-    "max_hp": 82,
+    "id": "monk",
+    "name": "actor.monk.name",
+    "description": "actor.monk.description",
+    "max_hp": 68,
     "starting_energy": 3,
     "starting_traits": [],
     "starting_relics": [
-      "bastion_seal"
+      "coal_rosary"
+    ]
+  },
+  {
+    "id": "lost_psychopath",
+    "name": "actor.lost_psychopath.name",
+    "description": "actor.lost_psychopath.description",
+    "max_hp": 72,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": []
+  },
+  {
+    "id": "merchant",
+    "name": "actor.merchant.name",
+    "description": "actor.merchant.description",
+    "max_hp": 64,
+    "starting_energy": 3,
+    "starting_traits": [],
+    "starting_relics": [
+      "bone_purse"
     ]
   }
 ]

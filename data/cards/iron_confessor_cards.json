@@ -7,7 +7,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "attack",
-    "owner_actor": "iron_confessor",
+    "owner_actor": "rusted_knight",
     "effects": [
       {
         "type": "block",
@@ -35,7 +35,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "iron_confessor",
+    "owner_actor": "rusted_knight",
     "effects": [
       {
         "type": "block",
@@ -55,7 +55,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "attack",
-    "owner_actor": "iron_confessor",
+    "owner_actor": "rusted_knight",
     "effects": [
       {
         "type": "damage",
@@ -84,7 +84,7 @@
     "energy_cost": 1,
     "gold_cost": 70,
     "type": "skill",
-    "owner_actor": "iron_confessor",
+    "owner_actor": "rusted_knight",
     "keywords": [
       "retain"
     ],
@@ -116,7 +116,7 @@
     "energy_cost": 2,
     "gold_cost": 90,
     "type": "attack",
-    "owner_actor": "iron_confessor",
+    "owner_actor": "rusted_knight",
     "effects": [
       {
         "type": "damage",

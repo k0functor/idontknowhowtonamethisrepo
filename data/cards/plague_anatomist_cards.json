@@ -7,7 +7,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "attack",
-    "owner_actor": "plague_anatomist",
+    "owner_actor": "herbalist",
     "effects": [
       {
         "type": "damage",
@@ -36,7 +36,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "plague_anatomist",
+    "owner_actor": "herbalist",
     "effects": [
       {
         "type": "apply_status",
@@ -57,7 +57,7 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "plague_anatomist",
+    "owner_actor": "herbalist",
     "effects": [
       {
         "type": "block",
@@ -86,7 +86,7 @@
     "energy_cost": 1,
     "gold_cost": 70,
     "type": "attack",
-    "owner_actor": "plague_anatomist",
+    "owner_actor": "herbalist",
     "effects": [
       {
         "type": "damage",
@@ -116,7 +116,7 @@
     "energy_cost": 2,
     "gold_cost": 95,
     "type": "skill",
-    "owner_actor": "plague_anatomist",
+    "owner_actor": "herbalist",
     "effects": [
       {
         "type": "apply_status",

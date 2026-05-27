@@ -1,11 +1,18 @@
 #include "PlayerTurnSystem.hpp"
 
+#include "cards/CardKeyword.hpp"
+
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
 
-PlayerTurnSystem::PlayerTurnSystem(const DrawSystem& drawSystem)
-    : drawSystem_(drawSystem) {}
+PlayerTurnSystem::PlayerTurnSystem(
+    const DrawSystem& drawSystem,
+    const CardDatabase& cardDatabase
+)
+    : drawSystem_(drawSystem),
+      cardDatabase_(cardDatabase) {}
 
 void PlayerTurnSystem::startTurn(
     CombatState& state,
@@ -33,6 +40,17 @@ void PlayerTurnSystem::discardHand(CombatState& state) const {
     state.hand.clear();
 
     for (CardInstance& card : cards) {
-        state.deck.discardPile.addTop(std::move(card));
+        const CardDefinition& definition = cardDatabase_.get(card.definitionId);
+        const bool retains = std::find(
+            definition.keywords.begin(),
+            definition.keywords.end(),
+            CardKeyword::Retain
+        ) != definition.keywords.end();
+
+        if (retains) {
+            state.hand.add(std::move(card));
+        } else {
+            state.deck.discardPile.addTop(std::move(card));
+        }
     }
 }

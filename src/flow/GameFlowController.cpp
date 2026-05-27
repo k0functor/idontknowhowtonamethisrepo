@@ -457,8 +457,28 @@ void GameFlowController::updateDebugPanel() {
         character = GetCharPressed();
     }
 
-    if (IsKeyPressed(KEY_BACKSPACE) && !debugInput_.empty()) {
-        debugInput_.pop_back();
+    constexpr float backspaceInitialDelaySeconds = 0.32f;
+    constexpr float backspaceRepeatIntervalSeconds = 0.045f;
+
+    if (!IsKeyDown(KEY_BACKSPACE)) {
+        debugBackspaceHeldSeconds_ = 0.f;
+        debugBackspaceRepeatSeconds_ = 0.f;
+    } else if (IsKeyPressed(KEY_BACKSPACE)) {
+        if (!debugInput_.empty()) {
+            debugInput_.pop_back();
+        }
+        debugBackspaceHeldSeconds_ = 0.f;
+        debugBackspaceRepeatSeconds_ = 0.f;
+    } else {
+        const float deltaSeconds = GetFrameTime();
+        debugBackspaceHeldSeconds_ += deltaSeconds;
+        if (debugBackspaceHeldSeconds_ >= backspaceInitialDelaySeconds && !debugInput_.empty()) {
+            debugBackspaceRepeatSeconds_ += deltaSeconds;
+            while (debugBackspaceRepeatSeconds_ >= backspaceRepeatIntervalSeconds && !debugInput_.empty()) {
+                debugInput_.pop_back();
+                debugBackspaceRepeatSeconds_ -= backspaceRepeatIntervalSeconds;
+            }
+        }
     }
 
     if (IsKeyPressed(KEY_TAB)) {
@@ -849,7 +869,7 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
             return true;
         }
         const int delta = parseIntOr(tokens, 1u, 0);
-        runController_.adjustAllActorsStress(delta);
+        runController_.adjustAllActorsStress(delta, &random_);
         saveActiveRun();
         output = "Run actor stress adjusted by " + std::to_string(delta);
         return true;
@@ -863,6 +883,7 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
         for (RunActorState& actor : runController_.run().actorStates) {
             actor.currentHp = std::max(1, actor.maxHp);
             actor.stress = 0;
+            actor.resolveCheckTriggered = false;
         }
         saveActiveRun();
         output = "Run actors fully healed and stress cleared";

@@ -1,6 +1,25 @@
 #include "Targeting.hpp"
 
+#include <cstddef>
 #include <stdexcept>
+
+namespace {
+EntityId chooseRandomTarget(const std::vector<EntityId>& targets, const EffectContext& context) {
+    if (targets.empty()) {
+        return EntityId{};
+    }
+
+    if (context.random == nullptr) {
+        return targets.front();
+    }
+
+    const int index = context.random->rangeInclusive(
+        0,
+        static_cast<int>(targets.size()) - 1
+    );
+    return targets[static_cast<std::size_t>(index)];
+}
+}
 
 std::vector<EntityId> Targeting::resolveTargets(
     const CombatState& state,
@@ -28,7 +47,7 @@ std::vector<EntityId> Targeting::resolveTargets(
             if (enemies.empty()) {
                 return {};
             }
-            return {enemies.front()};
+            return {chooseRandomTarget(enemies, context)};
         }
 
         case EffectTarget::Ally:
@@ -45,7 +64,7 @@ std::vector<EntityId> Targeting::resolveTargets(
             if (allies.empty()) {
                 return {};
             }
-            return {allies.front()};
+            return {chooseRandomTarget(allies, context)};
         }
     }
 

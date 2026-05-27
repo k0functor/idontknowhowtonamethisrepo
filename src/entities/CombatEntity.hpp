@@ -20,7 +20,8 @@ struct CombatEntity {
     int block = 0;
 
     int stress = 0;
-    int maxStress = 100;
+    int maxStress = 200;
+    bool resolveCheckTriggered = false;
     std::vector<std::string> traitIds;
 
     StatusContainer statuses;

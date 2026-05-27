@@ -118,5 +118,7 @@
   "ui.stress": "Стресс",
   "combat.log.gain_stress": "Получен стресс",
   "combat.log.lose_stress": "Снят стресс",
-  "combat.log.stress_breakdown": "Срыв от стресса"
+  "combat.log.stress_breakdown": "Срыв от стресса",
+  "combat.log.stress_resolve": "Проверка решимости",
+  "combat.log.stress_collapse": "Смерть от стресса"
 }

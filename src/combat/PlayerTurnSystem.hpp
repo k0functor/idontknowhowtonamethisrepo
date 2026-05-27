@@ -3,12 +3,16 @@
 #include "cards/DrawSystem.hpp"
 #include "combat/CombatState.hpp"
 #include "core/Random.hpp"
+#include "data/CardDatabase.hpp"
 
 #include <cstddef>
 
 class PlayerTurnSystem {
 public:
-    explicit PlayerTurnSystem(const DrawSystem& drawSystem);
+    PlayerTurnSystem(
+        const DrawSystem& drawSystem,
+        const CardDatabase& cardDatabase
+    );
 
     void startTurn(
         CombatState& state,
@@ -23,4 +27,5 @@ private:
 
 private:
     const DrawSystem& drawSystem_;
+    const CardDatabase& cardDatabase_;
 };

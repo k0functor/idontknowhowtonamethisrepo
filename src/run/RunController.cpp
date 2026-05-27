@@ -6,6 +6,7 @@
 #include "consumables/ConsumableDefinition.hpp"
 #include "consumables/ConsumableId.hpp"
 #include "run/RunCardEligibility.hpp"
+#include "run/StressRules.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -214,6 +215,10 @@ RewardState RunController::completeCombatAndCreateReward(
         }
     }
 
+    if (combatResult.remainingConsumableIds.has_value()) {
+        state.consumableIds = *combatResult.remainingConsumableIds;
+    }
+
     markNodeCompletedAndUnlockNext(nodeId);
 
     ++state.stats.combatsWon;
@@ -342,11 +347,13 @@ void RunController::reduceAllActorsStress(const int amount) {
     adjustAllActorsStress(-amount);
 }
 
-void RunController::adjustAllActorsStress(const int delta) {
+void RunController::adjustAllActorsStress(const int delta, Random* random) {
     RunState& state = run();
     for (RunActorState& actor : state.actorStates) {
-        actor.maxStress = std::max(1, actor.maxStress);
-        actor.stress = std::clamp(actor.stress + delta, 0, actor.maxStress);
+        const StressRules::StressAdjustmentResult result = StressRules::applyDelta(actor, delta, random);
+        if (result.collapsed) {
+            actor.currentHp = 0;
+        }
     }
 }
 
@@ -498,7 +505,7 @@ void RunController::completeEventChoice(
             }
 
             case RunEventEffectType::GainStress:
-                adjustAllActorsStress(std::max(0, effect.amount));
+                adjustAllActorsStress(std::max(0, effect.amount), &random);
                 break;
 
             case RunEventEffectType::LoseStress:
