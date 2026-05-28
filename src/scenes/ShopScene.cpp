@@ -134,11 +134,6 @@ Rectangle ShopScene::removeCancelButtonBounds(const Rectangle modal) const {
 }
 
 void ShopScene::updateShop(const Vector2 mouse) {
-    if (IsKeyPressed(KEY_ESCAPE)) {
-        onLeave_();
-        return;
-    }
-
     if (BasicUi::contains(leaveButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         onLeave_();
         return;

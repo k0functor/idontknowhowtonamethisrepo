@@ -5,6 +5,7 @@
 #include "data/CardDatabase.hpp"
 #include "data/EnemyDatabase.hpp"
 #include "data/EventDatabase.hpp"
+#include "encounters/EncounterDatabase.hpp"
 #include "consumables/ConsumableDatabase.hpp"
 #include "drones/DroneDatabase.hpp"
 #include "relics/RelicDatabase.hpp"
@@ -52,6 +53,9 @@ public:
     const EventDatabase& events() const;
     EventDatabase& events();
 
+    const EncounterDatabase& encounters() const;
+    EncounterDatabase& encounters();
+
     const RewardTuning& rewardTuning() const;
     RewardTuning& rewardTuning();
 
@@ -72,6 +76,7 @@ private:
     ConsumableDatabase consumables_;
     DroneDatabase drones_;
     EventDatabase events_;
+    EncounterDatabase encounters_;
     RewardTuning rewardTuning_;
     ShopTuning shopTuning_;
     RunMapGenerationConfig actOneMapGeneration_;

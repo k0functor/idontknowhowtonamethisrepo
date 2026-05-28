@@ -44,6 +44,7 @@ private:
     void layoutPlayers();
     void layoutEnemies();
     void renderDronePanel(const Font* font) const;
+    void renderCardTooltip(const Font* font) const;
 
     Rectangle contentBounds() const;
     Rectangle battlefieldBounds() const;

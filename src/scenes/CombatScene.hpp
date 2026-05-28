@@ -108,6 +108,21 @@ private:
     void tryUseConsumable(std::size_t index);
     void updateConsumableConfirmationInput(Vector2 mousePosition);
     void renderConsumableConfirmationModal() const;
+
+    bool combatItemInspectOpen() const;
+    void openRelicInspect(std::size_t index);
+    void openConsumableInspect(std::size_t index);
+    void closeCombatItemInspect();
+    void updateCombatItemInspectInput(Vector2 mousePosition);
+    void renderCombatItemInspectModal() const;
+    Rectangle combatItemInspectModalBounds() const;
+    Rectangle combatItemInspectCloseButtonBounds(Rectangle modal) const;
+    Rectangle combatItemInspectPreviousButtonBounds(Rectangle modal) const;
+    Rectangle combatItemInspectNextButtonBounds(Rectangle modal) const;
+    void inspectPreviousItem();
+    void inspectNextItem();
+    std::optional<std::size_t> nextFilledConsumableIndex(std::size_t start, int direction) const;
+
     Rectangle consumableConfirmationBounds() const;
     Rectangle consumableConfirmButtonBounds(Rectangle modal) const;
     Rectangle consumableCancelButtonBounds(Rectangle modal) const;
@@ -139,6 +154,9 @@ private:
     void renderPileButtons() const;
     void renderPileOverlay() const;
     void renderPileCard(const CardInstance& card, Rectangle bounds) const;
+    std::optional<std::size_t> hoveredPileCardIndex(Vector2 mousePosition) const;
+    CardViewModel cardViewModelForInstance(const CardInstance& card) const;
+    void renderPileCardInspectPanel() const;
 
     bool selectedCardCanTargetEnemy() const;
     bool selectedCardCanTargetPlayer() const;
@@ -234,6 +252,9 @@ private:
     InspectPanelView inspectPanelView_;
     RelicInspectModal relicInspectModal_;
     std::optional<CardInstanceId> inspectedCardId_;
+    std::optional<std::size_t> inspectedPileCardIndex_;
+    std::optional<std::size_t> inspectedRelicIndex_;
+    std::optional<std::size_t> inspectedConsumableIndex_;
     std::optional<std::size_t> pendingConsumableIndex_;
     PileOverlayMode pileOverlayMode_ = PileOverlayMode::None;
     float pileOverlayScrollOffset_ = 0.f;

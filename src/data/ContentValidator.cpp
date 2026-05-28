@@ -4,6 +4,7 @@
 #include "consumables/ConsumableId.hpp"
 #include "drones/DroneId.hpp"
 #include "effects/EffectDefinition.hpp"
+#include "enemies/EnemyId.hpp"
 #include "relics/RelicId.hpp"
 #include "statuses/StatusId.hpp"
 
@@ -123,6 +124,43 @@ void ContentValidator::validate(const ContentRegistry& content) {
                 "Enemy '" + enemy->id.value + "' action '" + action.id + "'",
                 action.effects
             );
+        }
+    }
+
+
+
+    for (const RunEventDefinition* event : content.events().all()) {
+        if (event == nullptr) {
+            continue;
+        }
+
+        for (std::size_t choiceIndex = 0; choiceIndex < event->choices.size(); ++choiceIndex) {
+            const RunEventChoiceDefinition& choice = event->choices[choiceIndex];
+            const std::string owner = "Event '" + event->id + "' choice " + std::to_string(choiceIndex);
+
+            for (const std::string& relicId : choice.requirements.requiredRelicIds) {
+                if (!content.relics().contains(RelicId(relicId))) {
+                    addError(errors, owner + " requires unknown relic '" + relicId + "'");
+                }
+            }
+
+            for (const std::string& relicId : choice.requirements.forbiddenRelicIds) {
+                if (!content.relics().contains(RelicId(relicId))) {
+                    addError(errors, owner + " forbids unknown relic '" + relicId + "'");
+                }
+            }
+        }
+    }
+
+    for (const EncounterDefinition* encounter : content.encounters().all()) {
+        if (encounter == nullptr) {
+            continue;
+        }
+
+        for (const std::string& enemyId : encounter->enemyIds) {
+            if (!content.enemies().contains(EnemyId(enemyId))) {
+                addError(errors, "Encounter '" + encounter->id + "' references unknown enemy '" + enemyId + "'");
+            }
         }
     }
 

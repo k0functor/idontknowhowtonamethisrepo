@@ -139,7 +139,11 @@ void CombatView::render(const Font* font) const {
         }
 
         if (!model_.turnOrderLabel.empty()) {
-            DrawTextEx(*font, model_.turnOrderLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 140.f, battlefield.y + 10.f}, 16.f, 1.f, Color{255, 224, 150, 255});
+            DrawTextEx(*font, model_.turnOrderLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 180.f, battlefield.y + 10.f}, 16.f, 1.f, Color{255, 224, 150, 255});
+        }
+
+        if (!model_.activeActorLabel.empty()) {
+            DrawTextEx(*font, model_.activeActorLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 120.f, battlefield.y + 32.f}, 16.f, 1.f, Color{180, 230, 255, 255});
         }
 
         for (std::size_t i = 0; i < model_.relics.size(); ++i) {
@@ -190,6 +194,7 @@ void CombatView::render(const Font* font) const {
 
     renderDronePanel(font);
     handView_.render(font);
+    renderCardTooltip(font);
 }
 
 std::optional<CardInstanceId> CombatView::hoveredCardId() const {
@@ -344,6 +349,58 @@ void CombatView::renderDronePanel(const Font* font) const {
         DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, hovered ? 3.f : 2.f, border);
         DrawTextEx(*font, shorten(slot.name, 13).c_str(), Vector2{bounds.x + 8.f, bounds.y + 13.f}, 14.f, 1.f, Color{220, 245, 250, 255});
     }
+}
+
+
+void CombatView::renderCardTooltip(const Font* font) const {
+    if (font == nullptr) {
+        return;
+    }
+
+    const std::optional<CardInstanceId> hoveredCardId = handView_.hoveredCardId();
+    if (!hoveredCardId.has_value()) {
+        return;
+    }
+
+    const auto cardIterator = std::find_if(
+        model_.handCards.begin(),
+        model_.handCards.end(),
+        [&hoveredCardId](const CardViewModel& card) {
+            return card.instanceId == *hoveredCardId;
+        }
+    );
+
+    if (cardIterator == model_.handCards.end() || cardIterator->playable || cardIterator->unplayableReason.empty()) {
+        return;
+    }
+
+    const std::optional<Vector2> center = handView_.cardCenter(cardIterator->instanceId);
+    if (!center.has_value()) {
+        return;
+    }
+
+    const std::string text = cardIterator->unplayableReason;
+    constexpr float fontSize = 16.f;
+    constexpr float paddingX = 12.f;
+    constexpr float paddingY = 8.f;
+    const Vector2 textSize = MeasureTextEx(*font, text.c_str(), fontSize, 1.f);
+    const float width = std::min(360.f, std::max(160.f, textSize.x + paddingX * 2.f));
+    const float height = textSize.y + paddingY * 2.f;
+
+    Rectangle bounds{
+        center->x - width * 0.5f,
+        center->y - CardView::size().y * 0.65f - height - 10.f,
+        width,
+        height
+    };
+
+    const Rectangle content = contentBounds();
+    bounds.x = std::clamp(bounds.x, content.x + 8.f, content.x + content.width - bounds.width - 8.f);
+    bounds.y = std::max(80.f, bounds.y);
+
+    DrawRectangleRounded(bounds, 0.18f, 8, Color{28, 24, 28, 238});
+    DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, 2.f, Color{255, 190, 160, 255});
+    DrawTextEx(*font, text.c_str(), Vector2{bounds.x + paddingX, bounds.y + paddingY}, fontSize, 1.f, Color{255, 220, 205, 255});
 }
 
 Rectangle CombatView::contentBounds() const {

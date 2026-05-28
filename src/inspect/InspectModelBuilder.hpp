@@ -4,6 +4,8 @@
 #include "inspect/InspectPanelModel.hpp"
 #include "data/ContentRegistry.hpp"
 #include "localization/LocalizationManager.hpp"
+#include "consumables/ConsumableDefinition.hpp"
+#include "relics/RelicDefinition.hpp"
 #include "ui/CardViewModel.hpp"
 #include "ui/CombatViewModel.hpp"
 #include "ui/ConsumableViewModel.hpp"
@@ -20,6 +22,8 @@ public:
     InspectPanelModel buildEnemy(const EnemyViewModel& enemy) const;
     InspectPanelModel buildPlayer(const PlayerViewModel& player) const;
     InspectPanelModel buildConsumable(const ConsumableViewModel& consumable) const;
+    InspectPanelModel buildConsumable(const ConsumableDefinition& consumable) const;
+    InspectPanelModel buildRelic(const RelicDefinition& relic) const;
     InspectPanelModel buildDroneSlot(const DroneSlotViewModel& droneSlot) const;
 
     InspectPanelModel buildCard(
@@ -35,6 +39,10 @@ private:
     std::string statusName(const std::string& statusId) const;
     std::string statusDescription(const std::string& statusId) const;
     std::string effectSummary(const EffectDefinition& effect) const;
+    std::string relicRarityText(RelicRarity rarity) const;
+    std::string consumableRarityText(ConsumableRarity rarity) const;
+    std::string relicModifierSummary(const RelicModifierDefinition& modifier) const;
+    std::string relicTriggerSummary(const RelicTriggerDefinition& trigger) const;
     std::string targetText(EffectTarget target) const;
     std::string valueText(const EffectValue& value) const;
 

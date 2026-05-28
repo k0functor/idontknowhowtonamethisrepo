@@ -63,6 +63,10 @@ add_executable(i_dont_know_how_to_name_this_game
     src/data/EventDatabase.hpp
     src/data/EventDatabase.cpp
 
+    src/encounters/EncounterDefinition.hpp
+    src/encounters/EncounterDatabase.hpp
+    src/encounters/EncounterDatabase.cpp
+
     src/data/parsers/EffectValueParser.hpp
     src/data/parsers/EffectValueParser.cpp
     src/data/parsers/EffectDefinitionParser.hpp
@@ -150,6 +154,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/statuses/StatusSystem.cpp
 
     src/events/RunEventEffect.hpp
+    src/events/RunEventRequirement.hpp
+    src/events/RunEventRequirement.cpp
     src/events/RunEventDefinition.hpp
 
     src/shop/ShopOffer.hpp

@@ -8,6 +8,7 @@
 #include "entities/CombatEntity.hpp"
 #include "combat/EnemyIntentState.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,10 @@ public:
     std::vector<EntityId> aliveEnemyIds() const;
     std::vector<EntityId> alivePlayerIds() const;
 
+    std::optional<EntityId> activePlayerId() const;
+    CombatEntity* activePlayer();
+    const CombatEntity* activePlayer() const;
+
     std::vector<CombatEntity> players;
     std::vector<CombatEntity> enemies;
     std::vector<EnemyIntentState> enemyIntents;
@@ -44,6 +49,11 @@ public:
     CombatResources resources;
     CombatPhase phase = CombatPhase::NotStarted;
     int turn = 0;
+
+    // Normal single-actor archetypes use one player turn per round.
+    // Sadist/Masochist uses sequential subturns: Sadist -> Masochist -> enemies.
+    bool useSequentialPlayerTurns = false;
+    std::size_t activePlayerIndex = 0;
 
     CombatLog log;
 };

@@ -256,21 +256,62 @@ void CardView::render(const Font* font) const {
         font,
         currentTransform_,
         toString(model_.type) + " / " + toString(model_.rarity),
-        Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 132.f},
+        Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 129.f},
         11.f,
         1.f,
         Color{210, 210, 210, 255}
     );
 
+    if (!model_.ownerLabel.empty()) {
+        drawTextLocal(
+            font,
+            currentTransform_,
+            truncateLine(model_.ownerLabel, 22),
+            Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 143.f},
+            10.f,
+            1.f,
+            model_.playable ? Color{185, 195, 215, 255} : Color{145, 145, 152, 255}
+        );
+    }
+
     drawTextLocal(
         font,
         currentTransform_,
         wrapText(model_.description, 24, 5),
-        Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 154.f},
+        Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 160.f},
         12.f,
         1.f,
         model_.playable ? WHITE : Color{170, 170, 170, 255}
     );
+
+    if (!model_.playable) {
+        drawLocalRectangle(
+            currentTransform_,
+            Vector2{-cardSize.x * 0.5f + 8.f, -cardSize.y * 0.5f + 8.f},
+            Vector2{cardSize.x - 16.f, cardSize.y - 16.f},
+            Color{0, 0, 0, 72}
+        );
+
+        if (!model_.unplayableReason.empty()) {
+            drawLocalRectangle(
+                currentTransform_,
+                Vector2{-cardSize.x * 0.5f + 10.f, cardSize.y * 0.5f - 44.f},
+                Vector2{cardSize.x - 20.f, 32.f},
+                Color{34, 24, 26, 220}
+            );
+
+            drawTextLocal(
+                font,
+                currentTransform_,
+                truncateLine(model_.unplayableReason, 22),
+                Vector2{-cardSize.x * 0.5f + 16.f, cardSize.y * 0.5f - 36.f},
+                10.f,
+                1.f,
+                Color{255, 205, 190, 255}
+            );
+        }
+    }
+
 }
 
 bool CardView::contains(const Vector2 worldPosition) const {

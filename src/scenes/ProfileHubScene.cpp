@@ -115,11 +115,6 @@ void ProfileHubScene::update(float) {
 
     const Vector2 mouse = GetMousePosition();
 
-    if (IsKeyPressed(KEY_ESCAPE)) {
-        onBack_();
-        return;
-    }
-
     if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
         moveSelection(-1);
     }

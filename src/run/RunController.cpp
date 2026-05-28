@@ -448,7 +448,7 @@ void RunController::completeShopNode(const int nodeId) {
     markNodeCompletedAndUnlockNext(nodeId);
 }
 
-void RunController::completeEventChoice(
+bool RunController::completeEventChoice(
     const int nodeId,
     const RunEventChoiceDefinition& choice,
     const CardDatabase& cards,
@@ -457,6 +457,11 @@ void RunController::completeEventChoice(
     Random& random
 ) {
     RunState& state = run();
+
+    const RunEventChoiceAvailability availability = evaluateRunEventChoiceRequirements(choice.requirements, state);
+    if (!availability.available) {
+        return false;
+    }
 
     for (const RunEventEffect& effect : choice.effects) {
         switch (effect.type) {
@@ -521,6 +526,7 @@ void RunController::completeEventChoice(
     }
 
     markNodeCompletedAndUnlockNext(nodeId);
+    return true;
 }
 
 void RunController::markNodeCompletedAndUnlockNext(const int nodeId) {

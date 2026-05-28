@@ -11,6 +11,8 @@ struct CardViewModel {
 
     std::string name;
     std::string description;
+    std::string ownerLabel;
+    std::string unplayableReason;
 
     int energyCost = 0;
 
@@ -19,4 +21,5 @@ struct CardViewModel {
 
     bool playable = true;
     bool selected = false;
+    bool upgraded = false;
 };

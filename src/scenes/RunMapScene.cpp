@@ -11,6 +11,7 @@
 #include <cmath>
 #include <limits>
 #include <set>
+#include <sstream>
 #include <utility>
 #include <raylib.h>
 
@@ -114,11 +115,6 @@ void RunMapScene::update(float) {
         return;
     }
 
-    if (IsKeyPressed(KEY_ESCAPE)) {
-        onBackToHub_();
-        return;
-    }
-
     const Rectangle back{32.f, 32.f, 180.f, 48.f};
     if (BasicUi::contains(back, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         onBackToHub_();
@@ -167,17 +163,18 @@ void RunMapScene::render() const {
     BasicUi::drawButton(font_, relicsButtonBounds(), localization_.get(TextId("run.view_relics")), mouse);
     BasicUi::drawButton(font_, consumablesButtonBounds(), localization_.get(TextId("run.view_consumables")), mouse);
 
+    const float summaryX = std::max(232.f, static_cast<float>(GetScreenWidth()) - 360.f);
     BasicUi::drawText(
         font_,
         runHpSummaryText(),
-        Vector2{232.f, 45.f},
+        Vector2{summaryX, 36.f},
         22.f,
         Color{235, 224, 185, 255}
     );
     BasicUi::drawText(
         font_,
         runStressSummaryText(),
-        Vector2{472.f, 45.f},
+        Vector2{summaryX, 62.f},
         22.f,
         Color{220, 185, 230, 255}
     );
@@ -306,15 +303,30 @@ Rectangle RunMapScene::restCancelButtonBounds(const Rectangle modal) const {
 
 
 Rectangle RunMapScene::deckButtonBounds() const {
-    return Rectangle{static_cast<float>(GetScreenWidth()) - 520.f, 32.f, 126.f, 42.f};
+    constexpr float buttonWidth = 126.f;
+    constexpr float buttonHeight = 42.f;
+    constexpr float gap = 10.f;
+    constexpr float relicsWidth = 126.f;
+    constexpr float consumablesWidth = 156.f;
+    constexpr float totalWidth = buttonWidth + relicsWidth + consumablesWidth + gap * 2.f;
+    const float startX = (static_cast<float>(GetScreenWidth()) - totalWidth) * 0.5f;
+    return Rectangle{startX, 32.f, buttonWidth, buttonHeight};
 }
 
 Rectangle RunMapScene::relicsButtonBounds() const {
-    return Rectangle{static_cast<float>(GetScreenWidth()) - 384.f, 32.f, 126.f, 42.f};
+    constexpr float buttonWidth = 126.f;
+    constexpr float buttonHeight = 42.f;
+    constexpr float gap = 10.f;
+    const Rectangle deck = deckButtonBounds();
+    return Rectangle{deck.x + deck.width + gap, 32.f, buttonWidth, buttonHeight};
 }
 
 Rectangle RunMapScene::consumablesButtonBounds() const {
-    return Rectangle{static_cast<float>(GetScreenWidth()) - 248.f, 32.f, 156.f, 42.f};
+    constexpr float buttonWidth = 156.f;
+    constexpr float buttonHeight = 42.f;
+    constexpr float gap = 10.f;
+    const Rectangle relics = relicsButtonBounds();
+    return Rectangle{relics.x + relics.width + gap, 32.f, buttonWidth, buttonHeight};
 }
 
 Rectangle RunMapScene::overlayBounds() const {
@@ -593,12 +605,18 @@ void RunMapScene::openOverlay(const OverlayMode mode) {
     overlayMode_ = mode;
     overlayScrollOffset_ = 0.f;
     selectedUpgradeCardId_.reset();
+    inspectedCardId_.reset();
+    inspectedRelicId_.reset();
+    inspectedConsumableId_.reset();
 }
 
 void RunMapScene::closeOverlay() {
     overlayMode_ = OverlayMode::None;
     overlayScrollOffset_ = 0.f;
     selectedUpgradeCardId_.reset();
+    inspectedCardId_.reset();
+    inspectedRelicId_.reset();
+    inspectedConsumableId_.reset();
 }
 
 void RunMapScene::updateOverlay(const Vector2 mousePosition) {
@@ -608,22 +626,82 @@ void RunMapScene::updateOverlay(const Vector2 mousePosition) {
     const float wheel = GetMouseWheelMove();
     if (wheel != 0.f) {
         std::size_t count = 0;
+        float maxScroll = 0.f;
         if (overlayMode_ == OverlayMode::Deck) {
             count = runState_.deckCardIds.size();
+            maxScroll = cardGridMaxScroll(grid, count);
         } else if (overlayMode_ == OverlayMode::Upgrade) {
             count = upgradableCards().size();
+            maxScroll = cardGridMaxScroll(grid, count);
+        } else if (overlayMode_ == OverlayMode::Relics) {
+            count = runState_.relicIds.size();
+            maxScroll = listMaxScroll(grid, count);
+        } else if (overlayMode_ == OverlayMode::Consumables) {
+            count = runState_.consumableIds.size();
+            maxScroll = listMaxScroll(grid, count);
         }
         overlayScrollOffset_ = std::clamp(
             overlayScrollOffset_ - wheel * 76.f,
             0.f,
-            cardGridMaxScroll(grid, count)
+            maxScroll
         );
+    }
+
+    if (inspectedCardId_.has_value() || inspectedRelicId_.has_value() || inspectedConsumableId_.has_value()) {
+        const Rectangle inspect = cardInspectModalBounds();
+        if (IsKeyPressed(KEY_ESCAPE) ||
+            (BasicUi::contains(cardInspectCloseButtonBounds(inspect), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+            inspectedCardId_.reset();
+            inspectedRelicId_.reset();
+            inspectedConsumableId_.reset();
+            return;
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !BasicUi::contains(inspect, mousePosition)) {
+            inspectedCardId_.reset();
+            inspectedRelicId_.reset();
+            inspectedConsumableId_.reset();
+            return;
+        }
+
+        return;
     }
 
     if (IsKeyPressed(KEY_ESCAPE) ||
         (BasicUi::contains(overlayCloseButtonBounds(modal), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         closeOverlay();
         return;
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || IsKeyPressed(KEY_I)) {
+        inspectedCardId_ = hoveredOverlayCardId(mousePosition);
+        if (inspectedCardId_.has_value()) {
+            return;
+        }
+
+        inspectedRelicId_ = hoveredOverlayRelicId(mousePosition);
+        if (inspectedRelicId_.has_value()) {
+            return;
+        }
+
+        inspectedConsumableId_ = hoveredOverlayConsumableId(mousePosition);
+        if (inspectedConsumableId_.has_value()) {
+            return;
+        }
+    }
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (overlayMode_ == OverlayMode::Relics) {
+            inspectedRelicId_ = hoveredOverlayRelicId(mousePosition);
+            if (inspectedRelicId_.has_value()) {
+                return;
+            }
+        } else if (overlayMode_ == OverlayMode::Consumables) {
+            inspectedConsumableId_ = hoveredOverlayConsumableId(mousePosition);
+            if (inspectedConsumableId_.has_value()) {
+                return;
+            }
+        }
     }
 
     if (overlayMode_ != OverlayMode::Upgrade || !IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -682,6 +760,9 @@ void RunMapScene::renderOverlay() const {
 
     const Vector2 mouse = GetMousePosition();
     BasicUi::drawButton(font_, overlayCloseButtonBounds(modal), localization_.get(TextId("ui.close")), mouse);
+    renderCardInspectModal();
+    renderRelicInspectModal();
+    renderConsumableInspectModal();
 }
 
 void RunMapScene::renderDeckOverlay(const Rectangle modal) const {
@@ -752,58 +833,127 @@ void RunMapScene::renderUpgradeOverlay(const Rectangle modal) const {
 
 void RunMapScene::renderRelicsOverlay(const Rectangle modal) const {
     const Rectangle area = overlayGridBounds(modal);
-    float y = area.y;
 
     if (runState_.relicIds.empty()) {
         BasicUi::drawCenteredText(font_, localization_.get(TextId("run.no_relics")), area, 22.f, Color{205, 210, 225, 255});
         return;
     }
 
-    for (const std::string& relicId : runState_.relicIds) {
-        const Rectangle row{area.x, y, area.width, 72.f};
-        DrawRectangleRounded(row, 0.035f, 8, Color{38, 41, 54, 255});
-        DrawRectangleRoundedLinesEx(row, 0.035f, 8, 2.f, Color{120, 130, 160, 255});
+    DrawRectangleRounded(area, 0.02f, 8, Color{20, 22, 30, 255});
+    BeginScissorMode(static_cast<int>(area.x), static_cast<int>(area.y), static_cast<int>(area.width), static_cast<int>(area.height));
+
+    const Vector2 mouse = GetMousePosition();
+    for (std::size_t i = 0; i < runState_.relicIds.size(); ++i) {
+        const Rectangle row = listRowBounds(area, i, overlayScrollOffset_);
+        if (row.y + row.height < area.y || row.y > area.y + area.height) {
+            continue;
+        }
+
+        const std::string& relicId = runState_.relicIds[i];
+        const bool hovered = BasicUi::contains(row, mouse);
+        DrawRectangleRounded(row, 0.035f, 8, hovered ? Color{48, 51, 66, 255} : Color{38, 41, 54, 255});
+        DrawRectangleRoundedLinesEx(row, 0.035f, 8, hovered ? 3.f : 2.f, hovered ? Color{238, 196, 86, 255} : Color{120, 130, 160, 255});
 
         std::string name = relicId;
         std::string description = relicId;
+        std::string rarity;
         if (relics_.contains(RelicId(relicId))) {
             const RelicDefinition& relic = relics_.get(RelicId(relicId));
             name = localization_.get(relic.nameTextId);
             description = localization_.get(relic.descriptionTextId);
+            rarity = relicRarityText(relic.rarity);
         }
 
         BasicUi::drawText(font_, name, Vector2{row.x + 18.f, row.y + 12.f}, 21.f, Color{245, 235, 190, 255});
-        BasicUi::drawText(font_, description, Vector2{row.x + 18.f, row.y + 42.f}, 15.f, Color{190, 198, 220, 255});
-        y += 84.f;
+        if (!rarity.empty()) {
+            BasicUi::drawText(font_, rarity, Vector2{row.x + row.width - 170.f, row.y + 15.f}, 15.f, Color{205, 212, 230, 255});
+        }
+
+        const std::vector<std::string> lines = BasicUi::wrapText(font_, description, 15.f, row.width - 36.f);
+        float y = row.y + 43.f;
+        for (const std::string& line : lines) {
+            if (y > row.y + row.height - 15.f) {
+                break;
+            }
+            BasicUi::drawText(font_, line, Vector2{row.x + 18.f, y}, 15.f, Color{190, 198, 220, 255});
+            y += 18.f;
+        }
     }
+
+    EndScissorMode();
+
+    BasicUi::drawText(
+        font_,
+        localization_.format(TextId("run.relic_count"), {{"count", std::to_string(runState_.relicIds.size())}}),
+        Vector2{modal.x + 32.f, modal.y + modal.height - 48.f},
+        18.f,
+        Color{190, 198, 220, 255}
+    );
 }
 
 void RunMapScene::renderConsumablesOverlay(const Rectangle modal) const {
     const Rectangle area = overlayGridBounds(modal);
-    float y = area.y;
 
     if (runState_.consumableIds.empty()) {
         BasicUi::drawCenteredText(font_, localization_.get(TextId("run.no_consumables")), area, 22.f, Color{205, 210, 225, 255});
         return;
     }
 
-    for (const std::string& consumableId : runState_.consumableIds) {
-        const Rectangle row{area.x, y, area.width, 72.f};
-        DrawRectangleRounded(row, 0.035f, 8, Color{34, 44, 58, 255});
-        DrawRectangleRoundedLinesEx(row, 0.035f, 8, 2.f, Color{105, 150, 190, 255});
+    DrawRectangleRounded(area, 0.02f, 8, Color{20, 22, 30, 255});
+    BeginScissorMode(static_cast<int>(area.x), static_cast<int>(area.y), static_cast<int>(area.width), static_cast<int>(area.height));
+
+    const Vector2 mouse = GetMousePosition();
+    for (std::size_t i = 0; i < runState_.consumableIds.size(); ++i) {
+        const Rectangle row = listRowBounds(area, i, overlayScrollOffset_);
+        if (row.y + row.height < area.y || row.y > area.y + area.height) {
+            continue;
+        }
+
+        const std::string& consumableId = runState_.consumableIds[i];
+        const bool hovered = BasicUi::contains(row, mouse);
+        DrawRectangleRounded(row, 0.035f, 8, hovered ? Color{44, 56, 72, 255} : Color{34, 44, 58, 255});
+        DrawRectangleRoundedLinesEx(row, 0.035f, 8, hovered ? 3.f : 2.f, hovered ? Color{128, 190, 230, 255} : Color{105, 150, 190, 255});
 
         std::string name = consumableId;
         std::string description = consumableId;
+        std::string rarity;
+        std::string cost;
         if (consumables_.contains(ConsumableId(consumableId))) {
             const ConsumableDefinition& consumable = consumables_.get(ConsumableId(consumableId));
             name = localization_.get(consumable.nameTextId);
             description = localization_.get(consumable.descriptionTextId);
+            rarity = consumableRarityText(consumable.rarity);
+            cost = localization_.format(TextId("inspect.consumable.gold_cost.value"), {{"amount", std::to_string(consumable.goldCost)}});
         }
 
         BasicUi::drawText(font_, name, Vector2{row.x + 18.f, row.y + 12.f}, 21.f, Color{220, 240, 250, 255});
-        BasicUi::drawText(font_, description, Vector2{row.x + 18.f, row.y + 42.f}, 15.f, Color{190, 205, 220, 255});
-        y += 84.f;
+        if (!rarity.empty()) {
+            BasicUi::drawText(font_, rarity, Vector2{row.x + row.width - 210.f, row.y + 15.f}, 15.f, Color{205, 212, 230, 255});
+        }
+        if (!cost.empty()) {
+            BasicUi::drawText(font_, cost, Vector2{row.x + row.width - 96.f, row.y + 15.f}, 15.f, Color{235, 220, 140, 255});
+        }
+
+        const std::vector<std::string> lines = BasicUi::wrapText(font_, description, 15.f, row.width - 36.f);
+        float y = row.y + 43.f;
+        for (const std::string& line : lines) {
+            if (y > row.y + row.height - 15.f) {
+                break;
+            }
+            BasicUi::drawText(font_, line, Vector2{row.x + 18.f, y}, 15.f, Color{190, 205, 220, 255});
+            y += 18.f;
+        }
     }
+
+    EndScissorMode();
+
+    BasicUi::drawText(
+        font_,
+        localization_.format(TextId("run.consumable_count"), {{"count", std::to_string(runState_.consumableIds.size())}}),
+        Vector2{modal.x + 32.f, modal.y + modal.height - 48.f},
+        18.f,
+        Color{190, 198, 220, 255}
+    );
 }
 
 void RunMapScene::renderCardGrid(const Rectangle grid, const std::vector<CardId>& cardIds, const bool selectionMode) const {
@@ -840,6 +990,381 @@ void RunMapScene::renderCardGrid(const Rectangle grid, const std::vector<CardId>
     EndScissorMode();
 }
 
+std::optional<CardId> RunMapScene::hoveredOverlayCardId(const Vector2 mousePosition) const {
+    if (overlayMode_ != OverlayMode::Deck && overlayMode_ != OverlayMode::Upgrade) {
+        return std::nullopt;
+    }
+
+    const Rectangle grid = overlayGridBounds(overlayBounds());
+    const std::vector<CardId> cardIds = overlayMode_ == OverlayMode::Upgrade
+        ? upgradableCards()
+        : runState_.deckCardIds;
+
+    for (std::size_t i = 0; i < cardIds.size(); ++i) {
+        const Rectangle cell = cardGridCellBounds(grid, i, overlayScrollOffset_);
+        if (cell.y + cell.height < grid.y || cell.y > grid.y + grid.height) {
+            continue;
+        }
+
+        if (BasicUi::contains(cell, mousePosition)) {
+            return cardIds[i];
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> RunMapScene::hoveredOverlayRelicId(const Vector2 mousePosition) const {
+    if (overlayMode_ != OverlayMode::Relics) {
+        return std::nullopt;
+    }
+
+    const Rectangle area = overlayGridBounds(overlayBounds());
+    for (std::size_t i = 0; i < runState_.relicIds.size(); ++i) {
+        const Rectangle row = listRowBounds(area, i, overlayScrollOffset_);
+        if (row.y + row.height < area.y || row.y > area.y + area.height) {
+            continue;
+        }
+
+        if (BasicUi::contains(row, mousePosition)) {
+            return runState_.relicIds[i];
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> RunMapScene::hoveredOverlayConsumableId(const Vector2 mousePosition) const {
+    if (overlayMode_ != OverlayMode::Consumables) {
+        return std::nullopt;
+    }
+
+    const Rectangle area = overlayGridBounds(overlayBounds());
+    for (std::size_t i = 0; i < runState_.consumableIds.size(); ++i) {
+        const Rectangle row = listRowBounds(area, i, overlayScrollOffset_);
+        if (row.y + row.height < area.y || row.y > area.y + area.height) {
+            continue;
+        }
+
+        if (BasicUi::contains(row, mousePosition)) {
+            return runState_.consumableIds[i];
+        }
+    }
+
+    return std::nullopt;
+}
+
+Rectangle RunMapScene::cardInspectModalBounds() const {
+    const Rectangle overlay = overlayBounds();
+    const float width = std::min(520.f, overlay.width - 96.f);
+    const float height = std::min(600.f, overlay.height - 96.f);
+    return Rectangle{
+        overlay.x + overlay.width - width - 34.f,
+        overlay.y + 72.f,
+        width,
+        height
+    };
+}
+
+Rectangle RunMapScene::cardInspectCloseButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + modal.width - 128.f, modal.y + modal.height - 54.f, 104.f, 36.f};
+}
+
+std::string RunMapScene::cardInspectValueText(const EffectValue& value) const {
+    if (value.isDice()) {
+        return toString(value.diceExpression());
+    }
+
+    return std::to_string(value.fixedAmount());
+}
+
+std::string RunMapScene::cardInspectEffectText(const EffectDefinition& effect) const {
+    std::ostringstream out;
+    out << localizedOrFallback(TextId("inspect.effect." + toString(effect.type)), toString(effect.type));
+    out << ": " << cardInspectValueText(effect.value);
+
+    if (effect.repeatCount > 1) {
+        out << " x" << effect.repeatCount;
+    }
+
+    if (effect.statusId.has_value()) {
+        out << " " << localizedOrFallback(TextId("status." + *effect.statusId + ".name"), *effect.statusId);
+    }
+
+    out << " -> " << localizedOrFallback(TextId("inspect.target." + toString(effect.target)), toString(effect.target));
+    return out.str();
+}
+
+void RunMapScene::renderCardInspectModal() const {
+    if (!inspectedCardId_.has_value() || !cards_.contains(*inspectedCardId_)) {
+        return;
+    }
+
+    const bool upgraded = isCardUpgraded(*inspectedCardId_);
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(cards_.get(*inspectedCardId_), upgraded);
+    const CardDescriptionFormatter formatter(localization_);
+    const Rectangle modal = cardInspectModalBounds();
+    const Vector2 mouse = GetMousePosition();
+
+    DrawRectangleRounded(modal, 0.045f, 14, Color{18, 20, 28, 248});
+    DrawRectangleRoundedLinesEx(modal, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
+
+    float y = modal.y + 22.f;
+    BasicUi::drawCenteredText(
+        font_,
+        cardName(*inspectedCardId_, upgraded),
+        Rectangle{modal.x + 28.f, y, modal.width - 56.f, 34.f},
+        25.f,
+        Color{255, 235, 175, 255}
+    );
+    y += 48.f;
+
+    const std::string meta =
+        localizedOrFallback(TextId("inspect.card.cost.name"), "Cost") + ": " + std::to_string(definition.energyCost) +
+        "   " + localizedOrFallback(TextId("inspect.card.type.name"), "Type") + ": " + localizedOrFallback(TextId("card.type." + toString(definition.type)), toString(definition.type)) +
+        "   " + localizedOrFallback(TextId("inspect.card.rarity.name"), "Rarity") + ": " + localizedOrFallback(TextId("card.rarity." + toString(definition.rarity)), toString(definition.rarity));
+    BasicUi::drawText(font_, meta, Vector2{modal.x + 28.f, y}, 15.f, Color{218, 222, 235, 255});
+    y += 26.f;
+
+    const std::string owner = definition.ownerActorId.empty()
+        ? localizedOrFallback(TextId("ui.card_owner.common"), "Common card")
+        : definition.ownerActorId;
+    BasicUi::drawText(font_, localizedOrFallback(TextId("inspect.card.owner.name"), "Owner") + ": " + owner, Vector2{modal.x + 28.f, y}, 15.f, Color{205, 212, 230, 255});
+    y += 24.f;
+
+    BasicUi::drawText(
+        font_,
+        localizedOrFallback(TextId("inspect.card.upgrade.name"), "Upgrade") + ": " +
+            (upgraded ? localizedOrFallback(TextId("inspect.card.upgrade.yes.short"), "upgraded") : localizedOrFallback(TextId("inspect.card.upgrade.no.short"), "not upgraded")),
+        Vector2{modal.x + 28.f, y},
+        15.f,
+        Color{205, 212, 230, 255}
+    );
+    y += 30.f;
+
+    const std::vector<std::string> descriptionLines = BasicUi::wrapText(font_, formatter.formatStaticDescription(definition), 16.f, modal.width - 56.f);
+    for (const std::string& line : descriptionLines) {
+        if (y > modal.y + modal.height - 118.f) break;
+        BasicUi::drawText(font_, line, Vector2{modal.x + 28.f, y}, 16.f, Color{232, 232, 240, 255});
+        y += 21.f;
+    }
+    y += 8.f;
+
+    if (!definition.keywords.empty()) {
+        BasicUi::drawText(font_, localizedOrFallback(TextId("inspect.card.keywords.name"), "Keywords"), Vector2{modal.x + 28.f, y}, 17.f, Color{245, 220, 140, 255});
+        y += 24.f;
+        for (const CardKeyword keyword : definition.keywords) {
+            if (y > modal.y + modal.height - 118.f) break;
+            const std::string key = "keyword." + toString(keyword) + ".name";
+            BasicUi::drawText(font_, "• " + localizedOrFallback(TextId(key), toString(keyword)), Vector2{modal.x + 34.f, y}, 15.f, Color{210, 218, 235, 255});
+            y += 20.f;
+        }
+        y += 6.f;
+    }
+
+    if (!definition.effects.empty()) {
+        BasicUi::drawText(font_, localizedOrFallback(TextId("inspect.card.effects.name"), "Effects"), Vector2{modal.x + 28.f, y}, 17.f, Color{245, 220, 140, 255});
+        y += 24.f;
+        for (const EffectDefinition& effect : definition.effects) {
+            if (y > modal.y + modal.height - 118.f) break;
+            const std::vector<std::string> lines = BasicUi::wrapText(font_, "• " + cardInspectEffectText(effect), 14.f, modal.width - 68.f);
+            for (const std::string& line : lines) {
+                if (y > modal.y + modal.height - 118.f) break;
+                BasicUi::drawText(font_, line, Vector2{modal.x + 34.f, y}, 14.f, Color{205, 212, 230, 255});
+                y += 18.f;
+            }
+        }
+    }
+
+    BasicUi::drawButton(font_, cardInspectCloseButtonBounds(modal), localization_.get(TextId("ui.close")), mouse);
+}
+
+void RunMapScene::renderRelicInspectModal() const {
+    if (!inspectedRelicId_.has_value()) {
+        return;
+    }
+
+    const RelicId relicId(*inspectedRelicId_);
+    if (!relics_.contains(relicId)) {
+        return;
+    }
+
+    const RelicDefinition& relic = relics_.get(relicId);
+    const Rectangle modal = cardInspectModalBounds();
+    const Vector2 mouse = GetMousePosition();
+
+    DrawRectangleRounded(modal, 0.045f, 14, Color{18, 20, 28, 248});
+    DrawRectangleRoundedLinesEx(modal, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
+
+    float y = modal.y + 22.f;
+    BasicUi::drawCenteredText(
+        font_,
+        localization_.get(relic.nameTextId),
+        Rectangle{modal.x + 28.f, y, modal.width - 56.f, 34.f},
+        25.f,
+        Color{255, 235, 175, 255}
+    );
+    y += 48.f;
+
+    BasicUi::drawText(
+        font_,
+        localizedOrFallback(TextId("inspect.relic.rarity.name"), "Rarity") + ": " + relicRarityText(relic.rarity),
+        Vector2{modal.x + 28.f, y},
+        15.f,
+        Color{218, 222, 235, 255}
+    );
+    y += 26.f;
+
+    if (!relic.mechanicId.empty() && relic.mechanicId != "default") {
+        BasicUi::drawText(
+            font_,
+            localizedOrFallback(TextId("inspect.relic.mechanic.name"), "Mechanic") + ": " + relic.mechanicId,
+            Vector2{modal.x + 28.f, y},
+            15.f,
+            Color{205, 212, 230, 255}
+        );
+        y += 24.f;
+    }
+
+    const std::vector<std::string> descriptionLines = BasicUi::wrapText(font_, localization_.get(relic.descriptionTextId), 16.f, modal.width - 56.f);
+    for (const std::string& line : descriptionLines) {
+        if (y > modal.y + modal.height - 118.f) {
+            break;
+        }
+        BasicUi::drawText(font_, line, Vector2{modal.x + 28.f, y}, 16.f, Color{232, 232, 240, 255});
+        y += 21.f;
+    }
+    y += 10.f;
+
+    if (!relic.modifiers.empty()) {
+        BasicUi::drawText(font_, localizedOrFallback(TextId("inspect.relic.modifiers.name"), "Modifiers"), Vector2{modal.x + 28.f, y}, 17.f, Color{245, 220, 140, 255});
+        y += 24.f;
+
+        for (const RelicModifierDefinition& modifier : relic.modifiers) {
+            const std::vector<std::string> lines = BasicUi::wrapText(font_, "• " + relicModifierText(modifier), 14.f, modal.width - 68.f);
+            for (const std::string& line : lines) {
+                if (y > modal.y + modal.height - 118.f) {
+                    break;
+                }
+                BasicUi::drawText(font_, line, Vector2{modal.x + 34.f, y}, 14.f, Color{205, 212, 230, 255});
+                y += 18.f;
+            }
+        }
+        y += 6.f;
+    }
+
+    if (!relic.triggers.empty()) {
+        BasicUi::drawText(font_, localizedOrFallback(TextId("inspect.relic.triggers.name"), "Triggers"), Vector2{modal.x + 28.f, y}, 17.f, Color{245, 220, 140, 255});
+        y += 24.f;
+
+        for (const RelicTriggerDefinition& trigger : relic.triggers) {
+            const std::vector<std::string> lines = BasicUi::wrapText(font_, "• " + relicTriggerText(trigger), 14.f, modal.width - 68.f);
+            for (const std::string& line : lines) {
+                if (y > modal.y + modal.height - 118.f) {
+                    break;
+                }
+                BasicUi::drawText(font_, line, Vector2{modal.x + 34.f, y}, 14.f, Color{205, 212, 230, 255});
+                y += 18.f;
+            }
+        }
+    }
+
+    if (relic.modifiers.empty() && relic.triggers.empty()) {
+        BasicUi::drawText(
+            font_,
+            localizedOrFallback(TextId("inspect.relic.passive_only"), "This relic has no parsed modifiers or triggers yet."),
+            Vector2{modal.x + 28.f, y},
+            15.f,
+            Color{205, 212, 230, 255}
+        );
+    }
+
+    BasicUi::drawButton(font_, cardInspectCloseButtonBounds(modal), localization_.get(TextId("ui.close")), mouse);
+}
+
+void RunMapScene::renderConsumableInspectModal() const {
+    if (!inspectedConsumableId_.has_value()) {
+        return;
+    }
+
+    const ConsumableId consumableId(*inspectedConsumableId_);
+    if (!consumables_.contains(consumableId)) {
+        return;
+    }
+
+    const ConsumableDefinition& consumable = consumables_.get(consumableId);
+    const Rectangle modal = cardInspectModalBounds();
+    const Vector2 mouse = GetMousePosition();
+
+    DrawRectangleRounded(modal, 0.045f, 14, Color{18, 20, 28, 248});
+    DrawRectangleRoundedLinesEx(modal, 0.045f, 14, 3.f, Color{128, 190, 230, 255});
+
+    float y = modal.y + 22.f;
+    BasicUi::drawCenteredText(
+        font_,
+        localization_.get(consumable.nameTextId),
+        Rectangle{modal.x + 28.f, y, modal.width - 56.f, 34.f},
+        25.f,
+        Color{220, 240, 250, 255}
+    );
+    y += 48.f;
+
+    BasicUi::drawText(
+        font_,
+        localizedOrFallback(TextId("inspect.consumable.rarity.name"), "Rarity") + ": " + consumableRarityText(consumable.rarity),
+        Vector2{modal.x + 28.f, y},
+        15.f,
+        Color{218, 222, 235, 255}
+    );
+    y += 24.f;
+
+    BasicUi::drawText(
+        font_,
+        localizedOrFallback(TextId("inspect.consumable.gold_cost.name"), "Gold cost") + ": " + std::to_string(consumable.goldCost),
+        Vector2{modal.x + 28.f, y},
+        15.f,
+        Color{235, 220, 140, 255}
+    );
+    y += 30.f;
+
+    const std::vector<std::string> descriptionLines = BasicUi::wrapText(font_, localization_.get(consumable.descriptionTextId), 16.f, modal.width - 56.f);
+    for (const std::string& line : descriptionLines) {
+        if (y > modal.y + modal.height - 118.f) {
+            break;
+        }
+        BasicUi::drawText(font_, line, Vector2{modal.x + 28.f, y}, 16.f, Color{232, 232, 240, 255});
+        y += 21.f;
+    }
+    y += 10.f;
+
+    if (!consumable.effects.empty()) {
+        BasicUi::drawText(font_, localizedOrFallback(TextId("inspect.consumable.effects.name"), "Effects"), Vector2{modal.x + 28.f, y}, 17.f, Color{245, 220, 140, 255});
+        y += 24.f;
+
+        for (const EffectDefinition& effect : consumable.effects) {
+            const std::vector<std::string> lines = BasicUi::wrapText(font_, "• " + cardInspectEffectText(effect), 14.f, modal.width - 68.f);
+            for (const std::string& line : lines) {
+                if (y > modal.y + modal.height - 118.f) {
+                    break;
+                }
+                BasicUi::drawText(font_, line, Vector2{modal.x + 34.f, y}, 14.f, Color{205, 212, 230, 255});
+                y += 18.f;
+            }
+        }
+    }
+
+    BasicUi::drawButton(font_, cardInspectCloseButtonBounds(modal), localization_.get(TextId("ui.close")), mouse);
+}
+
+
+std::string RunMapScene::localizedOrFallback(const TextId& textId, const std::string& fallback) const {
+    if (localization_.hasText(textId)) {
+        return localization_.get(textId);
+    }
+
+    return fallback;
+}
+
 Rectangle RunMapScene::cardGridCellBounds(const Rectangle grid, const std::size_t index, const float scrollOffset) const {
     constexpr int columns = 5;
     constexpr float gap = 14.f;
@@ -866,6 +1391,28 @@ float RunMapScene::cardGridMaxScroll(const Rectangle grid, const std::size_t cou
     const std::size_t rows = (count + columns - 1) / columns;
     const float totalHeight = static_cast<float>(rows) * height + static_cast<float>(rows > 0 ? rows - 1 : 0) * gap;
     return std::max(0.f, totalHeight - grid.height);
+}
+
+Rectangle RunMapScene::listRowBounds(const Rectangle area, const std::size_t index, const float scrollOffset) const {
+    constexpr float gap = 10.f;
+    constexpr float height = 94.f;
+    return Rectangle{
+        area.x + 12.f,
+        area.y + 12.f + static_cast<float>(index) * (height + gap) - scrollOffset,
+        area.width - 24.f,
+        height
+    };
+}
+
+float RunMapScene::listMaxScroll(const Rectangle area, const std::size_t count) const {
+    if (count == 0) {
+        return 0.f;
+    }
+
+    constexpr float gap = 10.f;
+    constexpr float height = 94.f;
+    const float totalHeight = 24.f + static_cast<float>(count) * height + static_cast<float>(count > 0 ? count - 1 : 0) * gap;
+    return std::max(0.f, totalHeight - area.height);
 }
 
 bool RunMapScene::isCardUpgraded(const CardId& cardId) const {
@@ -911,6 +1458,64 @@ std::string RunMapScene::cardDescription(const CardId& cardId, const bool upgrad
     const CardDefinition definition = CardUpgrade::effectiveDefinition(cards_.get(cardId), upgraded);
     return formatter.formatStaticDescription(definition);
 }
+
+
+std::string RunMapScene::relicRarityText(const RelicRarity rarity) const {
+    return localizedOrFallback(TextId("relic.rarity." + toString(rarity)), toString(rarity));
+}
+
+std::string RunMapScene::consumableRarityText(const ConsumableRarity rarity) const {
+    return localizedOrFallback(TextId("consumable.rarity." + toString(rarity)), toString(rarity));
+}
+
+std::string RunMapScene::relicModifierText(const RelicModifierDefinition& modifier) const {
+    std::ostringstream out;
+    out << localizedOrFallback(TextId("relic.modifier." + toString(modifier.type)), toString(modifier.type));
+
+    if (modifier.amount != 0) {
+        out << " " << (modifier.amount > 0 ? "+" : "") << modifier.amount;
+    }
+
+    if (modifier.multiplier != 1.0) {
+        out << " x" << modifier.multiplier;
+    }
+
+    out << " · ";
+    out << (modifier.playerOnly
+        ? localizedOrFallback(TextId("inspect.relic.player_only"), "player only")
+        : localizedOrFallback(TextId("inspect.relic.affects_all"), "affects all"));
+
+    return out.str();
+}
+
+std::string RunMapScene::relicTriggerText(const RelicTriggerDefinition& trigger) const {
+    std::ostringstream out;
+    out << localizedOrFallback(TextId("game_event." + toString(trigger.eventType)), toString(trigger.eventType));
+
+    if (trigger.everyNTurns > 0) {
+        out << " · " << localization_.format(
+            TextId("inspect.relic.every_n_turns"),
+            {{"count", std::to_string(trigger.everyNTurns)}}
+        );
+    }
+
+    if (trigger.oncePerCombat) {
+        out << " · " << localizedOrFallback(TextId("inspect.relic.once_per_combat"), "once per combat");
+    }
+
+    if (!trigger.effects.empty()) {
+        out << " · " << localizedOrFallback(TextId("inspect.relic.effects.name"), "Effects") << ": ";
+        for (std::size_t i = 0; i < trigger.effects.size(); ++i) {
+            if (i > 0) {
+                out << "; ";
+            }
+            out << cardInspectEffectText(trigger.effects[i]);
+        }
+    }
+
+    return out.str();
+}
+
 
 std::string RunMapScene::overlayTitle() const {
     switch (overlayMode_) {

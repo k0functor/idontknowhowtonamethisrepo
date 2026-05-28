@@ -33,6 +33,8 @@ public:
 private:
     bool updateCombatResult(CombatState& state) const;
     void startNextPlayerTurn(CombatState& state, Random& random) const;
+    void setActivePlayerToFirstAlive(CombatState& state) const;
+    bool advanceToNextPlayerSubturn(CombatState& state) const;
 
 private:
     const EnemyDatabase& enemyDatabase_;

@@ -1,5 +1,7 @@
 #include "TurnSystem.hpp"
 
+#include <algorithm>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -32,7 +34,9 @@ void emitTurnEvent(const GameEventBus* eventBus, GameEventType type, const Comba
     event.type = type;
     event.turn = state.turn;
 
-    if (!state.players.empty()) {
+    if (const std::optional<EntityId> activePlayer = state.activePlayerId()) {
+        event.source = *activePlayer;
+    } else if (!state.players.empty()) {
         event.source = state.players.front().id;
     }
 
@@ -43,6 +47,7 @@ void emitTurnEvent(const GameEventBus* eventBus, GameEventType type, const Comba
 void TurnSystem::startCombat(CombatState& state, Random& random) const {
     state.turn = 1;
     state.phase = CombatPhase::PlayerTurn;
+    setActivePlayerToFirstAlive(state);
     state.resources.resetEnergy();
 
     playerTurnSystem_.startTurn(state, handSize_, random);
@@ -57,9 +62,22 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
         return;
     }
 
+    bool turnEndedEventEmitted = false;
+    if (state.useSequentialPlayerTurns) {
+        emitTurnEvent(eventBus_, GameEventType::TurnEnded, state);
+        turnEndedEventEmitted = true;
+        if (advanceToNextPlayerSubturn(state)) {
+            emitTurnEvent(eventBus_, GameEventType::TurnStarted, state);
+            updateCombatResult(state);
+            return;
+        }
+    }
+
     playerTurnSystem_.endTurn(state);
     droneSystem_.processEndOfPlayerTurn(state, random);
-    emitTurnEvent(eventBus_, GameEventType::TurnEnded, state);
+    if (!turnEndedEventEmitted) {
+        emitTurnEvent(eventBus_, GameEventType::TurnEnded, state);
+    }
     statusSystem_.onTurnEndedForSide(state, EntityType::Player);
 
     if (updateCombatResult(state)) {
@@ -109,8 +127,37 @@ bool TurnSystem::updateCombatResult(CombatState& state) const {
 
 void TurnSystem::startNextPlayerTurn(CombatState& state, Random& random) const {
     ++state.turn;
+    setActivePlayerToFirstAlive(state);
     playerTurnSystem_.startTurn(state, handSize_, random);
     refreshEnemyIntents(state, random);
     emitTurnEvent(eventBus_, GameEventType::TurnStarted, state);
     updateCombatResult(state);
+}
+
+void TurnSystem::setActivePlayerToFirstAlive(CombatState& state) const {
+    state.activePlayerIndex = 0;
+
+    for (std::size_t i = 0; i < state.players.size(); ++i) {
+        if (state.players[i].isAlive()) {
+            state.activePlayerIndex = i;
+            return;
+        }
+    }
+}
+
+bool TurnSystem::advanceToNextPlayerSubturn(CombatState& state) const {
+    if (state.players.empty()) {
+        return false;
+    }
+
+    const std::size_t start = std::min(state.activePlayerIndex + 1, state.players.size());
+    for (std::size_t i = start; i < state.players.size(); ++i) {
+        if (state.players[i].isAlive()) {
+            state.activePlayerIndex = i;
+            state.log.add("Active player actor: " + state.players[i].definitionId);
+            return true;
+        }
+    }
+
+    return false;
 }

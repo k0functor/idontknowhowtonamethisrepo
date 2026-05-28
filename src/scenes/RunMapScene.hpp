@@ -2,9 +2,15 @@
 
 #include "cards/CardId.hpp"
 #include "consumables/ConsumableDatabase.hpp"
+#include "consumables/ConsumableRarity.hpp"
 #include "data/CardDatabase.hpp"
+#include "effects/EffectDefinition.hpp"
+#include "effects/EffectValue.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "relics/RelicDatabase.hpp"
+#include "relics/RelicModifierDefinition.hpp"
+#include "relics/RelicRarity.hpp"
+#include "relics/RelicTriggerDefinition.hpp"
 #include "run/RunState.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
@@ -77,6 +83,17 @@ private:
     void closeOverlay();
     void updateOverlay(Vector2 mousePosition);
     void renderOverlay() const;
+    std::optional<CardId> hoveredOverlayCardId(Vector2 mousePosition) const;
+    std::optional<std::string> hoveredOverlayRelicId(Vector2 mousePosition) const;
+    std::optional<std::string> hoveredOverlayConsumableId(Vector2 mousePosition) const;
+    void renderCardInspectModal() const;
+    void renderRelicInspectModal() const;
+    void renderConsumableInspectModal() const;
+    Rectangle cardInspectModalBounds() const;
+    Rectangle cardInspectCloseButtonBounds(Rectangle modal) const;
+    std::string cardInspectEffectText(const EffectDefinition& effect) const;
+    std::string cardInspectValueText(const EffectValue& value) const;
+    std::string localizedOrFallback(const TextId& textId, const std::string& fallback) const;
     void renderDeckOverlay(Rectangle modal) const;
     void renderUpgradeOverlay(Rectangle modal) const;
     void renderRelicsOverlay(Rectangle modal) const;
@@ -84,10 +101,16 @@ private:
     void renderCardGrid(Rectangle grid, const std::vector<CardId>& cardIds, bool selectionMode) const;
     Rectangle cardGridCellBounds(Rectangle grid, std::size_t index, float scrollOffset) const;
     float cardGridMaxScroll(Rectangle grid, std::size_t count) const;
+    Rectangle listRowBounds(Rectangle area, std::size_t index, float scrollOffset) const;
+    float listMaxScroll(Rectangle area, std::size_t count) const;
     bool isCardUpgraded(const CardId& cardId) const;
     std::vector<CardId> upgradableCards() const;
     std::string cardName(const CardId& cardId, bool upgraded) const;
     std::string cardDescription(const CardId& cardId, bool upgraded) const;
+    std::string relicRarityText(RelicRarity rarity) const;
+    std::string consumableRarityText(ConsumableRarity rarity) const;
+    std::string relicModifierText(const RelicModifierDefinition& modifier) const;
+    std::string relicTriggerText(const RelicTriggerDefinition& trigger) const;
     std::string overlayTitle() const;
 
 private:
@@ -107,4 +130,7 @@ private:
     OverlayMode overlayMode_ = OverlayMode::None;
     float overlayScrollOffset_ = 0.f;
     std::optional<CardId> selectedUpgradeCardId_;
+    std::optional<CardId> inspectedCardId_;
+    std::optional<std::string> inspectedRelicId_;
+    std::optional<std::string> inspectedConsumableId_;
 };

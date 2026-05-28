@@ -2,6 +2,7 @@
 
 #include "cards/CardDefinition.hpp"
 #include "cards/CardInstance.hpp"
+#include "combat/CardPlayFailureReason.hpp"
 #include "combat/CombatPhase.hpp"
 #include "combat/CombatState.hpp"
 #include "entities/EntityId.hpp"
@@ -10,6 +11,7 @@
 
 struct CardPlayValidationResult {
     bool valid = false;
+    CardPlayFailureReason failureReason = CardPlayFailureReason::None;
     std::string reason;
 };
 

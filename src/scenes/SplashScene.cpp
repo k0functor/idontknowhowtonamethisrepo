@@ -21,7 +21,6 @@ void SplashScene::update(const float deltaSeconds) {
     if (elapsedSeconds_ >= 1.2f ||
         IsKeyPressed(KEY_SPACE) ||
         IsKeyPressed(KEY_ENTER) ||
-        IsKeyPressed(KEY_ESCAPE) ||
         IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         finished_ = true;
         onFinished_();

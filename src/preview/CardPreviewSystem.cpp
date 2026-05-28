@@ -39,6 +39,7 @@ CardPreview CardPreviewSystem::previewCard(
     );
 
     preview.playable = validation.valid;
+    preview.unplayableReasonCode = validation.failureReason;
     preview.unplayableReason = validation.reason;
 
     for (const EffectDefinition& effect : definition.effects) {

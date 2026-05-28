@@ -61,11 +61,6 @@ SaveSlotScene::SaveSlotScene(
       onBack_(std::move(onBack)) {}
 
 void SaveSlotScene::update(float) {
-    if (IsKeyPressed(KEY_ESCAPE)) {
-        onBack_();
-        return;
-    }
-
     const Vector2 mouse = GetMousePosition();
 
     if (BasicUi::contains(backButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {

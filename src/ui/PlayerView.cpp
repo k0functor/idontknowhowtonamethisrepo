@@ -26,10 +26,12 @@ bool PlayerView::contains(const Vector2 worldPosition) const {
 void PlayerView::render(const Font* font, const bool hovered) const {
     const Rectangle body = bounds();
     const Color fill = model_.alive ? Color{58, 82, 92, 255} : Color{52, 52, 52, 255};
-    const Color outline = hovered ? Color{255, 230, 130, 255} : Color{200, 220, 235, 255};
+    const Color outline = model_.activeTurn
+        ? Color{255, 205, 70, 255}
+        : (hovered ? Color{255, 230, 130, 255} : Color{200, 220, 235, 255});
 
     DrawRectangleRounded(body, 0.12f, 12, fill);
-    DrawRectangleRoundedLinesEx(body, 0.12f, 12, hovered ? 4.f : 2.f, outline);
+    DrawRectangleRoundedLinesEx(body, 0.12f, 12, model_.activeTurn ? 4.5f : (hovered ? 4.f : 2.f), outline);
 
     const float hpRatio = model_.maxHp <= 0
         ? 0.f
@@ -46,6 +48,10 @@ void PlayerView::render(const Font* font, const bool hovered) const {
     }
 
     DrawTextEx(*font, model_.name.c_str(), Vector2{position_.x + 14.f, position_.y + 12.f}, 20.f, 1.f, WHITE);
+
+    if (model_.activeTurn) {
+        DrawTextEx(*font, model_.activeTurnLabel.c_str(), Vector2{position_.x + size_.x - 78.f, position_.y + 14.f}, 14.f, 1.f, Color{255, 222, 110, 255});
+    }
 
     const std::string hpText = std::to_string(model_.currentHp) + "/" + std::to_string(model_.maxHp);
     DrawTextEx(*font, hpText.c_str(), Vector2{position_.x + 18.f, position_.y + size_.y - 38.f}, 14.f, 1.f, WHITE);

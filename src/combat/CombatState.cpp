@@ -93,3 +93,36 @@ std::vector<EntityId> CombatState::alivePlayerIds() const {
 
     return result;
 }
+
+std::optional<EntityId> CombatState::activePlayerId() const {
+    const CombatEntity* current = activePlayer();
+    if (current == nullptr) {
+        return std::nullopt;
+    }
+
+    return current->id;
+}
+
+CombatEntity* CombatState::activePlayer() {
+    if (players.empty() || activePlayerIndex >= players.size()) {
+        return nullptr;
+    }
+
+    if (!players[activePlayerIndex].isAlive()) {
+        return nullptr;
+    }
+
+    return &players[activePlayerIndex];
+}
+
+const CombatEntity* CombatState::activePlayer() const {
+    if (players.empty() || activePlayerIndex >= players.size()) {
+        return nullptr;
+    }
+
+    if (!players[activePlayerIndex].isAlive()) {
+        return nullptr;
+    }
+
+    return &players[activePlayerIndex];
+}

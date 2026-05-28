@@ -98,7 +98,7 @@ public:
     bool purchaseShopItem(const ShopPurchase& purchase);
     void completeShopNode(int nodeId);
 
-    void completeEventChoice(
+    bool completeEventChoice(
         int nodeId,
         const RunEventChoiceDefinition& choice,
         const CardDatabase& cards,

@@ -1085,6 +1085,7 @@ void GameFlowController::setEventScene(const int nodeId, const RunEventDefinitio
         std::make_unique<EventScene>(
             uiFont_,
             localization_,
+            runController_.run(),
             event,
             [this, nodeId](const RunEventChoiceDefinition& choice) { finishEvent(nodeId, choice); }
         )
@@ -1283,7 +1284,7 @@ void GameFlowController::finishShop(const int nodeId) {
 
 void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefinition& choice) {
     queueTransition([this, nodeId, choice]() {
-        runController_.completeEventChoice(
+        const bool completed = runController_.completeEventChoice(
             nodeId,
             choice,
             content_.cards(),
@@ -1291,6 +1292,10 @@ void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefin
             content_.consumables(),
             random_
         );
+        if (!completed) {
+            setEventScene(nodeId, content_.events().get(runController_.pendingRoom().eventId));
+            return;
+        }
         saveActiveRun();
         setRunMapScene();
     });

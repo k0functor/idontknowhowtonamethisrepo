@@ -1,25 +1,36 @@
 {
   "id": "act1",
-  "layer_count": 12,
-  "middle_min_nodes": 2,
-  "middle_max_nodes": 4,
-  "event_weight": 30,
-  "combat_weight": 70,
+  "layer_count": 8,
+  "middle_min_nodes": 3,
+  "middle_max_nodes": 3,
+  "event_weight": 0,
+  "combat_weight": 100,
   "shop": {
     "count": 1,
-    "min_layer": 2,
-    "max_layer": 8
+    "min_layer": 1,
+    "max_layer": 5
+  },
+  "chests": {
+    "count": 3,
+    "min_layer": 3,
+    "max_layer": 3
   },
   "elites": {
     "min": 1,
-    "max": 2,
-    "min_layer": 3,
-    "max_layer": 8
+    "max": 1,
+    "min_layer": 1,
+    "max_layer": 5
+  },
+  "events": {
+    "min": 3,
+    "max": 4,
+    "min_layer": 1,
+    "max_layer": 5
   },
   "layout": {
     "start_x": 120.0,
-    "layer_step_x": 210.0,
-    "center_y": 520.0,
-    "node_spacing_y": 170.0
+    "layer_step_x": 180.0,
+    "center_y": 500.0,
+    "node_spacing_y": 145.0
   }
 }

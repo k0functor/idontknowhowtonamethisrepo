@@ -43,6 +43,24 @@ RunMapEliteConfig parseEliteConfig(
     return result;
 }
 
+RunMapEventConfig parseEventConfig(
+    const Json& json,
+    const RunMapEventConfig& fallback,
+    const std::filesystem::path& filePath
+) {
+    if (!json.is_object()) {
+        throw std::runtime_error(filePath.string() + ": 'events' must be an object");
+    }
+
+    const JsonReader reader(json, filePath);
+    RunMapEventConfig result = fallback;
+    result.minimum = reader.optionalInt("min", result.minimum);
+    result.maximum = reader.optionalInt("max", result.maximum);
+    result.minLayer = reader.optionalInt("min_layer", result.minLayer);
+    result.maxLayer = reader.optionalInt("max_layer", result.maxLayer);
+    return result;
+}
+
 RunMapLayoutConfig parseLayoutConfig(
     const Json& json,
     const RunMapLayoutConfig& fallback,
@@ -77,8 +95,17 @@ void RunMapGenerationConfig::loadFromFile(const std::filesystem::path& filePath)
         shop_ = parseSpecialNodeConfig(reader.requiredObject("shop"), shop_, filePath, "shop");
     }
 
+    if (reader.has("chests")) {
+        chests_ = parseSpecialNodeConfig(reader.requiredObject("chests"), chests_, filePath, "chests");
+    }
+
     if (reader.has("elites")) {
         elites_ = parseEliteConfig(reader.requiredObject("elites"), elites_, filePath);
+    }
+
+    hasFixedEvents_ = reader.has("events");
+    if (hasFixedEvents_) {
+        events_ = parseEventConfig(reader.requiredObject("events"), events_, filePath);
     }
 
     if (reader.has("layout")) {
@@ -116,8 +143,20 @@ const RunMapSpecialNodeConfig& RunMapGenerationConfig::shop() const {
     return shop_;
 }
 
+const RunMapSpecialNodeConfig& RunMapGenerationConfig::chests() const {
+    return chests_;
+}
+
 const RunMapEliteConfig& RunMapGenerationConfig::elites() const {
     return elites_;
+}
+
+const RunMapEventConfig& RunMapGenerationConfig::events() const {
+    return events_;
+}
+
+bool RunMapGenerationConfig::hasFixedEvents() const {
+    return hasFixedEvents_;
 }
 
 const RunMapLayoutConfig& RunMapGenerationConfig::layout() const {
@@ -156,6 +195,14 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
         throw std::runtime_error(filePath.string() + ": shop layer range must be inside middle layers");
     }
 
+    if (chests_.count < 0) {
+        throw std::runtime_error(filePath.string() + ": chests.count must not be negative");
+    }
+
+    if (chests_.count > 0 && (chests_.minLayer < firstMiddleLayer || chests_.maxLayer > lastMiddleLayer || chests_.minLayer > chests_.maxLayer)) {
+        throw std::runtime_error(filePath.string() + ": chests layer range must be inside middle layers");
+    }
+
     if (elites_.minimum < 0 || elites_.maximum < 0 || elites_.minimum > elites_.maximum) {
         throw std::runtime_error(filePath.string() + ": elite min/max must be non-negative and min <= max");
     }
@@ -164,7 +211,17 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
         throw std::runtime_error(filePath.string() + ": elite layer range must be inside middle layers");
     }
 
-    const int guaranteedSpecials = shop_.count + elites_.maximum;
+    if (hasFixedEvents_) {
+        if (events_.minimum < 0 || events_.maximum < 0 || events_.minimum > events_.maximum) {
+            throw std::runtime_error(filePath.string() + ": event min/max must be non-negative and min <= max");
+        }
+
+        if (events_.minLayer < firstMiddleLayer || events_.maxLayer > lastMiddleLayer || events_.minLayer > events_.maxLayer) {
+            throw std::runtime_error(filePath.string() + ": event layer range must be inside middle layers");
+        }
+    }
+
+    const int guaranteedSpecials = shop_.count + chests_.count + elites_.maximum + (hasFixedEvents_ ? events_.maximum : 0);
     const int middleLayerCount = lastMiddleLayer - firstMiddleLayer + 1;
     if (guaranteedSpecials > middleLayerCount * middleMaxNodes_) {
         throw std::runtime_error(filePath.string() + ": requested specials cannot fit into middle layers");

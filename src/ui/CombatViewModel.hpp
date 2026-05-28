@@ -44,6 +44,7 @@ struct CombatViewModel {
     std::string droneSlotsLabel = "Drone slots";
     std::string keyboardHintLabel;
     std::string turnOrderLabel;
+    std::string activeActorLabel;
 
     bool canEndTurn = false;
 

@@ -18,11 +18,6 @@ DifficultySelectScene::DifficultySelectScene(
       onBack_(std::move(onBack)) {}
 
 void DifficultySelectScene::update(float) {
-    if (IsKeyPressed(KEY_ESCAPE)) {
-        onBack_();
-        return;
-    }
-
     const Vector2 mouse = GetMousePosition();
     const float centerX = GetScreenWidth() * 0.5f;
     const float width = 520.f;

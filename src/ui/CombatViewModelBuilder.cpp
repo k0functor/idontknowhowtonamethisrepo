@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <iterator>
 #include <string>
+#include <optional>
 #include <unordered_map>
 
 namespace {
@@ -302,6 +303,10 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.stress = player.stress;
         playerModel.maxStress = player.maxStress;
         playerModel.stressLabel = localizedOrFallback(localization_, "ui.stress", "Stress");
+        playerModel.activeTurnLabel = localizedOrFallback(localization_, "ui.active_turn", "Acting");
+        if (const std::optional<EntityId> activePlayer = state.activePlayerId()) {
+            playerModel.activeTurn = *activePlayer == player.id;
+        }
         playerModel.traitIds = player.traitIds;
         playerModel.statuses = buildStatuses(player.statuses);
         playerModel.alive = player.isAlive();

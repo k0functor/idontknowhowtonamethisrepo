@@ -99,6 +99,7 @@ void Application::initializeWindow() {
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE);
     InitWindow(width, height, config_.window.title.c_str());
+    SetExitKey(KEY_NULL);
     windowInitialized_ = true;
 
     if (config_.window.fullscreen) {

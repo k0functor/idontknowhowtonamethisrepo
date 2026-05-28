@@ -1,0 +1,60 @@
+{
+  "pools": {
+    "combat": [
+      {
+        "id": "act1_rat_cultist",
+        "enemies": ["rat_cultist"],
+        "weight": 2
+      },
+      {
+        "id": "act1_ash_hound",
+        "enemies": ["ash_hound"],
+        "weight": 2
+      },
+      {
+        "id": "act1_plague_spider",
+        "enemies": ["plague_spider"],
+        "weight": 2
+      },
+      {
+        "id": "act1_shield_and_knife",
+        "enemies": ["shield_bearer", "knife_acolyte"],
+        "weight": 1
+      },
+      {
+        "id": "act1_rat_and_lamp",
+        "enemies": ["rat_cultist", "grave_lamp"],
+        "weight": 1
+      },
+      {
+        "id": "act1_knife_and_spider",
+        "enemies": ["knife_acolyte", "plague_spider"],
+        "weight": 1
+      }
+    ],
+    "elite": [
+      {
+        "id": "act1_grave_knight",
+        "enemies": ["grave_knight"],
+        "weight": 1
+      },
+      {
+        "id": "act1_choir_executioner",
+        "enemies": ["choir_executioner"],
+        "weight": 1
+      },
+      {
+        "id": "act1_glass_collector",
+        "enemies": ["glass_collector"],
+        "weight": 1
+      }
+    ],
+    "boss": [
+      {
+        "id": "act1_baron_of_ashes",
+        "enemies": ["baron_of_ashes"],
+        "weight": 1
+      }
+    ]
+  }
+}

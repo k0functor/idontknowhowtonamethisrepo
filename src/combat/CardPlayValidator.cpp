@@ -4,6 +4,21 @@
 #include "combat/CardCost.hpp"
 
 #include <algorithm>
+#include <optional>
+#include <utility>
+
+namespace {
+CardPlayValidationResult validResult() {
+    return {true, CardPlayFailureReason::None, {}};
+}
+
+CardPlayValidationResult invalidResult(
+    const CardPlayFailureReason reason,
+    std::string message
+) {
+    return {false, reason, std::move(message)};
+}
+}
 
 CardPlayValidationResult CardPlayValidator::validate(
     const CombatState& state,
@@ -11,7 +26,7 @@ CardPlayValidationResult CardPlayValidator::validate(
     const CardInstance& instance
 ) const {
     if (state.players.empty()) {
-        return {false, "No player actor"};
+        return invalidResult(CardPlayFailureReason::NoPlayerActor, "No player actor");
     }
 
     return validate(state, definition, instance, state.players.front().id);
@@ -24,17 +39,37 @@ CardPlayValidationResult CardPlayValidator::validate(
     const EntityId source
 ) const {
     if (state.phase != CombatPhase::PlayerTurn) {
-        return {false, "Not player turn"};
+        return invalidResult(CardPlayFailureReason::NotPlayerTurn, "Not player turn");
     }
 
     if (!state.hand.contains(instance.instanceId)) {
-        return {false, "Card is not in hand"};
+        return invalidResult(CardPlayFailureReason::CardNotInHand, "Card is not in hand");
+    }
+
+    if (!state.hasEntity(source) || !state.isPlayer(source)) {
+        return invalidResult(CardPlayFailureReason::InvalidCardSource, "Invalid card source");
+    }
+
+    const CombatEntity& sourceEntity = state.entity(source);
+    if (!sourceEntity.isAlive()) {
+        return invalidResult(CardPlayFailureReason::CardSourceDefeated, "Card source is defeated");
+    }
+
+    if (state.useSequentialPlayerTurns) {
+        const std::optional<EntityId> activePlayer = state.activePlayerId();
+        if (!activePlayer.has_value() || *activePlayer != source) {
+            return invalidResult(CardPlayFailureReason::WrongActorTurn, "Not this actor's turn");
+        }
+    }
+
+    if (!definition.ownerActorId.empty() && sourceEntity.definitionId != definition.ownerActorId) {
+        return invalidResult(CardPlayFailureReason::WrongActorForCard, "Wrong actor for card");
     }
 
     const int energyCost = CardCost::effectiveEnergyCost(state, source, definition);
 
     if (!state.resources.canSpendEnergy(source, energyCost)) {
-        return {false, "Not enough energy"};
+        return invalidResult(CardPlayFailureReason::NotEnoughEnergy, "Not enough energy");
     }
 
     const bool unplayable = std::find(
@@ -44,8 +79,8 @@ CardPlayValidationResult CardPlayValidator::validate(
     ) != definition.keywords.end();
 
     if (unplayable) {
-        return {false, "Card is unplayable"};
+        return invalidResult(CardPlayFailureReason::UnplayableKeyword, "Card is unplayable");
     }
 
-    return {true, {}};
+    return validResult();
 }

@@ -34,18 +34,24 @@
     "choices": [
       {
         "text": "event.rusted_vending_altar.choice.relic",
-        "description": "event.rusted_vending_altar.choice.relic.description",
+        "description": "event.rusted_vending_altar.choice.relic.requirement_description",
         "effects": [
           { "type": "lose_gold", "amount": 60 },
           { "type": "gain_random_relic" }
-        ]
+        ],
+        "requirements": {
+          "min_gold": 60
+        }
       },
       {
         "text": "event.rusted_vending_altar.choice.consumable",
         "description": "event.rusted_vending_altar.choice.consumable.description",
         "effects": [
           { "type": "gain_random_consumable" }
-        ]
+        ],
+        "requirements": {
+          "free_consumable_slot": true
+        }
       },
       {
         "text": "event.choice.skip",

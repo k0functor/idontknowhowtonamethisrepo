@@ -1,6 +1,7 @@
 #pragma once
 
 #include "events/RunEventEffect.hpp"
+#include "events/RunEventRequirement.hpp"
 #include "localization/TextId.hpp"
 
 #include <string>
@@ -10,6 +11,7 @@ struct RunEventChoiceDefinition {
     TextId textTextId;
     TextId descriptionTextId;
     std::vector<RunEventEffect> effects;
+    RunEventChoiceRequirements requirements;
 };
 
 struct RunEventDefinition {

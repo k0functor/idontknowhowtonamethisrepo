@@ -11,6 +11,7 @@ void ContentRegistry::clear() {
     consumables_.clear();
     drones_.clear();
     events_.clear();
+    encounters_.clear();
     rewardTuning_ = RewardTuning{};
     shopTuning_ = ShopTuning{};
     actOneMapGeneration_ = RunMapGenerationConfig{};
@@ -29,6 +30,7 @@ void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDir
     consumables_.loadFromDirectory(dataDirectory / "consumables");
     drones_.loadFromDirectory(dataDirectory / "drones");
     events_.loadFromDirectory(dataDirectory / "events");
+    encounters_.loadFromFile(dataDirectory / "encounters" / "act1_encounters.json");
     rewardTuning_.loadFromFile(dataDirectory / "rewards" / "reward_tables.json");
     shopTuning_.loadFromFile(dataDirectory / "shop" / "shop_tables.json");
     actOneMapGeneration_.loadFromFile(dataDirectory / "run" / "acts" / "act1.json");
@@ -115,6 +117,13 @@ EventDatabase& ContentRegistry::events() {
     return events_;
 }
 
+const EncounterDatabase& ContentRegistry::encounters() const {
+    return encounters_;
+}
+
+EncounterDatabase& ContentRegistry::encounters() {
+    return encounters_;
+}
 
 const RewardTuning& ContentRegistry::rewardTuning() const {
     return rewardTuning_;

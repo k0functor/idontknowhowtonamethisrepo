@@ -21,9 +21,11 @@ struct PlayerViewModel {
 
     std::string blockLabel = "Block";
     std::string stressLabel = "Stress";
+    std::string activeTurnLabel = "Acting";
 
     std::vector<StatusViewModel> statuses;
     std::vector<std::string> traitIds;
 
     bool alive = true;
+    bool activeTurn = false;
 };
