@@ -5,6 +5,7 @@
 #include "localization/LocalizationManager.hpp"
 #include "statuses/StatusDatabase.hpp"
 #include "drones/DroneDatabase.hpp"
+#include "data/CardDatabase.hpp"
 #include "ui/CardViewModelBuilder.hpp"
 #include "ui/CombatViewModel.hpp"
 #include "ui/StatusViewModel.hpp"
@@ -21,6 +22,7 @@ public:
         const LocalizationManager& localization,
         const StatusDatabase& statusDatabase,
         const DroneDatabase& droneDatabase,
+        const CardDatabase& cardDatabase,
         const CardViewModelBuilder& cardViewModelBuilder
     );
 
@@ -46,5 +48,6 @@ private:
     const LocalizationManager& localization_;
     const StatusDatabase& statusDatabase_;
     const DroneDatabase& droneDatabase_;
+    const CardDatabase& cardDatabase_;
     const CardViewModelBuilder& cardViewModelBuilder_;
 };

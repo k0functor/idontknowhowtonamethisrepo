@@ -66,7 +66,7 @@ void CombatController::applyOutcomeToState(
         if (state.phase != CombatPhase::Won) {
             state.phase = CombatPhase::Won;
             state.enemyIntents.clear();
-            state.log.add("Combat won");
+            state.log.add(CombatLogEntryType::CombatWon);
         }
         return;
     }
@@ -75,7 +75,7 @@ void CombatController::applyOutcomeToState(
         if (state.phase != CombatPhase::Lost) {
             state.phase = CombatPhase::Lost;
             state.enemyIntents.clear();
-            state.log.add("Combat lost");
+            state.log.add(CombatLogEntryType::CombatLost);
         }
     }
 }

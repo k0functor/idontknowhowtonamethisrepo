@@ -1,5 +1,8 @@
 #include "LocalizationManager.hpp"
 
+#include <algorithm>
+#include <iterator>
+#include <sstream>
 #include <stdexcept>
 
 void LocalizationManager::setMissingTextPolicy(const MissingTextPolicy policy) {
@@ -36,11 +39,82 @@ bool LocalizationManager::hasLocale(const Locale& locale) const {
 }
 
 bool LocalizationManager::hasText(const TextId& textId) const {
-    if (!hasLocale(currentLocale_)) {
+    return hasText(currentLocale_, textId);
+}
+
+bool LocalizationManager::hasText(const Locale& locale, const TextId& textId) const {
+    const auto iterator = bundles_.find(locale.code());
+    if (iterator == bundles_.end()) {
         return false;
     }
 
-    return currentBundle().contains(textId.value);
+    return iterator->second.contains(textId.value);
+}
+
+std::vector<std::string> LocalizationManager::textIds(const Locale& locale) const {
+    const auto iterator = bundles_.find(locale.code());
+    if (iterator == bundles_.end()) {
+        throw std::runtime_error("Locale '" + locale.code() + "' is not loaded");
+    }
+
+    return iterator->second.textIds();
+}
+
+void LocalizationManager::validateAllLocalesHaveSameTextIds() const {
+    if (bundles_.size() < 2) {
+        return;
+    }
+
+    const auto referenceIterator = bundles_.begin();
+    const std::string referenceLocale = referenceIterator->first;
+    const std::vector<std::string> referenceIds = referenceIterator->second.textIds();
+
+    std::vector<std::string> errors;
+
+    for (const auto& [localeCode, bundle] : bundles_) {
+        if (localeCode == referenceLocale) {
+            continue;
+        }
+
+        const std::vector<std::string> ids = bundle.textIds();
+
+        std::vector<std::string> missing;
+        std::set_difference(
+            referenceIds.begin(), referenceIds.end(),
+            ids.begin(), ids.end(),
+            std::back_inserter(missing)
+        );
+
+        std::vector<std::string> extra;
+        std::set_difference(
+            ids.begin(), ids.end(),
+            referenceIds.begin(), referenceIds.end(),
+            std::back_inserter(extra)
+        );
+
+        for (const std::string& textId : missing) {
+            errors.push_back(
+                "Locale '" + localeCode + "' is missing text id '" + textId +
+                "' present in '" + referenceLocale + "'"
+            );
+        }
+
+        for (const std::string& textId : extra) {
+            errors.push_back(
+                "Locale '" + localeCode + "' has extra text id '" + textId +
+                "' absent in '" + referenceLocale + "'"
+            );
+        }
+    }
+
+    if (!errors.empty()) {
+        std::ostringstream out;
+        out << "Localization validation failed with " << errors.size() << " error(s):";
+        for (const std::string& error : errors) {
+            out << "\n - " << error;
+        }
+        throw std::runtime_error(out.str());
+    }
 }
 
 std::string LocalizationManager::get(const TextId& textId) const {

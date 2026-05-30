@@ -35,5 +35,22 @@
   "status.weak.name": "Weak",
   "inspect.player.stress.name": "Stress",
   "inspect.player.stress.description": "Persistent pressure carried between rooms. At 100 stress, the actor makes a resolve check. At 200 stress, the actor dies.",
-  "inspect.player.trait.name": "Trait"
+  "inspect.player.trait.name": "Trait",
+  "inspect.combat.block.value": "{amount} block. Prevents incoming damage before HP is lost.",
+  "inspect.player.active_turn.name": "Active turn",
+  "inspect.player.active_turn.description": "This actor is currently allowed to play cards.",
+  "inspect.player.health.value": "{current}/{maximum} HP. When this actor reaches 0 HP, they are defeated.",
+  "inspect.player.energy.value": "{current}/{maximum}. Energy is spent to play cards belonging to this actor.",
+  "inspect.player.stress.value": "{current}/{maximum}. At 100 stress, this actor makes a resolve check. At 200 stress, they die.",
+  "inspect.status.title_with_amount": "{name}: {amount}",
+  "inspect.status.type.value": "Type: {type}",
+  "inspect.status.duration.value": "Duration: {duration}",
+  "inspect.status.end_turn_effect.value": "End of turn effect: {effect}",
+  "inspect.status.decrease_after_trigger": "Decreases after triggering.",
+  "status.type.buff": "buff",
+  "status.type.debuff": "debuff",
+  "status.type.neutral": "neutral",
+  "status.duration.persistent_combat": "persistent for this combat",
+  "status.duration.decrease_end_of_owner_turn": "decreases at the end of the owner's turn",
+  "status.duration.custom": "custom rule"
 }

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cmath>
 
 namespace {
 Color archetypeAccentColor(const PlayableArchetypeDefinition& archetype, const std::uint8_t alpha = 255) {
@@ -29,6 +30,15 @@ struct ProfileHubLayout {
     Rectangle achievementsButton{};
     Rectangle compendiumButton{};
     Rectangle notification{};
+};
+
+struct DetailsModalLayout {
+    Rectangle modal{};
+    Rectangle title{};
+    Rectangle content{};
+    Rectangle closeButton{};
+    Rectangle scrollTrack{};
+    Rectangle scrollHint{};
 };
 
 ProfileHubLayout calculateProfileHubLayout() {
@@ -84,6 +94,47 @@ ProfileHubLayout calculateProfileHubLayout() {
 
     return layout;
 }
+
+DetailsModalLayout calculateDetailsModalLayout() {
+    const float screenWidth = static_cast<float>(GetScreenWidth());
+    const float screenHeight = static_cast<float>(GetScreenHeight());
+
+    const float modalWidth = std::clamp(screenWidth - 96.f, 560.f, 900.f);
+    const float modalHeight = std::clamp(screenHeight - 120.f, 420.f, 680.f);
+    const Rectangle modal{
+        screenWidth * 0.5f - modalWidth * 0.5f,
+        screenHeight * 0.5f - modalHeight * 0.5f,
+        modalWidth,
+        modalHeight
+    };
+
+    DetailsModalLayout layout;
+    layout.modal = modal;
+    layout.title = Rectangle{modal.x + 36.f, modal.y + 22.f, modal.width - 72.f, 44.f};
+    layout.closeButton = Rectangle{modal.x + modal.width * 0.5f - 90.f, modal.y + modal.height - 56.f, 180.f, 42.f};
+    layout.scrollHint = Rectangle{modal.x + 36.f, layout.closeButton.y - 26.f, modal.width - 72.f, 20.f};
+    layout.content = Rectangle{
+        modal.x + 36.f,
+        modal.y + 82.f,
+        modal.width - 72.f,
+        layout.scrollHint.y - modal.y - 96.f
+    };
+    layout.scrollTrack = Rectangle{modal.x + modal.width - 24.f, layout.content.y, 8.f, layout.content.height};
+
+    return layout;
+}
+
+Rectangle scrollThumbBounds(const Rectangle track, const float visibleHeight, const float contentHeight, const float scrollY) {
+    if (contentHeight <= visibleHeight || visibleHeight <= 0.f || contentHeight <= 0.f) {
+        return Rectangle{track.x, track.y, track.width, track.height};
+    }
+
+    const float thumbHeight = std::clamp((visibleHeight / contentHeight) * track.height, 34.f, track.height);
+    const float maxScroll = std::max(1.f, contentHeight - visibleHeight);
+    const float travel = std::max(0.f, track.height - thumbHeight);
+    const float t = std::clamp(scrollY / maxScroll, 0.f, 1.f);
+    return Rectangle{track.x, track.y + travel * t, track.width, thumbHeight};
+}
 }
 
 ProfileHubScene::ProfileHubScene(
@@ -91,6 +142,7 @@ ProfileHubScene::ProfileHubScene(
     const LocalizationManager& localization,
     const PlayerActorDatabase& actors,
     const CardDatabase& cards,
+    const RelicDatabase& relics,
     std::vector<const PlayableArchetypeDefinition*> archetypes,
     std::function<void(PlayableArchetypeId)> onStartRun,
     std::function<void()> onBack
@@ -99,6 +151,7 @@ ProfileHubScene::ProfileHubScene(
       localization_(localization),
       actors_(actors),
       cards_(cards),
+      relics_(relics),
       archetypes_(std::move(archetypes)),
       onStartRun_(std::move(onStartRun)),
       onBack_(std::move(onBack)) {
@@ -123,8 +176,9 @@ void ProfileHubScene::update(float) {
         moveSelection(1);
     }
 
-    if (IsKeyPressed(KEY_SPACE)) {
+    if (IsKeyPressed(KEY_SPACE) && !archetypes_.empty()) {
         detailsOpen_ = true;
+        detailsScrollY_ = 0.f;
         return;
     }
 
@@ -240,109 +294,193 @@ void ProfileHubScene::updateDetailsModal() {
         return;
     }
 
+    const DetailsModalLayout layout = calculateDetailsModalLayout();
     const Vector2 mouse = GetMousePosition();
-    const Rectangle closeButton{GetScreenWidth() * 0.5f - 90.f, GetScreenHeight() - 96.f, 180.f, 48.f};
 
-    if (BasicUi::contains(closeButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(layout.closeButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         detailsOpen_ = false;
+        return;
     }
+
+    const float contentHeight = detailsContentHeight(layout.content);
+    const float maxScroll = std::max(0.f, contentHeight - layout.content.height);
+
+    if (BasicUi::contains(layout.modal, mouse)) {
+        const float mouseWheel = GetMouseWheelMove();
+        if (mouseWheel != 0.f) {
+            detailsScrollY_ -= mouseWheel * 56.f;
+        }
+    }
+
+    if (IsKeyPressed(KEY_DOWN)) {
+        detailsScrollY_ += 48.f;
+    }
+
+    if (IsKeyPressed(KEY_UP)) {
+        detailsScrollY_ -= 48.f;
+    }
+
+    if (IsKeyPressed(KEY_PAGE_DOWN)) {
+        detailsScrollY_ += layout.content.height * 0.82f;
+    }
+
+    if (IsKeyPressed(KEY_PAGE_UP)) {
+        detailsScrollY_ -= layout.content.height * 0.82f;
+    }
+
+    if (IsKeyPressed(KEY_HOME)) {
+        detailsScrollY_ = 0.f;
+    }
+
+    if (IsKeyPressed(KEY_END)) {
+        detailsScrollY_ = maxScroll;
+    }
+
+    detailsScrollY_ = std::clamp(detailsScrollY_, 0.f, maxScroll);
 }
 
 void ProfileHubScene::renderDetailsModal() const {
     DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 145});
 
     const PlayableArchetypeDefinition& archetype = selectedArchetype();
-    const Rectangle modal{GetScreenWidth() * 0.5f - 450.f, 70.f, 900.f, GetScreenHeight() - 140.f};
-    DrawRectangleRounded(modal, 0.035f, 12, Color{28, 31, 42, 255});
-    DrawRectangleRoundedLinesEx(modal, 0.035f, 12, 2.f, Color{140, 150, 185, 255});
+    const DetailsModalLayout layout = calculateDetailsModalLayout();
+    DrawRectangleRounded(layout.modal, 0.035f, 12, Color{28, 31, 42, 255});
+    DrawRectangleRoundedLinesEx(layout.modal, 0.035f, 12, 2.f, Color{140, 150, 185, 255});
 
-    float y = modal.y + 28.f;
-    BasicUi::drawCenteredText(font_, localization_.get(archetype.nameTextId), Rectangle{modal.x, y, modal.width, 44.f}, 32.f, Color{245, 245, 250, 255});
-    y += 62.f;
+    BasicUi::drawCenteredText(font_, localization_.get(archetype.nameTextId), layout.title, 32.f, Color{245, 245, 250, 255});
 
-    for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.detailsDescriptionTextId), 18.f, modal.width - 80.f)) {
-        BasicUi::drawText(font_, line, Vector2{modal.x + 40.f, y}, 18.f, Color{200, 206, 226, 255});
-        y += 24.f;
+    const float contentHeight = detailsContentHeight(layout.content);
+    const float maxScroll = std::max(0.f, contentHeight - layout.content.height);
+    const float scrollY = std::clamp(detailsScrollY_, 0.f, maxScroll);
+
+    BeginScissorMode(
+        static_cast<int>(std::floor(layout.content.x)),
+        static_cast<int>(std::floor(layout.content.y)),
+        static_cast<int>(std::ceil(layout.content.width)),
+        static_cast<int>(std::ceil(layout.content.height))
+    );
+    renderDetailsContent(layout.content, scrollY, true);
+    EndScissorMode();
+
+    if (contentHeight > layout.content.height + 1.f) {
+        DrawRectangleRounded(layout.scrollTrack, 0.6f, 6, Color{42, 46, 61, 255});
+        DrawRectangleRounded(
+            scrollThumbBounds(layout.scrollTrack, layout.content.height, contentHeight, scrollY),
+            0.6f,
+            6,
+            Color{150, 162, 205, 255}
+        );
+        BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.scroll_hint")), layout.scrollHint, 15.f, Color{160, 168, 195, 255});
     }
+
+    BasicUi::drawButton(font_, layout.closeButton, localization_.get(TextId("ui.close")), GetMousePosition());
+}
+
+float ProfileHubScene::detailsContentHeight(const Rectangle contentBounds) const {
+    return renderDetailsContent(contentBounds, 0.f, false);
+}
+
+float ProfileHubScene::renderDetailsContent(const Rectangle contentBounds, const float scrollY, const bool draw) const {
+    const PlayableArchetypeDefinition& archetype = selectedArchetype();
+
+    const float baseX = contentBounds.x + 6.f;
+    const float indentedX = contentBounds.x + 28.f;
+    const float wrappedWidth = contentBounds.width - 52.f;
+    float y = contentBounds.y - scrollY;
+
+    const auto drawTextIfNeeded = [&](const std::string& text, const Vector2 position, const float fontSize, const Color color) {
+        if (draw) {
+            BasicUi::drawText(font_, text, position, fontSize, color);
+        }
+    };
+
+    const auto addWrappedText = [&](const std::string& text, const float fontSize, const float lineHeight, const float x, const float maxWidth, const Color color) {
+        for (const std::string& line : BasicUi::wrapText(font_, text, fontSize, maxWidth)) {
+            drawTextIfNeeded(line, Vector2{x, y}, fontSize, color);
+            y += lineHeight;
+        }
+    };
+
+    const auto addSectionTitle = [&](const std::string& title, const Color color) {
+        y += 18.f;
+        drawTextIfNeeded(title, Vector2{baseX, y}, 23.f, color);
+        y += 32.f;
+    };
+
+    addWrappedText(localization_.get(archetype.detailsDescriptionTextId), 18.f, 24.f, baseX, wrappedWidth + 16.f, Color{200, 206, 226, 255});
 
     if (!archetype.visualIdentityTextId.value.empty()) {
-        y += 18.f;
-        BasicUi::drawText(font_, localization_.get(TextId("profile_hub.visual_identity")), Vector2{modal.x + 40.f, y}, 23.f, archetypeAccentColor(archetype));
-        y += 32.f;
-        for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.visualIdentityTextId), 17.f, modal.width - 100.f)) {
-            BasicUi::drawText(font_, line, Vector2{modal.x + 62.f, y}, 17.f, Color{220, 224, 238, 255});
-            y += 23.f;
-        }
+        addSectionTitle(localization_.get(TextId("profile_hub.visual_identity")), archetypeAccentColor(archetype));
+        addWrappedText(localization_.get(archetype.visualIdentityTextId), 17.f, 23.f, indentedX, wrappedWidth, Color{220, 224, 238, 255});
     }
 
-    y += 14.f;
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.palette")), Vector2{modal.x + 40.f, y}, 23.f, archetypeAccentColor(archetype));
-    y += 32.f;
-    for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.palette.nameTextId), 17.f, modal.width - 100.f)) {
-        BasicUi::drawText(font_, line, Vector2{modal.x + 62.f, y}, 17.f, Color{220, 224, 238, 255});
-        y += 23.f;
-    }
+    addSectionTitle(localization_.get(TextId("profile_hub.palette")), archetypeAccentColor(archetype));
+    addWrappedText(localization_.get(archetype.palette.nameTextId), 17.f, 23.f, indentedX, wrappedWidth, Color{220, 224, 238, 255});
 
-    y += 18.f;
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.starting_resources")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
-    y += 34.f;
-    BasicUi::drawText(font_, localization_.format(TextId("profile_hub.gold_value"), {{"gold", std::to_string(archetype.startingGold)}}), Vector2{modal.x + 62.f, y}, 19.f, Color{220, 224, 238, 255});
+    addSectionTitle(localization_.get(TextId("profile_hub.starting_resources")), Color{240, 235, 210, 255});
+    drawTextIfNeeded(localization_.format(TextId("profile_hub.gold_value"), {{"gold", std::to_string(archetype.startingGold)}}), Vector2{indentedX, y}, 19.f, Color{220, 224, 238, 255});
     y += 28.f;
 
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.party")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
-    y += 32.f;
+    addSectionTitle(localization_.get(TextId("profile_hub.party")), Color{240, 235, 210, 255});
     for (const std::string& actorId : archetype.actorDefinitionIds) {
-        BasicUi::drawText(font_, "• " + actorName(actorId), Vector2{modal.x + 62.f, y}, 18.f, Color{220, 224, 238, 255});
+        drawTextIfNeeded("* " + actorName(actorId), Vector2{indentedX, y}, 18.f, Color{220, 224, 238, 255});
         y += 24.f;
     }
 
-    y += 10.f;
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.starting_relics")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
-    y += 32.f;
+    addSectionTitle(localization_.get(TextId("profile_hub.starting_relics")), Color{240, 235, 210, 255});
     if (archetype.startingRelicIds.empty()) {
-        BasicUi::drawText(font_, localization_.get(TextId("profile_hub.none_bullet")), Vector2{modal.x + 62.f, y}, 18.f, Color{190, 196, 216, 255});
+        drawTextIfNeeded(localization_.get(TextId("profile_hub.none_bullet")), Vector2{indentedX, y}, 18.f, Color{190, 196, 216, 255});
         y += 24.f;
     } else {
         for (const std::string& relicId : archetype.startingRelicIds) {
-            BasicUi::drawText(font_, "• " + relicId, Vector2{modal.x + 62.f, y}, 18.f, Color{220, 224, 238, 255});
+            drawTextIfNeeded("* " + relicName(relicId), Vector2{indentedX, y}, 18.f, Color{220, 224, 238, 255});
             y += 24.f;
         }
     }
 
-    y += 10.f;
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.starting_deck")), Vector2{modal.x + 40.f, y}, 23.f, Color{240, 235, 210, 255});
-    y += 32.f;
+    addSectionTitle(localization_.get(TextId("profile_hub.starting_deck")), Color{240, 235, 210, 255});
+    const int columns = std::max(1, static_cast<int>((contentBounds.width - 48.f) / 250.f));
+    const float columnWidth = std::max(230.f, (contentBounds.width - 48.f) / static_cast<float>(columns));
     int shownCards = 0;
     for (const std::string& cardId : archetype.startingDeckCardIds) {
-        BasicUi::drawText(font_, "• " + cardName(cardId), Vector2{modal.x + 62.f + static_cast<float>(shownCards / 6) * 260.f, y + static_cast<float>(shownCards % 6) * 24.f}, 17.f, Color{220, 224, 238, 255});
+        const int column = shownCards % columns;
+        const int row = shownCards / columns;
+        drawTextIfNeeded(
+            "* " + cardName(cardId),
+            Vector2{indentedX + static_cast<float>(column) * columnWidth, y + static_cast<float>(row) * 24.f},
+            17.f,
+            Color{220, 224, 238, 255}
+        );
         ++shownCards;
     }
-    y += 24.f * static_cast<float>(std::min(6, std::max(1, shownCards))) + 18.f;
+    const int rows = std::max(1, (shownCards + columns - 1) / columns);
+    y += 24.f * static_cast<float>(rows);
 
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.strengths")), Vector2{modal.x + 40.f, y}, 23.f, Color{180, 235, 190, 255});
-    y += 32.f;
-    for (const TextId& textId : archetype.strengthTextIds) {
-        BasicUi::drawText(font_, "+ " + localization_.get(textId), Vector2{modal.x + 62.f, y}, 17.f, Color{210, 235, 216, 255});
+    addSectionTitle(localization_.get(TextId("profile_hub.strengths")), Color{180, 235, 190, 255});
+    if (archetype.strengthTextIds.empty()) {
+        drawTextIfNeeded(localization_.get(TextId("profile_hub.none_bullet")), Vector2{indentedX, y}, 17.f, Color{190, 196, 216, 255});
         y += 23.f;
+    } else {
+        for (const TextId& textId : archetype.strengthTextIds) {
+            addWrappedText("+ " + localization_.get(textId), 17.f, 23.f, indentedX, wrappedWidth, Color{210, 235, 216, 255});
+        }
     }
 
-    y += 10.f;
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.weaknesses")), Vector2{modal.x + 40.f, y}, 23.f, Color{235, 190, 185, 255});
-    y += 32.f;
-    for (const TextId& textId : archetype.weaknessTextIds) {
-        BasicUi::drawText(font_, "- " + localization_.get(textId), Vector2{modal.x + 62.f, y}, 17.f, Color{235, 210, 208, 255});
+    addSectionTitle(localization_.get(TextId("profile_hub.weaknesses")), Color{235, 190, 185, 255});
+    if (archetype.weaknessTextIds.empty()) {
+        drawTextIfNeeded(localization_.get(TextId("profile_hub.none_bullet")), Vector2{indentedX, y}, 17.f, Color{190, 196, 216, 255});
         y += 23.f;
+    } else {
+        for (const TextId& textId : archetype.weaknessTextIds) {
+            addWrappedText("- " + localization_.get(textId), 17.f, 23.f, indentedX, wrappedWidth, Color{235, 210, 208, 255});
+        }
     }
 
-    y += 10.f;
-    BasicUi::drawText(font_, localization_.get(TextId("profile_hub.unique_mechanic")), Vector2{modal.x + 40.f, y}, 23.f, Color{220, 210, 255, 255});
-    y += 32.f;
-    for (const std::string& line : BasicUi::wrapText(font_, localization_.get(archetype.uniqueMechanicTextId), 17.f, modal.width - 100.f)) {
-        BasicUi::drawText(font_, line, Vector2{modal.x + 62.f, y}, 17.f, Color{220, 224, 238, 255});
-        y += 23.f;
-    }
+    addSectionTitle(localization_.get(TextId("profile_hub.unique_mechanic")), Color{220, 210, 255, 255});
+    addWrappedText(localization_.get(archetype.uniqueMechanicTextId), 17.f, 23.f, indentedX, wrappedWidth, Color{220, 224, 238, 255});
 
-    BasicUi::drawButton(font_, Rectangle{GetScreenWidth() * 0.5f - 90.f, GetScreenHeight() - 96.f, 180.f, 48.f}, localization_.get(TextId("ui.close")), GetMousePosition());
+    y += 18.f;
+    return y + scrollY - contentBounds.y;
 }
 
 std::string ProfileHubScene::cardName(const std::string& cardId) const {
@@ -359,4 +497,12 @@ std::string ProfileHubScene::actorName(const std::string& actorId) const {
     }
 
     return localization_.get(actors_.get(PlayerActorId(actorId)).nameTextId);
+}
+
+std::string ProfileHubScene::relicName(const std::string& relicId) const {
+    if (!relics_.contains(RelicId(relicId))) {
+        return relicId;
+    }
+
+    return localization_.get(relics_.get(RelicId(relicId)).nameTextId);
 }

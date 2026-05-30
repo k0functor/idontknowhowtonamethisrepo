@@ -35,5 +35,22 @@
   "status.weak.name": "Слабость",
   "inspect.player.stress.name": "Стресс",
   "inspect.player.stress.description": "Постоянное давление, которое переносится между комнатами. На 100 стресса персонаж проходит проверку решимости. На 200 стресса персонаж погибает.",
-  "inspect.player.trait.name": "Черта"
+  "inspect.player.trait.name": "Черта",
+  "inspect.combat.block.value": "{amount} блока. Блок предотвращает входящий урон до потери здоровья.",
+  "inspect.player.active_turn.name": "Активный ход",
+  "inspect.player.active_turn.description": "Этот персонаж сейчас может играть карты.",
+  "inspect.player.health.value": "{current}/{maximum} HP. Когда здоровье падает до 0, персонаж выбывает из боя.",
+  "inspect.player.energy.value": "{current}/{maximum}. Энергия тратится на карты, принадлежащие этому персонажу.",
+  "inspect.player.stress.value": "{current}/{maximum}. На 100 стресса персонаж проходит проверку решимости. На 200 стресса он погибает.",
+  "inspect.status.title_with_amount": "{name}: {amount}",
+  "inspect.status.type.value": "Тип: {type}",
+  "inspect.status.duration.value": "Длительность: {duration}",
+  "inspect.status.end_turn_effect.value": "Эффект в конце хода: {effect}",
+  "inspect.status.decrease_after_trigger": "Уменьшается после срабатывания.",
+  "status.type.buff": "положительный",
+  "status.type.debuff": "отрицательный",
+  "status.type.neutral": "нейтральный",
+  "status.duration.persistent_combat": "держится до конца боя",
+  "status.duration.decrease_end_of_owner_turn": "уменьшается в конце хода владельца",
+  "status.duration.custom": "особое правило"
 }

@@ -2,14 +2,12 @@
 
 #include "relics/RelicId.hpp"
 #include "cards/CardDefinition.hpp"
-#include "cards/CardRarity.hpp"
-#include "cards/CardType.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "consumables/ConsumableId.hpp"
 #include "relics/RelicDefinition.hpp"
+#include "rewards/RewardPoolRules.hpp"
 #include "run/RunCardEligibility.hpp"
 #include "shop/ShopTuning.hpp"
-#include "relics/RelicRarity.hpp"
 #include "scenes/CombatScene.hpp"
 #include "scenes/DifficultySelectScene.hpp"
 #include "scenes/MainMenuScene.hpp"
@@ -39,17 +37,6 @@
 
 
 namespace {
-bool canSellCard(const CardDefinition& card) {
-    if (card.type == CardType::Status || card.type == CardType::Curse) {
-        return false;
-    }
-
-    if (card.rarity == CardRarity::Starter || card.rarity == CardRarity::Special) {
-        return false;
-    }
-
-    return true;
-}
 
 template <typename T>
 void pickUniqueRandom(std::vector<const T*>& candidates, const int count, Random& random, std::vector<const T*>& out) {
@@ -73,7 +60,7 @@ ShopState createShopState(
 
     std::vector<const CardDefinition*> cardCandidates;
     for (const CardDefinition* card : cards.all()) {
-        if (card != nullptr && canSellCard(*card) && runCanReceiveCard(run, *card)) {
+        if (card != nullptr && RewardPoolRules::canAppearInShop(*card) && runCanReceiveCard(run, *card)) {
             cardCandidates.push_back(card);
         }
     }
@@ -94,7 +81,7 @@ ShopState createShopState(
             continue;
         }
 
-        if (relic->rarity == RelicRarity::Starter || relic->rarity == RelicRarity::Special) {
+        if (!RewardPoolRules::canAppearInShop(*relic)) {
             continue;
         }
 
@@ -923,6 +910,7 @@ void GameFlowController::setProfileHubScene() {
             localization_,
             content_.actors(),
             content_.cards(),
+            content_.relics(),
             content_.archetypes().all(),
             [this](PlayableArchetypeId archetypeId) { selectArchetype(std::move(archetypeId)); },
             [this]() { showSaveSlots(); }

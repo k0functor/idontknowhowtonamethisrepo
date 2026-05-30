@@ -91,3 +91,17 @@ const std::string& LocalizationBundle::get(const std::string& textId) const {
 
     return iterator->second;
 }
+
+
+std::vector<std::string> LocalizationBundle::textIds() const {
+    std::vector<std::string> result;
+    result.reserve(texts_.size());
+
+    for (const auto& [textId, text] : texts_) {
+        (void)text;
+        result.push_back(textId);
+    }
+
+    std::sort(result.begin(), result.end());
+    return result;
+}

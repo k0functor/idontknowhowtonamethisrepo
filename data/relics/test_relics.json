@@ -110,7 +110,25 @@
     "id": "copper_inhaler",
     "name": "relic.copper_inhaler.name",
     "description": "relic.copper_inhaler.description",
-    "rarity": "starter"
+    "rarity": "starter",
+    "triggers": [
+      {
+        "event": "status_applied",
+        "status": "poison",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "source_side": "player"
+      }
+    ]
   },
   {
     "id": "coal_rosary",
@@ -149,6 +167,29 @@
         "type": "block_add",
         "amount": 1,
         "priority": 440
+      }
+    ]
+  },
+  {
+    "id": "snake_oil",
+    "name": "relic.snake_oil.name",
+    "description": "relic.snake_oil.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_enemy",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "poison"
+          }
+        ]
       }
     ]
   }

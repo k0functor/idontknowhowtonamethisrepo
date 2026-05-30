@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_map>
 #include <cstddef>
+#include <vector>
 
 class LocalizationManager {
 public:
@@ -25,6 +26,9 @@ public:
 
     bool hasLocale(const Locale& locale) const;
     bool hasText(const TextId& textId) const;
+    bool hasText(const Locale& locale, const TextId& textId) const;
+    std::vector<std::string> textIds(const Locale& locale) const;
+    void validateAllLocalesHaveSameTextIds() const;
 
     std::string get(const TextId& textId) const;
 

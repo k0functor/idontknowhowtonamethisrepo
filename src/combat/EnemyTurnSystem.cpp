@@ -16,7 +16,7 @@ void EnemyTurnSystem::executeTurn(
     Random& random
 ) const {
     state.phase = CombatPhase::EnemyTurn;
-    state.log.add("Enemy turn started");
+    state.log.add(CombatLogEntryType::EnemyTurnStarted);
 
     for (CombatEntity& enemy : state.enemies) {
         if (!enemy.isAlive()) {
@@ -37,11 +37,11 @@ void EnemyTurnSystem::executeTurn(
         context.diceCorruption = DiceCorruption{};
         context.random = &random;
 
-        state.log.add("Enemy action: " + action.id);
+        state.log.add(CombatLogEntryType::EnemyAction, {{"action", action.id}});
         effectSystem_.applyEffects(state, action.effects, context);
     }
 
-    state.log.add("Enemy turn ended");
+    state.log.add(CombatLogEntryType::EnemyTurnEnded);
 }
 
 const EnemyActionDefinition& EnemyTurnSystem::actionForEnemy(

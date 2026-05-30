@@ -37,4 +37,6 @@ struct PlayableArchetypeDefinition {
     std::vector<TextId> weaknessTextIds;
 
     std::string mechanicId = "default";
+
+    int selectionOrder = 1000;
 };

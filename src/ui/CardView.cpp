@@ -1,5 +1,7 @@
 #include "CardView.hpp"
 
+#include "ui/Utf8.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <sstream>
@@ -25,57 +27,6 @@ Color cardFillColor(const CardViewModel& model) {
     }
 
     return Color{90, 90, 96, 255};
-}
-
-std::string truncateLine(const std::string& text, const std::size_t limit) {
-    if (text.size() <= limit) {
-        return text;
-    }
-
-    if (limit <= 3) {
-        return text.substr(0, limit);
-    }
-
-    return text.substr(0, limit - 3) + "...";
-}
-
-std::string wrapText(const std::string& text, const std::size_t lineLength, const std::size_t maxLines) {
-    std::istringstream input(text);
-    std::string word;
-    std::string result;
-    std::string line;
-    std::size_t lines = 0;
-
-    while (input >> word) {
-        if (line.empty()) {
-            line = word;
-        } else if (line.size() + 1 + word.size() <= lineLength) {
-            line += " " + word;
-        } else {
-            if (!result.empty()) {
-                result += '\n';
-            }
-
-            result += truncateLine(line, lineLength);
-            ++lines;
-
-            if (lines >= maxLines) {
-                return result;
-            }
-
-            line = word;
-        }
-    }
-
-    if (!line.empty() && lines < maxLines) {
-        if (!result.empty()) {
-            result += '\n';
-        }
-
-        result += truncateLine(line, lineLength);
-    }
-
-    return result;
 }
 
 float uniformScale(const CardTransform& transform) {
@@ -238,7 +189,7 @@ void CardView::render(const Font* font) const {
     drawTextLocal(
         font,
         currentTransform_,
-        wrapText(model_.name, 17, 2),
+        UiUtf8::wrapByCodepoints(model_.name, 17, 2),
         Vector2{-cardSize.x * 0.5f + 48.f, -cardSize.y * 0.5f + 12.f},
         15.f,
         1.f,
@@ -266,7 +217,7 @@ void CardView::render(const Font* font) const {
         drawTextLocal(
             font,
             currentTransform_,
-            truncateLine(model_.ownerLabel, 22),
+            UiUtf8::truncateWithEllipsis(model_.ownerLabel, 22),
             Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 143.f},
             10.f,
             1.f,
@@ -277,7 +228,7 @@ void CardView::render(const Font* font) const {
     drawTextLocal(
         font,
         currentTransform_,
-        wrapText(model_.description, 24, 5),
+        UiUtf8::wrapByCodepoints(model_.description, 24, 5),
         Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 160.f},
         12.f,
         1.f,
@@ -303,7 +254,7 @@ void CardView::render(const Font* font) const {
             drawTextLocal(
                 font,
                 currentTransform_,
-                truncateLine(model_.unplayableReason, 22),
+                UiUtf8::truncateWithEllipsis(model_.unplayableReason, 22),
                 Vector2{-cardSize.x * 0.5f + 16.f, cardSize.y * 0.5f - 36.f},
                 10.f,
                 1.f,

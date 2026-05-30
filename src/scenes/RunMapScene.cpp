@@ -1357,12 +1357,12 @@ void RunMapScene::renderConsumableInspectModal() const {
 }
 
 
-std::string RunMapScene::localizedOrFallback(const TextId& textId, const std::string& fallback) const {
+std::string RunMapScene::localizedOrFallback(const TextId& textId, const std::string&) const {
     if (localization_.hasText(textId)) {
         return localization_.get(textId);
     }
 
-    return fallback;
+    return textId.value;
 }
 
 Rectangle RunMapScene::cardGridCellBounds(const Rectangle grid, const std::size_t index, const float scrollOffset) const {

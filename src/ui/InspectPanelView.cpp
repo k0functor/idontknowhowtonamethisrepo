@@ -19,6 +19,32 @@ Color panelBorder() {
     return Color{220, 190, 105, 255};
 }
 
+Color titleColor(const InspectEntryStyle style) {
+    switch (style) {
+        case InspectEntryStyle::Hint:
+            return Color{145, 220, 245, 255};
+        case InspectEntryStyle::Warning:
+            return Color{245, 165, 120, 255};
+        case InspectEntryStyle::Normal:
+            break;
+    }
+
+    return Color{245, 220, 140, 255};
+}
+
+Color descriptionColor(const InspectEntryStyle style) {
+    switch (style) {
+        case InspectEntryStyle::Hint:
+            return Color{195, 230, 245, 255};
+        case InspectEntryStyle::Warning:
+            return Color{238, 202, 180, 255};
+        case InspectEntryStyle::Normal:
+            break;
+    }
+
+    return Color{205, 208, 220, 255};
+}
+
 void drawWrapped(
     const UiFont& font,
     const std::string& text,
@@ -101,7 +127,7 @@ void InspectPanelView::render(
                 entry.title,
                 Rectangle{content.x, y, content.width, content.y + content.height - y},
                 entryTitleFontSize,
-                Color{245, 220, 140, 255},
+                titleColor(entry.style),
                 y
             );
         }
@@ -112,7 +138,7 @@ void InspectPanelView::render(
                 entry.description,
                 Rectangle{content.x, y, content.width, content.y + content.height - y},
                 entryDescriptionFontSize,
-                Color{205, 208, 220, 255},
+                descriptionColor(entry.style),
                 y
             );
         }

@@ -62,12 +62,12 @@ void DroneSystem::summonDrone(
     slot.droneId = droneId;
     slot.owner = validOwnerOrFallback(state, owner);
     state.droneSlots.push_back(slot);
-    state.log.add("Summoned drone: " + droneId);
+    state.log.add(CombatLogEntryType::DroneSummoned, {{"drone", droneId}});
 }
 
 void DroneSystem::useOldestDrone(CombatState& state, Random* random) const {
     if (state.droneSlots.empty()) {
-        state.log.add("No drone to use");
+        state.log.add(CombatLogEntryType::NoDrone);
         return;
     }
 
@@ -76,7 +76,7 @@ void DroneSystem::useOldestDrone(CombatState& state, Random* random) const {
 
     const DroneDefinition& definition = drones_.get(DroneId(slot.droneId));
     if (!definition.manualAction.has_value()) {
-        state.log.add("Drone has no manual action: " + slot.droneId);
+        state.log.add(CombatLogEntryType::DroneNoManualAction, {{"drone", slot.droneId}});
         return;
     }
 
@@ -168,8 +168,11 @@ void DroneSystem::applyDroneAction(
         applyDroneEffect(state, effect, baseContext);
     }
 
-    if (!action.fallbackLog.empty()) {
-        state.log.add(action.fallbackLog);
+    if (!action.logTextId.empty() || !action.fallbackLog.empty()) {
+        state.log.add(
+            CombatLogEntryType::DroneAction,
+            {{"action_text_id", action.logTextId}, {"action", action.fallbackLog}}
+        );
     }
 }
 
@@ -219,7 +222,7 @@ void DroneSystem::applyDroneEffect(
         case EffectType::Heal:
             for (const EntityId target : targets) {
                 state.entity(target).health.heal(resolvedValue.actual);
-                state.log.add("Heal: " + std::to_string(resolvedValue.actual));
+                state.log.add(CombatLogEntryType::Heal, {{"amount", std::to_string(resolvedValue.actual)}});
             }
             return;
 
@@ -264,7 +267,7 @@ void DroneSystem::applyDroneEffect(
                 static_cast<std::size_t>(std::max(0, resolvedValue.actual)),
                 *baseContext.random
             );
-            state.log.add("Draw cards: " + std::to_string(resolvedValue.actual));
+            state.log.add(CombatLogEntryType::DrawCards, {{"amount", std::to_string(resolvedValue.actual)}});
             return;
 
         case EffectType::DiscardCards:

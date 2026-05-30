@@ -22,5 +22,7 @@
   "inspect.enemy.intent": "Намерение",
   "inspect.enemy.no_details.description": "У этого врага сейчас нет видимых намерений или статусов.",
   "inspect.enemy.no_details.name": "Нет видимых эффектов",
-  "inspect.enemy.normal.name": "Обычный враг"
+  "inspect.enemy.normal.name": "Обычный враг",
+  "inspect.enemy.health.name": "Здоровье",
+  "inspect.enemy.health.value": "{current}/{maximum} HP"
 }

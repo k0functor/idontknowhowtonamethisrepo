@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 class LocalizationBundle {
 public:
@@ -18,6 +19,7 @@ public:
 
     bool contains(const std::string& textId) const;
     const std::string& get(const std::string& textId) const;
+    std::vector<std::string> textIds() const;
 
 private:
     void mergeFileInto(

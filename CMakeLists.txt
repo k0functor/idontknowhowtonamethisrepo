@@ -351,6 +351,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/rewards/RewardTuning.cpp
     src/rewards/RewardGenerator.hpp
     src/rewards/RewardGenerator.cpp
+    src/rewards/RewardPoolRules.hpp
+    src/rewards/RewardPoolRules.cpp
     src/rewards/RewardSystem.hpp
     src/rewards/RewardSystem.cpp
     src/flow/SceneId.hpp

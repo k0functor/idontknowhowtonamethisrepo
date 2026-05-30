@@ -10,7 +10,6 @@
       "amount": 3
     },
     "manual": {
-      "fallback_log": "Striker drone deals damage",
       "effects": [
         {
           "type": "damage",
@@ -20,10 +19,10 @@
             "amount": 3
           }
         }
-      ]
+      ],
+      "log_text": "combat.log.drone_striker_damage"
     },
     "end_turn": {
-      "fallback_log": "Striker drone deals damage",
       "effects": [
         {
           "type": "damage",
@@ -33,7 +32,8 @@
             "amount": 3
           }
         }
-      ]
+      ],
+      "log_text": "combat.log.drone_striker_damage"
     }
   },
   {
@@ -47,7 +47,6 @@
       "amount": 4
     },
     "manual": {
-      "fallback_log": "Guardian drone grants 4 block",
       "effects": [
         {
           "type": "block",
@@ -57,10 +56,10 @@
             "amount": 4
           }
         }
-      ]
+      ],
+      "log_text": "combat.log.drone_guardian_block"
     },
     "end_turn": {
-      "fallback_log": "Guardian drone grants 4 block",
       "effects": [
         {
           "type": "block",
@@ -70,7 +69,8 @@
             "amount": 4
           }
         }
-      ]
+      ],
+      "log_text": "combat.log.drone_guardian_block"
     }
   },
   {
@@ -84,7 +84,6 @@
       "amount": 8
     },
     "manual": {
-      "fallback_log": "Bomber drone explodes for 8 damage to all enemies",
       "effects": [
         {
           "type": "damage",
@@ -94,7 +93,8 @@
             "amount": 8
           }
         }
-      ]
+      ],
+      "log_text": "combat.log.drone_bomber_damage"
     }
   }
 ]

@@ -261,6 +261,7 @@ CombatScene::CombatScene(
           localization_,
           content_.statuses(),
           content_.drones(),
+          content_.cards(),
           cardViewModelBuilder_
       ),
       inspectModelBuilder_(content_, localization_) {
@@ -281,7 +282,7 @@ CombatScene::CombatScene(
 
             if (source.definitionId == "sadist" && target.definitionId == "masochist") {
                 source.statuses.add("strength", 1);
-                state_.log.add("Sadist gains 1 Strength for hurting Masochist");
+                state_.log.add(CombatLogEntryType::SadistHurtsMasochist);
             }
         }
 
@@ -294,7 +295,7 @@ CombatScene::CombatScene(
             if (target.definitionId == "masochist") {
                 target.statuses.add("strength", 1);
                 target.statuses.add("dexterity", 1);
-                state_.log.add("Masochist gains 1 Strength and 1 Dexterity after taking pain");
+                state_.log.add(CombatLogEntryType::MasochistPainBonus);
             }
         }
 
@@ -562,12 +563,20 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         return std::nullopt;
     };
 
+    auto localizedDebugTarget = [this](const std::string& side) {
+        if (side == "enemy" || side == "enemies") {
+            return localization_.get(TextId("debug.target.enemy"));
+        }
+
+        return localization_.get(TextId("debug.target.player"));
+    };
+
     const std::string& command = tokens.front();
 
     if (command == "status" || (command == "apply" && tokens.size() >= 2 && tokens[1] == "status")) {
         const std::size_t idIndex = command == "status" ? 1u : 2u;
         if (tokens.size() <= idIndex) {
-            output = "Usage: status <status_id> [amount] [player|enemy]";
+            output = localization_.get(TextId("debug.usage.status"));
             return true;
         }
 
@@ -580,21 +589,24 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
 
         const std::optional<EntityId> target = firstTarget(side);
         if (!target.has_value()) {
-            output = "No alive " + side + " target";
+            output = localization_.format(TextId("debug.no_alive_target"), {{"target", localizedDebugTarget(side)}});
             return true;
         }
 
         statusSystem_.applyStatus(state_, *target, statusId, amount);
         turnSystem_.refreshEnemyIntentValues(state_);
         viewModelDirty_ = true;
-        output = "Applied status '" + statusId + "' x" + std::to_string(amount) + " to " + side;
+        output = localization_.format(
+            TextId("debug.status_applied"),
+            {{"status", statusId}, {"amount", std::to_string(amount)}, {"target", localizedDebugTarget(side)}}
+        );
         return true;
     }
 
     if (command == "heal" || command == "damage") {
         const int amount = parseAmount(tokens, 1u, 0);
         if (amount <= 0) {
-            output = "Usage: " + command + " <amount> [player|enemy]";
+            output = localization_.format(TextId("debug.usage.heal_damage"), {{"command", command}});
             return true;
         }
 
@@ -605,17 +617,23 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
 
         const std::optional<EntityId> target = firstTarget(side);
         if (!target.has_value()) {
-            output = "No alive " + side + " target";
+            output = localization_.format(TextId("debug.no_alive_target"), {{"target", localizedDebugTarget(side)}});
             return true;
         }
 
         CombatEntity& entity = state_.entity(*target);
         if (command == "heal") {
             entity.health.heal(amount);
-            output = "Healed " + side + " for " + std::to_string(amount);
+            output = localization_.format(
+                TextId("debug.healed"),
+                {{"target", localizedDebugTarget(side)}, {"amount", std::to_string(amount)}}
+            );
         } else {
             entity.health.takeDamage(amount);
-            output = "Damaged " + side + " for " + std::to_string(amount);
+            output = localization_.format(
+                TextId("debug.damaged"),
+                {{"target", localizedDebugTarget(side)}, {"amount", std::to_string(amount)}}
+            );
             combatController_.updateAfterAction(state_);
             finishCombatIfNeeded();
         }
@@ -627,7 +645,7 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
     if (command == "stress") {
         const int amount = parseAmount(tokens, 1u, 0);
         if (tokens.size() < 2u || amount == 0) {
-            output = "Usage: stress <delta> [player|enemy]";
+            output = localization_.get(TextId("debug.usage.stress"));
             return true;
         }
 
@@ -638,7 +656,7 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
 
         const std::optional<EntityId> target = firstTarget(side);
         if (!target.has_value()) {
-            output = "No alive " + side + " target";
+            output = localization_.format(TextId("debug.no_alive_target"), {{"target", localizedDebugTarget(side)}});
             return true;
         }
 
@@ -650,14 +668,17 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
             finishCombatIfNeeded();
         }
         viewModelDirty_ = true;
-        output = "Adjusted " + side + " stress by " + std::to_string(result.applied);
+        output = localization_.format(
+            TextId("debug.stress_adjusted"),
+            {{"target", localizedDebugTarget(side)}, {"amount", std::to_string(result.applied)}}
+        );
         return true;
     }
 
     if (command == "block") {
         const int amount = parseAmount(tokens, 1u, 0);
         if (amount <= 0) {
-            output = "Usage: block <amount> [player|enemy]";
+            output = localization_.get(TextId("debug.usage.block"));
             return true;
         }
 
@@ -668,20 +689,23 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
 
         const std::optional<EntityId> target = firstTarget(side);
         if (!target.has_value()) {
-            output = "No alive " + side + " target";
+            output = localization_.format(TextId("debug.no_alive_target"), {{"target", localizedDebugTarget(side)}});
             return true;
         }
 
         state_.entity(*target).block += amount;
         viewModelDirty_ = true;
-        output = "Added block " + std::to_string(amount) + " to " + side;
+        output = localization_.format(
+            TextId("debug.block_added"),
+            {{"target", localizedDebugTarget(side)}, {"amount", std::to_string(amount)}}
+        );
         return true;
     }
 
     if (command == "energy") {
         const int amount = parseAmount(tokens, 1u, 0);
         if (amount == 0) {
-            output = "Usage: energy <amount>";
+            output = localization_.get(TextId("debug.usage.energy"));
             return true;
         }
 
@@ -695,7 +719,7 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         }
 
         viewModelDirty_ = true;
-        output = "Adjusted combat energy by " + std::to_string(amount);
+        output = localization_.format(TextId("debug.energy_adjusted"), {{"amount", std::to_string(amount)}});
         return true;
     }
 
@@ -706,7 +730,7 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         combatController_.updateAfterAction(state_);
         finishCombatIfNeeded();
         viewModelDirty_ = true;
-        output = "Combat won by debug command";
+        output = localization_.get(TextId("debug.combat_won"));
         return true;
     }
 
@@ -717,7 +741,7 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         combatController_.updateAfterAction(state_);
         finishCombatIfNeeded();
         viewModelDirty_ = true;
-        output = "Combat lost by debug command";
+        output = localization_.get(TextId("debug.combat_lost"));
         return true;
     }
 
@@ -796,7 +820,7 @@ void CombatScene::initializeCombat() {
         state_.deck.drawPile.addTop(cardFactory_.create(cardId, upgraded));
     }
 
-    state_.log.add("Combat started");
+    state_.log.add(CombatLogEntryType::CombatStarted);
     relicSystem_.startCombat();
     turnSystem_.startCombat(state_, random_);
 
@@ -1008,7 +1032,7 @@ void CombatScene::updateInspectInput(const Vector2) {
 
 void CombatScene::renderInspectOverlay() const {
     if (relicInspectModal_.isOpen()) {
-        relicInspectModal_.render(uiFont_, view_.model().relics);
+        relicInspectModal_.render(uiFont_, localization_, view_.model().relics);
         return;
     }
 
@@ -2055,7 +2079,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
     );
 
     if (!result.played) {
-        state_.log.add("Cannot play card: " + result.reason);
+        state_.log.add(CombatLogEntryType::CannotPlayCard, {{"reason", result.reason}});
     }
 
     selectedCardId_.reset();
@@ -2744,12 +2768,12 @@ std::string CombatScene::rewardCardDescription(const CardId& cardId) const {
     return descriptionFormatter.formatStaticDescription(content_.cards().get(cardId));
 }
 
-std::string CombatScene::localizedOrFallback(const TextId& textId, const std::string& fallback) const {
+std::string CombatScene::localizedOrFallback(const TextId& textId, const std::string&) const {
     if (localization_.hasText(textId)) {
         return localization_.get(textId);
     }
 
-    return fallback;
+    return textId.value;
 }
 
 Rectangle CombatScene::drawPileButtonBounds() const {

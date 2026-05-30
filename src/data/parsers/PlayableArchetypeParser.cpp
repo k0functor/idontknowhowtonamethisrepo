@@ -83,6 +83,7 @@ PlayableArchetypeDefinition PlayableArchetypeParser::parse(
     definition.strengthTextIds = parseTextIds(reader, "strengths");
     definition.weaknessTextIds = parseTextIds(reader, "weaknesses");
     definition.mechanicId = reader.optionalString("mechanic_id", "default");
+    definition.selectionOrder = reader.optionalInt("selection_order", 1000);
 
     if (definition.actorDefinitionIds.empty()) {
         throw std::runtime_error(
@@ -102,6 +103,13 @@ PlayableArchetypeDefinition PlayableArchetypeParser::parse(
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() +
             "': archetype starting_gold must not be negative"
+        );
+    }
+
+    if (definition.selectionOrder < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() +
+            "': archetype selection_order must not be negative"
         );
     }
 

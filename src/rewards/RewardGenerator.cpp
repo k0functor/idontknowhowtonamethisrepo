@@ -1,29 +1,14 @@
 #include "RewardGenerator.hpp"
 
-#include "cards/CardRarity.hpp"
-#include "cards/CardType.hpp"
 #include "rewards/RewardOption.hpp"
 #include "relics/RelicDefinition.hpp"
-#include "relics/RelicRarity.hpp"
+#include "rewards/RewardPoolRules.hpp"
 #include "run/RunCardEligibility.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <vector>
 
-namespace {
-bool canAppearAsCombatReward(const CardDefinition& card) {
-    if (card.type == CardType::Status || card.type == CardType::Curse) {
-        return false;
-    }
-
-    if (card.rarity == CardRarity::Starter || card.rarity == CardRarity::Special) {
-        return false;
-    }
-
-    return true;
-}
-}
 
 RewardState RewardGenerator::generateCombatReward(
     const RewardContext& context,
@@ -51,7 +36,7 @@ RewardState RewardGenerator::generateCombatReward(
     if (shouldOfferCards(context, tuning)) {
         std::vector<const CardDefinition*> candidates;
         for (const CardDefinition* card : cards.all()) {
-            if (card != nullptr && canAppearAsCombatReward(*card) && runCanReceiveCard(context.run, *card)) {
+            if (card != nullptr && RewardPoolRules::canAppearAsCardReward(*card) && runCanReceiveCard(context.run, *card)) {
                 candidates.push_back(card);
             }
         }
@@ -135,7 +120,7 @@ std::optional<RelicId> RewardGenerator::chooseRelicReward(
             continue;
         }
 
-        if (relic->rarity == RelicRarity::Starter || relic->rarity == RelicRarity::Special) {
+        if (!RewardPoolRules::canAppearAsRelicReward(*relic)) {
             continue;
         }
 

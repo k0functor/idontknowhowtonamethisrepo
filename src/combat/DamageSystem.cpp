@@ -45,10 +45,13 @@ DamageResult DamageSystem::dealDamage(
     result.killed = targetEntity.health.isDead();
 
     state.log.add(
-        "Damage: raw=" + std::to_string(result.rawDamage) +
-        ", modified=" + std::to_string(result.modifiedDamage) +
-        ", blocked=" + std::to_string(result.blockedDamage) +
-        ", hp=" + std::to_string(result.hpDamage)
+        CombatLogEntryType::DamageDealt,
+        {
+            {"raw", std::to_string(result.rawDamage)},
+            {"modified", std::to_string(result.modifiedDamage)},
+            {"blocked", std::to_string(result.blockedDamage)},
+            {"hp", std::to_string(result.hpDamage)}
+        }
     );
 
     if (eventBus_ != nullptr) {

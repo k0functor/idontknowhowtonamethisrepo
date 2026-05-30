@@ -33,8 +33,11 @@ BlockResult BlockSystem::gainBlock(
     targetEntity.block += modified.modified;
 
     state.log.add(
-        "Block: raw=" + std::to_string(rawBlock) +
-        ", modified=" + std::to_string(modified.modified)
+        CombatLogEntryType::BlockGained,
+        {
+            {"raw", std::to_string(rawBlock)},
+            {"modified", std::to_string(modified.modified)}
+        }
     );
 
     if (eventBus_ != nullptr) {

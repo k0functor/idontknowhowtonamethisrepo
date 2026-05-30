@@ -44,9 +44,12 @@ void StatusSystem::applyStatus(
     }
 
     state.log.add(
-        "Status: " + statusId +
-        " +" + std::to_string(amount) +
-        " on entity " + std::to_string(target.value)
+        CombatLogEntryType::StatusApplied,
+        {
+            {"status", statusId},
+            {"amount", std::to_string(amount)},
+            {"target", std::to_string(target.value)}
+        }
     );
 }
 
@@ -119,7 +122,10 @@ void StatusSystem::applyPoisonDamage(
     const int hpDamage = entity.health.takeDamage(amount);
 
     state.log.add(
-        "Poison damage: entity " + std::to_string(owner.value) +
-        " takes " + std::to_string(hpDamage)
+        CombatLogEntryType::PoisonDamage,
+        {
+            {"target", std::to_string(owner.value)},
+            {"amount", std::to_string(hpDamage)}
+        }
     );
 }

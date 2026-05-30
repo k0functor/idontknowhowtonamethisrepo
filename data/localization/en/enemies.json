@@ -22,5 +22,7 @@
   "inspect.enemy.intent": "Intent",
   "inspect.enemy.no_details.description": "This enemy currently has no visible intent details or statuses.",
   "inspect.enemy.no_details.name": "No visible effects",
-  "inspect.enemy.normal.name": "Normal enemy"
+  "inspect.enemy.normal.name": "Normal enemy",
+  "inspect.enemy.health.name": "Health",
+  "inspect.enemy.health.value": "{current}/{maximum} HP"
 }

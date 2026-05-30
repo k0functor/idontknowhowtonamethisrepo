@@ -132,6 +132,7 @@ void RelicInspectModal::update(const std::size_t relicCount) {
 
 void RelicInspectModal::render(
     const UiFont& font,
+    const LocalizationManager& localization,
     const std::vector<RelicViewModel>& relics
 ) const {
     if (!currentIndex_.has_value() || relics.empty() || *currentIndex_ >= relics.size()) {
@@ -194,7 +195,7 @@ void RelicInspectModal::render(
 
     BasicUi::drawCenteredText(
         font,
-        "Esc / click outside",
+        localization.get(TextId("ui.relic_inspect_close_hint")),
         Rectangle{bounds.x + 90.f, bounds.y + bounds.height - 28.f, bounds.width - 180.f, 18.f},
         12.f,
         Color{140, 145, 160, 255}

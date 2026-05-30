@@ -34,6 +34,7 @@ public:
 
 private:
     bool triggerMatches(
+        const CombatState& state,
         const RelicTriggerDefinition& trigger,
         const GameEvent& event,
         const RelicInstance& instance

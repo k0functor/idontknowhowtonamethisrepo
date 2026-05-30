@@ -115,7 +115,7 @@ void RelicSystem::handleEvent(
         const RelicDefinition& relic = database_.get(instance.id);
 
         for (const RelicTriggerDefinition& trigger : relic.triggers) {
-            if (!triggerMatches(trigger, event, instance)) {
+            if (!triggerMatches(state, trigger, event, instance)) {
                 continue;
             }
 
@@ -138,12 +138,13 @@ void RelicSystem::handleEvent(
             ++instance.triggersThisCombat;
             ++instance.totalTriggers;
 
-            state.log.add("Relic triggered: " + instance.id.value);
+            state.log.add(CombatLogEntryType::RelicTriggered, {{"relic", instance.id.value}});
         }
     }
 }
 
 bool RelicSystem::triggerMatches(
+    const CombatState& state,
     const RelicTriggerDefinition& trigger,
     const GameEvent& event,
     const RelicInstance& instance
@@ -164,6 +165,18 @@ bool RelicSystem::triggerMatches(
         if (event.turn % trigger.everyNTurns != 0) {
             return false;
         }
+    }
+
+    if (trigger.statusId.has_value() && event.statusId != *trigger.statusId) {
+        return false;
+    }
+
+    if (trigger.sourceSide == "player") {
+        return event.source.has_value() && state.isPlayer(*event.source);
+    }
+
+    if (trigger.sourceSide == "enemy") {
+        return event.source.has_value() && state.isEnemy(*event.source);
     }
 
     return true;

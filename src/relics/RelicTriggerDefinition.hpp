@@ -3,6 +3,8 @@
 #include "effects/EffectDefinition.hpp"
 #include "game/GameEvent.hpp"
 
+#include <optional>
+#include <string>
 #include <vector>
 
 struct RelicTriggerDefinition {
@@ -12,6 +14,10 @@ struct RelicTriggerDefinition {
     int everyNTurns = 0;
 
     bool oncePerCombat = false;
+
+    // Optional event filters. Empty filters match every event of eventType.
+    std::optional<std::string> statusId;
+    std::string sourceSide = "any";
 
     std::vector<EffectDefinition> effects;
 };

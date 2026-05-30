@@ -32,16 +32,16 @@ struct CombatViewModel {
     int discardPileSize = 0;
     int exhaustPileSize = 0;
 
-    std::string turnLabel = "Turn";
-    std::string phaseText = "Not started";
-    std::string energyLabel = "Energy";
-    std::string totalEnergyLabel = "Total energy";
-    std::string drawPileLabel = "Draw";
-    std::string discardPileLabel = "Discard";
-    std::string exhaustPileLabel = "Exhaust";
-    std::string endTurnLabel = "End Turn";
-    std::string emptyLabel = "Empty";
-    std::string droneSlotsLabel = "Drone slots";
+    std::string turnLabel = {};
+    std::string phaseText = {};
+    std::string energyLabel = {};
+    std::string totalEnergyLabel = {};
+    std::string drawPileLabel = {};
+    std::string discardPileLabel = {};
+    std::string exhaustPileLabel = {};
+    std::string endTurnLabel = {};
+    std::string emptyLabel = {};
+    std::string droneSlotsLabel = {};
     std::string keyboardHintLabel;
     std::string turnOrderLabel;
     std::string activeActorLabel;

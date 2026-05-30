@@ -49,6 +49,18 @@ RelicTriggerDefinition parseTrigger(
     trigger.everyNTurns = reader.optionalInt("every_n_turns", 0);
     trigger.oncePerCombat = reader.optionalBool("once_per_combat", false);
 
+    if (reader.has("status")) {
+        trigger.statusId = reader.requiredString("status");
+    }
+    trigger.sourceSide = reader.optionalString("source_side", "any");
+
+    if (trigger.sourceSide != "any" && trigger.sourceSide != "player" && trigger.sourceSide != "enemy") {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() +
+            "': relic trigger source_side must be one of: any, player, enemy"
+        );
+    }
+
     if (trigger.everyNTurns < 0) {
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() + "': every_n_turns must not be negative"

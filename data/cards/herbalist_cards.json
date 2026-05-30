@@ -1,0 +1,869 @@
+[
+  {
+    "id": "herbalist_scalpel",
+    "name": "card.herbalist_scalpel.name",
+    "description": "card.herbalist_scalpel.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        },
+        "status": "poison"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          },
+          "status": "poison"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_toxin_vial",
+    "name": "card.herbalist_toxin_vial.name",
+    "description": "card.herbalist_toxin_vial.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        },
+        "status": "poison"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          },
+          "status": "poison"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_smoke_mask",
+    "name": "card.herbalist_smoke_mask.name",
+    "description": "card.herbalist_smoke_mask.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "weak"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_autopsy",
+    "name": "card.herbalist_autopsy.name",
+    "description": "card.herbalist_autopsy.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "dice",
+          "count": 1,
+          "die": "d6"
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d8"
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "vulnerable"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_rot_cloud",
+    "name": "card.herbalist_rot_cloud.name",
+    "description": "card.herbalist_rot_cloud.description",
+    "rarity": "common",
+    "energy_cost": 2,
+    "gold_cost": 95,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        },
+        "status": "poison"
+      },
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          },
+          "status": "poison"
+        },
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "weak"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_green_guard",
+    "name": "card.herbalist_green_guard.name",
+    "description": "card.herbalist_green_guard.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 75,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        },
+        "status": "poison"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          },
+          "status": "poison"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_quick_prick",
+    "name": "card.herbalist_quick_prick.name",
+    "description": "card.herbalist_quick_prick.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "repeat_count": 3
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "poison"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "repeat_count": 4
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "poison"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_bitter_tea",
+    "name": "card.herbalist_bitter_tea.name",
+    "description": "card.herbalist_bitter_tea.description",
+    "rarity": "common",
+    "energy_cost": 0,
+    "gold_cost": 65,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_field_salve",
+    "name": "card.herbalist_field_salve.name",
+    "description": "card.herbalist_field_salve.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 75,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "heal",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "heal",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_bottle_toss",
+    "name": "card.herbalist_bottle_toss.name",
+    "description": "card.herbalist_bottle_toss.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 75,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "random_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        },
+        "status": "poison"
+      },
+      {
+        "type": "damage",
+        "target": "random_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "random_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          },
+          "status": "poison"
+        },
+        {
+          "type": "damage",
+          "target": "random_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_serrated_scalpel",
+    "name": "card.herbalist_serrated_scalpel.name",
+    "description": "card.herbalist_serrated_scalpel.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 105,
+    "type": "attack",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        },
+        "repeat_count": 2
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        },
+        "status": "poison"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          },
+          "repeat_count": 2
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          },
+          "status": "poison"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_distillation",
+    "name": "card.herbalist_distillation.name",
+    "description": "card.herbalist_distillation.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 115,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "upgrade": {
+      "energy_cost": 0
+    }
+  },
+  {
+    "id": "herbalist_paralyzing_draft",
+    "name": "card.herbalist_paralyzing_draft.name",
+    "description": "card.herbalist_paralyzing_draft.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 120,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        },
+        "status": "poison"
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "weak"
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "energy_cost": 1
+    }
+  },
+  {
+    "id": "herbalist_nettle_cloak",
+    "name": "card.herbalist_nettle_cloak.name",
+    "description": "card.herbalist_nettle_cloak.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 115,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        },
+        "status": "poison"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 15
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          },
+          "status": "poison"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_field_treatment",
+    "name": "card.herbalist_field_treatment.name",
+    "description": "card.herbalist_field_treatment.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 105,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "heal",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "lose_stress",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "heal",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "lose_stress",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_black_hemlock",
+    "name": "card.herbalist_black_hemlock.name",
+    "description": "card.herbalist_black_hemlock.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 170,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        },
+        "status": "poison"
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 16
+          },
+          "status": "poison"
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "vulnerable"
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_garden_of_teeth",
+    "name": "card.herbalist_garden_of_teeth.name",
+    "description": "card.herbalist_garden_of_teeth.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 175,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        },
+        "status": "poison"
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          },
+          "status": "poison"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "herbalist_surgical_flurry",
+    "name": "card.herbalist_surgical_flurry.name",
+    "description": "card.herbalist_surgical_flurry.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 165,
+    "type": "attack",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "repeat_count": 5
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        },
+        "status": "poison"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "repeat_count": 5
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          },
+          "status": "poison"
+        }
+      ]
+    }
+  }
+]

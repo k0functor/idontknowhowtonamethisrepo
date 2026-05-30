@@ -74,7 +74,7 @@ PlayCardResult CardPlaySystem::playCard(
         state.deck.discardPile.addTop(std::move(*removedCard));
     }
 
-    state.log.add("Played card: " + definition.id.value);
+    state.log.add(CombatLogEntryType::CardPlayed, {{"card", definition.id.value}});
 
     if (eventBus_ != nullptr) {
         GameEvent event;

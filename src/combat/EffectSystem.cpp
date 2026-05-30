@@ -26,11 +26,11 @@ void logStressResolveOutcome(CombatState& state, const CombatEntity& entity, con
 
     switch (result.resolveOutcome) {
         case StressRules::ResolveOutcome::Resolve:
-            state.log.add("Stress resolve: " + entity.definitionId);
+            state.log.add(CombatLogEntryType::StressResolve, {{"actor", entity.definitionId}});
             return;
 
         case StressRules::ResolveOutcome::Breakdown:
-            state.log.add("Stress breakdown: " + entity.definitionId);
+            state.log.add(CombatLogEntryType::StressBreakdown, {{"actor", entity.definitionId}});
             return;
 
         case StressRules::ResolveOutcome::None:
@@ -43,9 +43,9 @@ void adjustStress(CombatState& state, const EntityId target, const int delta, Ra
     const StressRules::StressAdjustmentResult result = StressRules::applyDelta(entity, delta, random);
 
     if (result.applied > 0) {
-        state.log.add("Gain stress: " + std::to_string(result.applied));
+        state.log.add(CombatLogEntryType::GainStress, {{"amount", std::to_string(result.applied)}});
     } else if (result.applied < 0) {
-        state.log.add("Lose stress: " + std::to_string(-result.applied));
+        state.log.add(CombatLogEntryType::LoseStress, {{"amount", std::to_string(-result.applied)}});
     }
 
     if (entity.type == EntityType::Player) {
@@ -53,7 +53,7 @@ void adjustStress(CombatState& state, const EntityId target, const int delta, Ra
 
         if (result.collapsed) {
             entity.health.setCurrent(0);
-            state.log.add("Stress collapse: " + entity.definitionId);
+            state.log.add(CombatLogEntryType::StressCollapse, {{"actor", entity.definitionId}});
         }
     }
 }
@@ -190,7 +190,7 @@ void EffectSystem::applyEffect(
             case EffectType::Heal:
                 for (const EntityId target : targets) {
                     state.entity(target).health.heal(resolvedValue.actual);
-                    state.log.add("Heal: " + std::to_string(resolvedValue.actual));
+                    state.log.add(CombatLogEntryType::Heal, {{"amount", std::to_string(resolvedValue.actual)}});
                 }
                 continue;
 
@@ -201,18 +201,18 @@ void EffectSystem::applyEffect(
                     static_cast<std::size_t>(resolvedValue.actual),
                     *context.random
                 );
-                state.log.add("Draw cards: " + std::to_string(resolvedValue.actual));
+                state.log.add(CombatLogEntryType::DrawCards, {{"amount", std::to_string(resolvedValue.actual)}});
                 continue;
 
             case EffectType::GainEnergy:
                 energySystem_.gain(state, context.source, resolvedValue.actual);
-                state.log.add("Gain energy: " + std::to_string(resolvedValue.actual));
+                state.log.add(CombatLogEntryType::GainEnergy, {{"amount", std::to_string(resolvedValue.actual)}});
                 continue;
 
             case EffectType::LoseHp:
                 for (const EntityId target : targets) {
                     const int hpDamage = state.entity(target).health.takeDamage(resolvedValue.actual);
-                    state.log.add("Lose HP: " + std::to_string(hpDamage));
+                    state.log.add(CombatLogEntryType::LoseHp, {{"amount", std::to_string(hpDamage)}});
                 }
                 continue;
 
@@ -230,7 +230,7 @@ void EffectSystem::applyEffect(
 
             case EffectType::DiscardCards:
             case EffectType::LoseEnergy:
-                state.log.add("Effect not implemented yet: " + toString(effect.type));
+                state.log.add(CombatLogEntryType::EffectNotImplemented, {{"effect", toString(effect.type)}});
                 continue;
         }
 

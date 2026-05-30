@@ -16,7 +16,7 @@ struct EnemyViewModel {
     int maxHp = 1;
     int block = 0;
 
-    std::string blockLabel = "Block";
+    std::string blockLabel = {};
 
     EnemyIntent intent;
     std::string intentText;

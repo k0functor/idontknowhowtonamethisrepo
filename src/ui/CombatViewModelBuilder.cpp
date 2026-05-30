@@ -15,14 +15,28 @@ namespace {
 std::string localizedOrFallback(
     const LocalizationManager& localization,
     const std::string& textId,
-    const std::string& fallback
+    const std::string&
 ) {
     const TextId id(textId);
     if (localization.hasText(id)) {
         return localization.get(id);
     }
 
-    return fallback;
+    return textId;
+}
+
+std::string localizedFormatOrFallback(
+    const LocalizationManager& localization,
+    const std::string& textId,
+    const std::string&,
+    const TextFormatter::Variables& variables
+) {
+    const TextId id(textId);
+    if (localization.hasText(id)) {
+        return localization.format(id, variables);
+    }
+
+    return TextFormatter::format(textId, variables);
 }
 
 std::string phaseLabel(
@@ -102,13 +116,51 @@ std::string intentLabel(
     return base + " " + value;
 }
 
-bool startsWith(const std::string& text, const std::string& prefix) {
-    return text.rfind(prefix, 0) == 0;
+std::string variableOrFallback(
+    const CombatLogEntry& entry,
+    const std::string& name,
+    const std::string& fallback = {}
+) {
+    const auto iterator = entry.variables.find(name);
+    if (iterator == entry.variables.end()) {
+        return fallback;
+    }
+
+    return iterator->second;
 }
 
-std::string suffixAfter(const std::string& text, const std::string& prefix) {
-    return text.substr(prefix.size());
+std::string statusName(
+    const LocalizationManager& localization,
+    const StatusDatabase& statuses,
+    const std::string& statusIdText
+) {
+    const StatusId statusId(statusIdText);
+    if (!statuses.contains(statusId)) {
+        return statusIdText;
+    }
+
+    const StatusDefinition& definition = statuses.get(statusId);
+    return localizedOrFallback(localization, definition.nameTextId.value, statusIdText);
 }
+
+std::string droneActionText(
+    const LocalizationManager& localization,
+    const CombatLogEntry& entry
+) {
+    const std::string actionTextId = variableOrFallback(entry, "action_text_id");
+    if (!actionTextId.empty() && localization.hasText(TextId(actionTextId))) {
+        return localization.get(TextId(actionTextId));
+    }
+
+    const std::string action = variableOrFallback(entry, "action");
+    return localizedFormatOrFallback(
+        localization,
+        "combat.log.drone_action",
+        "Drone action: {action}",
+        {{"action", action.empty() ? "combat.log.drone_action" : action}}
+    );
+}
+
 
 std::string droneName(
     const LocalizationManager& localization,
@@ -124,110 +176,271 @@ std::string droneName(
     return localizedOrFallback(localization, definition.nameTextId.value, droneType);
 }
 
+std::string cardName(
+    const LocalizationManager& localization,
+    const CardDatabase& cards,
+    const std::string& cardIdText
+) {
+    const CardId cardId(cardIdText);
+    if (!cards.contains(cardId)) {
+        return cardIdText;
+    }
+
+    const CardDefinition& definition = cards.get(cardId);
+    return localizedOrFallback(localization, definition.nameTextId.value, cardIdText);
+}
+
+std::string enemyActionName(
+    const LocalizationManager& localization,
+    const std::string& actionId
+) {
+    const std::string textId = "enemy.action." + actionId + ".name";
+    return localizedOrFallback(localization, textId, actionId);
+}
+
+std::string cardPlayFailureText(
+    const LocalizationManager& localization,
+    const std::string& reason
+) {
+    if (reason == "No player actor") {
+        return localizedOrFallback(localization, "ui.card_unplayable.no_player_actor", reason);
+    }
+    if (reason == "Not player turn") {
+        return localizedOrFallback(localization, "ui.card_unplayable.not_player_turn", reason);
+    }
+    if (reason == "Card is not in hand") {
+        return localizedOrFallback(localization, "ui.card_unplayable.card_not_in_hand", reason);
+    }
+    if (reason == "Invalid card source") {
+        return localizedOrFallback(localization, "ui.card_unplayable.invalid_source", reason);
+    }
+    if (reason == "Card source is defeated") {
+        return localizedOrFallback(localization, "ui.card_unplayable.source_defeated", reason);
+    }
+    if (reason == "Not this actor's turn") {
+        return localizedOrFallback(localization, "ui.card_unplayable.wrong_actor_turn_no_active", reason);
+    }
+    if (reason == "Wrong actor for card") {
+        return localizedOrFallback(localization, "ui.card_unplayable.wrong_actor_for_card", reason);
+    }
+    if (reason == "Not enough energy") {
+        return localizedOrFallback(localization, "ui.card_unplayable.not_enough_energy", reason);
+    }
+    if (reason == "Card is unplayable") {
+        return localizedOrFallback(localization, "ui.card_unplayable.unplayable_keyword", reason);
+    }
+
+    return reason;
+}
+
 std::string localizeLogEntry(
     const LocalizationManager& localization,
+    const StatusDatabase& statuses,
     const DroneDatabase& drones,
-    const std::string& entry
+    const CardDatabase& cards,
+    const CombatLogEntry& entry
 ) {
-    if (entry == "Combat started") {
-        return localizedOrFallback(localization, "combat.log.started", "Combat started");
-    }
-    if (entry == "Combat won") {
-        return localizedOrFallback(localization, "combat.log.won", "Combat won");
-    }
-    if (entry == "Combat lost") {
-        return localizedOrFallback(localization, "combat.log.lost", "Combat lost");
-    }
-    if (entry == "Player turn ended") {
-        return localizedOrFallback(localization, "combat.log.player_turn_ended", "Player turn ended");
-    }
-    if (entry == "Enemy turn started") {
-        return localizedOrFallback(localization, "combat.log.enemy_turn_started", "Enemy turn started");
-    }
-    if (entry == "Enemy turn ended") {
-        return localizedOrFallback(localization, "combat.log.enemy_turn_ended", "Enemy turn ended");
-    }
-    if (entry == "Striker drone deals damage") {
-        return localizedOrFallback(localization, "combat.log.drone_striker_damage", "Striker drone deals damage");
-    }
-    if (entry == "Guardian drone grants 4 block" || entry == "Guardian drone grants 4 block at end of turn") {
-        return localizedOrFallback(localization, "combat.log.drone_guardian_block", "Guardian drone grants 4 block");
-    }
-    if (entry == "Bomber drone explodes for 8 damage to all enemies") {
-        return localizedOrFallback(localization, "combat.log.drone_bomber_damage", "Bomber drone deals 8 damage to all enemies");
-    }
-    if (entry == "No drone to use") {
-        return localizedOrFallback(localization, "combat.log.no_drone", "No drone to use");
-    }
+    switch (entry.type) {
+        case CombatLogEntryType::Text:
+            return entry.text;
 
-    const std::string playerTurnPrefix = "Player turn started: ";
-    if (startsWith(entry, playerTurnPrefix)) {
-        return localizedOrFallback(localization, "combat.log.player_turn_started", "Player turn") + ": " + suffixAfter(entry, playerTurnPrefix);
-    }
+        case CombatLogEntryType::CombatStarted:
+            return localizedOrFallback(localization, "combat.log.started", "Combat started");
 
-    const std::string summonedDronePrefix = "Summoned drone: ";
-    if (startsWith(entry, summonedDronePrefix)) {
-        return localizedOrFallback(localization, "combat.log.drone_summoned", "Summoned drone") + ": " +
-            droneName(localization, drones, suffixAfter(entry, summonedDronePrefix));
-    }
+        case CombatLogEntryType::CombatWon:
+            return localizedOrFallback(localization, "combat.log.won", "Combat won");
 
-    const std::string strikerDamagePrefix = "Striker drone deals ";
-    const std::string damageSuffix = " damage";
-    if (startsWith(entry, strikerDamagePrefix) && entry.size() >= strikerDamagePrefix.size() + damageSuffix.size()) {
-        std::string amount = suffixAfter(entry, strikerDamagePrefix);
-        if (amount.size() >= damageSuffix.size() && amount.substr(amount.size() - damageSuffix.size()) == damageSuffix) {
-            amount.erase(amount.size() - damageSuffix.size());
-            return localizedOrFallback(localization, "combat.log.drone_striker_damage", "Striker drone deals damage") + ": " + amount;
+        case CombatLogEntryType::CombatLost:
+            return localizedOrFallback(localization, "combat.log.lost", "Combat lost");
+
+        case CombatLogEntryType::PlayerTurnStarted:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.player_turn_started",
+                "Player turn: {turn}",
+                entry.variables
+            );
+
+        case CombatLogEntryType::PlayerTurnEnded:
+            return localizedOrFallback(localization, "combat.log.player_turn_ended", "Player turn ended");
+
+        case CombatLogEntryType::EnemyTurnStarted:
+            return localizedOrFallback(localization, "combat.log.enemy_turn_started", "Enemy turn started");
+
+        case CombatLogEntryType::EnemyTurnEnded:
+            return localizedOrFallback(localization, "combat.log.enemy_turn_ended", "Enemy turn ended");
+
+        case CombatLogEntryType::ActivePlayerActor:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.active_player_actor",
+                "Active character: {actor}",
+                entry.variables
+            );
+
+        case CombatLogEntryType::CardPlayed: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["card"] = cardName(localization, cards, variableOrFallback(entry, "card"));
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.played_card",
+                "Played card: {card}",
+                variables
+            );
         }
+
+        case CombatLogEntryType::CannotPlayCard: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["reason"] = cardPlayFailureText(localization, variableOrFallback(entry, "reason"));
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.cannot_play_card",
+                "Cannot play card: {reason}",
+                variables
+            );
+        }
+
+        case CombatLogEntryType::EnemyAction: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["action"] = enemyActionName(localization, variableOrFallback(entry, "action"));
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.enemy_action",
+                "Enemy action: {action}",
+                variables
+            );
+        }
+
+        case CombatLogEntryType::DamageDealt:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.damage_detail",
+                "Damage: raw={raw}, modified={modified}, blocked={blocked}, hp={hp}",
+                entry.variables
+            );
+
+        case CombatLogEntryType::BlockGained:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.block_detail",
+                "Block: raw={raw}, modified={modified}",
+                entry.variables
+            );
+
+        case CombatLogEntryType::Heal:
+            return localizedFormatOrFallback(localization, "combat.log.heal", "Heal: {amount}", entry.variables);
+
+        case CombatLogEntryType::DrawCards:
+            return localizedFormatOrFallback(localization, "combat.log.draw_cards", "Draw cards: {amount}", entry.variables);
+
+        case CombatLogEntryType::GainEnergy:
+            return localizedFormatOrFallback(localization, "combat.log.gain_energy", "Gain energy: {amount}", entry.variables);
+
+        case CombatLogEntryType::LoseHp:
+            return localizedFormatOrFallback(localization, "combat.log.lose_hp", "Lose HP: {amount}", entry.variables);
+
+        case CombatLogEntryType::StatusApplied: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["status"] = statusName(localization, statuses, variableOrFallback(entry, "status"));
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.status_applied",
+                "Status: {status} +{amount} on entity {target}",
+                variables
+            );
+        }
+
+        case CombatLogEntryType::PoisonDamage:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.poison_damage",
+                "Poison damage: entity {target} takes {amount}",
+                entry.variables
+            );
+
+        case CombatLogEntryType::GainStress:
+            return localizedFormatOrFallback(localization, "combat.log.gain_stress", "Gain stress: {amount}", entry.variables);
+
+        case CombatLogEntryType::LoseStress:
+            return localizedFormatOrFallback(localization, "combat.log.lose_stress", "Lose stress: {amount}", entry.variables);
+
+        case CombatLogEntryType::StressResolve:
+            return localizedFormatOrFallback(localization, "combat.log.stress_resolve", "Stress resolve: {actor}", entry.variables);
+
+        case CombatLogEntryType::StressBreakdown:
+            return localizedFormatOrFallback(localization, "combat.log.stress_breakdown", "Stress breakdown: {actor}", entry.variables);
+
+        case CombatLogEntryType::StressCollapse:
+            return localizedFormatOrFallback(localization, "combat.log.stress_collapse", "Stress collapse: {actor}", entry.variables);
+
+        case CombatLogEntryType::DroneSummoned: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["drone"] = droneName(localization, drones, variableOrFallback(entry, "drone"));
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.drone_summoned",
+                "Summoned drone: {drone}",
+                variables
+            );
+        }
+
+        case CombatLogEntryType::NoDrone:
+            return localizedOrFallback(localization, "combat.log.no_drone", "No drone to use");
+
+        case CombatLogEntryType::DroneNoManualAction: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["drone"] = droneName(localization, drones, variableOrFallback(entry, "drone"));
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.drone_no_manual_action",
+                "Drone has no manual action: {drone}",
+                variables
+            );
+        }
+
+        case CombatLogEntryType::DroneAction:
+            return droneActionText(localization, entry);
+
+        case CombatLogEntryType::UsedConsumable:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.used_consumable",
+                "Used consumable: {consumable}",
+                entry.variables
+            );
+
+        case CombatLogEntryType::RelicTriggered:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.relic_triggered",
+                "Relic triggered: {relic}",
+                entry.variables
+            );
+
+        case CombatLogEntryType::SadistHurtsMasochist:
+            return localizedOrFallback(
+                localization,
+                "combat.log.sadist_hurts_masochist",
+                "Sadist gains 1 Strength for hurting Masochist"
+            );
+
+        case CombatLogEntryType::MasochistPainBonus:
+            return localizedOrFallback(
+                localization,
+                "combat.log.masochist_pain_bonus",
+                "Masochist gains 1 Strength and 1 Dexterity after taking pain"
+            );
+
+        case CombatLogEntryType::EffectNotImplemented:
+            return localizedFormatOrFallback(
+                localization,
+                "combat.log.effect_not_implemented",
+                "Effect not implemented yet: {effect}",
+                entry.variables
+            );
     }
 
-    const std::string strikerEndTurnPrefix = "Striker drone end-turn damage: ";
-    if (startsWith(entry, strikerEndTurnPrefix)) {
-        return localizedOrFallback(localization, "combat.log.drone_striker_damage", "Striker drone deals damage") + ": " +
-            suffixAfter(entry, strikerEndTurnPrefix);
-    }
-
-    const std::string drawPrefix = "Draw cards: ";
-    if (startsWith(entry, drawPrefix)) {
-        return localizedOrFallback(localization, "combat.log.draw_cards", "Draw cards") + ": " + suffixAfter(entry, drawPrefix);
-    }
-
-    const std::string gainEnergyPrefix = "Gain energy: ";
-    if (startsWith(entry, gainEnergyPrefix)) {
-        return localizedOrFallback(localization, "combat.log.gain_energy", "Gain energy") + ": " + suffixAfter(entry, gainEnergyPrefix);
-    }
-
-    const std::string healPrefix = "Heal: ";
-    if (startsWith(entry, healPrefix)) {
-        return localizedOrFallback(localization, "combat.log.heal", "Heal") + ": " + suffixAfter(entry, healPrefix);
-    }
-
-    const std::string gainStressPrefix = "Gain stress: ";
-    if (startsWith(entry, gainStressPrefix)) {
-        return localizedOrFallback(localization, "combat.log.gain_stress", "Gain stress") + ": " + suffixAfter(entry, gainStressPrefix);
-    }
-
-    const std::string loseStressPrefix = "Lose stress: ";
-    if (startsWith(entry, loseStressPrefix)) {
-        return localizedOrFallback(localization, "combat.log.lose_stress", "Lose stress") + ": " + suffixAfter(entry, loseStressPrefix);
-    }
-
-    const std::string resolvePrefix = "Stress resolve: ";
-    if (startsWith(entry, resolvePrefix)) {
-        return localizedOrFallback(localization, "combat.log.stress_resolve", "Stress resolve") + ": " + suffixAfter(entry, resolvePrefix);
-    }
-
-    const std::string breakdownPrefix = "Stress breakdown: ";
-    if (startsWith(entry, breakdownPrefix)) {
-        return localizedOrFallback(localization, "combat.log.stress_breakdown", "Stress breakdown") + ": " + suffixAfter(entry, breakdownPrefix);
-    }
-
-    const std::string collapsePrefix = "Stress collapse: ";
-    if (startsWith(entry, collapsePrefix)) {
-        return localizedOrFallback(localization, "combat.log.stress_collapse", "Stress collapse") + ": " + suffixAfter(entry, collapsePrefix);
-    }
-
-    return entry;
+    return entry.text;
 }
 }
 
@@ -235,11 +448,13 @@ CombatViewModelBuilder::CombatViewModelBuilder(
     const LocalizationManager& localization,
     const StatusDatabase& statusDatabase,
     const DroneDatabase& droneDatabase,
+    const CardDatabase& cardDatabase,
     const CardViewModelBuilder& cardViewModelBuilder
 )
     : localization_(localization),
       statusDatabase_(statusDatabase),
       droneDatabase_(droneDatabase),
+      cardDatabase_(cardDatabase),
       cardViewModelBuilder_(cardViewModelBuilder) {}
 
 CombatViewModel CombatViewModelBuilder::build(
@@ -397,7 +612,7 @@ std::vector<std::string> CombatViewModelBuilder::recentLogEntries(
     const CombatState& state,
     const std::size_t maxCount
 ) const {
-    const std::vector<std::string>& entries = state.log.entries();
+    const std::vector<CombatLogEntry>& entries = state.log.entries();
     const auto begin = entries.size() <= maxCount
         ? entries.begin()
         : entries.end() - static_cast<std::ptrdiff_t>(maxCount);
@@ -406,7 +621,7 @@ std::vector<std::string> CombatViewModelBuilder::recentLogEntries(
     result.reserve(static_cast<std::size_t>(std::distance(begin, entries.end())));
 
     for (auto iterator = begin; iterator != entries.end(); ++iterator) {
-        result.push_back(localizeLogEntry(localization_, droneDatabase_, *iterator));
+        result.push_back(localizeLogEntry(localization_, statusDatabase_, droneDatabase_, cardDatabase_, *iterator));
     }
 
     return result;

@@ -19,9 +19,9 @@ struct PlayerViewModel {
     int stress = 0;
     int maxStress = 200;
 
-    std::string blockLabel = "Block";
-    std::string stressLabel = "Stress";
-    std::string activeTurnLabel = "Acting";
+    std::string blockLabel = {};
+    std::string stressLabel = {};
+    std::string activeTurnLabel = {};
 
     std::vector<StatusViewModel> statuses;
     std::vector<std::string> traitIds;

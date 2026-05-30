@@ -8,26 +8,26 @@ namespace {
 std::string localizedOrFallback(
     const LocalizationManager& localization,
     const TextId& textId,
-    const std::string& fallback
+    const std::string&
 ) {
     if (localization.hasText(textId)) {
         return localization.get(textId);
     }
 
-    return fallback;
+    return textId.value;
 }
 
 std::string formatOrFallback(
     const LocalizationManager& localization,
     const TextId& textId,
     const TextFormatter::Variables& variables,
-    const std::string& fallback
+    const std::string&
 ) {
     if (localization.hasText(textId)) {
         return localization.format(textId, variables);
     }
 
-    return fallback;
+    return TextFormatter::format(textId.value, variables);
 }
 
 std::string entityDisplayName(

@@ -1,5 +1,7 @@
 #include "CombatView.hpp"
 
+#include "ui/Utf8.hpp"
+
 #include <algorithm>
 #include <string>
 
@@ -7,17 +9,6 @@ namespace {
 constexpr float minContentWidth = 960.f;
 constexpr float maxContentWidth = 1520.f;
 
-std::string shorten(const std::string& text, const std::size_t maxLength) {
-    if (text.size() <= maxLength) {
-        return text;
-    }
-
-    if (maxLength <= 3) {
-        return text.substr(0, maxLength);
-    }
-
-    return text.substr(0, maxLength - 3) + "...";
-}
 }
 
 void CombatView::setModel(const CombatViewModel& model) {
@@ -155,7 +146,7 @@ void CombatView::render(const Font* font) const {
 
             DrawRectangleRounded(bounds, 0.22f, 6, fill);
             DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
-            DrawTextEx(*font, shorten(relic.name, 15).c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
+            DrawTextEx(*font, UiUtf8::truncateWithEllipsis(relic.name, 15).c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
         }
 
         for (std::size_t i = 0; i < model_.consumables.size(); ++i) {
@@ -170,7 +161,7 @@ void CombatView::render(const Font* font) const {
             DrawRectangleRounded(bounds, 0.22f, 6, fill);
             DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
 
-            const std::string text = consumable.filled ? shorten(consumable.name, 12) : model_.emptyLabel;
+            const std::string text = consumable.filled ? UiUtf8::truncateWithEllipsis(consumable.name, 12) : model_.emptyLabel;
             DrawTextEx(*font, text.c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{220, 235, 245, 255});
         }
 
@@ -347,7 +338,7 @@ void CombatView::renderDronePanel(const Font* font) const {
 
         DrawRectangleRounded(bounds, 0.18f, 8, fill);
         DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, hovered ? 3.f : 2.f, border);
-        DrawTextEx(*font, shorten(slot.name, 13).c_str(), Vector2{bounds.x + 8.f, bounds.y + 13.f}, 14.f, 1.f, Color{220, 245, 250, 255});
+        DrawTextEx(*font, UiUtf8::truncateWithEllipsis(slot.name, 13).c_str(), Vector2{bounds.x + 8.f, bounds.y + 13.f}, 14.f, 1.f, Color{220, 245, 250, 255});
     }
 }
 

@@ -26,6 +26,6 @@ bool ConsumableSystem::useConsumable(
     context.random = &random;
 
     effectSystem.applyEffects(state, definition.effects, context);
-    state.log.add("Used potion: " + consumableId);
+    state.log.add(CombatLogEntryType::UsedConsumable, {{"consumable", consumableId}});
     return true;
 }

@@ -1,18 +1,22 @@
 #include "InspectModelBuilder.hpp"
 
 #include "cards/CardKeyword.hpp"
-#include "effects/EffectDefinition.hpp"
-#include "statuses/StatusDefinition.hpp"
+#include "consumables/ConsumableRarity.hpp"
 #include "dice/DiceExpression.hpp"
+#include "drones/DroneActionDefinition.hpp"
 #include "drones/DroneDefinition.hpp"
 #include "drones/DroneId.hpp"
+#include "effects/EffectDefinition.hpp"
+#include "game/GameEvent.hpp"
 #include "relics/RelicModifierDefinition.hpp"
 #include "relics/RelicRarity.hpp"
 #include "relics/RelicTriggerDefinition.hpp"
-#include "consumables/ConsumableRarity.hpp"
-#include "game/GameEvent.hpp"
+#include "statuses/StatusDefinition.hpp"
+#include "statuses/StatusDurationRule.hpp"
+#include "statuses/StatusType.hpp"
 
 #include <sstream>
+#include <utility>
 
 InspectModelBuilder::InspectModelBuilder(
     const ContentRegistry& content,
@@ -25,36 +29,39 @@ InspectPanelModel InspectModelBuilder::buildEnemy(const EnemyViewModel& enemy) c
     InspectPanelModel model;
     model.header = enemy.name;
 
+    model.entries.push_back(InspectEntry{
+        rawTextOrFallback("inspect.enemy.health.name", "Health"),
+        formatRawText(
+            "inspect.enemy.health.value",
+            "{current}/{maximum} HP",
+            {{"current", std::to_string(enemy.currentHp)}, {"maximum", std::to_string(enemy.maxHp)}}
+        )
+    });
+
     if (!enemy.intentText.empty()) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.enemy.intent", "Intent"),
-            enemy.intentText
+            enemy.intentText,
+            InspectEntryStyle::Hint
         });
     }
 
     if (enemy.block > 0) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.combat.block.name", "Block"),
-            rawTextOrFallback(
-                "inspect.combat.block.description",
-                "Prevents incoming damage before HP is lost."
+            formatRawText(
+                "inspect.combat.block.value",
+                "{amount} block. Prevents incoming damage before HP is lost.",
+                {{"amount", std::to_string(enemy.block)}}
             )
         });
     }
 
     for (const StatusViewModel& status : enemy.statuses) {
-        std::string title = status.name;
-        if (status.amount > 0) {
-            title += ": " + std::to_string(status.amount);
-        }
-
-        model.entries.push_back(InspectEntry{
-            title,
-            statusDescription(status.id)
-        });
+        appendStatusEntry(model, status);
     }
 
-    if (model.entries.empty()) {
+    if (enemy.statuses.empty() && enemy.block <= 0 && enemy.intentText.empty()) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.enemy.no_details.name", "No visible effects"),
             rawTextOrFallback(
@@ -71,45 +78,71 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
     InspectPanelModel model;
     model.header = player.name;
 
+    if (player.activeTurn) {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.player.active_turn.name", "Active turn"),
+            rawTextOrFallback(
+                "inspect.player.active_turn.description",
+                "This actor is currently allowed to play cards."
+            ),
+            InspectEntryStyle::Hint
+        });
+    }
+
     model.entries.push_back(InspectEntry{
-        rawTextOrFallback("inspect.player.hp.name", "HP"),
-        std::to_string(player.currentHp) + "/" + std::to_string(player.maxHp)
+        rawTextOrFallback("inspect.player.health.name", "Health"),
+        formatRawText(
+            "inspect.player.health.value",
+            "{current}/{maximum} HP. When this actor reaches 0 HP, they are defeated.",
+            {{"current", std::to_string(player.currentHp)}, {"maximum", std::to_string(player.maxHp)}}
+        )
     });
 
     if (player.maxEnergy > 0) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.player.energy.name", "Energy"),
-            std::to_string(player.currentEnergy) + "/" + std::to_string(player.maxEnergy) + "\n" +
-                rawTextOrFallback(
-                    "inspect.player.energy.description",
-                    "Energy is spent to play cards belonging to this actor."
-                )
+            formatRawText(
+                "inspect.player.energy.value",
+                "{current}/{maximum}. Energy is spent to play cards belonging to this actor.",
+                {{"current", std::to_string(player.currentEnergy)}, {"maximum", std::to_string(player.maxEnergy)}}
+            )
         });
     }
+
+    model.entries.push_back(InspectEntry{
+        rawTextOrFallback("inspect.player.stress.name", "Stress"),
+        formatRawText(
+            "inspect.player.stress.value",
+            "{current}/{maximum}. At 100 stress, this actor makes a resolve check. At 200 stress, they die.",
+            {{"current", std::to_string(player.stress)}, {"maximum", std::to_string(player.maxStress)}}
+        ),
+        player.stress >= 100 ? InspectEntryStyle::Warning : InspectEntryStyle::Normal
+    });
 
     if (player.block > 0) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.combat.block.name", "Block"),
-            rawTextOrFallback(
-                "inspect.combat.block.description",
-                "Prevents incoming damage before HP is lost."
+            formatRawText(
+                "inspect.combat.block.value",
+                "{amount} block. Prevents incoming damage before HP is lost.",
+                {{"amount", std::to_string(player.block)}}
             )
         });
     }
 
     for (const StatusViewModel& status : player.statuses) {
-        std::string title = status.name;
-        if (status.amount > 0) {
-            title += ": " + std::to_string(status.amount);
-        }
+        appendStatusEntry(model, status);
+    }
 
+    for (const std::string& traitId : player.traitIds) {
         model.entries.push_back(InspectEntry{
-            title,
-            statusDescription(status.id)
+            rawTextOrFallback("inspect.player.trait.name", "Trait"),
+            traitId,
+            InspectEntryStyle::Hint
         });
     }
 
-    if (model.entries.size() <= 3) {
+    if (player.statuses.empty() && player.traitIds.empty() && player.block <= 0 && !player.activeTurn) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.player.no_effects.name", "No active effects"),
             rawTextOrFallback(
@@ -144,11 +177,11 @@ InspectPanelModel InspectModelBuilder::buildConsumable(const ConsumableViewModel
         rawTextOrFallback(
             "inspect.consumable.use_hint.description",
             "Left-click uses this consumable."
-        )
+        ),
+        InspectEntryStyle::Hint
     });
     return model;
 }
-
 
 InspectPanelModel InspectModelBuilder::buildConsumable(const ConsumableDefinition& consumable) const {
     InspectPanelModel model;
@@ -160,19 +193,13 @@ InspectPanelModel InspectModelBuilder::buildConsumable(const ConsumableDefinitio
         consumableRarityText(consumable.rarity)
     });
 
-    std::string goldCost = rawTextOrFallback(
-        "inspect.consumable.gold_cost.value",
-        "{amount} gold"
-    );
-    const std::string amountMarker = "{amount}";
-    const std::size_t amountPosition = goldCost.find(amountMarker);
-    if (amountPosition != std::string::npos) {
-        goldCost.replace(amountPosition, amountMarker.size(), std::to_string(consumable.goldCost));
-    }
-
     model.entries.push_back(InspectEntry{
         rawTextOrFallback("inspect.consumable.gold_cost.name", "Gold cost"),
-        goldCost
+        formatRawText(
+            "inspect.consumable.gold_cost.value",
+            "{amount} gold",
+            {{"amount", std::to_string(consumable.goldCost)}}
+        )
     });
 
     model.entries.push_back(InspectEntry{
@@ -180,23 +207,12 @@ InspectPanelModel InspectModelBuilder::buildConsumable(const ConsumableDefinitio
         rawTextOrFallback(
             "inspect.consumable.use_hint.description",
             "Left-click opens a use confirmation window."
-        )
+        ),
+        InspectEntryStyle::Hint
     });
 
-    if (!consumable.effects.empty()) {
-        for (const EffectDefinition& effect : consumable.effects) {
-            model.entries.push_back(InspectEntry{
-                rawTextOrFallback("inspect.consumable.effects.name", "Effects"),
-                effectSummary(effect)
-            });
-
-            if (effect.statusId.has_value()) {
-                model.entries.push_back(InspectEntry{
-                    statusName(*effect.statusId),
-                    statusDescription(*effect.statusId)
-                });
-            }
-        }
+    for (const EffectDefinition& effect : consumable.effects) {
+        appendEffectEntry(model, "inspect.consumable.effects.name", effect);
     }
 
     return model;
@@ -215,26 +231,23 @@ InspectPanelModel InspectModelBuilder::buildRelic(const RelicDefinition& relic) 
     if (!relic.mechanicId.empty() && relic.mechanicId != "default") {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.relic.mechanic.name", "Mechanic"),
-            relic.mechanicId
+            relic.mechanicId,
+            InspectEntryStyle::Hint
         });
     }
 
-    if (!relic.modifiers.empty()) {
-        for (const RelicModifierDefinition& modifier : relic.modifiers) {
-            model.entries.push_back(InspectEntry{
-                rawTextOrFallback("inspect.relic.modifiers.name", "Modifiers"),
-                relicModifierSummary(modifier)
-            });
-        }
+    for (const RelicModifierDefinition& modifier : relic.modifiers) {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.relic.modifiers.name", "Modifiers"),
+            relicModifierSummary(modifier)
+        });
     }
 
-    if (!relic.triggers.empty()) {
-        for (const RelicTriggerDefinition& trigger : relic.triggers) {
-            model.entries.push_back(InspectEntry{
-                rawTextOrFallback("inspect.relic.triggers.name", "Triggers"),
-                relicTriggerSummary(trigger)
-            });
-        }
+    for (const RelicTriggerDefinition& trigger : relic.triggers) {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.relic.triggers.name", "Triggers"),
+            relicTriggerSummary(trigger)
+        });
     }
 
     if (relic.modifiers.empty() && relic.triggers.empty()) {
@@ -243,7 +256,8 @@ InspectPanelModel InspectModelBuilder::buildRelic(const RelicDefinition& relic) 
             rawTextOrFallback(
                 "inspect.relic.passive_only",
                 "This relic has no parsed modifiers or triggers yet. The description above is the source of truth."
-            )
+            ),
+            InspectEntryStyle::Warning
         });
     }
 
@@ -272,6 +286,40 @@ InspectPanelModel InspectModelBuilder::buildDroneSlot(const DroneSlotViewModel& 
         rawTextOrFallback("inspect.drone.active.name", "Active drone"),
         droneSlot.description
     });
+
+    const DroneId droneId(droneSlot.type);
+    if (!content_.drones().contains(droneId)) {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.drone.unknown.name", "Unknown drone"),
+            rawTextOrFallback("inspect.drone.unknown.description", "The drone id is not present in the loaded content database."),
+            InspectEntryStyle::Warning
+        });
+        return model;
+    }
+
+    const DroneDefinition& definition = content_.drones().get(droneId);
+    if (definition.manualAction.has_value()) {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.drone.manual_action.name", "Manual action"),
+            droneActionSummary(*definition.manualAction),
+            InspectEntryStyle::Hint
+        });
+    } else {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.drone.manual_action.name", "Manual action"),
+            rawTextOrFallback("inspect.drone.no_manual_action", "This drone has no manual action."),
+            InspectEntryStyle::Warning
+        });
+    }
+
+    if (definition.endTurnAction.has_value()) {
+        model.entries.push_back(InspectEntry{
+            rawTextOrFallback("inspect.drone.end_turn_action.name", "End turn action"),
+            droneActionSummary(*definition.endTurnAction),
+            InspectEntryStyle::Hint
+        });
+    }
+
     return model;
 }
 
@@ -309,37 +357,28 @@ InspectPanelModel InspectModelBuilder::buildCard(
         rawTextOrFallback("inspect.card.upgrade.name", "Upgrade"),
         card.upgraded
             ? rawTextOrFallback("inspect.card.upgrade.yes", "This card is upgraded.")
-            : rawTextOrFallback("inspect.card.upgrade.no", "This card is not upgraded.")
+            : rawTextOrFallback("inspect.card.upgrade.no", "This card is not upgraded."),
+        card.upgraded ? InspectEntryStyle::Hint : InspectEntryStyle::Normal
     });
 
     if (!card.playable && !card.unplayableReason.empty()) {
         model.entries.push_back(InspectEntry{
             rawTextOrFallback("inspect.card.playability.name", "Playability"),
-            card.unplayableReason
+            card.unplayableReason,
+            InspectEntryStyle::Warning
         });
     }
 
-    if (!definition.keywords.empty()) {
-        for (const CardKeyword keyword : definition.keywords) {
-            model.entries.push_back(InspectEntry{
-                keywordName(keyword),
-                keywordDescription(keyword)
-            });
-        }
+    for (const CardKeyword keyword : definition.keywords) {
+        model.entries.push_back(InspectEntry{
+            keywordName(keyword),
+            keywordDescription(keyword),
+            InspectEntryStyle::Hint
+        });
     }
 
     for (const EffectDefinition& effect : definition.effects) {
-        model.entries.push_back(InspectEntry{
-            rawTextOrFallback("inspect.card.effect.name", "Effect"),
-            effectSummary(effect)
-        });
-
-        if (effect.statusId.has_value()) {
-            model.entries.push_back(InspectEntry{
-                statusName(*effect.statusId),
-                statusDescription(*effect.statusId)
-            });
-        }
+        appendEffectEntry(model, "inspect.card.effect.name", effect);
     }
 
     if (definition.effects.empty() && definition.keywords.empty()) {
@@ -355,15 +394,53 @@ InspectPanelModel InspectModelBuilder::buildCard(
     return model;
 }
 
+void InspectModelBuilder::appendStatusEntry(InspectPanelModel& model, const StatusViewModel& status) const {
+    appendStatusEntry(model, status.id, status.amount);
+}
+
+void InspectModelBuilder::appendStatusEntry(InspectPanelModel& model, const std::string& statusId, const int amount) const {
+    std::string title = statusName(statusId);
+    if (amount > 0) {
+        title = formatRawText(
+            "inspect.status.title_with_amount",
+            "{name}: {amount}",
+            {{"name", title}, {"amount", std::to_string(amount)}}
+        );
+    }
+
+    std::string description = statusDescription(statusId);
+    const std::string rule = statusRuleDescription(statusId);
+    if (!rule.empty()) {
+        description += "\n" + rule;
+    }
+
+    model.entries.push_back(InspectEntry{title, description});
+}
+
+void InspectModelBuilder::appendEffectEntry(
+    InspectPanelModel& model,
+    const std::string& titleTextId,
+    const EffectDefinition& effect
+) const {
+    model.entries.push_back(InspectEntry{
+        rawTextOrFallback(titleTextId, "Effect"),
+        effectSummary(effect)
+    });
+
+    if (effect.statusId.has_value()) {
+        appendStatusEntry(model, *effect.statusId, 0);
+    }
+}
+
 std::string InspectModelBuilder::textOrFallback(
     const TextId& textId,
-    const std::string& fallback
+    const std::string&
 ) const {
     if (localization_.hasText(textId)) {
         return localization_.get(textId);
     }
 
-    return fallback;
+    return textId.value;
 }
 
 std::string InspectModelBuilder::rawTextOrFallback(
@@ -371,6 +448,24 @@ std::string InspectModelBuilder::rawTextOrFallback(
     const std::string& fallback
 ) const {
     return textOrFallback(TextId(textId), fallback);
+}
+
+std::string InspectModelBuilder::formatRawText(
+    const std::string& textId,
+    const std::string& fallback,
+    const std::vector<std::pair<std::string, std::string>>& variables
+) const {
+    std::string text = rawTextOrFallback(textId, fallback);
+    for (const auto& [key, value] : variables) {
+        const std::string marker = "{" + key + "}";
+        std::size_t position = 0;
+        while ((position = text.find(marker, position)) != std::string::npos) {
+            text.replace(position, marker.size(), value);
+            position += value.size();
+        }
+    }
+
+    return text;
 }
 
 std::string InspectModelBuilder::keywordName(const CardKeyword keyword) const {
@@ -403,6 +498,58 @@ std::string InspectModelBuilder::statusDescription(const std::string& statusId) 
     }
 
     return rawTextOrFallback("inspect.status.unknown", "No status description.");
+}
+
+std::string InspectModelBuilder::statusRuleDescription(const std::string& statusId) const {
+    const StatusId id(statusId);
+    if (!content_.statuses().contains(id)) {
+        return {};
+    }
+
+    const StatusDefinition& definition = content_.statuses().get(id);
+    std::vector<std::string> parts;
+    parts.push_back(formatRawText(
+        "inspect.status.type.value",
+        "Type: {type}",
+        {{"type", statusTypeText(definition.type)}}
+    ));
+    parts.push_back(formatRawText(
+        "inspect.status.duration.value",
+        "Duration: {duration}",
+        {{"duration", statusDurationText(definition.durationRule)}}
+    ));
+
+    if (!definition.endTurnEffect.empty()) {
+        parts.push_back(formatRawText(
+            "inspect.status.end_turn_effect.value",
+            "End of turn effect: {effect}",
+            {{"effect", definition.endTurnEffect}}
+        ));
+    }
+
+    if (definition.decreaseAfterTrigger) {
+        parts.push_back(rawTextOrFallback(
+            "inspect.status.decrease_after_trigger",
+            "Decreases after triggering."
+        ));
+    }
+
+    std::ostringstream out;
+    for (std::size_t i = 0; i < parts.size(); ++i) {
+        if (i > 0) {
+            out << "\n";
+        }
+        out << parts[i];
+    }
+    return out.str();
+}
+
+std::string InspectModelBuilder::statusTypeText(const StatusType type) const {
+    return rawTextOrFallback("status.type." + toString(type), toString(type));
+}
+
+std::string InspectModelBuilder::statusDurationText(const StatusDurationRule rule) const {
+    return rawTextOrFallback("status.duration." + toString(rule), toString(rule));
 }
 
 std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) const {
@@ -459,9 +606,6 @@ std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) c
             return out.str();
         case EffectType::UseDrone:
             return rawTextOrFallback("inspect.effect.use_drone", "Uses the oldest drone");
-        default:
-            out << rawTextOrFallback("inspect.effect.unknown", "Effect");
-            break;
     }
 
     out << ": " << valueText(effect.value);
@@ -478,6 +622,21 @@ std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) c
     return out.str();
 }
 
+std::string InspectModelBuilder::droneActionSummary(const DroneActionDefinition& action) const {
+    std::ostringstream out;
+    if (!action.logTextId.empty() || !action.fallbackLog.empty()) {
+        out << rawTextOrFallback(action.logTextId, action.fallbackLog.empty() ? action.logTextId : action.fallbackLog);
+    }
+
+    for (std::size_t i = 0; i < action.effects.size(); ++i) {
+        if (out.tellp() > 0 || i > 0) {
+            out << "\n";
+        }
+        out << effectSummary(action.effects[i]);
+    }
+
+    return out.str();
+}
 
 std::string InspectModelBuilder::relicRarityText(const RelicRarity rarity) const {
     return rawTextOrFallback("relic.rarity." + toString(rarity), toString(rarity));
@@ -510,13 +669,11 @@ std::string InspectModelBuilder::relicTriggerSummary(const RelicTriggerDefinitio
     out << rawTextOrFallback("game_event." + toString(trigger.eventType), toString(trigger.eventType));
 
     if (trigger.everyNTurns > 0) {
-        std::string cadence = rawTextOrFallback("inspect.relic.every_n_turns", "every {count} turns");
-        const std::string marker = "{count}";
-        const std::size_t markerPosition = cadence.find(marker);
-        if (markerPosition != std::string::npos) {
-            cadence.replace(markerPosition, marker.size(), std::to_string(trigger.everyNTurns));
-        }
-        out << ", " << cadence;
+        out << ", " << formatRawText(
+            "inspect.relic.every_n_turns",
+            "every {count} turns",
+            {{"count", std::to_string(trigger.everyNTurns)}}
+        );
     }
 
     if (trigger.oncePerCombat) {

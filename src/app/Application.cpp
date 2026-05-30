@@ -259,11 +259,12 @@ void Application::loadLocalization() {
     );
 
     localization_.setCurrentLocale(config_.locale);
+    localization_.validateAllLocalesHaveSameTextIds();
 }
 
 void Application::loadContent() {
     content_.loadFromDataDirectory(config_.paths.data);
-    ContentValidator::validate(content_);
+    ContentValidator::validate(content_, localization_);
 
     if (config_.debug.enabled) {
         std::cout << "Loaded cards: " << content_.cards().size() << '\n';

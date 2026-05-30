@@ -37,7 +37,8 @@
         "b": 48
       }
     },
-    "visual_identity": "archetype.rusted_knight.visual_identity"
+    "visual_identity": "archetype.rusted_knight.visual_identity",
+    "selection_order": 10
   },
   {
     "id": "herbalist",
@@ -49,11 +50,11 @@
       "herbalist"
     ],
     "starting_deck": [
-      "plague_scalpel",
-      "plague_scalpel",
-      "plague_vial",
-      "plague_vial",
-      "plague_mask",
+      "herbalist_scalpel",
+      "herbalist_scalpel",
+      "herbalist_toxin_vial",
+      "herbalist_toxin_vial",
+      "herbalist_smoke_mask",
       "defend",
       "strike"
     ],
@@ -77,7 +78,176 @@
         "b": 93
       }
     },
-    "visual_identity": "archetype.herbalist.visual_identity"
+    "visual_identity": "archetype.herbalist.visual_identity",
+    "selection_order": 20
+  },
+  {
+    "id": "replicant",
+    "name": "archetype.replicant.name",
+    "short_description": "archetype.replicant.short_description",
+    "details_description": "archetype.replicant.details_description",
+    "unique_mechanic": "archetype.replicant.unique_mechanic",
+    "actors": [
+      "replicant"
+    ],
+    "starting_deck": [
+      "cyborg_striker_drone",
+      "cyborg_guardian_drone",
+      "cyborg_bomber_drone",
+      "cyborg_trigger_drone",
+      "cyborg_wrench_hit",
+      "defend",
+      "strike"
+    ],
+    "starting_relics": [
+      "empty_dock"
+    ],
+    "starting_gold": 60,
+    "strengths": [
+      "archetype.replicant.strength.drones",
+      "archetype.replicant.strength.marks"
+    ],
+    "weaknesses": [
+      "archetype.replicant.weakness.slot_pressure"
+    ],
+    "mechanic_id": "replicant_drones",
+    "palette": {
+      "name": "archetype.replicant.palette",
+      "accent": {
+        "r": 68,
+        "g": 139,
+        "b": 205
+      }
+    },
+    "visual_identity": "archetype.replicant.visual_identity",
+    "selection_order": 30
+  },
+  {
+    "id": "monk",
+    "name": "archetype.monk.name",
+    "short_description": "archetype.monk.short_description",
+    "details_description": "archetype.monk.details_description",
+    "unique_mechanic": "archetype.monk.unique_mechanic",
+    "actors": [
+      "monk"
+    ],
+    "starting_deck": [
+      "monk_enter_flame",
+      "monk_enter_ash",
+      "monk_enter_smoke",
+      "monk_palm_strike",
+      "monk_ash_guard",
+      "monk_smoke_step",
+      "strike"
+    ],
+    "starting_relics": [
+      "coal_rosary"
+    ],
+    "starting_gold": 70,
+    "strengths": [
+      "archetype.monk.strength.stances",
+      "archetype.monk.strength.flexible_tempo"
+    ],
+    "weaknesses": [
+      "archetype.monk.weakness.misstance"
+    ],
+    "mechanic_id": "monk_stances",
+    "palette": {
+      "name": "archetype.monk.palette",
+      "accent": {
+        "r": 137,
+        "g": 88,
+        "b": 190
+      }
+    },
+    "visual_identity": "archetype.monk.visual_identity",
+    "selection_order": 40
+  },
+  {
+    "id": "merchant",
+    "name": "archetype.merchant.name",
+    "short_description": "archetype.merchant.short_description",
+    "details_description": "archetype.merchant.details_description",
+    "unique_mechanic": "archetype.merchant.unique_mechanic",
+    "actors": [
+      "merchant"
+    ],
+    "starting_deck": [
+      "merchant_debt_slash",
+      "merchant_debt_slash",
+      "merchant_cash_guard",
+      "merchant_cash_guard",
+      "merchant_quick_deal",
+      "defend",
+      "strike"
+    ],
+    "starting_relics": [
+      "bone_purse",
+      "copper_coin"
+    ],
+    "starting_gold": 140,
+    "strengths": [
+      "archetype.merchant.strength.gold_income",
+      "archetype.merchant.strength.shop_control"
+    ],
+    "weaknesses": [
+      "archetype.merchant.weakness.no_card_rewards",
+      "archetype.merchant.weakness.shop_dependency"
+    ],
+    "mechanic_id": "merchant_progression",
+    "palette": {
+      "name": "archetype.merchant.palette",
+      "accent": {
+        "r": 214,
+        "g": 177,
+        "b": 64
+      }
+    },
+    "visual_identity": "archetype.merchant.visual_identity",
+    "selection_order": 50
+  },
+  {
+    "id": "lost_psychopath",
+    "name": "archetype.lost_psychopath.name",
+    "short_description": "archetype.lost_psychopath.short_description",
+    "details_description": "archetype.lost_psychopath.details_description",
+    "unique_mechanic": "archetype.lost_psychopath.unique_mechanic",
+    "actors": [
+      "lost_psychopath"
+    ],
+    "starting_deck": [
+      "strike",
+      "strike",
+      "strike",
+      "defend",
+      "defend",
+      "wanderer_clean_cut",
+      "wanderer_breathe",
+      "wanderer_risky_stab"
+    ],
+    "starting_relics": [
+      "whetstone",
+      "old_bell"
+    ],
+    "starting_gold": 75,
+    "strengths": [
+      "archetype.lost_psychopath.strength.stress_scaling",
+      "archetype.lost_psychopath.strength.risk_pressure"
+    ],
+    "weaknesses": [
+      "archetype.lost_psychopath.weakness.instability"
+    ],
+    "mechanic_id": "stress_psychopath",
+    "palette": {
+      "name": "archetype.lost_psychopath.palette",
+      "accent": {
+        "r": 132,
+        "g": 132,
+        "b": 142
+      }
+    },
+    "visual_identity": "archetype.lost_psychopath.visual_identity",
+    "selection_order": 60
   },
   {
     "id": "sadist_masochist",
@@ -120,170 +290,7 @@
         "b": 58
       }
     },
-    "visual_identity": "archetype.sadist_masochist.visual_identity"
-  },
-  {
-    "id": "replicant",
-    "name": "archetype.replicant.name",
-    "short_description": "archetype.replicant.short_description",
-    "details_description": "archetype.replicant.details_description",
-    "unique_mechanic": "archetype.replicant.unique_mechanic",
-    "actors": [
-      "replicant"
-    ],
-    "starting_deck": [
-      "cyborg_striker_drone",
-      "cyborg_guardian_drone",
-      "cyborg_bomber_drone",
-      "cyborg_trigger_drone",
-      "cyborg_wrench_hit",
-      "defend",
-      "strike"
-    ],
-    "starting_relics": [
-      "empty_dock"
-    ],
-    "starting_gold": 60,
-    "strengths": [
-      "archetype.replicant.strength.drones",
-      "archetype.replicant.strength.marks"
-    ],
-    "weaknesses": [
-      "archetype.replicant.weakness.slot_pressure"
-    ],
-    "mechanic_id": "replicant_drones",
-    "palette": {
-      "name": "archetype.replicant.palette",
-      "accent": {
-        "r": 68,
-        "g": 139,
-        "b": 205
-      }
-    },
-    "visual_identity": "archetype.replicant.visual_identity"
-  },
-  {
-    "id": "monk",
-    "name": "archetype.monk.name",
-    "short_description": "archetype.monk.short_description",
-    "details_description": "archetype.monk.details_description",
-    "unique_mechanic": "archetype.monk.unique_mechanic",
-    "actors": [
-      "monk"
-    ],
-    "starting_deck": [
-      "monk_enter_flame",
-      "monk_enter_ash",
-      "monk_enter_smoke",
-      "monk_palm_strike",
-      "monk_ash_guard",
-      "monk_smoke_step",
-      "strike"
-    ],
-    "starting_relics": [
-      "coal_rosary"
-    ],
-    "starting_gold": 70,
-    "strengths": [
-      "archetype.monk.strength.stances",
-      "archetype.monk.strength.flexible_tempo"
-    ],
-    "weaknesses": [
-      "archetype.monk.weakness.misstance"
-    ],
-    "mechanic_id": "monk_stances",
-    "palette": {
-      "name": "archetype.monk.palette",
-      "accent": {
-        "r": 137,
-        "g": 88,
-        "b": 190
-      }
-    },
-    "visual_identity": "archetype.monk.visual_identity"
-  },
-  {
-    "id": "lost_psychopath",
-    "name": "archetype.lost_psychopath.name",
-    "short_description": "archetype.lost_psychopath.short_description",
-    "details_description": "archetype.lost_psychopath.details_description",
-    "unique_mechanic": "archetype.lost_psychopath.unique_mechanic",
-    "actors": [
-      "lost_psychopath"
-    ],
-    "starting_deck": [
-      "strike",
-      "strike",
-      "strike",
-      "defend",
-      "defend",
-      "wanderer_clean_cut",
-      "wanderer_breathe",
-      "wanderer_risky_stab"
-    ],
-    "starting_relics": [
-      "whetstone",
-      "old_bell"
-    ],
-    "starting_gold": 75,
-    "strengths": [
-      "archetype.lost_psychopath.strength.stress_scaling",
-      "archetype.lost_psychopath.strength.risk_pressure"
-    ],
-    "weaknesses": [
-      "archetype.lost_psychopath.weakness.instability"
-    ],
-    "mechanic_id": "stress_psychopath",
-    "palette": {
-      "name": "archetype.lost_psychopath.palette",
-      "accent": {
-        "r": 132,
-        "g": 132,
-        "b": 142
-      }
-    },
-    "visual_identity": "archetype.lost_psychopath.visual_identity"
-  },
-  {
-    "id": "merchant",
-    "name": "archetype.merchant.name",
-    "short_description": "archetype.merchant.short_description",
-    "details_description": "archetype.merchant.details_description",
-    "unique_mechanic": "archetype.merchant.unique_mechanic",
-    "actors": [
-      "merchant"
-    ],
-    "starting_deck": [
-      "merchant_debt_slash",
-      "merchant_debt_slash",
-      "merchant_cash_guard",
-      "merchant_cash_guard",
-      "merchant_quick_deal",
-      "defend",
-      "strike"
-    ],
-    "starting_relics": [
-      "bone_purse",
-      "copper_coin"
-    ],
-    "starting_gold": 140,
-    "strengths": [
-      "archetype.merchant.strength.gold_income",
-      "archetype.merchant.strength.shop_control"
-    ],
-    "weaknesses": [
-      "archetype.merchant.weakness.no_card_rewards",
-      "archetype.merchant.weakness.shop_dependency"
-    ],
-    "mechanic_id": "merchant_progression",
-    "palette": {
-      "name": "archetype.merchant.palette",
-      "accent": {
-        "r": 214,
-        "g": 177,
-        "b": 64
-      }
-    },
-    "visual_identity": "archetype.merchant.visual_identity"
+    "visual_identity": "archetype.sadist_masochist.visual_identity",
+    "selection_order": 70
   }
 ]

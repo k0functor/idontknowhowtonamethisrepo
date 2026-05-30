@@ -3,6 +3,7 @@
 #include "data/JsonLoader.hpp"
 #include "data/parsers/PlayableArchetypeParser.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 void PlayableArchetypeDatabase::clear() {
@@ -66,6 +67,17 @@ std::vector<const PlayableArchetypeDefinition*> PlayableArchetypeDatabase::all()
     for (const auto& [_, definition] : archetypes_) {
         result.push_back(&definition);
     }
+
+    std::sort(result.begin(), result.end(), [](
+        const PlayableArchetypeDefinition* left,
+        const PlayableArchetypeDefinition* right
+    ) {
+        if (left->selectionOrder != right->selectionOrder) {
+            return left->selectionOrder < right->selectionOrder;
+        }
+
+        return left->id.value < right->id.value;
+    });
 
     return result;
 }

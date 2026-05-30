@@ -111,14 +111,14 @@ bool TurnSystem::updateCombatResult(CombatState& state) const {
     if (state.aliveEnemyIds().empty()) {
         state.phase = CombatPhase::Won;
         state.enemyIntents.clear();
-        state.log.add("Combat won");
+        state.log.add(CombatLogEntryType::CombatWon);
         return true;
     }
 
     if (state.alivePlayerIds().empty()) {
         state.phase = CombatPhase::Lost;
         state.enemyIntents.clear();
-        state.log.add("Combat lost");
+        state.log.add(CombatLogEntryType::CombatLost);
         return true;
     }
 
@@ -154,7 +154,10 @@ bool TurnSystem::advanceToNextPlayerSubturn(CombatState& state) const {
     for (std::size_t i = start; i < state.players.size(); ++i) {
         if (state.players[i].isAlive()) {
             state.activePlayerIndex = i;
-            state.log.add("Active player actor: " + state.players[i].definitionId);
+            state.log.add(
+                CombatLogEntryType::ActivePlayerActor,
+                {{"actor", state.players[i].definitionId}}
+            );
             return true;
         }
     }

@@ -1,5 +1,5 @@
 {
-  "combat.defeat.continue_hint": "Нажмите Enter, Space или кликните, чтобы продолжить.",
+  "combat.defeat.continue_hint": "Нажмите Ввод, Пробел или кликните, чтобы продолжить.",
   "combat.defeat.description": "Забег завершён.",
   "combat.defeat.title": "Поражение",
   "combat.phase.enemy_turn": "Ход врага",

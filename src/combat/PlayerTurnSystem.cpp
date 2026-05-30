@@ -28,12 +28,12 @@ void PlayerTurnSystem::startTurn(
     }
 
     drawSystem_.drawCards(state.deck, state.hand, handSize, random);
-    state.log.add("Player turn started: " + std::to_string(state.turn));
+    state.log.add(CombatLogEntryType::PlayerTurnStarted, {{"turn", std::to_string(state.turn)}});
 }
 
 void PlayerTurnSystem::endTurn(CombatState& state) const {
     discardHand(state);
-    state.log.add("Player turn ended");
+    state.log.add(CombatLogEntryType::PlayerTurnEnded);
 }
 
 void PlayerTurnSystem::discardHand(CombatState& state) const {
