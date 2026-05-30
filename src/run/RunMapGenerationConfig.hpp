@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <string>
+#include <vector>
 
 struct RunMapLayoutConfig {
     float startX = 120.f;
@@ -38,8 +39,12 @@ public:
     int layerCount() const;
     int middleMinNodes() const;
     int middleMaxNodes() const;
+    bool hasLayerNodeCounts() const;
+    int nodeCountForLayer(int layer, class Random& random) const;
+    const std::vector<int>& layerNodeCounts() const;
     int combatWeight() const;
     int eventWeight() const;
+    int extraConnectionChance() const;
     const RunMapSpecialNodeConfig& shop() const;
     const RunMapSpecialNodeConfig& chests() const;
     const RunMapEliteConfig& elites() const;
@@ -55,8 +60,10 @@ private:
     int layerCount_ = 12;
     int middleMinNodes_ = 2;
     int middleMaxNodes_ = 4;
+    std::vector<int> layerNodeCounts_;
     int combatWeight_ = 70;
     int eventWeight_ = 30;
+    int extraConnectionChance_ = 35;
     RunMapSpecialNodeConfig shop_{1, 2, 8};
     RunMapSpecialNodeConfig chests_{0, 1, 1};
     RunMapEliteConfig elites_{1, 2, 3, 8};

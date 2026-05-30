@@ -5,13 +5,16 @@
 #include "cards/CardType.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "consumables/ConsumableId.hpp"
+#include "rewards/RewardPoolRules.hpp"
 #include "run/RunCardEligibility.hpp"
 #include "run/StressRules.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <limits>
 #include <optional>
 #include <utility>
 
@@ -62,6 +65,44 @@ std::optional<std::string> chooseRandomConsumable(const ConsumableDatabase& cons
     const int index = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
     return candidates[static_cast<std::size_t>(index)]->id.value;
 }
+
+
+bool containsDeckIndex(const std::vector<int>& indices, const std::size_t deckIndex) {
+    if (deckIndex > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        return false;
+    }
+
+    const int value = static_cast<int>(deckIndex);
+    return std::find(indices.begin(), indices.end(), value) != indices.end();
+}
+
+void eraseDeckIndexAndShiftUpgrades(RunState& state, const std::size_t erasedIndex) {
+    if (erasedIndex >= state.deckCardIds.size()) {
+        return;
+    }
+
+    state.deckCardIds.erase(state.deckCardIds.begin() + static_cast<std::ptrdiff_t>(erasedIndex));
+
+    std::vector<int> updated;
+    updated.reserve(state.upgradedDeckIndices.size());
+    for (const int index : state.upgradedDeckIndices) {
+        if (index < 0) {
+            continue;
+        }
+
+        const std::size_t current = static_cast<std::size_t>(index);
+        if (current == erasedIndex) {
+            continue;
+        }
+
+        updated.push_back(current > erasedIndex ? index - 1 : index);
+    }
+
+    std::sort(updated.begin(), updated.end());
+    updated.erase(std::unique(updated.begin(), updated.end()), updated.end());
+    state.upgradedDeckIndices = std::move(updated);
+}
+
 }
 
 void RunController::startNewRun(
@@ -274,7 +315,7 @@ std::optional<RelicId> RunController::chooseChestRelic(
             continue;
         }
 
-        if (relic->rarity == RelicRarity::Starter || relic->rarity == RelicRarity::Special) {
+        if (!RewardPoolRules::canAppearAsRelicReward(*relic)) {
             continue;
         }
 
@@ -357,23 +398,16 @@ void RunController::adjustAllActorsStress(const int delta, Random* random) {
     }
 }
 
-void RunController::completeRestUpgrade(const int nodeId, CardId cardId) {
+void RunController::completeRestUpgrade(const int nodeId, const std::size_t deckIndex) {
     RunState& state = run();
 
-    const bool cardInDeck = std::find(
-        state.deckCardIds.begin(),
-        state.deckCardIds.end(),
-        cardId
-    ) != state.deckCardIds.end();
-
-    const bool alreadyUpgraded = std::find(
-        state.upgradedCardIds.begin(),
-        state.upgradedCardIds.end(),
-        cardId
-    ) != state.upgradedCardIds.end();
-
-    if (cardInDeck && !alreadyUpgraded) {
-        state.upgradedCardIds.push_back(std::move(cardId));
+    if (deckIndex < state.deckCardIds.size() && !containsDeckIndex(state.upgradedDeckIndices, deckIndex)) {
+        state.upgradedDeckIndices.push_back(static_cast<int>(deckIndex));
+        std::sort(state.upgradedDeckIndices.begin(), state.upgradedDeckIndices.end());
+        state.upgradedDeckIndices.erase(
+            std::unique(state.upgradedDeckIndices.begin(), state.upgradedDeckIndices.end()),
+            state.upgradedDeckIndices.end()
+        );
     }
 
     markNodeCompletedAndUnlockNext(nodeId);
@@ -430,13 +464,25 @@ bool RunController::purchaseShopItem(const ShopPurchase& purchase) {
             return true;
 
         case ShopOfferType::CardRemoval: {
-            const auto iterator = std::find(state.deckCardIds.begin(), state.deckCardIds.end(), purchase.cardId);
-            if (iterator == state.deckCardIds.end()) {
-                return false;
+            std::size_t removedIndex = 0;
+
+            if (purchase.hasDeckIndex) {
+                if (purchase.deckIndex >= state.deckCardIds.size()) {
+                    return false;
+                }
+
+                removedIndex = purchase.deckIndex;
+            } else {
+                const auto iterator = std::find(state.deckCardIds.begin(), state.deckCardIds.end(), purchase.cardId);
+                if (iterator == state.deckCardIds.end()) {
+                    return false;
+                }
+
+                removedIndex = static_cast<std::size_t>(std::distance(state.deckCardIds.begin(), iterator));
             }
 
             state.gold -= purchase.price;
-            state.deckCardIds.erase(iterator);
+            eraseDeckIndexAndShiftUpgrades(state, removedIndex);
             return true;
         }
     }

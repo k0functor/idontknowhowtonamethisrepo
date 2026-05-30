@@ -3,6 +3,8 @@
 #include "cards/CardDescriptionFormatter.hpp"
 
 #include "cards/CardDefinition.hpp"
+#include "consumables/ConsumableDefinition.hpp"
+#include "consumables/ConsumableId.hpp"
 #include "relics/RelicDefinition.hpp"
 #include "inspect/InspectPanelModel.hpp"
 #include "ui/BasicUi.hpp"
@@ -19,6 +21,7 @@ RewardScene::RewardScene(
     const LocalizationManager& localization,
     const CardDatabase& cards,
     const RelicDatabase& relics,
+    const ConsumableDatabase& consumables,
     RewardState reward,
     std::function<void(RewardSelection)> onContinue
 )
@@ -26,6 +29,7 @@ RewardScene::RewardScene(
       localization_(localization),
       cards_(cards),
       relics_(relics),
+      consumables_(consumables),
       reward_(std::move(reward)),
       onContinue_(std::move(onContinue)) {}
 
@@ -34,6 +38,11 @@ void RewardScene::update(float) {
 
     if (cardChoiceOpen_) {
         updateCardChoice(mouse);
+        return;
+    }
+
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) || IsKeyPressed(KEY_ESCAPE)) {
+        onContinue_(selection_);
         return;
     }
 
@@ -67,6 +76,14 @@ void RewardScene::render() const {
     DrawRectangleRounded(panel, 0.06f, 12, Color{31, 34, 44, 255});
     DrawRectangleRoundedLinesEx(panel, 0.06f, 12, 2.f, Color{120, 130, 160, 255});
 
+    BasicUi::drawText(
+        font_,
+        rewardHint(),
+        Vector2{panel.x + 30.f, panel.y + 56.f},
+        17.f,
+        Color{190, 196, 215, 255}
+    );
+
     if (reward_.options.empty()) {
         BasicUi::drawCenteredText(
             font_,
@@ -86,10 +103,11 @@ void RewardScene::render() const {
 
             BasicUi::drawText(font_, optionTitle(option), Vector2{row.x + 22.f, row.y + 12.f}, 23.f, Color{245, 245, 250, 255});
 
-            if (option.type == RewardOptionType::Relic) {
+            const std::string description = optionDescription(option);
+            if (!description.empty()) {
                 BasicUi::drawText(
                     font_,
-                    relicDescription(option.relicId),
+                    description,
                     Vector2{row.x + 22.f, row.y + 42.f},
                     15.f,
                     Color{190, 198, 220, 255}
@@ -306,10 +324,31 @@ std::string RewardScene::optionTitle(const RewardOption& option) const {
         case RewardOptionType::CardChoice:
             return localization_.get(TextId("reward.take_card"));
         case RewardOptionType::Consumable:
-            return localization_.get(TextId("reward.take_consumable"));
+            return localization_.format(
+                TextId("reward.take_consumable_named"),
+                {{"consumable", consumableName(option.consumableId)}}
+            );
         case RewardOptionType::Relic:
             return localization_.format(TextId("reward.take_relic"), {{"relic", relicName(option.relicId)}});
     }
+    return {};
+}
+
+std::string RewardScene::optionDescription(const RewardOption& option) const {
+    switch (option.type) {
+        case RewardOptionType::Gold:
+            return localization_.get(TextId("reward.gold_description"));
+        case RewardOptionType::CardChoice:
+            return localization_.format(
+                TextId("reward.card_choice_description"),
+                {{"count", std::to_string(option.cardOptions.size())}}
+            );
+        case RewardOptionType::Consumable:
+            return consumableDescription(option.consumableId);
+        case RewardOptionType::Relic:
+            return relicDescription(option.relicId);
+    }
+
     return {};
 }
 
@@ -338,10 +377,34 @@ std::string RewardScene::relicDescription(const std::string& relicId) const {
     return localization_.get(relics_.get(RelicId(relicId)).descriptionTextId);
 }
 
+std::string RewardScene::consumableName(const std::string& consumableId) const {
+    if (consumableId.empty() || !consumables_.contains(ConsumableId(consumableId))) {
+        return consumableId;
+    }
+
+    return localization_.get(consumables_.get(ConsumableId(consumableId)).nameTextId);
+}
+
+std::string RewardScene::consumableDescription(const std::string& consumableId) const {
+    if (consumableId.empty() || !consumables_.contains(ConsumableId(consumableId))) {
+        return consumableId;
+    }
+
+    return localization_.get(consumables_.get(ConsumableId(consumableId)).descriptionTextId);
+}
+
 std::string RewardScene::rewardTitle() const {
     if (reward_.sourceNodeType == RunMapNodeType::Chest) {
         return localization_.get(TextId("reward.chest_title"));
     }
 
     return localization_.get(TextId("reward.title"));
+}
+
+std::string RewardScene::rewardHint() const {
+    if (reward_.sourceNodeType == RunMapNodeType::Chest) {
+        return localization_.get(TextId("reward.chest_optional_hint"));
+    }
+
+    return localization_.get(TextId("reward.optional_hint"));
 }

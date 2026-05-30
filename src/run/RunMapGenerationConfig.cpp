@@ -2,6 +2,7 @@
 
 #include "data/JsonLoader.hpp"
 #include "data/JsonReader.hpp"
+#include "core/Random.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -61,6 +62,30 @@ RunMapEventConfig parseEventConfig(
     return result;
 }
 
+
+std::vector<int> parseLayerNodeCounts(
+    const Json& json,
+    const std::filesystem::path& filePath
+) {
+    if (!json.is_array()) {
+        throw std::runtime_error(filePath.string() + ": 'layer_node_counts' must be an array");
+    }
+
+    std::vector<int> result;
+    result.reserve(json.size());
+
+    for (std::size_t index = 0; index < json.size(); ++index) {
+        const Json& value = json.at(index);
+        if (!value.is_number_integer()) {
+            throw std::runtime_error(filePath.string() + ": all elements of 'layer_node_counts' must be integers");
+        }
+
+        result.push_back(value.get<int>());
+    }
+
+    return result;
+}
+
 RunMapLayoutConfig parseLayoutConfig(
     const Json& json,
     const RunMapLayoutConfig& fallback,
@@ -88,8 +113,14 @@ void RunMapGenerationConfig::loadFromFile(const std::filesystem::path& filePath)
     layerCount_ = reader.optionalInt("layer_count", layerCount_);
     middleMinNodes_ = reader.optionalInt("middle_min_nodes", middleMinNodes_);
     middleMaxNodes_ = reader.optionalInt("middle_max_nodes", middleMaxNodes_);
+
+    if (reader.has("layer_node_counts")) {
+        layerNodeCounts_ = parseLayerNodeCounts(reader.requiredArray("layer_node_counts"), filePath);
+        layerCount_ = static_cast<int>(layerNodeCounts_.size());
+    }
     combatWeight_ = reader.optionalInt("combat_weight", combatWeight_);
     eventWeight_ = reader.optionalInt("event_weight", eventWeight_);
+    extraConnectionChance_ = reader.optionalInt("extra_connection_chance", extraConnectionChance_);
 
     if (reader.has("shop")) {
         shop_ = parseSpecialNodeConfig(reader.requiredObject("shop"), shop_, filePath, "shop");
@@ -131,12 +162,36 @@ int RunMapGenerationConfig::middleMaxNodes() const {
     return middleMaxNodes_;
 }
 
+bool RunMapGenerationConfig::hasLayerNodeCounts() const {
+    return !layerNodeCounts_.empty();
+}
+
+int RunMapGenerationConfig::nodeCountForLayer(const int layer, Random& random) const {
+    if (hasLayerNodeCounts()) {
+        if (layer < 0 || layer >= static_cast<int>(layerNodeCounts_.size())) {
+            throw std::runtime_error("Requested run map layer is outside configured layer_node_counts");
+        }
+
+        return layerNodeCounts_[static_cast<std::size_t>(layer)];
+    }
+
+    return random.rangeInclusive(middleMinNodes_, middleMaxNodes_);
+}
+
+const std::vector<int>& RunMapGenerationConfig::layerNodeCounts() const {
+    return layerNodeCounts_;
+}
+
 int RunMapGenerationConfig::combatWeight() const {
     return combatWeight_;
 }
 
 int RunMapGenerationConfig::eventWeight() const {
     return eventWeight_;
+}
+
+int RunMapGenerationConfig::extraConnectionChance() const {
+    return extraConnectionChance_;
 }
 
 const RunMapSpecialNodeConfig& RunMapGenerationConfig::shop() const {
@@ -172,12 +227,28 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
         throw std::runtime_error(filePath.string() + ": layer_count must be at least 4");
     }
 
+    if (hasLayerNodeCounts()) {
+        if (static_cast<int>(layerNodeCounts_.size()) != layerCount_) {
+            throw std::runtime_error(filePath.string() + ": layer_node_counts size must match layer_count");
+        }
+
+        for (std::size_t index = 0; index < layerNodeCounts_.size(); ++index) {
+            if (layerNodeCounts_[index] <= 0) {
+                throw std::runtime_error(filePath.string() + ": layer_node_counts must contain only positive counts");
+            }
+        }
+    }
+
     if (middleMinNodes_ <= 0 || middleMaxNodes_ <= 0 || middleMinNodes_ > middleMaxNodes_) {
         throw std::runtime_error(filePath.string() + ": middle node counts must be positive and min <= max");
     }
 
     if (combatWeight_ < 0 || eventWeight_ < 0 || combatWeight_ + eventWeight_ <= 0) {
         throw std::runtime_error(filePath.string() + ": combat/event weights must be non-negative and not both zero");
+    }
+
+    if (extraConnectionChance_ < 0 || extraConnectionChance_ > 100) {
+        throw std::runtime_error(filePath.string() + ": extra_connection_chance must be between 0 and 100");
     }
 
     const int firstMiddleLayer = 1;
@@ -222,8 +293,17 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
     }
 
     const int guaranteedSpecials = shop_.count + chests_.count + elites_.maximum + (hasFixedEvents_ ? events_.maximum : 0);
-    const int middleLayerCount = lastMiddleLayer - firstMiddleLayer + 1;
-    if (guaranteedSpecials > middleLayerCount * middleMaxNodes_) {
+    int middleCapacity = 0;
+    if (hasLayerNodeCounts()) {
+        for (int layer = firstMiddleLayer; layer <= lastMiddleLayer; ++layer) {
+            middleCapacity += layerNodeCounts_[static_cast<std::size_t>(layer)];
+        }
+    } else {
+        const int middleLayerCount = lastMiddleLayer - firstMiddleLayer + 1;
+        middleCapacity = middleLayerCount * middleMaxNodes_;
+    }
+
+    if (guaranteedSpecials > middleCapacity) {
         throw std::runtime_error(filePath.string() + ": requested specials cannot fit into middle layers");
     }
 

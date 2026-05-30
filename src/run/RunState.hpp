@@ -27,7 +27,7 @@ struct RunState {
     float goldRewardMultiplier = 1.f;
 
     std::vector<CardId> deckCardIds;
-    std::vector<CardId> upgradedCardIds;
+    std::vector<int> upgradedDeckIndices;
 
     std::vector<std::string> relicIds;
 

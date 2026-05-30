@@ -109,6 +109,72 @@ std::vector<CardId> requiredCardIdArray(const Json& object, const std::string& k
     return result;
 }
 
+std::vector<int> intArrayFromJson(const Json& array, const std::string& key, const std::filesystem::path& sourcePath) {
+    if (!array.is_array()) {
+        throwSaveError(sourcePath, "'" + key + "' must be an array");
+    }
+
+    std::vector<int> result;
+    result.reserve(array.size());
+
+    for (std::size_t index = 0; index < array.size(); ++index) {
+        const Json& value = array.at(index);
+        if (!value.is_number_integer()) {
+            throwSaveError(sourcePath, "'" + key + "' element " + std::to_string(index) + " must be an integer");
+        }
+        result.push_back(value.get<int>());
+    }
+
+    return result;
+}
+
+std::vector<int> requiredIntArray(const Json& object, const std::string& key, const std::filesystem::path& sourcePath) {
+    return intArrayFromJson(requiredField(object, key, sourcePath), key, sourcePath);
+}
+
+Json intArray(const std::vector<int>& values) {
+    Json array = Json::array();
+    for (const int value : values) {
+        array.push_back(value);
+    }
+    return array;
+}
+
+std::vector<int> migrateLegacyUpgradedCardIds(
+    const std::vector<CardId>& deckCardIds,
+    const std::vector<CardId>& upgradedCardIds
+) {
+    std::vector<int> result;
+
+    for (const CardId& upgradedCardId : upgradedCardIds) {
+        for (std::size_t index = 0; index < deckCardIds.size(); ++index) {
+            if (deckCardIds[index] == upgradedCardId &&
+                std::find(result.begin(), result.end(), static_cast<int>(index)) == result.end()) {
+                result.push_back(static_cast<int>(index));
+                break;
+            }
+        }
+    }
+
+    std::sort(result.begin(), result.end());
+    return result;
+}
+
+void normalizeUpgradedDeckIndices(RunState& run) {
+    std::vector<int> normalized;
+    normalized.reserve(run.upgradedDeckIndices.size());
+
+    for (const int index : run.upgradedDeckIndices) {
+        if (index >= 0 && static_cast<std::size_t>(index) < run.deckCardIds.size()) {
+            normalized.push_back(index);
+        }
+    }
+
+    std::sort(normalized.begin(), normalized.end());
+    normalized.erase(std::unique(normalized.begin(), normalized.end()), normalized.end());
+    run.upgradedDeckIndices = std::move(normalized);
+}
+
 Json stringArray(const std::vector<std::string>& values) {
     Json array = Json::array();
     for (const std::string& value : values) {
@@ -650,7 +716,7 @@ Json RunStateSerializer::toJson(const RunState& run) {
         {"enemy_damage_multiplier", run.enemyDamageMultiplier},
         {"gold_reward_multiplier", run.goldRewardMultiplier},
         {"deck_card_ids", cardIdArray(run.deckCardIds)},
-        {"upgraded_card_ids", cardIdArray(run.upgradedCardIds)},
+        {"upgraded_deck_indices", intArray(run.upgradedDeckIndices)},
         {"relic_ids", stringArray(run.relicIds)},
         {"consumable_ids", stringArray(run.consumableIds)},
         {"max_consumables", run.maxConsumables},
@@ -679,7 +745,17 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
     run.enemyDamageMultiplier = requiredFloat(json, "enemy_damage_multiplier", sourcePath);
     run.goldRewardMultiplier = requiredFloat(json, "gold_reward_multiplier", sourcePath);
     run.deckCardIds = requiredCardIdArray(json, "deck_card_ids", sourcePath);
-    run.upgradedCardIds = requiredCardIdArray(json, "upgraded_card_ids", sourcePath);
+
+    if (const Json* upgradedDeckIndices = optionalField(json, "upgraded_deck_indices", sourcePath)) {
+        run.upgradedDeckIndices = intArrayFromJson(*upgradedDeckIndices, "upgraded_deck_indices", sourcePath);
+    } else if (optionalField(json, "upgraded_card_ids", sourcePath) != nullptr) {
+        run.upgradedDeckIndices = migrateLegacyUpgradedCardIds(
+            run.deckCardIds,
+            requiredCardIdArray(json, "upgraded_card_ids", sourcePath)
+        );
+    }
+
+    normalizeUpgradedDeckIndices(run);
     run.relicIds = requiredStringArray(json, "relic_ids", sourcePath);
     run.consumableIds = requiredStringArray(json, "consumable_ids", sourcePath);
     run.maxConsumables = requiredInt(json, "max_consumables", sourcePath);

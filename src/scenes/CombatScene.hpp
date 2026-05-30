@@ -60,8 +60,7 @@ public:
         Random& random,
         const UiFont& uiFont,
         const RunState& runState,
-        std::function<RewardState(const CombatResult&)> createRewardOnVictory,
-        std::function<void(const RewardState&, const RewardSelection&)> onRewardAccepted,
+        std::function<void(const CombatResult&)> onCombatWon,
         std::function<void(const CombatResult&)> onCombatLost
     );
 
@@ -208,6 +207,7 @@ private:
 
     std::function<RewardState(const CombatResult&)> createRewardOnVictory_;
     std::function<void(const RewardState&, const RewardSelection&)> onRewardAccepted_;
+    std::function<void(const CombatResult&)> onCombatWon_;
     std::function<void(const CombatResult&)> onCombatLost_;
 
     GameEventBus eventBus_;

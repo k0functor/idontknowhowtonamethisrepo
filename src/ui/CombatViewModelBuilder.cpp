@@ -517,6 +517,7 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.block = player.block;
         playerModel.stress = player.stress;
         playerModel.maxStress = player.maxStress;
+        playerModel.blockLabel = localizedOrFallback(localization_, "ui.block", "Block");
         playerModel.stressLabel = localizedOrFallback(localization_, "ui.stress", "Stress");
         playerModel.activeTurnLabel = localizedOrFallback(localization_, "ui.active_turn", "Acting");
         if (const std::optional<EntityId> activePlayer = state.activePlayerId()) {
@@ -561,6 +562,7 @@ CombatViewModel CombatViewModelBuilder::build(
         enemyModel.currentHp = enemy.health.current();
         enemyModel.maxHp = enemy.health.maximum();
         enemyModel.block = enemy.block;
+        enemyModel.blockLabel = localizedOrFallback(localization_, "ui.block", "Block");
         enemyModel.statuses = buildStatuses(enemy.statuses);
         enemyModel.alive = enemy.isAlive();
 

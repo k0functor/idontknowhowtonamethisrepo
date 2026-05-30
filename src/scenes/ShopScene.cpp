@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace {
-constexpr float offerHeight = 112.f;
+constexpr float offerHeight = 124.f;
 constexpr float offerSpacing = 18.f;
 }
 
@@ -151,6 +151,7 @@ void ShopScene::updateShop(const Vector2 mouse) {
 
         if (offer.type == ShopOfferType::CardRemoval) {
             removeMode_ = true;
+            removeScrollOffset_ = 0;
             return;
         }
 
@@ -172,6 +173,22 @@ void ShopScene::updateShop(const Vector2 mouse) {
 void ShopScene::updateRemoveMode(const Vector2 mouse) {
     const Rectangle modal = removeModeBounds();
 
+    const float wheel = GetMouseWheelMove();
+    if (wheel > 0.f && removeScrollOffset_ > 0u) {
+        --removeScrollOffset_;
+    } else if (wheel < 0.f && removeScrollOffset_ + visibleRemoveCardCount() < runState_.deckCardIds.size()) {
+        ++removeScrollOffset_;
+    }
+
+    if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) && removeScrollOffset_ > 0u) {
+        --removeScrollOffset_;
+    }
+    if ((IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) && removeScrollOffset_ + visibleRemoveCardCount() < runState_.deckCardIds.size()) {
+        ++removeScrollOffset_;
+    }
+
+    clampRemoveScrollOffset();
+
     if (IsKeyPressed(KEY_ESCAPE) ||
         (BasicUi::contains(removeCancelButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         removeMode_ = false;
@@ -182,14 +199,18 @@ void ShopScene::updateRemoveMode(const Vector2 mouse) {
         return;
     }
 
-    for (std::size_t i = 0; i < runState_.deckCardIds.size(); ++i) {
-        if (!BasicUi::contains(removeCardBounds(i), mouse)) {
+    const std::size_t visibleCount = visibleRemoveCardCount();
+    for (std::size_t visibleIndex = 0; visibleIndex < visibleCount; ++visibleIndex) {
+        const std::size_t deckIndex = removeScrollOffset_ + visibleIndex;
+        if (deckIndex >= runState_.deckCardIds.size() || !BasicUi::contains(removeCardBounds(visibleIndex), mouse)) {
             continue;
         }
 
         ShopPurchase purchase;
         purchase.type = ShopOfferType::CardRemoval;
-        purchase.cardId = runState_.deckCardIds[i];
+        purchase.cardId = runState_.deckCardIds[deckIndex];
+        purchase.deckIndex = deckIndex;
+        purchase.hasDeckIndex = true;
         purchase.price = shopState_.cardRemovalPrice;
 
         if (onPurchase_(purchase)) {
@@ -209,6 +230,17 @@ void ShopScene::updateRemoveMode(const Vector2 mouse) {
     }
 }
 
+void ShopScene::clampRemoveScrollOffset() {
+    const std::size_t visibleCount = visibleRemoveCardCount();
+    if (runState_.deckCardIds.size() <= visibleCount) {
+        removeScrollOffset_ = 0;
+        return;
+    }
+
+    const std::size_t maximumOffset = runState_.deckCardIds.size() - visibleCount;
+    removeScrollOffset_ = std::min(removeScrollOffset_, maximumOffset);
+}
+
 void ShopScene::renderOffers() const {
     const Vector2 mouse = GetMousePosition();
 
@@ -224,18 +256,27 @@ void ShopScene::renderOffers() const {
 
         BasicUi::drawText(font_, offerKind(offer), Vector2{bounds.x + 16.f, bounds.y + 11.f}, 15.f, Color{180, 188, 210, 255});
         BasicUi::drawText(font_, offerName(offer), Vector2{bounds.x + 16.f, bounds.y + 34.f}, 22.f, enabled ? Color{244, 244, 250, 255} : Color{135, 139, 154, 255});
-        BasicUi::drawText(font_, priceText(offer.price), Vector2{bounds.x + bounds.width - 104.f, bounds.y + 13.f}, 18.f, enabled ? Color{236, 214, 126, 255} : Color{130, 125, 96, 255});
+        BasicUi::drawText(font_, priceText(offer.price), Vector2{bounds.x + bounds.width - 150.f, bounds.y + 13.f}, 18.f, enabled ? Color{236, 214, 126, 255} : Color{130, 125, 96, 255});
 
         const std::string description = offerDescription(offer);
         const std::vector<std::string> lines = BasicUi::wrapText(font_, description, 14.f, bounds.width - 34.f);
         float y = bounds.y + 67.f;
         for (const std::string& line : lines) {
-            if (y > bounds.y + bounds.height - 18.f) {
+            if (y > bounds.y + bounds.height - 44.f) {
                 break;
             }
             BasicUi::drawText(font_, line, Vector2{bounds.x + 16.f, y}, 14.f, Color{190, 198, 220, 255});
             y += 18.f;
         }
+
+        const std::string status = offerStatus(offer);
+        BasicUi::drawText(
+            font_,
+            status,
+            Vector2{bounds.x + 16.f, bounds.y + bounds.height - 22.f},
+            14.f,
+            offerStatusColor(offer)
+        );
 
         if (offer.purchased) {
             BasicUi::drawCenteredText(font_, localization_.get(TextId("shop.sold")), bounds, 26.f, Color{245, 220, 145, 220});
@@ -254,17 +295,42 @@ void ShopScene::renderRemoveMode() const {
     BasicUi::drawCenteredText(font_, localization_.get(TextId("shop.remove_card_title")), Rectangle{modal.x + 20.f, modal.y + 22.f, modal.width - 40.f, 42.f}, 30.f, Color{255, 235, 175, 255});
     BasicUi::drawCenteredText(font_, localization_.format(TextId("shop.remove_card_description"), {{"price", std::to_string(shopState_.cardRemovalPrice)}}), Rectangle{modal.x + 30.f, modal.y + 64.f, modal.width - 60.f, 30.f}, 17.f, Color{190, 198, 220, 255});
 
-    const std::size_t maxVisible = std::min<std::size_t>(runState_.deckCardIds.size(), 7);
-    for (std::size_t i = 0; i < maxVisible; ++i) {
-        const Rectangle row = removeCardBounds(i);
+    const std::size_t visibleCount = visibleRemoveCardCount();
+    for (std::size_t visibleIndex = 0; visibleIndex < visibleCount; ++visibleIndex) {
+        const std::size_t deckIndex = removeScrollOffset_ + visibleIndex;
+        if (deckIndex >= runState_.deckCardIds.size()) {
+            break;
+        }
+
+        const Rectangle row = removeCardBounds(visibleIndex);
         const bool hovered = BasicUi::contains(row, mouse);
         DrawRectangleRounded(row, 0.08f, 8, hovered ? Color{55, 60, 78, 255} : Color{40, 43, 56, 255});
         DrawRectangleRoundedLinesEx(row, 0.08f, 8, 2.f, hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
-        BasicUi::drawText(font_, cardName(runState_.deckCardIds[i]), Vector2{row.x + 16.f, row.y + 10.f}, 19.f, Color{238, 238, 245, 255});
+        BasicUi::drawText(font_, cardName(runState_.deckCardIds[deckIndex]), Vector2{row.x + 16.f, row.y + 10.f}, 19.f, Color{238, 238, 245, 255});
+        BasicUi::drawText(
+            font_,
+            localization_.format(TextId("shop.deck_index"), {{"index", std::to_string(deckIndex + 1)}}),
+            Vector2{row.x + row.width - 82.f, row.y + 11.f},
+            16.f,
+            Color{164, 172, 196, 255}
+        );
     }
 
-    if (runState_.deckCardIds.size() > maxVisible) {
-        BasicUi::drawCenteredText(font_, localization_.get(TextId("shop.remove_only_first_cards")), Rectangle{modal.x + 30.f, modal.y + modal.height - 112.f, modal.width - 60.f, 28.f}, 15.f, Color{174, 180, 202, 255});
+    if (runState_.deckCardIds.size() > visibleCount) {
+        BasicUi::drawCenteredText(
+            font_,
+            localization_.format(
+                TextId("shop.remove_scroll_hint"),
+                {
+                    {"from", std::to_string(removeScrollOffset_ + 1)},
+                    {"to", std::to_string(std::min(runState_.deckCardIds.size(), removeScrollOffset_ + visibleCount))},
+                    {"total", std::to_string(runState_.deckCardIds.size())}
+                }
+            ),
+            Rectangle{modal.x + 30.f, modal.y + modal.height - 112.f, modal.width - 60.f, 28.f},
+            15.f,
+            Color{174, 180, 202, 255}
+        );
     }
 
     BasicUi::drawButton(font_, removeCancelButtonBounds(modal), localization_.get(TextId("reward.cancel")), mouse);
@@ -347,6 +413,49 @@ std::string ShopScene::offerKind(const ShopOffer& offer) const {
     return {};
 }
 
+std::string ShopScene::offerStatus(const ShopOffer& offer) const {
+    if (offer.purchased) {
+        return localization_.get(TextId("shop.status.sold"));
+    }
+
+    if (offer.type == ShopOfferType::Consumable && static_cast<int>(runState_.consumableIds.size()) >= runState_.maxConsumables) {
+        return localization_.get(TextId("shop.status.consumables_full"));
+    }
+
+    if (offer.type == ShopOfferType::CardRemoval) {
+        if (shopState_.cardRemovalUsed) {
+            return localization_.get(TextId("shop.status.removal_used"));
+        }
+        if (runState_.deckCardIds.empty()) {
+            return localization_.get(TextId("shop.status.deck_empty"));
+        }
+    }
+
+    if (runState_.gold < offer.price) {
+        return localization_.format(TextId("shop.status.not_enough_gold"), {{"missing", std::to_string(offer.price - runState_.gold)}});
+    }
+
+    return localization_.get(TextId("shop.status.click_to_buy"));
+}
+
+Color ShopScene::offerStatusColor(const ShopOffer& offer) const {
+    if (canBuy(offer)) {
+        return Color{156, 210, 158, 255};
+    }
+
+    if (offer.purchased) {
+        return Color{236, 214, 126, 255};
+    }
+
+    return Color{210, 145, 135, 255};
+}
+
+std::size_t ShopScene::visibleRemoveCardCount() const {
+    const Rectangle modal = removeModeBounds();
+    const float availableHeight = std::max(42.f, modal.height - 190.f);
+    return std::max<std::size_t>(1u, static_cast<std::size_t>(availableHeight / 52.f));
+}
+
 std::string ShopScene::cardName(const CardId& cardId) const {
     if (!cards_.contains(cardId)) {
         return cardId.value;
@@ -364,6 +473,6 @@ std::string ShopScene::cardDescription(const CardId& cardId) const {
     return descriptionFormatter.formatStaticDescription(cards_.get(cardId));
 }
 
-std::string ShopScene::priceText(const int price) {
-    return std::to_string(price) + "g";
+std::string ShopScene::priceText(const int price) const {
+    return localization_.format(TextId("shop.price"), {{"price", std::to_string(price)}});
 }

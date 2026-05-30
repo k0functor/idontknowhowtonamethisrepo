@@ -2,6 +2,7 @@
 
 #include "cards/CardId.hpp"
 
+#include <cstddef>
 #include <string>
 
 #include <raylib.h>
@@ -24,5 +25,7 @@ struct ShopPurchase {
     ShopOfferType type = ShopOfferType::Card;
     std::string contentId;
     CardId cardId;
+    std::size_t deckIndex = 0;
+    bool hasDeckIndex = false;
     int price = 0;
 };

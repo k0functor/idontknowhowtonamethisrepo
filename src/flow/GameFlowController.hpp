@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "archetypes/PlayableArchetypeId.hpp"
 #include "cards/CardId.hpp"
 #include "combat/CombatResult.hpp"
@@ -69,6 +71,7 @@ private:
     void setRunMapScene();
     bool setPendingRoomSceneIfNeeded();
     void setCombatScene(int nodeId);
+    void setCombatRewardScene(int nodeId, RewardState reward);
     void setChestRewardScene(int nodeId, RewardState reward);
     void setShopScene(int nodeId, ShopState shopState);
     void setEventScene(int nodeId, const RunEventDefinition& event);
@@ -83,7 +86,7 @@ private:
     void selectDifficulty(DifficultyId difficultyId);
     void startMapNode(int nodeId);
     void restHeal(int nodeId);
-    void restUpgrade(int nodeId, CardId cardId);
+    void restUpgrade(int nodeId, std::size_t deckIndex);
     void restSkip(int nodeId);
     bool purchaseShopItem(const ShopPurchase& purchase);
     void updatePendingShopState(int nodeId, const ShopState& shopState);

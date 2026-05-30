@@ -186,8 +186,7 @@ CombatScene::CombatScene(
     Random& random,
     const UiFont& uiFont,
     const RunState& runState,
-    std::function<RewardState(const CombatResult&)> createRewardOnVictory,
-    std::function<void(const RewardState&, const RewardSelection&)> onRewardAccepted,
+    std::function<void(const CombatResult&)> onCombatWon,
     std::function<void(const CombatResult&)> onCombatLost
 )
     : content_(content),
@@ -195,8 +194,7 @@ CombatScene::CombatScene(
       random_(random),
       uiFont_(uiFont),
       runState_(runState),
-      createRewardOnVictory_(std::move(createRewardOnVictory)),
-      onRewardAccepted_(std::move(onRewardAccepted)),
+      onCombatWon_(std::move(onCombatWon)),
       onCombatLost_(std::move(onCombatLost)),
       relicSystem_(content_.relics()),
       damageSystem_(modifierSystem_, &eventBus_),
@@ -323,9 +321,10 @@ void CombatScene::update(const float deltaSeconds) {
         view_.update(deltaSeconds, blockedMousePosition());
 
         if (state_.phase == CombatPhase::Won) {
-            openRewardModalIfNeeded();
-            updateRewardModalInput(mousePosition);
-        } else if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            return;
+        }
+
+        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             onCombatLost_(finalResult_);
         }
 
@@ -518,10 +517,10 @@ void CombatScene::render() const {
     }
 
     if (state_.phase == CombatPhase::Won) {
-        renderRewardModal();
-    } else {
-        renderDefeatModal();
+        return;
     }
+
+    renderDefeatModal();
 }
 
 void CombatScene::onLocalizationChanged() {
@@ -807,16 +806,17 @@ void CombatScene::initializeCombat() {
         throw std::runtime_error("Cannot initialize combat: run deck is empty");
     }
 
-    for (const CardId& cardId : runState_.deckCardIds) {
+    for (std::size_t index = 0; index < runState_.deckCardIds.size(); ++index) {
+        const CardId& cardId = runState_.deckCardIds[index];
         if (!content_.cards().contains(cardId)) {
             throw std::runtime_error("Run deck contains unknown card id: " + cardId.value);
         }
 
         const bool upgraded = std::find(
-            runState_.upgradedCardIds.begin(),
-            runState_.upgradedCardIds.end(),
-            cardId
-        ) != runState_.upgradedCardIds.end();
+            runState_.upgradedDeckIndices.begin(),
+            runState_.upgradedDeckIndices.end(),
+            static_cast<int>(index)
+        ) != runState_.upgradedDeckIndices.end();
         state_.deck.drawPile.addTop(cardFactory_.create(cardId, upgraded));
     }
 
@@ -2190,8 +2190,8 @@ void CombatScene::finishCombatIfNeeded() {
         lastPreviewTarget_.reset();
         viewModelDirty_ = true;
 
-        if (finalResult_.outcome == CombatOutcome::Victory) {
-            openRewardModalIfNeeded();
+        if (finalResult_.outcome == CombatOutcome::Victory && onCombatWon_) {
+            onCombatWon_(finalResult_);
         }
     }
 }

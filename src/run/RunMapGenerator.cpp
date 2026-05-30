@@ -3,10 +3,17 @@
 #include <algorithm>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace {
 struct Slot {
+    int layer = 0;
+    int index = 0;
+};
+
+struct NodeLocation {
     int layer = 0;
     int index = 0;
 };
@@ -93,63 +100,182 @@ void addEdge(RunMap& map, const int from, const int to) {
     }
 }
 
-void connectFully(
-    RunMap& map,
-    const std::vector<int>& fromLayer,
-    const std::vector<int>& toLayer
+std::vector<int> adjacentTargetIndices(
+    const int fromIndex,
+    const int fromCount,
+    const int toCount
 ) {
-    for (const int from : fromLayer) {
-        for (const int to : toLayer) {
-            addEdge(map, from, to);
+    std::vector<int> result;
+
+    if (fromCount <= 0 || toCount <= 0) {
+        return result;
+    }
+
+    if (fromCount == 1 || toCount == 1) {
+        result.reserve(static_cast<std::size_t>(toCount));
+        for (int index = 0; index < toCount; ++index) {
+            result.push_back(index);
+        }
+        return result;
+    }
+
+    int first = (fromIndex * toCount) / fromCount;
+    int last = ((fromIndex + 1) * toCount) / fromCount;
+
+    if (last >= toCount) {
+        last = toCount - 1;
+    }
+
+    if (first > last) {
+        first = last;
+    }
+
+    for (int index = first; index <= last; ++index) {
+        result.push_back(index);
+    }
+
+    return result;
+}
+
+bool isAllowedAdjacentTarget(
+    const int fromIndex,
+    const int fromCount,
+    const int toIndex,
+    const int toCount
+) {
+    const std::vector<int> allowed = adjacentTargetIndices(fromIndex, fromCount, toCount);
+    return std::find(allowed.begin(), allowed.end(), toIndex) != allowed.end();
+}
+
+bool containsIndex(const std::vector<int>& values, const int candidate) {
+    return std::find(values.begin(), values.end(), candidate) != values.end();
+}
+
+void addSelectedConnection(std::vector<std::vector<int>>& selectedTargetsBySource, const int sourceIndex, const int targetIndex) {
+    std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)];
+    if (!containsIndex(targets, targetIndex)) {
+        targets.push_back(targetIndex);
+    }
+}
+
+std::vector<int> sourceIndicesForTarget(
+    const int targetIndex,
+    const int fromCount,
+    const int toCount
+) {
+    std::vector<int> result;
+    for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+        if (isAllowedAdjacentTarget(sourceIndex, fromCount, targetIndex, toCount)) {
+            result.push_back(sourceIndex);
         }
     }
+    return result;
 }
 
-bool containsOnlyType(const RunMap& map, const std::vector<int>& nodeIds, const RunMapNodeType type) {
-    if (nodeIds.empty()) {
-        return false;
-    }
-
-    return std::all_of(nodeIds.begin(), nodeIds.end(), [&](const int id) {
-        return nodeById(map, id).type == type;
-    });
-}
-
-void connectRandomly(
+void connectAdjacentLayers(
     RunMap& map,
     const std::vector<int>& fromLayer,
     const std::vector<int>& toLayer,
-    Random& random
+    Random& random,
+    const int extraConnectionChance
 ) {
-    if (fromLayer.empty() || toLayer.empty()) {
+    const int fromCount = static_cast<int>(fromLayer.size());
+    const int toCount = static_cast<int>(toLayer.size());
+
+    if (fromCount == 0 || toCount == 0) {
         return;
     }
 
-    std::vector<int> incomingCount(toLayer.size(), 0);
-
-    for (const int from : fromLayer) {
-        const int maximumEdges = std::min<int>(2, static_cast<int>(toLayer.size()));
-        const int edgeCount = random.rangeInclusive(1, maximumEdges);
-
-        for (int edge = 0; edge < edgeCount; ++edge) {
-            const int targetIndex = random.rangeInclusive(0, static_cast<int>(toLayer.size()) - 1);
-            const int targetId = toLayer[static_cast<std::size_t>(targetIndex)];
-            addEdge(map, from, targetId);
-            ++incomingCount[static_cast<std::size_t>(targetIndex)];
+    if (fromCount == 1 || toCount == 1) {
+        for (int fromIndex = 0; fromIndex < fromCount; ++fromIndex) {
+            const std::vector<int> targets = adjacentTargetIndices(fromIndex, fromCount, toCount);
+            for (const int targetIndex : targets) {
+                addEdge(map, fromLayer[static_cast<std::size_t>(fromIndex)], toLayer[static_cast<std::size_t>(targetIndex)]);
+            }
         }
+        return;
     }
 
-    // Every room in the next layer must be reachable from at least one previous room.
-    for (std::size_t i = 0; i < toLayer.size(); ++i) {
-        if (incomingCount[i] > 0) {
+    std::vector<std::vector<int>> selectedTargetsBySource(static_cast<std::size_t>(fromCount));
+
+    // First guarantee that every target in the next layer has at least one incoming edge.
+    for (int targetIndex = 0; targetIndex < toCount; ++targetIndex) {
+        const std::vector<int> sources = sourceIndicesForTarget(targetIndex, fromCount, toCount);
+        if (sources.empty()) {
+            throw std::runtime_error("Cannot connect generated run map: target has no adjacent source");
+        }
+
+        const int chosenSource = sources[static_cast<std::size_t>(random.rangeInclusive(0, static_cast<int>(sources.size()) - 1))];
+        addSelectedConnection(selectedTargetsBySource, chosenSource, targetIndex);
+    }
+
+    // Then guarantee that every source room has at least one outgoing edge.
+    for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+        if (!selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)].empty()) {
             continue;
         }
 
-        const int from = fromLayer[static_cast<std::size_t>(
-            random.rangeInclusive(0, static_cast<int>(fromLayer.size()) - 1)
-        )];
+        const std::vector<int> targets = adjacentTargetIndices(sourceIndex, fromCount, toCount);
+        if (targets.empty()) {
+            throw std::runtime_error("Cannot connect generated run map: source has no adjacent target");
+        }
 
-        addEdge(map, from, toLayer[i]);
+        const int chosenTarget = targets[static_cast<std::size_t>(random.rangeInclusive(0, static_cast<int>(targets.size()) - 1))];
+        addSelectedConnection(selectedTargetsBySource, sourceIndex, chosenTarget);
+    }
+
+    // Add a few extra adjacent edges randomly, so the map stays readable instead of fully connected.
+    const double extraProbability = static_cast<double>(extraConnectionChance) / 100.0;
+    int allowedEdgeCount = 0;
+    for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+        const std::vector<int> targets = adjacentTargetIndices(sourceIndex, fromCount, toCount);
+        allowedEdgeCount += static_cast<int>(targets.size());
+        for (const int targetIndex : targets) {
+            if (!containsIndex(selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)], targetIndex) &&
+                random.chance(extraProbability)) {
+                addSelectedConnection(selectedTargetsBySource, sourceIndex, targetIndex);
+            }
+        }
+    }
+
+    int selectedEdgeCount = 0;
+    std::vector<int> incomingByTarget(static_cast<std::size_t>(toCount), 0);
+    for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+        const std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)];
+        selectedEdgeCount += static_cast<int>(targets.size());
+        for (const int targetIndex : targets) {
+            ++incomingByTarget[static_cast<std::size_t>(targetIndex)];
+        }
+    }
+
+    if (selectedEdgeCount >= allowedEdgeCount) {
+        std::vector<std::pair<int, int>> removableEdges;
+        for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+            const std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)];
+            if (targets.size() <= 1) {
+                continue;
+            }
+
+            for (const int targetIndex : targets) {
+                if (incomingByTarget[static_cast<std::size_t>(targetIndex)] > 1) {
+                    removableEdges.emplace_back(sourceIndex, targetIndex);
+                }
+            }
+        }
+
+        if (!removableEdges.empty()) {
+            const std::pair<int, int> edge = removableEdges[static_cast<std::size_t>(random.rangeInclusive(0, static_cast<int>(removableEdges.size()) - 1))];
+            std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(edge.first)];
+            targets.erase(std::remove(targets.begin(), targets.end(), edge.second), targets.end());
+        }
+    }
+
+    for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+        std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)];
+        std::sort(targets.begin(), targets.end());
+        for (const int targetIndex : targets) {
+            addEdge(map, fromLayer[static_cast<std::size_t>(sourceIndex)], toLayer[static_cast<std::size_t>(targetIndex)]);
+        }
     }
 }
 
@@ -219,15 +345,40 @@ int countNodesOfType(const RunMap& map, const RunMapNodeType type) {
     }));
 }
 
-int countNodesOfTypeOnLayer(const RunMap& map, const RunMapNodeType type, const int layer, const RunMapLayoutConfig& layout) {
-    const float expectedX = layout.startX + static_cast<float>(layer) * layout.layerStepX;
-    return static_cast<int>(std::count_if(map.nodes.begin(), map.nodes.end(), [&](const RunMapNode& node) {
-        return node.type == type && node.position.x == expectedX;
-    }));
+int countNodesOfTypeOnLayer(
+    const RunMap& map,
+    const std::vector<std::vector<int>>& layerIds,
+    const RunMapNodeType type,
+    const int layer
+) {
+    if (layer < 0 || layer >= static_cast<int>(layerIds.size())) {
+        return 0;
+    }
+
+    return static_cast<int>(std::count_if(
+        layerIds[static_cast<std::size_t>(layer)].begin(),
+        layerIds[static_cast<std::size_t>(layer)].end(),
+        [&](const int id) {
+            return nodeById(map, id).type == type;
+        }
+    ));
+}
+
+std::unordered_map<int, NodeLocation> buildNodeLocations(const std::vector<std::vector<int>>& layerIds) {
+    std::unordered_map<int, NodeLocation> result;
+
+    for (int layer = 0; layer < static_cast<int>(layerIds.size()); ++layer) {
+        for (int index = 0; index < static_cast<int>(layerIds[static_cast<std::size_t>(layer)].size()); ++index) {
+            result[layerIds[static_cast<std::size_t>(layer)][static_cast<std::size_t>(index)]] = NodeLocation{layer, index};
+        }
+    }
+
+    return result;
 }
 
 void validateGeneratedActOneMap(
     const RunMap& map,
+    const std::vector<std::vector<int>>& layerIds,
     const RunMapGenerationConfig& config
 ) {
     const int shopCount = countNodesOfType(map, RunMapNodeType::Shop);
@@ -244,7 +395,7 @@ void validateGeneratedActOneMap(
     }
 
     if (config.chests().count > 0 && config.chests().minLayer == config.chests().maxLayer) {
-        const int chestLayerCount = countNodesOfTypeOnLayer(map, RunMapNodeType::Chest, config.chests().minLayer, config.layout());
+        const int chestLayerCount = countNodesOfTypeOnLayer(map, layerIds, RunMapNodeType::Chest, config.chests().minLayer);
         if (chestLayerCount != config.chests().count) {
             throw std::runtime_error("Generated act 1 map has invalid chest layer placement");
         }
@@ -256,6 +407,59 @@ void validateGeneratedActOneMap(
 
     if (config.hasFixedEvents() && (eventCount < config.events().minimum || eventCount > config.events().maximum)) {
         throw std::runtime_error("Generated act 1 map has invalid event count");
+    }
+
+    if (config.hasLayerNodeCounts()) {
+        for (int layer = 0; layer < static_cast<int>(layerIds.size()); ++layer) {
+            if (static_cast<int>(layerIds[static_cast<std::size_t>(layer)].size()) != config.layerNodeCounts()[static_cast<std::size_t>(layer)]) {
+                throw std::runtime_error("Generated act 1 map has invalid layer width");
+            }
+        }
+    }
+
+    const std::unordered_map<int, NodeLocation> locations = buildNodeLocations(layerIds);
+    std::vector<int> incomingCount(map.nodes.size(), 0);
+
+    for (const RunMapNode& node : map.nodes) {
+        const auto fromIt = locations.find(node.id);
+        if (fromIt == locations.end()) {
+            throw std::runtime_error("Generated act 1 map contains a node outside layer index");
+        }
+
+        const NodeLocation from = fromIt->second;
+        if (from.layer < static_cast<int>(layerIds.size()) - 1 && node.nextNodeIds.empty()) {
+            throw std::runtime_error("Generated act 1 map contains a dead-end before boss");
+        }
+
+        for (const int toId : node.nextNodeIds) {
+            const auto toIt = locations.find(toId);
+            if (toIt == locations.end()) {
+                throw std::runtime_error("Generated act 1 map references an unknown target node");
+            }
+
+            const NodeLocation to = toIt->second;
+            if (to.layer != from.layer + 1) {
+                throw std::runtime_error("Generated act 1 map contains a connection that skips layers");
+            }
+
+            const int fromCount = static_cast<int>(layerIds[static_cast<std::size_t>(from.layer)].size());
+            const int toCount = static_cast<int>(layerIds[static_cast<std::size_t>(to.layer)].size());
+            if (!isAllowedAdjacentTarget(from.index, fromCount, to.index, toCount)) {
+                throw std::runtime_error("Generated act 1 map contains a non-adjacent connection");
+            }
+
+            if (toId >= 0 && toId < static_cast<int>(incomingCount.size())) {
+                ++incomingCount[static_cast<std::size_t>(toId)];
+            }
+        }
+    }
+
+    for (int layer = 1; layer < static_cast<int>(layerIds.size()); ++layer) {
+        for (const int id : layerIds[static_cast<std::size_t>(layer)]) {
+            if (incomingCount[static_cast<std::size_t>(id)] <= 0) {
+                throw std::runtime_error("Generated act 1 map contains an unreachable room");
+            }
+        }
     }
 }
 }
@@ -273,23 +477,28 @@ RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGeneration
     const int layerCount = config.layerCount();
     const int preBossLayer = layerCount - 2;
     const int bossLayer = layerCount - 1;
-    const int firstMiddleLayer = 1;
-    const int lastMiddleLayer = layerCount - 3;
-
     std::vector<std::vector<RunMapNodeType>> layerTypes(static_cast<std::size_t>(layerCount));
-    layerTypes[0] = {RunMapNodeType::Combat};
-    layerTypes[static_cast<std::size_t>(preBossLayer)] = {RunMapNodeType::Rest};
-    layerTypes[static_cast<std::size_t>(bossLayer)] = {RunMapNodeType::Boss};
 
-    for (int layer = firstMiddleLayer; layer <= lastMiddleLayer; ++layer) {
-        const int nodeCount = random.rangeInclusive(config.middleMinNodes(), config.middleMaxNodes());
+    for (int layer = 0; layer < layerCount; ++layer) {
+        const int nodeCount = (layer == 0 || layer == preBossLayer || layer == bossLayer)
+            ? (config.hasLayerNodeCounts() ? config.nodeCountForLayer(layer, random) : 1)
+            : config.nodeCountForLayer(layer, random);
+
         std::vector<RunMapNodeType>& types = layerTypes[static_cast<std::size_t>(layer)];
         types.reserve(static_cast<std::size_t>(nodeCount));
 
         for (int index = 0; index < nodeCount; ++index) {
-            types.push_back(config.hasFixedEvents()
-                ? RunMapNodeType::Combat
-                : randomCombatOrEventRoomType(config, random));
+            if (layer == bossLayer) {
+                types.push_back(RunMapNodeType::Boss);
+            } else if (layer == preBossLayer) {
+                types.push_back(RunMapNodeType::Rest);
+            } else if (layer == 0) {
+                types.push_back(RunMapNodeType::Combat);
+            } else {
+                types.push_back(config.hasFixedEvents()
+                    ? RunMapNodeType::Combat
+                    : randomCombatOrEventRoomType(config, random));
+            }
         }
     }
 
@@ -354,20 +563,21 @@ RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGeneration
         );
     }
 
-    nodeById(map, layerIds.front().front()).state = RunMapNodeState::Available;
+    for (const int startId : layerIds.front()) {
+        nodeById(map, startId).state = RunMapNodeState::Available;
+    }
 
     for (int layer = 0; layer < layerCount - 1; ++layer) {
-        const std::vector<int>& fromLayer = layerIds[static_cast<std::size_t>(layer)];
-        const std::vector<int>& toLayer = layerIds[static_cast<std::size_t>(layer + 1)];
-
-        if (containsOnlyType(map, toLayer, RunMapNodeType::Chest)) {
-            connectFully(map, fromLayer, toLayer);
-        } else {
-            connectRandomly(map, fromLayer, toLayer, random);
-        }
+        connectAdjacentLayers(
+            map,
+            layerIds[static_cast<std::size_t>(layer)],
+            layerIds[static_cast<std::size_t>(layer + 1)],
+            random,
+            config.extraConnectionChance()
+        );
     }
 
     map.currentNodeId = -1;
-    validateGeneratedActOneMap(map, config);
+    validateGeneratedActOneMap(map, layerIds, config);
     return map;
 }

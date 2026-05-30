@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "cards/CardId.hpp"
 #include "consumables/ConsumableDatabase.hpp"
 #include "consumables/ConsumableRarity.hpp"
@@ -33,7 +35,7 @@ public:
         const RunState& runState,
         std::function<void(int)> onNodeSelected,
         std::function<void(int)> onRestHeal,
-        std::function<void(int, CardId)> onRestUpgrade,
+        std::function<void(int, std::size_t)> onRestUpgrade,
         std::function<void(int)> onRestSkip,
         std::function<void()> onBackToHub
     );
@@ -66,13 +68,26 @@ private:
     Rectangle overlayGridBounds(Rectangle modal) const;
     Rectangle upgradeConfirmButtonBounds(Rectangle modal) const;
 
+    const RunMapNode* hoveredMapNode(Vector2 mousePosition) const;
+    const RunMapNode* currentMapNode() const;
+    bool isMapInteractionBlocked() const;
+    bool isPastLockedAlternative(const RunMapNode& node) const;
+    bool isNextAvailableConnection(const RunMapNode& from, const RunMapNode& to) const;
+    bool isChosenPathConnection(const RunMapNode& from, const RunMapNode& to) const;
+    Color connectionColor(const RunMapNode& from, const RunMapNode& to) const;
+    float connectionThickness(const RunMapNode& from, const RunMapNode& to) const;
     Color nodeColor(const RunMapNode& node) const;
     Color nodeOutlineColor(const RunMapNode& node) const;
+    Color nodeTextColor(const RunMapNode& node) const;
     float nodeOutlineThickness(const RunMapNode& node) const;
     std::string nodeLabel(const RunMapNode& node) const;
+    std::string nodeStateText(const RunMapNode& node) const;
+    void renderMapLegend() const;
 
     void updateRestModal(Vector2 mousePosition);
     void renderRestModal() const;
+    std::string restHealPreviewText() const;
+    std::string restStressPreviewText() const;
     void renderNodePreview(const RunMapNode& node) const;
     std::string nodePreviewTitle(const RunMapNode& node) const;
     std::string nodePreviewDescription(const RunMapNode& node) const;
@@ -83,7 +98,7 @@ private:
     void closeOverlay();
     void updateOverlay(Vector2 mousePosition);
     void renderOverlay() const;
-    std::optional<CardId> hoveredOverlayCardId(Vector2 mousePosition) const;
+    std::optional<std::size_t> hoveredOverlayDeckIndex(Vector2 mousePosition) const;
     std::optional<std::string> hoveredOverlayRelicId(Vector2 mousePosition) const;
     std::optional<std::string> hoveredOverlayConsumableId(Vector2 mousePosition) const;
     void renderCardInspectModal() const;
@@ -98,13 +113,13 @@ private:
     void renderUpgradeOverlay(Rectangle modal) const;
     void renderRelicsOverlay(Rectangle modal) const;
     void renderConsumablesOverlay(Rectangle modal) const;
-    void renderCardGrid(Rectangle grid, const std::vector<CardId>& cardIds, bool selectionMode) const;
+    void renderCardGrid(Rectangle grid, const std::vector<std::size_t>& deckIndices, bool selectionMode) const;
     Rectangle cardGridCellBounds(Rectangle grid, std::size_t index, float scrollOffset) const;
     float cardGridMaxScroll(Rectangle grid, std::size_t count) const;
     Rectangle listRowBounds(Rectangle area, std::size_t index, float scrollOffset) const;
     float listMaxScroll(Rectangle area, std::size_t count) const;
-    bool isCardUpgraded(const CardId& cardId) const;
-    std::vector<CardId> upgradableCards() const;
+    bool isDeckCardUpgraded(std::size_t deckIndex) const;
+    std::vector<std::size_t> upgradableDeckIndices() const;
     std::string cardName(const CardId& cardId, bool upgraded) const;
     std::string cardDescription(const CardId& cardId, bool upgraded) const;
     std::string relicRarityText(RelicRarity rarity) const;
@@ -122,15 +137,15 @@ private:
     const RunState& runState_;
     std::function<void(int)> onNodeSelected_;
     std::function<void(int)> onRestHeal_;
-    std::function<void(int, CardId)> onRestUpgrade_;
+    std::function<void(int, std::size_t)> onRestUpgrade_;
     std::function<void(int)> onRestSkip_;
     std::function<void()> onBackToHub_;
 
     std::optional<int> restModalNodeId_;
     OverlayMode overlayMode_ = OverlayMode::None;
     float overlayScrollOffset_ = 0.f;
-    std::optional<CardId> selectedUpgradeCardId_;
-    std::optional<CardId> inspectedCardId_;
+    std::optional<std::size_t> selectedUpgradeDeckIndex_;
+    std::optional<std::size_t> inspectedCardDeckIndex_;
     std::optional<std::string> inspectedRelicId_;
     std::optional<std::string> inspectedConsumableId_;
 };

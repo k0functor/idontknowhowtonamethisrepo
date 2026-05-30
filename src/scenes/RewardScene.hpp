@@ -1,5 +1,6 @@
 #pragma once
 
+#include "consumables/ConsumableDatabase.hpp"
 #include "data/CardDatabase.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "rewards/RewardOption.hpp"
@@ -22,6 +23,7 @@ public:
         const LocalizationManager& localization,
         const CardDatabase& cards,
         const RelicDatabase& relics,
+        const ConsumableDatabase& consumables,
         RewardState reward,
         std::function<void(RewardSelection)> onContinue
     );
@@ -47,17 +49,22 @@ private:
     RewardOption* activeOption();
 
     std::string optionTitle(const RewardOption& option) const;
+    std::string optionDescription(const RewardOption& option) const;
     std::string cardName(const CardId& cardId) const;
     std::string cardDescription(const CardId& cardId) const;
     std::string relicName(const std::string& relicId) const;
     std::string relicDescription(const std::string& relicId) const;
+    std::string consumableName(const std::string& consumableId) const;
+    std::string consumableDescription(const std::string& consumableId) const;
     std::string rewardTitle() const;
+    std::string rewardHint() const;
 
 private:
     const UiFont& font_;
     const LocalizationManager& localization_;
     const CardDatabase& cards_;
     const RelicDatabase& relics_;
+    const ConsumableDatabase& consumables_;
     RewardState reward_;
     RewardSelection selection_;
     std::function<void(RewardSelection)> onContinue_;

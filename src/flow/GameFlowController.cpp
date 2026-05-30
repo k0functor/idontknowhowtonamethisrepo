@@ -945,7 +945,7 @@ void GameFlowController::setRunMapScene() {
             runController_.run(),
             [this](const int nodeId) { startMapNode(nodeId); },
             [this](const int nodeId) { restHeal(nodeId); },
-            [this](const int nodeId, CardId cardId) { restUpgrade(nodeId, std::move(cardId)); },
+            [this](const int nodeId, const std::size_t deckIndex) { restUpgrade(nodeId, deckIndex); },
             [this](const int nodeId) { restSkip(nodeId); },
             [this]() { queueTransition([this]() { setProfileHubScene(); }); }
         )
@@ -966,6 +966,7 @@ bool GameFlowController::setPendingRoomSceneIfNeeded() {
                     localization_,
                     content_.cards(),
                     content_.relics(),
+                    content_.consumables(),
                     pending.reward,
                     [this](RewardSelection selection) {
                         finishReward(runController_.pendingRoom().reward, std::move(selection));
@@ -1019,10 +1020,9 @@ void GameFlowController::setCombatScene(const int nodeId) {
                 );
                 runController_.setPendingCombatReward(nodeId, reward);
                 saveActiveRun();
-                return reward;
-            },
-            [this](const RewardState& reward, RewardSelection selection) {
-                finishReward(reward, std::move(selection));
+                queueTransition([this, nodeId, reward = std::move(reward)]() mutable {
+                    setCombatRewardScene(nodeId, std::move(reward));
+                });
             },
             [this](const CombatResult&) {
                 queueTransition([this]() {
@@ -1035,6 +1035,30 @@ void GameFlowController::setCombatScene(const int nodeId) {
     );
 }
 
+
+void GameFlowController::setCombatRewardScene(const int nodeId, RewardState reward) {
+    sceneManager_.setScene(
+        std::make_unique<RewardScene>(
+            uiFont_,
+            localization_,
+            content_.cards(),
+            content_.relics(),
+            content_.consumables(),
+            std::move(reward),
+            [this, nodeId](RewardSelection selection) {
+                if (!runController_.hasPendingRoom() ||
+                    runController_.pendingRoom().type != RunPendingRoomType::CombatReward ||
+                    runController_.pendingRoom().nodeId != nodeId) {
+                    queueTransition([this]() { setRunMapScene(); });
+                    return;
+                }
+
+                finishReward(runController_.pendingRoom().reward, std::move(selection));
+            }
+        )
+    );
+}
+
 void GameFlowController::setChestRewardScene(const int nodeId, RewardState reward) {
     sceneManager_.setScene(
         std::make_unique<RewardScene>(
@@ -1042,6 +1066,7 @@ void GameFlowController::setChestRewardScene(const int nodeId, RewardState rewar
             localization_,
             content_.cards(),
             content_.relics(),
+            content_.consumables(),
             std::move(reward),
             [this, nodeId](RewardSelection selection) {
                 finishChestReward(nodeId, std::move(selection));
@@ -1227,10 +1252,10 @@ void GameFlowController::restHeal(const int nodeId) {
     });
 }
 
-void GameFlowController::restUpgrade(const int nodeId, CardId cardId) {
-    queueTransition([this, nodeId, cardId = std::move(cardId)]() mutable {
+void GameFlowController::restUpgrade(const int nodeId, const std::size_t deckIndex) {
+    queueTransition([this, nodeId, deckIndex]() {
         runController_.startNode(nodeId);
-        runController_.completeRestUpgrade(nodeId, std::move(cardId));
+        runController_.completeRestUpgrade(nodeId, deckIndex);
         saveActiveRun();
         setRunMapScene();
     });

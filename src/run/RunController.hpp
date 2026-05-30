@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "archetypes/PlayableArchetypeDefinition.hpp"
 #include "actors/PlayerActorDatabase.hpp"
 #include "combat/CombatResult.hpp"
@@ -92,7 +94,7 @@ public:
     void completeChestNode(int nodeId);
     void completeEventNode(int nodeId);
     void completeRestHeal(int nodeId);
-    void completeRestUpgrade(int nodeId, CardId cardId);
+    void completeRestUpgrade(int nodeId, std::size_t deckIndex);
     void completeRestSkip(int nodeId);
 
     bool purchaseShopItem(const ShopPurchase& purchase);
