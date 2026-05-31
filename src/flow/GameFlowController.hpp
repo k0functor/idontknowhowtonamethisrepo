@@ -54,6 +54,7 @@ private:
     void setSettingsScene();
     void openSettingsOverlay();
     void closeSettingsOverlay();
+    void saveAndExitRunToMainMenu();
     bool shouldShowInGameSettingsButton() const;
     bool debugPanelEnabled() const;
     void toggleDebugPanel();
@@ -69,6 +70,7 @@ private:
     void setProfileHubScene();
     void setDifficultySelectScene();
     void setRunMapScene();
+    void setFloorCompleteScene();
     bool setPendingRoomSceneIfNeeded();
     void setCombatScene(int nodeId);
     void setCombatRewardScene(int nodeId, RewardState reward);
@@ -94,6 +96,7 @@ private:
     void finishEvent(int nodeId, const RunEventChoiceDefinition& choice);
     void finishReward(const RewardState& reward, RewardSelection selection);
     void finishChestReward(int nodeId, RewardSelection selection);
+    void finishFloorComplete();
     void requestExit();
 
     bool hasRunSave(std::size_t slotIndex) const;

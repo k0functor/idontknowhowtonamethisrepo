@@ -45,6 +45,7 @@ public:
     int combatWeight() const;
     int eventWeight() const;
     int extraConnectionChance() const;
+    int questionMarkCombatChance() const;
     const RunMapSpecialNodeConfig& shop() const;
     const RunMapSpecialNodeConfig& chests() const;
     const RunMapEliteConfig& elites() const;
@@ -64,6 +65,7 @@ private:
     int combatWeight_ = 70;
     int eventWeight_ = 30;
     int extraConnectionChance_ = 35;
+    int questionMarkCombatChance_ = 30;
     RunMapSpecialNodeConfig shop_{1, 2, 8};
     RunMapSpecialNodeConfig chests_{0, 1, 1};
     RunMapEliteConfig elites_{1, 2, 3, 8};

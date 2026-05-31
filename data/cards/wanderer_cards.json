@@ -1,5 +1,45 @@
 [
   {
+    "id": "lost_psychopath_basic_strike",
+    "name": "card.lost_psychopath_basic_strike.name",
+    "description": "card.lost_psychopath_basic_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "lost_psychopath",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "lost_psychopath_basic_defend",
+    "name": "card.lost_psychopath_basic_defend.name",
+    "description": "card.lost_psychopath_basic_defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "lost_psychopath",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
     "id": "wanderer_balanced_cut",
     "name": "card.wanderer_balanced_cut.name",
     "description": "card.wanderer_balanced_cut.description",

@@ -2,58 +2,194 @@
   "pools": {
     "combat": [
       {
+        "id": "act1_rusted_mite",
+        "enemies": [
+          "rusted_mite"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 2
+      },
+      {
         "id": "act1_rat_cultist",
-        "enemies": ["rat_cultist"],
-        "weight": 2
+        "enemies": [
+          "rat_cultist"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 4
+      },
+      {
+        "id": "act1_grave_lamp",
+        "enemies": [
+          "grave_lamp"
+        ],
+        "weight": 3,
+        "min_layer": 0,
+        "max_layer": 4
       },
       {
         "id": "act1_ash_hound",
-        "enemies": ["ash_hound"],
-        "weight": 2
+        "enemies": [
+          "ash_hound"
+        ],
+        "weight": 3,
+        "min_layer": 1,
+        "max_layer": 5
       },
       {
         "id": "act1_plague_spider",
-        "enemies": ["plague_spider"],
-        "weight": 2
+        "enemies": [
+          "plague_spider"
+        ],
+        "weight": 3,
+        "min_layer": 1,
+        "max_layer": 5
       },
       {
-        "id": "act1_shield_and_knife",
-        "enemies": ["shield_bearer", "knife_acolyte"],
-        "weight": 1
+        "id": "act1_knife_acolyte",
+        "enemies": [
+          "knife_acolyte"
+        ],
+        "weight": 3,
+        "min_layer": 1,
+        "max_layer": 5
       },
       {
-        "id": "act1_rat_and_lamp",
-        "enemies": ["rat_cultist", "grave_lamp"],
-        "weight": 1
+        "id": "act1_shield_bearer",
+        "enemies": [
+          "shield_bearer"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_mold_marksman",
+        "enemies": [
+          "mold_marksman"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_rust_taskmaster",
+        "enemies": [
+          "rust_taskmaster"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_rat_and_mite",
+        "enemies": [
+          "rat_cultist",
+          "rusted_mite"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_lamp_and_mite",
+        "enemies": [
+          "grave_lamp",
+          "rusted_mite"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_hound_and_rat",
+        "enemies": [
+          "ash_hound",
+          "rat_cultist"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 5
       },
       {
         "id": "act1_knife_and_spider",
-        "enemies": ["knife_acolyte", "plague_spider"],
-        "weight": 1
+        "enemies": [
+          "knife_acolyte",
+          "plague_spider"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_shield_and_lamp",
+        "enemies": [
+          "shield_bearer",
+          "grave_lamp"
+        ],
+        "weight": 1,
+        "min_layer": 3,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_mold_and_mite",
+        "enemies": [
+          "mold_marksman",
+          "rusted_mite"
+        ],
+        "weight": 1,
+        "min_layer": 3,
+        "max_layer": 5
       }
     ],
     "elite": [
       {
         "id": "act1_grave_knight",
-        "enemies": ["grave_knight"],
-        "weight": 1
+        "enemies": [
+          "grave_knight"
+        ],
+        "weight": 1,
+        "min_layer": 1,
+        "max_layer": 5
       },
       {
         "id": "act1_choir_executioner",
-        "enemies": ["choir_executioner"],
-        "weight": 1
+        "enemies": [
+          "choir_executioner"
+        ],
+        "weight": 1,
+        "min_layer": 1,
+        "max_layer": 5
       },
       {
         "id": "act1_glass_collector",
-        "enemies": ["glass_collector"],
-        "weight": 1
+        "enemies": [
+          "glass_collector"
+        ],
+        "weight": 1,
+        "min_layer": 1,
+        "max_layer": 5
       }
     ],
     "boss": [
       {
         "id": "act1_baron_of_ashes",
-        "enemies": ["baron_of_ashes"],
-        "weight": 1
+        "enemies": [
+          "baron_of_ashes"
+        ],
+        "weight": 1,
+        "min_layer": 7,
+        "max_layer": 7
+      },
+      {
+        "id": "act1_rusted_bishop",
+        "enemies": [
+          "rusted_bishop"
+        ],
+        "weight": 1,
+        "min_layer": 7,
+        "max_layer": 7
       }
     ]
   }

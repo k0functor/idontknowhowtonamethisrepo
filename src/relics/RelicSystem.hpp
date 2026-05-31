@@ -7,9 +7,11 @@
 #include "relics/RelicDatabase.hpp"
 #include "relics/RelicInventory.hpp"
 
+class LocalizationManager;
+
 class RelicSystem final : public IModifierProvider {
 public:
-    explicit RelicSystem(const RelicDatabase& database);
+    RelicSystem(const RelicDatabase& database, const LocalizationManager& localization);
 
     void setRelics(const std::vector<std::string>& relicIds);
     void clear();
@@ -44,5 +46,6 @@ private:
 
 private:
     const RelicDatabase& database_;
+    const LocalizationManager& localization_;
     RelicInventory inventory_;
 };

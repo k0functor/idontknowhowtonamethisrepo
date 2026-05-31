@@ -8,14 +8,18 @@
     "actors": [
       "rusted_knight"
     ],
+    "reward_card_pools": [
+      "rusted_knight"
+    ],
     "starting_deck": [
-      "rusted_shield_bash",
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_defend",
+      "rusted_knight_basic_defend",
       "rusted_shield_bash",
       "rusted_bastion",
       "rusted_punishing_swing",
-      "rusted_hold_line",
-      "defend",
-      "strike"
+      "rusted_tempered_rage"
     ],
     "starting_relics": [
       "bastion_seal"
@@ -23,10 +27,12 @@
     "starting_gold": 55,
     "strengths": [
       "archetype.rusted_knight.strength.strength_scaling",
-      "archetype.rusted_knight.strength.block_pressure"
+      "archetype.rusted_knight.strength.block_pressure",
+      "archetype.rusted_knight.strength.risk_reward"
     ],
     "weaknesses": [
-      "archetype.rusted_knight.weakness.self_exposure"
+      "archetype.rusted_knight.weakness.self_exposure",
+      "archetype.rusted_knight.weakness.status_punish"
     ],
     "mechanic_id": "rusted_knight_strength",
     "palette": {
@@ -38,7 +44,8 @@
       }
     },
     "visual_identity": "archetype.rusted_knight.visual_identity",
-    "selection_order": 10
+    "selection_order": 10,
+    "is_available": true
   },
   {
     "id": "herbalist",
@@ -49,14 +56,17 @@
     "actors": [
       "herbalist"
     ],
+    "reward_card_pools": [
+      "herbalist"
+    ],
     "starting_deck": [
       "herbalist_scalpel",
       "herbalist_scalpel",
       "herbalist_toxin_vial",
       "herbalist_toxin_vial",
       "herbalist_smoke_mask",
-      "defend",
-      "strike"
+      "herbalist_basic_defend",
+      "herbalist_basic_strike"
     ],
     "starting_relics": [
       "copper_inhaler"
@@ -79,7 +89,8 @@
       }
     },
     "visual_identity": "archetype.herbalist.visual_identity",
-    "selection_order": 20
+    "selection_order": 20,
+    "is_available": true
   },
   {
     "id": "replicant",
@@ -90,14 +101,17 @@
     "actors": [
       "replicant"
     ],
+    "reward_card_pools": [
+      "replicant"
+    ],
     "starting_deck": [
       "cyborg_striker_drone",
       "cyborg_guardian_drone",
-      "cyborg_bomber_drone",
       "cyborg_trigger_drone",
       "cyborg_wrench_hit",
-      "defend",
-      "strike"
+      "cyborg_wrench_hit",
+      "cyborg_patch_guard",
+      "replicant_basic_defend"
     ],
     "starting_relics": [
       "empty_dock"
@@ -105,10 +119,12 @@
     "starting_gold": 60,
     "strengths": [
       "archetype.replicant.strength.drones",
+      "archetype.replicant.strength.active_passive",
       "archetype.replicant.strength.marks"
     ],
     "weaknesses": [
-      "archetype.replicant.weakness.slot_pressure"
+      "archetype.replicant.weakness.slot_pressure",
+      "archetype.replicant.weakness.delayed_value"
     ],
     "mechanic_id": "replicant_drones",
     "palette": {
@@ -120,7 +136,8 @@
       }
     },
     "visual_identity": "archetype.replicant.visual_identity",
-    "selection_order": 30
+    "selection_order": 30,
+    "is_available": true
   },
   {
     "id": "monk",
@@ -131,14 +148,18 @@
     "actors": [
       "monk"
     ],
+    "reward_card_pools": [
+      "monk"
+    ],
     "starting_deck": [
+      "monk_basic_strike",
+      "monk_basic_strike",
+      "monk_basic_defend",
+      "monk_basic_defend",
       "monk_enter_flame",
       "monk_enter_ash",
       "monk_enter_smoke",
-      "monk_palm_strike",
-      "monk_ash_guard",
-      "monk_smoke_step",
-      "strike"
+      "monk_palm_strike"
     ],
     "starting_relics": [
       "coal_rosary"
@@ -161,7 +182,8 @@
       }
     },
     "visual_identity": "archetype.monk.visual_identity",
-    "selection_order": 40
+    "selection_order": 40,
+    "is_available": true
   },
   {
     "id": "merchant",
@@ -172,14 +194,17 @@
     "actors": [
       "merchant"
     ],
+    "reward_card_pools": [
+      "merchant"
+    ],
     "starting_deck": [
       "merchant_debt_slash",
       "merchant_debt_slash",
       "merchant_cash_guard",
       "merchant_cash_guard",
       "merchant_quick_deal",
-      "defend",
-      "strike"
+      "merchant_basic_defend",
+      "merchant_basic_strike"
     ],
     "starting_relics": [
       "bone_purse",
@@ -204,7 +229,8 @@
       }
     },
     "visual_identity": "archetype.merchant.visual_identity",
-    "selection_order": 50
+    "selection_order": 50,
+    "is_available": false
   },
   {
     "id": "lost_psychopath",
@@ -215,12 +241,15 @@
     "actors": [
       "lost_psychopath"
     ],
+    "reward_card_pools": [
+      "lost_psychopath"
+    ],
     "starting_deck": [
-      "strike",
-      "strike",
-      "strike",
-      "defend",
-      "defend",
+      "lost_psychopath_basic_strike",
+      "lost_psychopath_basic_strike",
+      "lost_psychopath_basic_strike",
+      "lost_psychopath_basic_defend",
+      "lost_psychopath_basic_defend",
       "wanderer_clean_cut",
       "wanderer_breathe",
       "wanderer_risky_stab"
@@ -247,7 +276,8 @@
       }
     },
     "visual_identity": "archetype.lost_psychopath.visual_identity",
-    "selection_order": 60
+    "selection_order": 60,
+    "is_available": false
   },
   {
     "id": "sadist_masochist",
@@ -256,6 +286,10 @@
     "details_description": "archetype.sadist_masochist.details_description",
     "unique_mechanic": "archetype.sadist_masochist.unique_mechanic",
     "actors": [
+      "sadist",
+      "masochist"
+    ],
+    "reward_card_pools": [
       "sadist",
       "masochist"
     ],
@@ -291,6 +325,7 @@
       }
     },
     "visual_identity": "archetype.sadist_masochist.visual_identity",
-    "selection_order": 70
+    "selection_order": 70,
+    "is_available": false
   }
 ]

@@ -1,8 +1,44 @@
 [
   {
+    "id": "rusted_mite",
+    "name": "enemy.rusted_mite.name",
+    "max_hp": 16,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "rusted_mite_nip",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "rusted_mite_skitter",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
     "id": "rat_cultist",
     "name": "enemy.rat_cultist.name",
-    "max_hp": 24,
+    "max_hp": 22,
     "starting_block": 0,
     "actions": [
       {
@@ -43,7 +79,58 @@
             "target": "self",
             "value": {
               "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grave_lamp",
+    "name": "enemy.grave_lamp.name",
+    "max_hp": 18,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "grave_lamp_flare",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
               "amount": 5
+            }
+          }
+        ]
+      },
+      {
+        "id": "grave_lamp_glare",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "grave_lamp_dim",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
             }
           }
         ]
@@ -53,7 +140,7 @@
   {
     "id": "ash_hound",
     "name": "enemy.ash_hound.name",
-    "max_hp": 28,
+    "max_hp": 27,
     "starting_block": 0,
     "actions": [
       {
@@ -67,7 +154,7 @@
               "type": "fixed",
               "amount": 2
             },
-            "repeat_count": 4
+            "repeat_count": 3
           }
         ]
       },
@@ -80,16 +167,22 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 5
+              "amount": 7
             }
-          },
+          }
+        ]
+      },
+      {
+        "id": "ash_hound_snarl",
+        "intent": "debuff",
+        "effects": [
           {
             "type": "apply_status",
             "target": "random_ally",
-            "status": "burn",
+            "status": "weak",
             "value": {
               "type": "fixed",
-              "amount": 2
+              "amount": 1
             }
           }
         ]
@@ -99,7 +192,7 @@
   {
     "id": "plague_spider",
     "name": "enemy.plague_spider.name",
-    "max_hp": 22,
+    "max_hp": 24,
     "starting_block": 0,
     "actions": [
       {
@@ -112,7 +205,7 @@
             "status": "poison",
             "value": {
               "type": "fixed",
-              "amount": 3
+              "amount": 2
             }
           }
         ]
@@ -148,6 +241,66 @@
             "type": "apply_status",
             "target": "random_ally",
             "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "knife_acolyte",
+    "name": "enemy.knife_acolyte.name",
+    "max_hp": 28,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "knife_acolyte_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "knife_acolyte_dirty_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "knife_acolyte_sharpen",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
             "value": {
               "type": "fixed",
               "amount": 1
@@ -218,13 +371,13 @@
     ]
   },
   {
-    "id": "knife_acolyte",
-    "name": "enemy.knife_acolyte.name",
-    "max_hp": 26,
+    "id": "mold_marksman",
+    "name": "enemy.mold_marksman.name",
+    "max_hp": 30,
     "starting_block": 0,
     "actions": [
       {
-        "id": "knife_acolyte_cut",
+        "id": "mold_marksman_spore_dart",
         "intent": "attack",
         "effects": [
           {
@@ -232,13 +385,14 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 6
-            }
+              "amount": 3
+            },
+            "repeat_count": 2
           }
         ]
       },
       {
-        "id": "knife_acolyte_dirty_cut",
+        "id": "mold_marksman_choking_shot",
         "intent": "attack",
         "effects": [
           {
@@ -246,7 +400,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 4
+              "amount": 5
             }
           },
           {
@@ -261,7 +415,7 @@
         ]
       },
       {
-        "id": "knife_acolyte_sharpen",
+        "id": "mold_marksman_take_aim",
         "intent": "buff",
         "effects": [
           {
@@ -278,28 +432,28 @@
     ]
   },
   {
-    "id": "grave_lamp",
-    "name": "enemy.grave_lamp.name",
-    "max_hp": 20,
+    "id": "rust_taskmaster",
+    "name": "enemy.rust_taskmaster.name",
+    "max_hp": 42,
     "starting_block": 0,
     "actions": [
       {
-        "id": "grave_lamp_singe",
-        "intent": "debuff",
+        "id": "rust_taskmaster_order",
+        "intent": "buff",
         "effects": [
           {
             "type": "apply_status",
-            "target": "random_ally",
-            "status": "burn",
+            "target": "self",
+            "status": "strength",
             "value": {
               "type": "fixed",
-              "amount": 2
+              "amount": 1
             }
           }
         ]
       },
       {
-        "id": "grave_lamp_flare",
+        "id": "rust_taskmaster_whip",
         "intent": "attack",
         "effects": [
           {
@@ -307,8 +461,46 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 5
+              "amount": 7
             }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "rust_taskmaster_bulwark",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ]
+      },
+      {
+        "id": "rust_taskmaster_crackdown",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "repeat_count": 2
           }
         ]
       }

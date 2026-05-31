@@ -42,6 +42,9 @@ public:
     void restoreRun(RunState run);
     void clearActiveRun();
 
+    bool isActCompleted() const;
+    void completeCurrentAct();
+
     const RunState& run() const;
     RunState& run();
 
@@ -55,6 +58,7 @@ public:
 
     const RunMapNode& node(int nodeId) const;
     RunMapNode& node(int nodeId);
+    void revealNodeType(int nodeId, RunMapNodeType type);
 
     bool canStartNode(int nodeId) const;
     void startNode(int nodeId);
@@ -82,6 +86,8 @@ public:
     );
 
     void healAllActorsByPercent(float percent);
+    void healAllActorsFlat(int amount);
+    void damageAllActorsNonlethal(int amount);
     void reduceAllActorsStress(int amount);
     void adjustAllActorsStress(int delta, Random* random = nullptr);
 

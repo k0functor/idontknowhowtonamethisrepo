@@ -24,6 +24,7 @@ public:
 
 private:
     void discardHand(CombatState& state) const;
+    void applyStartOfTurnTraitEffects(CombatState& state, Random& random) const;
 
 private:
     const DrawSystem& drawSystem_;

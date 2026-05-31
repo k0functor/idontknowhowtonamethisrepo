@@ -76,10 +76,15 @@ PlayableArchetypeDefinition PlayableArchetypeParser::parse(
     definition.palette = parsePalette(reader, sourcePath);
 
     definition.actorDefinitionIds = reader.requiredStringArray("actors");
+    definition.rewardCardPoolIds = reader.optionalStringArray("reward_card_pools");
+    if (definition.rewardCardPoolIds.empty()) {
+        definition.rewardCardPoolIds = definition.actorDefinitionIds;
+    }
     definition.startingDeckCardIds = reader.requiredStringArray("starting_deck");
     definition.startingRelicIds = reader.optionalStringArray("starting_relics");
     definition.startingConsumableIds = reader.optionalStringArray("starting_consumables");
     definition.startingGold = reader.requiredInt("starting_gold");
+    definition.isAvailable = reader.optionalBool("is_available", true);
     definition.strengthTextIds = parseTextIds(reader, "strengths");
     definition.weaknessTextIds = parseTextIds(reader, "weaknesses");
     definition.mechanicId = reader.optionalString("mechanic_id", "default");
@@ -89,6 +94,13 @@ PlayableArchetypeDefinition PlayableArchetypeParser::parse(
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() +
             "': archetype '" + definition.id.value + "' must define at least one actor"
+        );
+    }
+
+    if (definition.rewardCardPoolIds.empty()) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() +
+            "': archetype '" + definition.id.value + "' must define at least one reward card pool"
         );
     }
 

@@ -10,11 +10,7 @@ std::string localizedOrFallback(
     const TextId& textId,
     const std::string&
 ) {
-    if (localization.hasText(textId)) {
-        return localization.get(textId);
-    }
-
-    return textId.value;
+    return localization.get(textId);
 }
 
 std::string formatOrFallback(
@@ -23,11 +19,7 @@ std::string formatOrFallback(
     const TextFormatter::Variables& variables,
     const std::string&
 ) {
-    if (localization.hasText(textId)) {
-        return localization.format(textId, variables);
-    }
-
-    return TextFormatter::format(textId.value, variables);
+    return localization.format(textId, variables);
 }
 
 std::string entityDisplayName(
@@ -58,7 +50,7 @@ std::string sourceOwnerLabel(
         localization,
         TextId("ui.card_owner.actor"),
         {{"actor", entityDisplayName(state, localization, source, definition.ownerActorId)}},
-        "Card of " + entityDisplayName(state, localization, source, definition.ownerActorId)
+        {}
     );
 }
 
@@ -85,7 +77,7 @@ std::string cardFailureReasonText(
                 localization,
                 TextId("ui.card_unplayable.source_defeated"),
                 {{"actor", entityDisplayName(state, localization, source, "actor")}},
-                entityDisplayName(state, localization, source, "actor") + " is defeated"
+                {}
             );
         case CardPlayFailureReason::WrongActorTurn: {
             const std::optional<EntityId> activePlayer = state.activePlayerId();
@@ -95,7 +87,7 @@ std::string cardFailureReasonText(
                     localization,
                     TextId("ui.card_unplayable.wrong_actor_turn"),
                     {{"actor", activeName}},
-                    "Now acting: " + activeName
+                    {}
                 );
             }
 
@@ -106,7 +98,7 @@ std::string cardFailureReasonText(
                 localization,
                 TextId("ui.card_unplayable.wrong_actor_for_card"),
                 {{"actor", entityDisplayName(state, localization, source, "actor")}},
-                "Wrong actor for card"
+                {}
             );
         case CardPlayFailureReason::NotEnoughEnergy:
             return localizedOrFallback(localization, TextId("ui.card_unplayable.not_enough_energy"), "Not enough energy");

@@ -1,8 +1,9 @@
 #pragma once
 
 #include "cards/CardInstanceId.hpp"
-#include "ui/CardView.hpp"
-#include "ui/HandLayout.hpp"
+#include "CardView.hpp"
+#include "CardViewModel.hpp"
+#include "HandLayout.hpp"
 
 #include <raylib.h>
 

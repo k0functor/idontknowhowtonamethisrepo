@@ -16,6 +16,8 @@ RunEventEffectType parseEffectType(const std::string& value, const std::filesyst
     if (value == "gain_random_consumable") return RunEventEffectType::GainRandomConsumable;
     if (value == "gain_stress") return RunEventEffectType::GainStress;
     if (value == "lose_stress") return RunEventEffectType::LoseStress;
+    if (value == "lose_hp") return RunEventEffectType::LoseHp;
+    if (value == "heal_all") return RunEventEffectType::HealAll;
     if (value == "skip") return RunEventEffectType::Skip;
 
     throw std::runtime_error(sourcePath.string() + ": Unknown run event effect type '" + value + "'");

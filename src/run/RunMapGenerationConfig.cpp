@@ -121,6 +121,7 @@ void RunMapGenerationConfig::loadFromFile(const std::filesystem::path& filePath)
     combatWeight_ = reader.optionalInt("combat_weight", combatWeight_);
     eventWeight_ = reader.optionalInt("event_weight", eventWeight_);
     extraConnectionChance_ = reader.optionalInt("extra_connection_chance", extraConnectionChance_);
+    questionMarkCombatChance_ = reader.optionalInt("question_mark_combat_chance", questionMarkCombatChance_);
 
     if (reader.has("shop")) {
         shop_ = parseSpecialNodeConfig(reader.requiredObject("shop"), shop_, filePath, "shop");
@@ -194,6 +195,10 @@ int RunMapGenerationConfig::extraConnectionChance() const {
     return extraConnectionChance_;
 }
 
+int RunMapGenerationConfig::questionMarkCombatChance() const {
+    return questionMarkCombatChance_;
+}
+
 const RunMapSpecialNodeConfig& RunMapGenerationConfig::shop() const {
     return shop_;
 }
@@ -249,6 +254,10 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
 
     if (extraConnectionChance_ < 0 || extraConnectionChance_ > 100) {
         throw std::runtime_error(filePath.string() + ": extra_connection_chance must be between 0 and 100");
+    }
+
+    if (questionMarkCombatChance_ < 0 || questionMarkCombatChance_ > 100) {
+        throw std::runtime_error(filePath.string() + ": question_mark_combat_chance must be between 0 and 100");
     }
 
     const int firstMiddleLayer = 1;

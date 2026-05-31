@@ -44,19 +44,20 @@ SettingsScene::SettingsScene(
     const LocalizationManager& localization,
     UserSettings settings,
     std::function<void(const UserSettings&)> onSettingsChanged,
-    std::function<void()> onBack
+    std::function<void()> onBack,
+    std::function<void()> onSaveAndExit
 )
     : font_(font),
       localization_(localization),
       settings_(std::move(settings)),
       onSettingsChanged_(std::move(onSettingsChanged)),
-      onBack_(std::move(onBack)) {}
+      onBack_(std::move(onBack)),
+      onSaveAndExit_(std::move(onSaveAndExit)) {}
 
 void SettingsScene::update(float) {
     const Vector2 mouse = GetMousePosition();
 
-    constexpr int rowCount = 7;
-    for (int row = 0; row < rowCount; ++row) {
+    for (int row = 0; row < rowCount(); ++row) {
         if (!BasicUi::contains(rowBounds(row), mouse) || !IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             continue;
         }
@@ -67,7 +68,9 @@ void SettingsScene::update(float) {
             case 2: trigger(RowAction::ToggleFullscreen); return;
             case 3: trigger(RowAction::ToggleVSync); return;
             case 4: trigger(RowAction::CycleFrameRateLimit); return;
-            case 5: trigger(RowAction::ToggleDebug); return;
+            case 5:
+                trigger(onSaveAndExit_ ? RowAction::SaveAndExit : RowAction::Back);
+                return;
             case 6: trigger(RowAction::Back); return;
             default: break;
         }
@@ -102,8 +105,13 @@ void SettingsScene::render() const {
     BasicUi::drawButton(font_, rowBounds(2), fullscreenLabel(), mouse);
     BasicUi::drawButton(font_, rowBounds(3), vSyncLabel(), mouse);
     BasicUi::drawButton(font_, rowBounds(4), frameRateLabel(), mouse);
-    BasicUi::drawButton(font_, rowBounds(5), debugLabel(), mouse);
-    BasicUi::drawButton(font_, rowBounds(6), text("ui.back"), mouse);
+
+    int nextRow = 5;
+    if (onSaveAndExit_) {
+        BasicUi::drawButton(font_, rowBounds(nextRow), text("settings.save_and_exit"), mouse);
+        ++nextRow;
+    }
+    BasicUi::drawButton(font_, rowBounds(nextRow), text("ui.back"), mouse);
 
     if (!notificationTextId_.empty()) {
         BasicUi::drawCenteredText(
@@ -116,11 +124,15 @@ void SettingsScene::render() const {
     }
 }
 
+int SettingsScene::rowCount() const {
+    return onSaveAndExit_ ? 7 : 6;
+}
+
 Rectangle SettingsScene::rowBounds(const int rowIndex) const {
     const float width = 520.f;
-    const float height = 48.f;
-    const float gap = 14.f;
-    const float startY = 190.f;
+    const float height = onSaveAndExit_ ? 44.f : 48.f;
+    const float gap = onSaveAndExit_ ? 10.f : 14.f;
+    const float startY = onSaveAndExit_ ? 178.f : 190.f;
     const float x = static_cast<float>(GetScreenWidth()) * 0.5f - width * 0.5f;
 
     return Rectangle{x, startY + static_cast<float>(rowIndex) * (height + gap), width, height};
@@ -205,13 +217,11 @@ void SettingsScene::trigger(const RowAction action) {
             return;
         }
 
-        case RowAction::ToggleDebug:
-            settings_.debug.enabled = !settings_.debug.enabled;
-            notificationTextId_ = settings_.debug.enabled
-                ? "settings.notification.debug_on"
-                : "settings.notification.debug_off";
-            notificationValue_.clear();
-            notifyChanged();
+
+        case RowAction::SaveAndExit:
+            if (onSaveAndExit_) {
+                onSaveAndExit_();
+            }
             return;
 
         case RowAction::Back:
@@ -279,6 +289,3 @@ std::string SettingsScene::frameRateLabel() const {
     return format("settings.fps_limit", {{"value", std::to_string(settings_.window.frameRateLimit)}});
 }
 
-std::string SettingsScene::debugLabel() const {
-    return format("settings.debug", {{"value", onOff(settings_.debug.enabled)}});
-}

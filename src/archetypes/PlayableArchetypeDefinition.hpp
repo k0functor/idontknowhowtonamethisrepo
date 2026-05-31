@@ -27,11 +27,13 @@ struct PlayableArchetypeDefinition {
     ArchetypePaletteDefinition palette;
 
     std::vector<std::string> actorDefinitionIds;
+    std::vector<std::string> rewardCardPoolIds;
     std::vector<std::string> startingDeckCardIds;
     std::vector<std::string> startingRelicIds;
     std::vector<std::string> startingConsumableIds;
 
     int startingGold = 0;
+    bool isAvailable = true;
 
     std::vector<TextId> strengthTextIds;
     std::vector<TextId> weaknessTextIds;

@@ -31,6 +31,8 @@ EncounterDefinition parseEncounter(
     definition.nodeType = nodeType;
     definition.enemyIds = reader.requiredStringArray("enemies");
     definition.weight = reader.optionalInt("weight", 1);
+    definition.minLayer = reader.optionalInt("min_layer", -1);
+    definition.maxLayer = reader.optionalInt("max_layer", -1);
 
     if (definition.id.empty()) {
         throw std::runtime_error(filePath.string() + ": encounter id must not be empty");
@@ -42,6 +44,14 @@ EncounterDefinition parseEncounter(
 
     if (definition.weight <= 0) {
         throw std::runtime_error(filePath.string() + ": encounter '" + definition.id + "' must have positive weight");
+    }
+
+    if (definition.minLayer < -1 || definition.maxLayer < -1) {
+        throw std::runtime_error(filePath.string() + ": encounter '" + definition.id + "' has invalid layer limits");
+    }
+
+    if (definition.minLayer >= 0 && definition.maxLayer >= 0 && definition.minLayer > definition.maxLayer) {
+        throw std::runtime_error(filePath.string() + ": encounter '" + definition.id + "' has min_layer greater than max_layer");
     }
 
     return definition;
@@ -86,23 +96,41 @@ void EncounterDatabase::loadFromFile(const std::filesystem::path& filePath) {
     }
 }
 
-const EncounterDefinition& EncounterDatabase::choose(const RunMapNodeType nodeType, Random& random) const {
+const EncounterDefinition& EncounterDatabase::choose(
+    const RunMapNodeType nodeType,
+    Random& random,
+    const int layerIndex
+) const {
     const std::vector<EncounterDefinition>& pool = poolFor(nodeType);
 
-    int totalWeight = 0;
+    std::vector<const EncounterDefinition*> eligible;
+    eligible.reserve(pool.size());
     for (const EncounterDefinition& encounter : pool) {
-        totalWeight += encounter.weight;
-    }
-
-    int roll = random.rangeInclusive(1, totalWeight);
-    for (const EncounterDefinition& encounter : pool) {
-        roll -= encounter.weight;
-        if (roll <= 0) {
-            return encounter;
+        if (encounter.isAllowedOnLayer(layerIndex)) {
+            eligible.push_back(&encounter);
         }
     }
 
-    return pool.back();
+    if (eligible.empty()) {
+        for (const EncounterDefinition& encounter : pool) {
+            eligible.push_back(&encounter);
+        }
+    }
+
+    int totalWeight = 0;
+    for (const EncounterDefinition* encounter : eligible) {
+        totalWeight += encounter->weight;
+    }
+
+    int roll = random.rangeInclusive(1, totalWeight);
+    for (const EncounterDefinition* encounter : eligible) {
+        roll -= encounter->weight;
+        if (roll <= 0) {
+            return *encounter;
+        }
+    }
+
+    return *eligible.back();
 }
 
 std::vector<const EncounterDefinition*> EncounterDatabase::all() const {

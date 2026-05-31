@@ -1,11 +1,15 @@
 #include "StatusSystem.hpp"
 
 #include "combat/CombatState.hpp"
+#include "game/GameEvent.hpp"
+#include "game/GameEventBus.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 
 namespace {
 constexpr const char* poisonDamageEffect = "poison_damage";
+constexpr const char* poisonStatus = "poison";
 constexpr const char* stanceFlame = "stance_flame";
 constexpr const char* stanceAsh = "stance_ash";
 constexpr const char* stanceSmoke = "stance_smoke";
@@ -15,14 +19,16 @@ bool isStanceStatus(const std::string& statusId) {
 }
 }
 
-StatusSystem::StatusSystem(const StatusDatabase& statusDatabase)
-    : statusDatabase_(statusDatabase) {}
+StatusSystem::StatusSystem(const StatusDatabase& statusDatabase, const GameEventBus* eventBus)
+    : statusDatabase_(statusDatabase),
+      eventBus_(eventBus) {}
 
 void StatusSystem::applyStatus(
     CombatState& state,
     const EntityId target,
     const std::string& statusId,
-    const int amount
+    const int amount,
+    const std::optional<EntityId> source
 ) const {
     if (amount <= 0) {
         return;
@@ -38,9 +44,9 @@ void StatusSystem::applyStatus(
         targetEntity.statuses.remove(stanceFlame);
         targetEntity.statuses.remove(stanceAsh);
         targetEntity.statuses.remove(stanceSmoke);
-        targetEntity.statuses.set(statusId, 1);
+        targetEntity.statuses.set(statusId, 1, source);
     } else {
-        targetEntity.statuses.add(statusId, amount);
+        targetEntity.statuses.add(statusId, amount, source);
     }
 
     state.log.add(
@@ -48,7 +54,8 @@ void StatusSystem::applyStatus(
         {
             {"status", statusId},
             {"amount", std::to_string(amount)},
-            {"target", std::to_string(target.value)}
+            {"target", targetEntity.definitionId.empty() ? std::to_string(target.value) : targetEntity.definitionId},
+            {"target_text_id", targetEntity.nameTextId.value}
         }
     );
 }
@@ -119,13 +126,56 @@ void StatusSystem::applyPoisonDamage(
     }
 
     CombatEntity& entity = state.entity(owner);
+    const std::optional<EntityId> source = entity.statuses.source(poisonStatus);
     const int hpDamage = entity.health.takeDamage(amount);
+    const bool killed = entity.health.isDead();
 
     state.log.add(
         CombatLogEntryType::PoisonDamage,
         {
-            {"target", std::to_string(owner.value)},
-            {"amount", std::to_string(hpDamage)}
+            {"target", entity.definitionId.empty() ? std::to_string(owner.value) : entity.definitionId},
+            {"target_text_id", entity.nameTextId.value},
+            {"amount", std::to_string(hpDamage)},
+            {"stacks", std::to_string(amount)},
+            {"remaining", std::to_string(std::max(0, amount - 1))}
         }
     );
+
+    emitPoisonDamageEvents(state, owner, source, hpDamage, killed);
+}
+
+void StatusSystem::emitPoisonDamageEvents(
+    CombatState& state,
+    const EntityId owner,
+    const std::optional<EntityId> source,
+    const int hpDamage,
+    const bool killed
+) const {
+    if (eventBus_ == nullptr || hpDamage <= 0) {
+        return;
+    }
+
+    GameEvent dealt;
+    dealt.type = GameEventType::DamageDealt;
+    dealt.source = source;
+    dealt.target = owner;
+    dealt.cardDefinitionId = CardId("status.poison");
+    dealt.effectType = EffectType::Damage;
+    dealt.statusId = poisonStatus;
+    dealt.amount = hpDamage;
+    dealt.turn = state.turn;
+
+    if (source.has_value()) {
+        eventBus_->emit(dealt);
+    }
+
+    GameEvent taken = dealt;
+    taken.type = GameEventType::DamageTaken;
+    eventBus_->emit(taken);
+
+    if (killed && state.isEnemy(owner)) {
+        GameEvent killedEvent = dealt;
+        killedEvent.type = GameEventType::EnemyKilled;
+        eventBus_->emit(killedEvent);
+    }
 }

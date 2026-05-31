@@ -13,16 +13,20 @@
   "enemy.intent.special": "Особое действие",
   "enemy.intent.unknown": "Неизвестно",
   "enemy.knife_acolyte.name": "Ножевой послушник",
+  "enemy.mold_marksman.name": "Плесневый стрелок",
   "enemy.plague_spider.name": "Чумной паук",
   "enemy.rat_cultist.name": "Крысиный культист",
+  "enemy.rust_taskmaster.name": "Ржавый надсмотрщик",
+  "enemy.rusted_bishop.name": "Ржавый епископ",
+  "enemy.rusted_mite.name": "Ржавый клещ",
   "enemy.shield_bearer.name": "Щитоносец",
   "enemy.training_dummy.name": "Тренировочный манекен",
   "inspect.enemy.boss.name": "Босс",
   "inspect.enemy.elite.name": "Элитный враг",
+  "inspect.enemy.health.name": "Здоровье",
+  "inspect.enemy.health.value": "{current}/{maximum} HP",
   "inspect.enemy.intent": "Намерение",
   "inspect.enemy.no_details.description": "У этого врага сейчас нет видимых намерений или статусов.",
   "inspect.enemy.no_details.name": "Нет видимых эффектов",
-  "inspect.enemy.normal.name": "Обычный враг",
-  "inspect.enemy.health.name": "Здоровье",
-  "inspect.enemy.health.value": "{current}/{maximum} HP"
+  "inspect.enemy.normal.name": "Обычный враг"
 }

@@ -11,6 +11,6 @@ struct DroneDefinition {
     TextId nameTextId;
     TextId descriptionTextId;
 
-    std::optional<DroneActionDefinition> manualAction;
-    std::optional<DroneActionDefinition> endTurnAction;
+    std::optional<DroneActionDefinition> activeAction;
+    std::optional<DroneActionDefinition> passiveAction;
 };

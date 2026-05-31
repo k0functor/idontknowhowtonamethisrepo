@@ -13,7 +13,7 @@ public:
     void clear();
     void loadFromFile(const std::filesystem::path& filePath);
 
-    const EncounterDefinition& choose(RunMapNodeType nodeType, Random& random) const;
+    const EncounterDefinition& choose(RunMapNodeType nodeType, Random& random, int layerIndex = -1) const;
     std::vector<const EncounterDefinition*> all() const;
     std::size_t size() const;
 

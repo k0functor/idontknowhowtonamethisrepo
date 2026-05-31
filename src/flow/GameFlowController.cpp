@@ -10,6 +10,7 @@
 #include "shop/ShopTuning.hpp"
 #include "scenes/CombatScene.hpp"
 #include "scenes/DifficultySelectScene.hpp"
+#include "scenes/FloorCompleteScene.hpp"
 #include "scenes/MainMenuScene.hpp"
 #include "scenes/ProfileHubScene.hpp"
 #include "scenes/RewardScene.hpp"
@@ -32,6 +33,8 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
+#include <string_view>
 
 #include <raylib.h>
 
@@ -230,6 +233,23 @@ void pushLimited(std::vector<std::string>& output, std::string value, const std:
         output.push_back(std::move(value));
     }
 }
+
+std::string commandText(std::initializer_list<std::string_view> tokens) {
+    std::string result;
+    for (const std::string_view token : tokens) {
+        if (!result.empty()) {
+            result.push_back(' ');
+        }
+        result.append(token.data(), token.size());
+    }
+    return result;
+}
+
+std::string commandPrefix(std::initializer_list<std::string_view> tokens) {
+    std::string result = commandText(tokens);
+    result.push_back(' ');
+    return result;
+}
 }
 
 GameFlowController::GameFlowController(
@@ -315,15 +335,6 @@ void GameFlowController::render() const {
         );
     }
 
-    if (debugPanelEnabled()) {
-        BasicUi::drawText(
-            uiFont_,
-            "F1 Debug",
-            Vector2{24.f, static_cast<float>(GetScreenHeight()) - 34.f},
-            18.f,
-            Color{170, 176, 198, 255}
-        );
-    }
 }
 
 bool GameFlowController::exitRequested() const {
@@ -402,12 +413,22 @@ void GameFlowController::openSettingsOverlay() {
                 onUserSettingsChanged_(userSettings_);
             }
         },
-        [this]() { closeSettingsOverlay(); }
+        [this]() { closeSettingsOverlay(); },
+        [this]() { saveAndExitRunToMainMenu(); }
     );
 }
 
 void GameFlowController::closeSettingsOverlay() {
     settingsOverlay_.reset();
+}
+
+void GameFlowController::saveAndExitRunToMainMenu() {
+    saveActiveRun();
+    settingsOverlay_.reset();
+    runController_.clearActiveRun();
+    selectedArchetypeId_.reset();
+    selectedDifficultyId_.reset();
+    queueTransition([this]() { setMainMenuScene(); });
 }
 
 bool GameFlowController::shouldShowInGameSettingsButton() const {
@@ -426,7 +447,7 @@ void GameFlowController::toggleDebugPanel() {
 
     debugPanelOpen_ = !debugPanelOpen_;
     if (debugPanelOpen_ && debugMessages_.empty()) {
-        addDebugMessage("Debug panel opened. Type 'help' for commands.");
+        addDebugMessage(localization_.get(TextId("debug.panel.opened")));
     }
 }
 
@@ -492,7 +513,7 @@ void GameFlowController::updateDebugPanel() {
             return;
         }
         if (BasicUi::contains(goldButton, mouse)) {
-            debugInput_ = "give gold 50";
+            debugInput_ = commandText({"give", "gold", "50"});
             submitDebugCommand();
             return;
         }
@@ -516,9 +537,9 @@ void GameFlowController::renderDebugPanel() const {
     DrawRectangleRounded(panel, 0.035f, 12, Color{22, 24, 32, 245});
     DrawRectangleRoundedLinesEx(panel, 0.035f, 12, 2.f, Color{125, 132, 158, 255});
 
-    BasicUi::drawText(uiFont_, "Debug Panel", Vector2{panel.x + 24.f, panel.y + 22.f}, 28.f, Color{240, 242, 250, 255});
-    BasicUi::drawText(uiFont_, "F1/Esc close. Enter runs command.", Vector2{panel.x + 24.f, panel.y + 56.f}, 17.f, Color{165, 172, 196, 255});
-    BasicUi::drawButton(uiFont_, Rectangle{panel.x + panel.width - 124.f, panel.y + 20.f, 96.f, 34.f}, "Close", mouse);
+    BasicUi::drawText(uiFont_, localization_.get(TextId("debug.panel.title")), Vector2{panel.x + 24.f, panel.y + 22.f}, 28.f, Color{240, 242, 250, 255});
+    BasicUi::drawText(uiFont_, localization_.get(TextId("debug.panel.close_hint")), Vector2{panel.x + 24.f, panel.y + 56.f}, 17.f, Color{165, 172, 196, 255});
+    BasicUi::drawButton(uiFont_, Rectangle{panel.x + panel.width - 124.f, panel.y + 20.f, 96.f, 34.f}, localization_.get(TextId("ui.close")), mouse);
 
     const Rectangle input{panel.x + 24.f, panel.y + 88.f, panel.width - 48.f, 42.f};
     DrawRectangleRounded(input, 0.15f, 8, Color{12, 14, 20, 255});
@@ -527,11 +548,12 @@ void GameFlowController::renderDebugPanel() const {
 
     const std::vector<std::string> suggestions = debugAutocompleteSuggestions();
     if (!suggestions.empty()) {
-        std::string suggestionText = "Tab: " + suggestions.front();
+        std::string suggestionBody = suggestions.front();
         const std::size_t previewCount = std::min<std::size_t>(suggestions.size(), 4u);
         for (std::size_t i = 1; i < previewCount; ++i) {
-            suggestionText += "  |  " + suggestions[i];
+            suggestionBody += "  |  " + suggestions[i];
         }
+        const std::string suggestionText = localization_.format(TextId("debug.panel.autocomplete"), {{"suggestions", suggestionBody}});
         BasicUi::drawText(uiFont_, suggestionText, Vector2{input.x + 12.f, input.y + 48.f}, 15.f, Color{170, 188, 235, 255});
     }
 
@@ -546,13 +568,13 @@ void GameFlowController::renderDebugPanel() const {
     }
 
     const float quickY = panel.y + panel.height - 104.f;
-    BasicUi::drawButton(uiFont_, Rectangle{panel.x + 24.f, quickY, 140.f, 38.f}, "+50 gold", mouse);
-    BasicUi::drawButton(uiFont_, Rectangle{panel.x + 176.f, quickY, 140.f, 38.f}, "Full heal", mouse);
-    BasicUi::drawButton(uiFont_, Rectangle{panel.x + 328.f, quickY, 140.f, 38.f}, "Save", mouse);
+    BasicUi::drawButton(uiFont_, Rectangle{panel.x + 24.f, quickY, 140.f, 38.f}, localization_.get(TextId("debug.panel.button.gold_50")), mouse);
+    BasicUi::drawButton(uiFont_, Rectangle{panel.x + 176.f, quickY, 140.f, 38.f}, localization_.get(TextId("debug.panel.button.full_heal")), mouse);
+    BasicUi::drawButton(uiFont_, Rectangle{panel.x + 328.f, quickY, 140.f, 38.f}, localization_.get(TextId("debug.panel.button.save")), mouse);
 
     BasicUi::drawText(
         uiFont_,
-        "Examples: give card cyborg_liquid_assets | give relic relic_id | status strength 3 | win combat",
+        localization_.get(TextId("debug.panel.examples")),
         Vector2{panel.x + 24.f, panel.y + panel.height - 46.f},
         15.f,
         Color{150, 156, 180, 255}
@@ -581,22 +603,22 @@ std::vector<std::string> GameFlowController::debugAutocompleteSuggestions() cons
         "help",
         "save",
         "fullheal",
-        "give gold 100",
-        "give card ",
-        "give relic ",
-        "give consumable ",
-        "status ",
-        "apply status ",
-        "stress 10",
-        "stress -10",
-        "heal 10",
-        "damage 10",
-        "block 10",
-        "energy 3",
-        "win combat",
-        "lose combat",
-        "clear pending",
-        "unlock map"
+        commandText({"give", "gold", "100"}),
+        commandPrefix({"give", "card"}),
+        commandPrefix({"give", "relic"}),
+        commandPrefix({"give", "consumable"}),
+        commandPrefix({"status"}),
+        commandPrefix({"apply", "status"}),
+        commandText({"stress", "10"}),
+        commandText({"stress", "-10"}),
+        commandText({"heal", "10"}),
+        commandText({"damage", "10"}),
+        commandText({"block", "10"}),
+        commandText({"energy", "3"}),
+        commandText({"win", "combat"}),
+        commandText({"lose", "combat"}),
+        commandText({"clear", "pending"}),
+        commandText({"unlock", "map"})
     };
 
     if (lowerInput.empty() || lowerInput.find(' ') == std::string::npos) {
@@ -653,12 +675,12 @@ std::vector<std::string> GameFlowController::debugAutocompleteSuggestions() cons
     }
     std::sort(statusIds.begin(), statusIds.end());
 
-    suggestIds("give card ", cardIds);
-    suggestIds("give relic ", relicIds);
-    suggestIds("give consumable ", consumableIds);
-    suggestIds("give potion ", consumableIds);
-    suggestIds("status ", statusIds);
-    suggestIds("apply status ", statusIds);
+    suggestIds(commandPrefix({"give", "card"}), cardIds);
+    suggestIds(commandPrefix({"give", "relic"}), relicIds);
+    suggestIds(commandPrefix({"give", "consumable"}), consumableIds);
+    suggestIds(commandPrefix({"give", "potion"}), consumableIds);
+    suggestIds(commandPrefix({"status"}), statusIds);
+    suggestIds(commandPrefix({"apply", "status"}), statusIds);
 
     if (suggestions.empty()) {
         for (const std::string& command : commands) {
@@ -681,7 +703,7 @@ void GameFlowController::acceptDebugAutocompleteSuggestion() {
 std::string GameFlowController::executeDebugCommand(const std::string& command) {
     const std::vector<std::string> tokens = splitCommand(command);
     if (tokens.empty()) {
-        return "Empty command";
+        return localization_.get(TextId("debug.command.empty"));
     }
 
     std::string sceneOutput;
@@ -694,7 +716,7 @@ std::string GameFlowController::executeDebugCommand(const std::string& command) 
         return runOutput;
     }
 
-    return "Unknown debug command. Type 'help'.";
+    return localization_.get(TextId("debug.command.unknown"));
 }
 
 bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& tokens, std::string& output) {
@@ -705,45 +727,32 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
     const std::string& command = tokens.front();
 
     if (command == "help") {
-        output =
-            "Commands:\n"
-            "  give gold <amount>\n"
-            "  give card <card_id> [count]\n"
-            "  give relic <relic_id>\n"
-            "  give consumable <consumable_id>\n"
-            "  heal <amount> / damage <amount>\n"
-            "  stress <delta>\n"
-            "  fullheal\n"
-            "  status <status_id> [amount] [player|enemy]\n"
-            "  block <amount> / energy <delta>\n"
-            "  win combat / lose combat\n"
-            "  save\n"
-            "  clear pending\n"
-            "  unlock map\n"
-            "Autocomplete: press Tab after command prefixes like 'give card ' or 'status '.";
+        output = localization_.get(TextId("debug.command.help"));
         return true;
     }
 
     if (command == "save") {
         saveActiveRun();
-        output = runController_.hasActiveRun() ? "Run saved" : "No active run to save";
+        output = runController_.hasActiveRun()
+            ? localization_.get(TextId("debug.run_saved"))
+            : localization_.get(TextId("debug.no_active_run_to_save"));
         return true;
     }
 
     if (command == "clear" && tokens.size() >= 2u && tokens[1] == "pending") {
         if (!runController_.hasActiveRun()) {
-            output = "No active run";
+            output = localization_.get(TextId("debug.no_active_run"));
             return true;
         }
         runController_.clearPendingRoom();
         saveActiveRun();
-        output = "Pending room cleared";
+        output = localization_.get(TextId("debug.pending_room_cleared"));
         return true;
     }
 
     if (command == "unlock" && tokens.size() >= 2u && tokens[1] == "map") {
         if (!runController_.hasActiveRun()) {
-            output = "No active run";
+            output = localization_.get(TextId("debug.no_active_run"));
             return true;
         }
         for (RunMapNode& node : runController_.run().map.nodes) {
@@ -752,13 +761,13 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
             }
         }
         saveActiveRun();
-        output = "All map nodes unlocked";
+        output = localization_.get(TextId("debug.map_unlocked"));
         return true;
     }
 
     if ((command == "give" || command == "add") && tokens.size() >= 3u) {
         if (!runController_.hasActiveRun()) {
-            output = "No active run";
+            output = localization_.get(TextId("debug.no_active_run"));
             return true;
         }
 
@@ -773,14 +782,17 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
                 run.stats.goldGained += amount;
             }
             saveActiveRun();
-            output = "Gold adjusted by " + std::to_string(amount) + ". Current gold: " + std::to_string(run.gold);
+            output = localization_.format(
+                TextId("debug.gold_adjusted"),
+                {{"amount", std::to_string(amount)}, {"gold", std::to_string(run.gold)}}
+            );
             return true;
         }
 
         if (type == "card") {
             const CardId cardId(idOrAmount);
             if (!content_.cards().contains(cardId)) {
-                output = "Unknown card id: " + idOrAmount;
+                output = localization_.format(TextId("debug.unknown_card_id"), {{"id", idOrAmount}});
                 return true;
             }
             const int count = std::max(1, parseIntOr(tokens, 3u, 1));
@@ -789,49 +801,52 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
                 ++run.stats.cardsAdded;
             }
             saveActiveRun();
-            output = "Added card '" + idOrAmount + "' x" + std::to_string(count);
+            output = localization_.format(
+                TextId("debug.card_added"),
+                {{"id", idOrAmount}, {"count", std::to_string(count)}}
+            );
             return true;
         }
 
         if (type == "relic") {
             const RelicId relicId(idOrAmount);
             if (!content_.relics().contains(relicId)) {
-                output = "Unknown relic id: " + idOrAmount;
+                output = localization_.format(TextId("debug.unknown_relic_id"), {{"id", idOrAmount}});
                 return true;
             }
             if (std::find(run.relicIds.begin(), run.relicIds.end(), idOrAmount) == run.relicIds.end()) {
                 run.relicIds.push_back(idOrAmount);
             }
             saveActiveRun();
-            output = "Added relic '" + idOrAmount + "'";
+            output = localization_.format(TextId("debug.relic_added"), {{"id", idOrAmount}});
             return true;
         }
 
         if (type == "consumable" || type == "potion") {
             const ConsumableId consumableId(idOrAmount);
             if (!content_.consumables().contains(consumableId)) {
-                output = "Unknown consumable id: " + idOrAmount;
+                output = localization_.format(TextId("debug.unknown_consumable_id"), {{"id", idOrAmount}});
                 return true;
             }
             if (static_cast<int>(run.consumableIds.size()) >= run.maxConsumables) {
-                output = "Consumable slots are full";
+                output = localization_.get(TextId("debug.consumable_slots_full"));
                 return true;
             }
             run.consumableIds.push_back(idOrAmount);
             saveActiveRun();
-            output = "Added consumable '" + idOrAmount + "'";
+            output = localization_.format(TextId("debug.consumable_added"), {{"id", idOrAmount}});
             return true;
         }
     }
 
     if (command == "heal" || command == "damage") {
         if (!runController_.hasActiveRun()) {
-            output = "No active run";
+            output = localization_.get(TextId("debug.no_active_run"));
             return true;
         }
         const int amount = parseIntOr(tokens, 1u, 0);
         if (amount <= 0) {
-            output = "Usage: " + command + " <amount>";
+            output = localization_.format(TextId("debug.usage.run_heal_damage"), {{"command", command}});
             return true;
         }
         for (RunActorState& actor : runController_.run().actorStates) {
@@ -842,29 +857,31 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
             }
         }
         saveActiveRun();
-        output = command == "heal" ? "Run actors healed" : "Run actors damaged";
+        output = command == "heal"
+            ? localization_.get(TextId("debug.run_actors_healed"))
+            : localization_.get(TextId("debug.run_actors_damaged"));
         return true;
     }
 
     if (command == "stress") {
         if (!runController_.hasActiveRun()) {
-            output = "No active run";
+            output = localization_.get(TextId("debug.no_active_run"));
             return true;
         }
         if (tokens.size() < 2u) {
-            output = "Usage: stress <delta>";
+            output = localization_.get(TextId("debug.usage.run_stress"));
             return true;
         }
         const int delta = parseIntOr(tokens, 1u, 0);
         runController_.adjustAllActorsStress(delta, &random_);
         saveActiveRun();
-        output = "Run actor stress adjusted by " + std::to_string(delta);
+        output = localization_.format(TextId("debug.run_actor_stress_adjusted"), {{"amount", std::to_string(delta)}});
         return true;
     }
 
     if (command == "fullheal") {
         if (!runController_.hasActiveRun()) {
-            output = "No active run";
+            output = localization_.get(TextId("debug.no_active_run"));
             return true;
         }
         for (RunActorState& actor : runController_.run().actorStates) {
@@ -873,7 +890,7 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
             actor.resolveCheckTriggered = false;
         }
         saveActiveRun();
-        output = "Run actors fully healed and stress cleared";
+        output = localization_.get(TextId("debug.full_heal_done"));
         return true;
     }
 
@@ -948,6 +965,22 @@ void GameFlowController::setRunMapScene() {
             [this](const int nodeId, const std::size_t deckIndex) { restUpgrade(nodeId, deckIndex); },
             [this](const int nodeId) { restSkip(nodeId); },
             [this]() { queueTransition([this]() { setProfileHubScene(); }); }
+        )
+    );
+}
+
+void GameFlowController::setFloorCompleteScene() {
+    if (!runController_.hasActiveRun()) {
+        throw std::runtime_error("Cannot open floor completion scene: no active run");
+    }
+
+    sceneManager_.setScene(
+        std::make_unique<FloorCompleteScene>(
+            uiFont_,
+            localization_,
+            content_.enemies(),
+            runController_.run(),
+            [this]() { finishFloorComplete(); }
         )
     );
 }
@@ -1135,7 +1168,11 @@ void GameFlowController::continueRunInSlot(const std::size_t slotIndex) {
         selectedArchetypeId_.reset();
         selectedDifficultyId_.reset();
         if (!setPendingRoomSceneIfNeeded()) {
-            setRunMapScene();
+            if (runController_.isActCompleted()) {
+                setFloorCompleteScene();
+            } else {
+                setRunMapScene();
+            }
         }
     });
 }
@@ -1152,6 +1189,13 @@ void GameFlowController::deleteRunInSlot(const std::size_t slotIndex) {
 
 void GameFlowController::selectArchetype(PlayableArchetypeId archetypeId) {
     queueTransition([this, archetypeId = std::move(archetypeId)]() mutable {
+        const PlayableArchetypeDefinition& archetype = content_.archetypes().get(archetypeId);
+        if (!archetype.isAvailable) {
+            selectedArchetypeId_.reset();
+            setProfileHubScene();
+            return;
+        }
+
         selectedArchetypeId_ = std::move(archetypeId);
         setDifficultySelectScene();
     });
@@ -1213,6 +1257,14 @@ void GameFlowController::startMapNode(const int nodeId) {
             }
 
             case RunMapNodeType::Event: {
+                const int combatChance = content_.actOneMapGeneration().questionMarkCombatChance();
+                if (random_.chance(static_cast<double>(combatChance) / 100.0)) {
+                    runController_.revealNodeType(nodeId, RunMapNodeType::Combat);
+                    saveActiveRun();
+                    setCombatScene(nodeId);
+                    return;
+                }
+
                 const RunEventDefinition& event = chooseRunEvent(content_.events(), random_);
                 runController_.setPendingEvent(nodeId, event.id);
                 saveActiveRun();
@@ -1316,8 +1368,18 @@ void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefin
 
 void GameFlowController::finishReward(const RewardState& reward, RewardSelection selection) {
     queueTransition([this, reward, selection = std::move(selection)]() mutable {
+        const bool completedBoss = reward.sourceNodeType == RunMapNodeType::Boss;
+
         runController_.applyReward(reward, selection);
         runController_.clearPendingRoom();
+
+        if (completedBoss) {
+            runController_.completeCurrentAct();
+            saveActiveRun();
+            setFloorCompleteScene();
+            return;
+        }
+
         saveActiveRun();
         setRunMapScene();
     });
@@ -1332,6 +1394,14 @@ void GameFlowController::finishChestReward(
         runController_.completeChestNode(nodeId);
         saveActiveRun();
         setRunMapScene();
+    });
+}
+
+void GameFlowController::finishFloorComplete() {
+    queueTransition([this]() {
+        deleteSelectedRunSave();
+        runController_.clearActiveRun();
+        setProfileHubScene();
     });
 }
 

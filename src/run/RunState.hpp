@@ -21,6 +21,9 @@ struct RunState {
     std::uint32_t seed = 0;
     int gold = 0;
     int act = 1;
+    bool actCompleted = false;
+    int completedAct = 0;
+    std::vector<std::string> defeatedBossEnemyIds;
 
     float enemyHpMultiplier = 1.f;
     float enemyDamageMultiplier = 1.f;
@@ -37,6 +40,7 @@ struct RunState {
     int maxConsumables = 3;
 
     std::vector<std::string> actorDefinitionIds;
+    std::vector<std::string> rewardCardPoolIds;
     std::vector<RunActorState> actorStates;
 
     RunMap map;

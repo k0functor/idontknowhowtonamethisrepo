@@ -86,26 +86,39 @@ DroneDefinition DroneDefinitionParser::parse(
         );
     }
 
-    if (reader.has("manual")) {
-        definition.manualAction = parseAction(
-            reader.requiredObject("manual"),
+    if (reader.has("active")) {
+        definition.activeAction = parseAction(
+            reader.requiredObject("active"),
             sourcePath,
-            definition.id.value + ".manual"
+            definition.id.value + ".active"
         );
     }
 
-    if (reader.has("end_turn")) {
-        definition.endTurnAction = parseAction(
+    if (reader.has("manual")) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': drone '" +
+            definition.id.value + "' uses legacy field 'manual'; use 'active' instead"
+        );
+    }
+
+    if (reader.has("passive")) {
+        definition.passiveAction = parseAction(
+            reader.requiredObject("passive"),
+            sourcePath,
+            definition.id.value + ".passive"
+        );
+    } else if (reader.has("end_turn")) {
+        definition.passiveAction = parseAction(
             reader.requiredObject("end_turn"),
             sourcePath,
             definition.id.value + ".end_turn"
         );
     }
 
-    if (!definition.manualAction.has_value() && !definition.endTurnAction.has_value()) {
+    if (!definition.activeAction.has_value() || !definition.passiveAction.has_value()) {
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() + "': drone '" +
-            definition.id.value + "' must define at least one of 'manual' or 'end_turn'"
+            definition.id.value + "' must define both 'active' and 'passive' actions"
         );
     }
 

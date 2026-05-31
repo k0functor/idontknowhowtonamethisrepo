@@ -8,6 +8,8 @@ enum class RunEventEffectType {
     GainRandomConsumable,
     GainStress,
     LoseStress,
+    LoseHp,
+    HealAll,
     Skip
 };
 

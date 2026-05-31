@@ -168,6 +168,23 @@
         "amount": 1,
         "priority": 440
       }
+    ],
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ]
+      }
     ]
   },
   {
@@ -188,6 +205,83 @@
               "amount": 3
             },
             "status": "poison"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bent_pauldron",
+    "name": "relic.bent_pauldron.name",
+    "description": "relic.bent_pauldron.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "damage_taken",
+        "source_side": "enemy",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "splintered_banner",
+    "name": "relic.splintered_banner.name",
+    "description": "relic.splintered_banner.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          },
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "furnace_heart",
+    "name": "relic.furnace_heart.name",
+    "description": "relic.furnace_heart.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "turn_started",
+        "every_n_turns": 2,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
           }
         ]
       }

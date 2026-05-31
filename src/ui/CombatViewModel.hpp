@@ -12,9 +12,11 @@
 
 struct DroneSlotViewModel {
     bool filled = false;
+    bool cardActivationAvailable = false;
     std::string type;
     std::string name;
     std::string description;
+    std::string cardActivationLabel;
 };
 
 struct CombatViewModel {

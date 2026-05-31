@@ -49,7 +49,7 @@ bool UiFont::available() const {
 
 const Font& UiFont::font() const {
     if (!available_) {
-        throw std::runtime_error("UI font was requested, but no font is loaded");
+        throw std::runtime_error("UI font was requested, but no font is loaded"); // NOL10N: developer UI resource diagnostic
     }
 
     return font_;

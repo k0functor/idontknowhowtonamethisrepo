@@ -8,11 +8,14 @@
 #include "relics/RelicDefinition.hpp"
 #include "inspect/InspectPanelModel.hpp"
 #include "ui/BasicUi.hpp"
+#include "ui/CardViewModelFactory.hpp"
+#include "ui/CardVisualInstance.hpp"
 
 #include <raylib.h>
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <vector>
 
@@ -250,19 +253,22 @@ void RewardScene::renderCardChoice() const {
 
     for (std::size_t i = 0; i < option->cardOptions.size(); ++i) {
         const Rectangle bounds = cardOptionBounds(i);
-        const bool hovered = BasicUi::contains(bounds, mouse);
         const bool selected = selectedCardIndex_.has_value() && *selectedCardIndex_ == i;
-        DrawRectangleRounded(bounds, 0.08f, 10, hovered ? Color{53, 58, 75, 255} : Color{40, 43, 56, 255});
-        DrawRectangleRoundedLinesEx(bounds, 0.08f, 10, selected ? 4.f : 2.f, selected ? Color{255, 218, 90, 255} : Color{110, 120, 150, 255});
         const CardId& cardId = option->cardOptions[i].cardId;
-        BasicUi::drawCenteredText(font_, cardName(cardId), Rectangle{bounds.x + 10.f, bounds.y + 14.f, bounds.width - 20.f, 38.f}, 22.f, Color{245, 245, 250, 255});
-        const std::vector<std::string> lines = BasicUi::wrapText(font_, cardDescription(cardId), 15.f, bounds.width - 28.f);
-        float y = bounds.y + 70.f;
-        for (const std::string& line : lines) {
-            if (y > bounds.y + bounds.height - 24.f) break;
-            BasicUi::drawText(font_, line, Vector2{bounds.x + 16.f, y}, 15.f, Color{205, 210, 225, 255});
-            y += 20.f;
+        if (!cards_.contains(cardId)) {
+            BasicUi::drawCenteredText(font_, cardId.value, bounds, 18.f, Color{245, 245, 250, 255});
+            continue;
         }
+
+        CardViewModel model = CardViewModelFactory::buildStatic(
+            cards_.get(cardId),
+            localization_,
+            CardInstanceId{static_cast<std::uint64_t>(i + 1)},
+            false,
+            selected
+        );
+        const CardTransform transform = CardVisualInstance::transformForBounds(bounds, static_cast<int>(i));
+        CardVisualInstance::renderStatic(model, font_.available() ? &font_.font() : nullptr, transform);
     }
 
     BasicUi::drawButton(font_, cancelButtonBounds(), localization_.get(TextId("reward.cancel")), mouse);

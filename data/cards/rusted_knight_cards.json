@@ -1,5 +1,45 @@
 [
   {
+    "id": "rusted_knight_basic_strike",
+    "name": "card.rusted_knight_basic_strike.name",
+    "description": "card.rusted_knight_basic_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "rusted_knight_basic_defend",
+    "name": "card.rusted_knight_basic_defend.name",
+    "description": "card.rusted_knight_basic_defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
     "id": "rusted_shield_bash",
     "name": "card.rusted_shield_bash.name",
     "description": "card.rusted_shield_bash.description",
@@ -130,6 +170,56 @@
     }
   },
   {
+    "id": "rusted_tempered_rage",
+    "name": "card.rusted_tempered_rage.name",
+    "description": "card.rusted_tempered_rage.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "strength"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "strength"
+        }
+      ]
+    }
+  },
+  {
     "id": "rusted_hold_line",
     "name": "card.rusted_hold_line.name",
     "description": "card.rusted_hold_line.description",
@@ -138,9 +228,6 @@
     "gold_cost": 70,
     "type": "skill",
     "owner_actor": "rusted_knight",
-    "keywords": [
-      "retain"
-    ],
     "effects": [
       {
         "type": "block",
@@ -180,7 +267,10 @@
           "status": "strength"
         }
       ]
-    }
+    },
+    "keywords": [
+      "retain"
+    ]
   },
   {
     "id": "rusted_blood_oath",
@@ -218,7 +308,6 @@
       }
     ],
     "upgrade": {
-      "energy_cost": 1,
       "effects": [
         {
           "type": "lose_hp",
@@ -244,7 +333,1063 @@
             "amount": 5
           }
         }
+      ],
+      "energy_cost": 1
+    }
+  },
+  {
+    "id": "rusted_splinter_cut",
+    "name": "card.rusted_splinter_cut.name",
+    "description": "card.rusted_splinter_cut.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        },
+        "repeat_count": 2
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          },
+          "repeat_count": 2
+        }
       ]
     }
+  },
+  {
+    "id": "rusted_guarded_thrust",
+    "name": "card.rusted_guarded_thrust.name",
+    "description": "card.rusted_guarded_thrust.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_rallying_plate",
+    "name": "card.rusted_rallying_plate.name",
+    "description": "card.rusted_rallying_plate.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_cracked_knuckles",
+    "name": "card.rusted_cracked_knuckles.name",
+    "description": "card.rusted_cracked_knuckles.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 75,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "weak"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 13
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "weak"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_brace_for_impact",
+    "name": "card.rusted_brace_for_impact.name",
+    "description": "card.rusted_brace_for_impact.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 16
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "vulnerable"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_battle_roar",
+    "name": "card.rusted_battle_roar.name",
+    "description": "card.rusted_battle_roar.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 95,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "strength"
+      },
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "strength"
+        },
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "vulnerable"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_reckless_charge",
+    "name": "card.rusted_reckless_charge.name",
+    "description": "card.rusted_reckless_charge.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 105,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 9
+        },
+        "repeat_count": 2
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          },
+          "repeat_count": 2
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_counterweight",
+    "name": "card.rusted_counterweight.name",
+    "description": "card.rusted_counterweight.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 100,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 14
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "strength"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 18
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "strength"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_red_momentum",
+    "name": "card.rusted_red_momentum.name",
+    "description": "card.rusted_red_momentum.description",
+    "rarity": "uncommon",
+    "energy_cost": 0,
+    "gold_cost": 105,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ]
+    },
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "rusted_sweeping_arc",
+    "name": "card.rusted_sweeping_arc.name",
+    "description": "card.rusted_sweeping_arc.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 100,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 13
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_unbroken_wall",
+    "name": "card.rusted_unbroken_wall.name",
+    "description": "card.rusted_unbroken_wall.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 150,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 22
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "strength"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 28
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "strength"
+        }
+      ]
+    },
+    "keywords": [
+      "retain"
+    ]
+  },
+  {
+    "id": "rusted_giantbreaker",
+    "name": "card.rusted_giantbreaker.name",
+    "description": "card.rusted_giantbreaker.description",
+    "rarity": "rare",
+    "energy_cost": 3,
+    "gold_cost": 165,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 25
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 30
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "vulnerable"
+        }
+      ],
+      "energy_cost": 2
+    }
+  },
+  {
+    "id": "rusted_last_stand",
+    "name": "card.rusted_last_stand.name",
+    "description": "card.rusted_last_stand.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 155,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        },
+        "status": "strength"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          },
+          "status": "strength"
+        }
+      ]
+    },
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "rusted_crimson_cleave",
+    "name": "card.rusted_crimson_cleave.name",
+    "description": "card.rusted_crimson_cleave.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 160,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        }
+      },
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 16
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        },
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 20
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_ribbreaker",
+    "name": "card.rusted_ribbreaker.name",
+    "description": "card.rusted_ribbreaker.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "vulnerable"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_lockstep",
+    "name": "card.rusted_lockstep.name",
+    "description": "card.rusted_lockstep.description",
+    "rarity": "common",
+    "energy_cost": 0,
+    "gold_cost": 65,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    },
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "rusted_bitter_grit",
+    "name": "card.rusted_bitter_grit.name",
+    "description": "card.rusted_bitter_grit.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 75,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "strength"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "strength"
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_spiked_shell",
+    "name": "card.rusted_spiked_shell.name",
+    "description": "card.rusted_spiked_shell.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 105,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      },
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 15
+          }
+        },
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "rusted_overextend",
+    "name": "card.rusted_overextend.name",
+    "description": "card.rusted_overextend.description",
+    "rarity": "uncommon",
+    "energy_cost": 0,
+    "gold_cost": 100,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "vulnerable"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        },
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "vulnerable"
+        }
+      ]
+    },
+    "keywords": [
+      "exhaust"
+    ]
+  },
+  {
+    "id": "rusted_shield_memory",
+    "name": "card.rusted_shield_memory.name",
+    "description": "card.rusted_shield_memory.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 155,
+    "type": "skill",
+    "owner_actor": "rusted_knight",
+    "effects": [
+      {
+        "type": "lose_hp",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        },
+        "status": "dexterity"
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "dexterity"
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    },
+    "keywords": [
+      "exhaust"
+    ]
   }
 ]

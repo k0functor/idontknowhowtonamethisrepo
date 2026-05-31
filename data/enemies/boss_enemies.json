@@ -2,7 +2,7 @@
   {
     "id": "baron_of_ashes",
     "name": "enemy.baron_of_ashes.name",
-    "max_hp": 160,
+    "max_hp": 145,
     "starting_block": 0,
     "actions": [
       {
@@ -20,11 +20,11 @@
           {
             "type": "apply_status",
             "target": "random_ally",
-            "status": "burn",
             "value": {
               "type": "fixed",
-              "amount": 2
-            }
+              "amount": 1
+            },
+            "status": "weak"
           }
         ]
       },
@@ -43,11 +43,11 @@
           {
             "type": "apply_status",
             "target": "self",
-            "status": "strength",
             "value": {
               "type": "fixed",
               "amount": 2
-            }
+            },
+            "status": "strength"
           }
         ]
       },
@@ -58,18 +58,18 @@
           {
             "type": "apply_status",
             "target": "all_allies",
-            "status": "vulnerable",
             "value": {
               "type": "fixed",
               "amount": 2
-            }
+            },
+            "status": "vulnerable"
           },
           {
             "type": "damage",
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 7
             }
           }
         ]
@@ -84,6 +84,113 @@
             "value": {
               "type": "fixed",
               "amount": 24
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rusted_bishop",
+    "name": "enemy.rusted_bishop.name",
+    "max_hp": 132,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "bishop_bell_toll",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          },
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "bishop_rusted_wall",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ]
+      },
+      {
+        "id": "bishop_censer_swing",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            },
+            "repeat_count": 2
+          }
+        ]
+      },
+      {
+        "id": "bishop_false_blessing",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ]
+      },
+      {
+        "id": "bishop_cracked_mitre",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 10
             }
           }
         ]

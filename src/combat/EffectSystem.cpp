@@ -4,18 +4,49 @@
 #include "run/StressRules.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
 namespace {
+constexpr const char* monkActorId = "monk";
 constexpr const char* stanceFlame = "stance_flame";
 constexpr const char* stanceAsh = "stance_ash";
 constexpr const char* stanceSmoke = "stance_smoke";
+constexpr int monkStanceShiftDraw = 2;
+constexpr int monkStanceShiftEnergy = 1;
 
-void clearStances(CombatEntity& entity) {
-    entity.statuses.remove(stanceFlame);
-    entity.statuses.remove(stanceAsh);
-    entity.statuses.remove(stanceSmoke);
+bool isStanceStatus(const std::string& statusId) {
+    return statusId == stanceFlame || statusId == stanceAsh || statusId == stanceSmoke;
+}
+
+std::optional<std::string> activeStance(const CombatEntity& entity) {
+    if (entity.statuses.has(stanceFlame)) {
+        return std::string(stanceFlame);
+    }
+
+    if (entity.statuses.has(stanceAsh)) {
+        return std::string(stanceAsh);
+    }
+
+    if (entity.statuses.has(stanceSmoke)) {
+        return std::string(stanceSmoke);
+    }
+
+    return std::nullopt;
+}
+
+bool shouldTriggerMonkStanceShiftReward(
+    const CombatEntity& entity,
+    const std::optional<std::string>& previousStance,
+    const std::string& nextStance
+) {
+    return entity.type == EntityType::Player &&
+           entity.definitionId == monkActorId &&
+           previousStance.has_value() &&
+           *previousStance != nextStance &&
+           isStanceStatus(nextStance);
 }
 
 
@@ -26,11 +57,17 @@ void logStressResolveOutcome(CombatState& state, const CombatEntity& entity, con
 
     switch (result.resolveOutcome) {
         case StressRules::ResolveOutcome::Resolve:
-            state.log.add(CombatLogEntryType::StressResolve, {{"actor", entity.definitionId}});
+            state.log.add(
+                CombatLogEntryType::StressResolve,
+                {{"actor", entity.definitionId}, {"actor_text_id", entity.nameTextId.value}}
+            );
             return;
 
         case StressRules::ResolveOutcome::Breakdown:
-            state.log.add(CombatLogEntryType::StressBreakdown, {{"actor", entity.definitionId}});
+            state.log.add(
+                CombatLogEntryType::StressBreakdown,
+                {{"actor", entity.definitionId}, {"actor_text_id", entity.nameTextId.value}}
+            );
             return;
 
         case StressRules::ResolveOutcome::None:
@@ -53,7 +90,10 @@ void adjustStress(CombatState& state, const EntityId target, const int delta, Ra
 
         if (result.collapsed) {
             entity.health.setCurrent(0);
-            state.log.add(CombatLogEntryType::StressCollapse, {{"actor", entity.definitionId}});
+            state.log.add(
+                CombatLogEntryType::StressCollapse,
+                {{"actor", entity.definitionId}, {"actor_text_id", entity.nameTextId.value}}
+            );
         }
     }
 }
@@ -145,7 +185,8 @@ void EffectSystem::applyEffect(
                         state,
                         target,
                         *effect.statusId,
-                        resolvedValue.actual
+                        resolvedValue.actual,
+                        context.source
                     );
 
                     if (eventBus_ != nullptr) {
@@ -170,8 +211,30 @@ void EffectSystem::applyEffect(
 
                 for (const EntityId target : targets) {
                     CombatEntity& entity = state.entity(target);
-                    clearStances(entity);
-                    statusSystem_.applyStatus(state, target, *effect.statusId, 1);
+                    const std::optional<std::string> previousStance = activeStance(entity);
+
+                    statusSystem_.applyStatus(state, target, *effect.statusId, 1, context.source);
+
+                    if (shouldTriggerMonkStanceShiftReward(entity, previousStance, *effect.statusId)) {
+                        std::size_t drawn = 0;
+                        if (context.random != nullptr) {
+                            drawn = drawSystem_.drawCards(
+                                state.deck,
+                                state.hand,
+                                static_cast<std::size_t>(monkStanceShiftDraw),
+                                *context.random
+                            );
+                        }
+
+                        energySystem_.gain(state, target, monkStanceShiftEnergy);
+                        state.log.add(
+                            CombatLogEntryType::MonkStanceShiftReward,
+                            {
+                                {"draw", std::to_string(drawn)},
+                                {"energy", std::to_string(monkStanceShiftEnergy)}
+                            }
+                        );
+                    }
                 }
                 continue;
 

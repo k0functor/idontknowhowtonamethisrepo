@@ -27,6 +27,10 @@ RunState RunFactory::createRun(
     run.enemyDamageMultiplier = difficulty.enemyDamageMultiplier;
     run.goldRewardMultiplier = difficulty.goldMultiplier;
     run.actorDefinitionIds = archetype.actorDefinitionIds;
+    run.rewardCardPoolIds = archetype.rewardCardPoolIds;
+    if (run.rewardCardPoolIds.empty()) {
+        run.rewardCardPoolIds = run.actorDefinitionIds;
+    }
     run.actorStates.reserve(archetype.actorDefinitionIds.size());
     for (const std::string& actorId : archetype.actorDefinitionIds) {
         const PlayerActorDefinition& actor = actors.get(PlayerActorId(actorId));

@@ -34,5 +34,6 @@
     "center_y": 500.0,
     "node_spacing_y": 125.0
   },
-  "extra_connection_chance": 30
+  "extra_connection_chance": 0,
+  "question_mark_combat_chance": 35
 }

@@ -15,6 +15,11 @@
 #include <optional>
 #include <string>
 
+enum class DroneActionKind {
+    Active,
+    Passive
+};
+
 class DroneSystem {
 public:
     DroneSystem(
@@ -43,12 +48,19 @@ public:
         Random* random = nullptr
     ) const;
 
+
     void processEndOfPlayerTurn(
         CombatState& state,
         Random& random
     ) const;
 
 private:
+    bool activateDroneAt(
+        CombatState& state,
+        std::size_t index,
+        Random* random = nullptr
+    ) const;
+
     EntityId validOwnerOrFallback(const CombatState& state, EntityId owner) const;
     std::optional<EntityId> targetForEffect(
         const CombatState& state,
@@ -60,7 +72,8 @@ private:
         CombatState& state,
         const DroneSlot& slot,
         const DroneActionDefinition& action,
-        Random* random
+        Random* random,
+        DroneActionKind kind
     ) const;
 
     void applyDroneEffect(

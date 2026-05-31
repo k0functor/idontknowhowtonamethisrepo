@@ -1,6 +1,7 @@
 #include "RunMapGenerator.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -39,6 +40,47 @@ RunMapNodeType randomCombatOrEventRoomType(const RunMapGenerationConfig& config,
     }
 
     return RunMapNodeType::Event;
+}
+
+int maximumRandomEventsForLayer(const int nodeCount, const RunMapGenerationConfig& config) {
+    if (nodeCount <= 0 || config.eventWeight() <= 0) {
+        return 0;
+    }
+
+    if (config.combatWeight() <= 0) {
+        return nodeCount;
+    }
+
+    const int totalWeight = config.combatWeight() + config.eventWeight();
+    const double eventRatio = static_cast<double>(config.eventWeight()) / static_cast<double>(totalWeight);
+    int maximumEvents = static_cast<int>(std::round(static_cast<double>(nodeCount) * eventRatio));
+
+    // A random question-mark layer must never entirely replace the combat path.
+    // With the act 1 70/30 split this gives 1 event on 4-room layers and 2 events on 5-room layers.
+    maximumEvents = std::clamp(maximumEvents, 1, nodeCount - 1);
+    return maximumEvents;
+}
+
+void clampRandomEventsInLayer(
+    std::vector<RunMapNodeType>& types,
+    const RunMapGenerationConfig& config,
+    Random& random
+) {
+    const int maximumEvents = maximumRandomEventsForLayer(static_cast<int>(types.size()), config);
+    std::vector<int> eventIndices;
+
+    for (int index = 0; index < static_cast<int>(types.size()); ++index) {
+        if (types[static_cast<std::size_t>(index)] == RunMapNodeType::Event) {
+            eventIndices.push_back(index);
+        }
+    }
+
+    while (static_cast<int>(eventIndices.size()) > maximumEvents) {
+        const int indexInList = random.rangeInclusive(0, static_cast<int>(eventIndices.size()) - 1);
+        const int layerIndex = eventIndices[static_cast<std::size_t>(indexInList)];
+        types[static_cast<std::size_t>(layerIndex)] = RunMapNodeType::Combat;
+        eventIndices.erase(eventIndices.begin() + indexInList);
+    }
 }
 
 std::vector<int> addLayer(
@@ -224,12 +266,11 @@ void connectAdjacentLayers(
         addSelectedConnection(selectedTargetsBySource, sourceIndex, chosenTarget);
     }
 
-    // Add a few extra adjacent edges randomly, so the map stays readable instead of fully connected.
+    // Add a few extra adjacent edges randomly, then prune back to a sparse graph.
+    // This keeps every room reachable without turning each layer into a lattice of noodles.
     const double extraProbability = static_cast<double>(extraConnectionChance) / 100.0;
-    int allowedEdgeCount = 0;
     for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
         const std::vector<int> targets = adjacentTargetIndices(sourceIndex, fromCount, toCount);
-        allowedEdgeCount += static_cast<int>(targets.size());
         for (const int targetIndex : targets) {
             if (!containsIndex(selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)], targetIndex) &&
                 random.chance(extraProbability)) {
@@ -238,18 +279,28 @@ void connectAdjacentLayers(
         }
     }
 
-    int selectedEdgeCount = 0;
     std::vector<int> incomingByTarget(static_cast<std::size_t>(toCount), 0);
-    for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
-        const std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)];
-        selectedEdgeCount += static_cast<int>(targets.size());
-        for (const int targetIndex : targets) {
-            ++incomingByTarget[static_cast<std::size_t>(targetIndex)];
-        }
-    }
+    auto rebuildIncomingAndCount = [&]() {
+        std::fill(incomingByTarget.begin(), incomingByTarget.end(), 0);
+        int edgeCount = 0;
 
-    if (selectedEdgeCount >= allowedEdgeCount) {
+        for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
+            const std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)];
+            edgeCount += static_cast<int>(targets.size());
+            for (const int targetIndex : targets) {
+                ++incomingByTarget[static_cast<std::size_t>(targetIndex)];
+            }
+        }
+
+        return edgeCount;
+    };
+
+    int selectedEdgeCount = rebuildIncomingAndCount();
+    const int desiredSparseEdgeCount = std::max(fromCount, toCount);
+
+    while (selectedEdgeCount > desiredSparseEdgeCount) {
         std::vector<std::pair<int, int>> removableEdges;
+
         for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
             const std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(sourceIndex)];
             if (targets.size() <= 1) {
@@ -263,11 +314,14 @@ void connectAdjacentLayers(
             }
         }
 
-        if (!removableEdges.empty()) {
-            const std::pair<int, int> edge = removableEdges[static_cast<std::size_t>(random.rangeInclusive(0, static_cast<int>(removableEdges.size()) - 1))];
-            std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(edge.first)];
-            targets.erase(std::remove(targets.begin(), targets.end(), edge.second), targets.end());
+        if (removableEdges.empty()) {
+            break;
         }
+
+        const std::pair<int, int> edge = removableEdges[static_cast<std::size_t>(random.rangeInclusive(0, static_cast<int>(removableEdges.size()) - 1))];
+        std::vector<int>& targets = selectedTargetsBySource[static_cast<std::size_t>(edge.first)];
+        targets.erase(std::remove(targets.begin(), targets.end(), edge.second), targets.end());
+        selectedEdgeCount = rebuildIncomingAndCount();
     }
 
     for (int sourceIndex = 0; sourceIndex < fromCount; ++sourceIndex) {
@@ -499,6 +553,10 @@ RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGeneration
                     ? RunMapNodeType::Combat
                     : randomCombatOrEventRoomType(config, random));
             }
+        }
+
+        if (!config.hasFixedEvents() && layer > 0 && layer < preBossLayer) {
+            clampRandomEventsInLayer(types, config, random);
         }
     }
 

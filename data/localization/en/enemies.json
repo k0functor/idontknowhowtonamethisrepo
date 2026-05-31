@@ -13,16 +13,20 @@
   "enemy.intent.special": "Special action",
   "enemy.intent.unknown": "Unknown",
   "enemy.knife_acolyte.name": "Knife Acolyte",
+  "enemy.mold_marksman.name": "Mold Marksman",
   "enemy.plague_spider.name": "Plague Spider",
   "enemy.rat_cultist.name": "Rat Cultist",
+  "enemy.rust_taskmaster.name": "Rust Taskmaster",
+  "enemy.rusted_bishop.name": "Rusted Bishop",
+  "enemy.rusted_mite.name": "Rusted Mite",
   "enemy.shield_bearer.name": "Shield Bearer",
   "enemy.training_dummy.name": "Training Dummy",
   "inspect.enemy.boss.name": "Boss",
   "inspect.enemy.elite.name": "Elite enemy",
+  "inspect.enemy.health.name": "Health",
+  "inspect.enemy.health.value": "{current}/{maximum} HP",
   "inspect.enemy.intent": "Intent",
   "inspect.enemy.no_details.description": "This enemy currently has no visible intent details or statuses.",
   "inspect.enemy.no_details.name": "No visible effects",
-  "inspect.enemy.normal.name": "Normal enemy",
-  "inspect.enemy.health.name": "Health",
-  "inspect.enemy.health.value": "{current}/{maximum} HP"
+  "inspect.enemy.normal.name": "Normal enemy"
 }

@@ -13,10 +13,13 @@
 #include "run/RunMapNode.hpp"
 #include "run/StressRules.hpp"
 #include "ui/BasicUi.hpp"
+#include "ui/CardViewModelFactory.hpp"
+#include "ui/CardVisualInstance.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -87,12 +90,59 @@ RunMapNodeType currentNodeType(const RunState& runState) {
     return RunMapNodeType::Combat;
 }
 
+int currentNodeLayerIndex(const RunState& runState) {
+    if (runState.map.currentNodeId < 0) {
+        return 0;
+    }
+
+    const RunMapNode* current = nullptr;
+    for (const RunMapNode& node : runState.map.nodes) {
+        if (node.id == runState.map.currentNodeId) {
+            current = &node;
+            break;
+        }
+    }
+
+    if (current == nullptr) {
+        return 0;
+    }
+
+    std::vector<float> layerXs;
+    layerXs.reserve(runState.map.nodes.size());
+    for (const RunMapNode& node : runState.map.nodes) {
+        const auto existing = std::find_if(
+            layerXs.begin(),
+            layerXs.end(),
+            [&](const float x) {
+                return std::abs(x - node.position.x) < 0.5f;
+            }
+        );
+
+        if (existing == layerXs.end()) {
+            layerXs.push_back(node.position.x);
+        }
+    }
+
+    std::sort(layerXs.begin(), layerXs.end());
+    for (std::size_t index = 0; index < layerXs.size(); ++index) {
+        if (std::abs(layerXs[index] - current->position.x) < 0.5f) {
+            return static_cast<int>(index);
+        }
+    }
+
+    return 0;
+}
+
 std::vector<std::string> enemyIdsForNode(
     const RunState& runState,
     const EncounterDatabase& encounters,
     Random& random
 ) {
-    const EncounterDefinition& encounter = encounters.choose(currentNodeType(runState), random);
+    const EncounterDefinition& encounter = encounters.choose(
+        currentNodeType(runState),
+        random,
+        currentNodeLayerIndex(runState)
+    );
     return encounter.enemyIds;
 }
 
@@ -104,7 +154,7 @@ void addEnemyToCombat(
     const float hpMultiplier
 ) {
     if (!enemies.contains(EnemyId(enemyId))) {
-        throw std::runtime_error("Unknown enemy in encounter: " + enemyId);
+        throw std::runtime_error("Unknown enemy in encounter: " + enemyId); // NOL10N: developer content validation diagnostic
     }
 
     const EnemyDefinition& definition = enemies.get(EnemyId(enemyId));
@@ -196,10 +246,11 @@ CombatScene::CombatScene(
       runState_(runState),
       onCombatWon_(std::move(onCombatWon)),
       onCombatLost_(std::move(onCombatLost)),
-      relicSystem_(content_.relics()),
+      modifierSystem_(localization_),
+      relicSystem_(content_.relics(), localization_),
       damageSystem_(modifierSystem_, &eventBus_),
       blockSystem_(modifierSystem_, &eventBus_),
-      statusSystem_(content_.statuses()),
+      statusSystem_(content_.statuses(), &eventBus_),
       consumableSystem_(content_.consumables()),
       droneSystem_(
           content_.drones(),
@@ -809,7 +860,7 @@ void CombatScene::initializeCombat() {
     for (std::size_t index = 0; index < runState_.deckCardIds.size(); ++index) {
         const CardId& cardId = runState_.deckCardIds[index];
         if (!content_.cards().contains(cardId)) {
-            throw std::runtime_error("Run deck contains unknown card id: " + cardId.value);
+            throw std::runtime_error("Run deck contains unknown card id: " + cardId.value); // NOL10N: developer save/content validation diagnostic
         }
 
         const bool upgraded = std::find(
@@ -955,23 +1006,32 @@ std::vector<DroneSlotViewModel> CombatScene::buildDroneSlotViewModels() const {
         DroneSlotViewModel slot;
 
         if (i < state_.droneSlots.size()) {
+            const DroneSlot& combatSlot = state_.droneSlots[i];
             slot.filled = true;
-            slot.type = state_.droneSlots[i].droneId;
+            slot.type = combatSlot.droneId;
 
             const DroneId droneId(slot.type);
             if (content_.drones().contains(droneId)) {
                 const DroneDefinition& definition = content_.drones().get(droneId);
                 slot.name = localizedOrFallback(definition.nameTextId, slot.type);
                 slot.description = localizedOrFallback(definition.descriptionTextId, slot.type);
+                slot.cardActivationAvailable = definition.activeAction.has_value();
             } else {
                 slot.name = slot.type;
                 slot.description = localizedOrFallback(TextId("drone.unknown.description"), slot.type);
+                slot.cardActivationAvailable = false;
             }
+
+            slot.cardActivationLabel = slot.cardActivationAvailable
+                ? localizedOrFallback(TextId("ui.drone_spend_by_card"), "Spent by activation cards")
+                : localizedOrFallback(TextId("ui.drone_no_active_action"), "No card activation");
         } else {
             slot.filled = false;
             slot.type = {};
             slot.name = localizedOrFallback(TextId("drone.empty"), "Empty");
             slot.description = localizedOrFallback(TextId("drone.empty.description"), "This drone slot is empty.");
+            slot.cardActivationAvailable = false;
+            slot.cardActivationLabel = localizedOrFallback(TextId("ui.drone_empty"), "Empty");
         }
 
         result.push_back(std::move(slot));
@@ -2429,56 +2489,22 @@ void CombatScene::renderRewardCardChoiceModal() const {
 
     for (std::size_t i = 0; i < option->cardOptions.size(); ++i) {
         const Rectangle bounds = rewardCardChoiceOptionBounds(i);
-        const bool hovered = BasicUi::contains(bounds, mouse);
         const bool selected = selectedRewardCardIndex_.has_value() && *selectedRewardCardIndex_ == i;
-
-        const Color fill = hovered ? Color{53, 58, 75, 255} : Color{40, 43, 56, 255};
-        const Color border = selected ? Color{255, 218, 90, 255} : Color{110, 120, 150, 255};
-
-        DrawRectangleRounded(bounds, 0.08f, 10, fill);
-        DrawRectangleRoundedLinesEx(bounds, 0.08f, 10, selected ? 4.f : 2.f, border);
-
         const CardId& cardId = option->cardOptions[i].cardId;
-        BasicUi::drawCenteredText(
-            uiFont_,
-            rewardCardName(cardId),
-            Rectangle{bounds.x + 10.f, bounds.y + 14.f, bounds.width - 20.f, 38.f},
-            22.f,
-            Color{245, 245, 250, 255}
-        );
-
-        const CardDefinition& definition = content_.cards().get(cardId);
-        const std::string meta = std::to_string(definition.energyCost) + " energy / " + toString(definition.rarity);
-        BasicUi::drawCenteredText(
-            uiFont_,
-            meta,
-            Rectangle{bounds.x + 10.f, bounds.y + 52.f, bounds.width - 20.f, 22.f},
-            14.f,
-            Color{178, 184, 205, 255}
-        );
-
-        const std::vector<std::string> lines = BasicUi::wrapText(
-            uiFont_,
-            rewardCardDescription(cardId),
-            15.f,
-            bounds.width - 28.f
-        );
-
-        float y = bounds.y + 88.f;
-        for (const std::string& line : lines) {
-            if (y > bounds.y + bounds.height - 24.f) {
-                break;
-            }
-
-            BasicUi::drawText(
-                uiFont_,
-                line,
-                Vector2{bounds.x + 16.f, y},
-                15.f,
-                Color{205, 210, 225, 255}
-            );
-            y += 20.f;
+        if (!content_.cards().contains(cardId)) {
+            BasicUi::drawCenteredText(uiFont_, cardId.value, bounds, 18.f, Color{245, 245, 250, 255});
+            continue;
         }
+
+        CardViewModel model = CardViewModelFactory::buildStatic(
+            content_.cards().get(cardId),
+            localization_,
+            CardInstanceId{static_cast<std::uint64_t>(i + 1)},
+            false,
+            selected
+        );
+        const CardTransform transform = CardVisualInstance::transformForBounds(bounds, static_cast<int>(i));
+        CardVisualInstance::renderStatic(model, uiFont_.available() ? &uiFont_.font() : nullptr, transform);
     }
 
     BasicUi::drawButton(
@@ -2777,20 +2803,62 @@ std::string CombatScene::localizedOrFallback(const TextId& textId, const std::st
 }
 
 Rectangle CombatScene::drawPileButtonBounds() const {
-    const float width = 126.f;
-    const float height = 34.f;
-    const float x = static_cast<float>(GetScreenWidth()) * 0.5f - width * 1.5f - 16.f;
-    return Rectangle{x, 40.f, width, height};
+    constexpr float width = 126.f;
+    constexpr float height = 34.f;
+    constexpr float margin = 24.f;
+    return Rectangle{
+        margin,
+        static_cast<float>(GetScreenHeight()) - height - margin,
+        width,
+        height
+    };
 }
 
 Rectangle CombatScene::discardPileButtonBounds() const {
-    const Rectangle draw = drawPileButtonBounds();
-    return Rectangle{draw.x + draw.width + 16.f, draw.y, draw.width, draw.height};
+    constexpr float width = 126.f;
+    constexpr float height = 34.f;
+    constexpr float margin = 24.f;
+    constexpr float gap = 12.f;
+    return Rectangle{
+        static_cast<float>(GetScreenWidth()) - margin - width * 2.f - gap,
+        static_cast<float>(GetScreenHeight()) - height - margin,
+        width,
+        height
+    };
 }
 
 Rectangle CombatScene::exhaustPileButtonBounds() const {
     const Rectangle discard = discardPileButtonBounds();
-    return Rectangle{discard.x + discard.width + 16.f, discard.y, discard.width, discard.height};
+    constexpr float gap = 12.f;
+    return Rectangle{discard.x + discard.width + gap, discard.y, discard.width, discard.height};
+}
+
+Rectangle CombatScene::energyBubbleBounds() const {
+    constexpr float size = 62.f;
+    constexpr float gapBelowActor = 12.f;
+    constexpr float gapAboveHand = 10.f;
+    const float screenHeight = static_cast<float>(GetScreenHeight());
+    const float handHeight = std::clamp(screenHeight * 0.36f, 250.f, 330.f);
+    const float handTop = screenHeight - handHeight;
+
+    if (const std::optional<Rectangle> playerBounds = view_.playerBounds(primaryPlayerId())) {
+        const float centerX = playerBounds->x + playerBounds->width * 0.5f;
+        const float preferredY = playerBounds->y + playerBounds->height + gapBelowActor;
+        const float maxY = handTop - size - gapAboveHand;
+        return Rectangle{
+            centerX - size * 0.5f,
+            std::min(preferredY, maxY),
+            size,
+            size
+        };
+    }
+
+    return Rectangle{
+        static_cast<float>(GetScreenWidth()) * 0.5f - size * 0.5f,
+        handTop - size - gapAboveHand,
+        size,
+        size
+    };
 }
 
 Rectangle CombatScene::pileOverlayBounds() const {
@@ -2916,8 +2984,27 @@ void CombatScene::updatePileOverlay(const Vector2 mousePosition) {
     }
 }
 
+void CombatScene::renderEnergyBubble() const {
+    const Rectangle bounds = energyBubbleBounds();
+    const int centerX = static_cast<int>(bounds.x + bounds.width * 0.5f);
+    const int centerY = static_cast<int>(bounds.y + bounds.height * 0.5f);
+    const float radius = bounds.width * 0.5f;
+
+    DrawCircle(centerX, centerY, radius, Color{54, 48, 78, 245});
+    DrawCircleLines(centerX, centerY, radius, Color{190, 170, 245, 255});
+
+    BasicUi::drawCenteredText(
+        uiFont_,
+        std::to_string(state_.resources.energy()) + " / " + std::to_string(state_.resources.maxEnergy()),
+        bounds,
+        19.f,
+        Color{246, 240, 255, 255}
+    );
+}
+
 void CombatScene::renderPileButtons() const {
     const Vector2 mouse = GetMousePosition();
+    renderEnergyBubble();
     BasicUi::drawButton(
         uiFont_,
         drawPileButtonBounds(),
@@ -2970,28 +3057,13 @@ void CombatScene::renderPileOverlay() const {
 }
 
 void CombatScene::renderPileCard(const CardInstance& card, const Rectangle bounds) const {
+    CardViewModel model = cardViewModelForInstance(card);
     const bool hovered = BasicUi::contains(bounds, GetMousePosition());
-    DrawRectangleRounded(bounds, 0.07f, 9, hovered ? Color{52, 56, 73, 255} : Color{39, 42, 55, 255});
-    DrawRectangleRoundedLinesEx(bounds, 0.07f, 9, 2.f, hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
-
-    if (!content_.cards().contains(card.definitionId)) {
-        BasicUi::drawCenteredText(uiFont_, card.definitionId.value, bounds, 16.f, Color{245, 245, 250, 255});
-        return;
-    }
-
-    const CardDefinition definition = CardUpgrade::effectiveDefinition(content_.cards().get(card.definitionId), card.upgraded);
-    const CardDescriptionFormatter formatter(localization_);
-    BasicUi::drawText(uiFont_, std::to_string(definition.energyCost), Vector2{bounds.x + 13.f, bounds.y + 10.f}, 18.f, Color{245, 245, 250, 255});
-    BasicUi::drawCenteredText(uiFont_, localization_.get(definition.nameTextId) + (card.upgraded ? "+" : ""), Rectangle{bounds.x + 38.f, bounds.y + 8.f, bounds.width - 48.f, 40.f}, 16.f, Color{245, 245, 250, 255});
-
-    const std::vector<std::string> lines = BasicUi::wrapText(uiFont_, formatter.formatStaticDescription(definition), 12.f, bounds.width - 22.f);
-    float y = bounds.y + 66.f;
-    for (const std::string& line : lines) {
-        if (y > bounds.y + bounds.height - 18.f) break;
-        BasicUi::drawText(uiFont_, line, Vector2{bounds.x + 12.f, y}, 12.f, Color{205, 210, 225, 255});
-        y += 16.f;
-    }
+    model.selected = hovered;
+    const CardTransform transform = CardVisualInstance::transformForBounds(bounds, 0);
+    CardVisualInstance::renderStatic(model, uiFont_.available() ? &uiFont_.font() : nullptr, transform);
 }
+
 
 
 std::optional<std::size_t> CombatScene::hoveredPileCardIndex(const Vector2 mousePosition) const {

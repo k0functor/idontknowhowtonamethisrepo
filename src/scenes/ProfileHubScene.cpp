@@ -193,7 +193,11 @@ void ProfileHubScene::update(float) {
     }
 
     if (BasicUi::contains(layout.startButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !archetypes_.empty()) {
-        onStartRun_(selectedArchetype().id);
+        if (selectedArchetype().isAvailable) {
+            onStartRun_(selectedArchetype().id);
+        } else {
+            notification_ = localization_.get(TextId("profile_hub.archetype_in_development"));
+        }
     }
 
     if (BasicUi::contains(layout.backButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -230,20 +234,33 @@ void ProfileHubScene::render() const {
 
     if (!archetypes_.empty()) {
         const PlayableArchetypeDefinition& archetype = selectedArchetype();
-        BasicUi::drawCenteredText(font_, localization_.get(archetype.nameTextId), Rectangle{characterPanel.x, characterPanel.y + 40.f, characterPanel.width, 50.f}, 34.f, Color{245, 245, 250, 255});
-        BasicUi::drawCenteredText(font_, localization_.get(archetype.shortDescriptionTextId), Rectangle{characterPanel.x + 50.f, characterPanel.y + 100.f, characterPanel.width - 100.f, 60.f}, 20.f, Color{190, 198, 220, 255});
+        const bool available = archetype.isAvailable;
+        const Color titleColor = available ? Color{245, 245, 250, 255} : Color{165, 168, 184, 255};
+        const Color subtitleColor = available ? Color{190, 198, 220, 255} : Color{135, 140, 158, 255};
+        const Color accent = available ? archetypeAccentColor(archetype) : Color{105, 108, 124, 255};
+        const Color accentFill = available ? archetypeAccentColor(archetype, 70) : Color{65, 67, 78, 190};
 
-        const Color accent = archetypeAccentColor(archetype);
-        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 96.f, archetypeAccentColor(archetype, 70));
+        BasicUi::drawCenteredText(font_, localization_.get(archetype.nameTextId), Rectangle{characterPanel.x, characterPanel.y + 40.f, characterPanel.width, 50.f}, 34.f, titleColor);
+        BasicUi::drawCenteredText(font_, localization_.get(archetype.shortDescriptionTextId), Rectangle{characterPanel.x + 50.f, characterPanel.y + 100.f, characterPanel.width - 100.f, 60.f}, 20.f, subtitleColor);
+
+        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 96.f, accentFill);
         DrawCircleLines(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 96.f, accent);
-        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 82.f, Color{75, 79, 96, 255});
-        BasicUi::drawCenteredText(font_, localization_.get(TextId("ui.portrait_placeholder")), Rectangle{characterPanel.x, characterPanel.y + 240.f, characterPanel.width, 40.f}, 18.f, Color{160, 166, 190, 255});
+        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 82.f, available ? Color{75, 79, 96, 255} : Color{48, 50, 60, 255});
+        BasicUi::drawCenteredText(font_, localization_.get(TextId("ui.portrait_placeholder")), Rectangle{characterPanel.x, characterPanel.y + 240.f, characterPanel.width, 40.f}, 18.f, available ? Color{160, 166, 190, 255} : Color{105, 110, 130, 255});
         BasicUi::drawCenteredText(font_, localization_.get(archetype.palette.nameTextId), Rectangle{characterPanel.x + 45.f, characterPanel.y + 355.f, characterPanel.width - 90.f, 28.f}, 16.f, accent);
 
-        BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.details_hint")), Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, Color{220, 220, 235, 255});
+        if (!available) {
+            const Rectangle badge{characterPanel.x + characterPanel.width * 0.5f - 120.f, characterPanel.y + 170.f, 240.f, 38.f};
+            DrawRectangleRounded(badge, 0.22f, 8, Color{55, 49, 58, 240});
+            DrawRectangleRoundedLinesEx(badge, 0.22f, 8, 2.f, Color{150, 124, 170, 255});
+            BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.in_development_badge")), badge, 18.f, Color{226, 214, 240, 255});
+        }
+
+        BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.details_hint")), Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, available ? Color{220, 220, 235, 255} : Color{150, 154, 174, 255});
     }
 
-    BasicUi::drawButton(font_, layout.startButton, localization_.get(TextId("ui.to_the_road")), mouse, !archetypes_.empty());
+    const bool selectedAvailable = !archetypes_.empty() && selectedArchetype().isAvailable;
+    BasicUi::drawButton(font_, layout.startButton, localization_.get(TextId("ui.to_the_road")), mouse, selectedAvailable);
     BasicUi::drawButton(font_, layout.challengesButton, localization_.get(TextId("ui.challenges")), mouse);
     BasicUi::drawButton(font_, layout.achievementsButton, localization_.get(TextId("ui.achievements")), mouse);
     BasicUi::drawButton(font_, layout.compendiumButton, localization_.get(TextId("ui.compendium")), mouse);
@@ -406,6 +423,11 @@ float ProfileHubScene::renderDetailsContent(const Rectangle contentBounds, const
         drawTextIfNeeded(title, Vector2{baseX, y}, 23.f, color);
         y += 32.f;
     };
+
+    if (!archetype.isAvailable) {
+        addWrappedText(localization_.get(TextId("profile_hub.archetype_in_development")), 18.f, 24.f, baseX, wrappedWidth + 16.f, Color{226, 214, 240, 255});
+        y += 8.f;
+    }
 
     addWrappedText(localization_.get(archetype.detailsDescriptionTextId), 18.f, 24.f, baseX, wrappedWidth + 16.f, Color{200, 206, 226, 255});
 

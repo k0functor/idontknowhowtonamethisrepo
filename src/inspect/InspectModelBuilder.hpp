@@ -43,16 +43,22 @@ private:
     void appendStatusEntry(InspectPanelModel& model, const std::string& statusId, int amount) const;
     void appendEffectEntry(InspectPanelModel& model, const std::string& titleTextId, const EffectDefinition& effect) const;
 
+    std::string textOrId(const TextId& textId) const;
     std::string textOrFallback(const TextId& textId, const std::string& fallback) const;
+    std::string rawText(const std::string& textId) const;
     std::string rawTextOrFallback(const std::string& textId, const std::string& fallback) const;
-    std::string formatRawText(const std::string& textId, const std::string& fallback, const std::vector<std::pair<std::string, std::string>>& variables) const;
+    std::string formatRawText(const std::string& textId, const std::vector<std::pair<std::string, std::string>>& variables) const;
     std::string keywordName(CardKeyword keyword) const;
     std::string keywordDescription(CardKeyword keyword) const;
+    std::string traitName(const std::string& traitId) const;
+    std::string traitDescription(const std::string& traitId) const;
     std::string statusName(const std::string& statusId) const;
     std::string statusDescription(const std::string& statusId) const;
     std::string statusRuleDescription(const std::string& statusId) const;
+    std::string statusStackRuntimeDescription(const std::string& statusId, int amount) const;
     std::string statusTypeText(StatusType type) const;
     std::string statusDurationText(StatusDurationRule rule) const;
+    std::string statusEndTurnEffectText(const std::string& effectId) const;
     std::string effectSummary(const EffectDefinition& effect) const;
     std::string droneActionSummary(const DroneActionDefinition& action) const;
     std::string relicRarityText(RelicRarity rarity) const;

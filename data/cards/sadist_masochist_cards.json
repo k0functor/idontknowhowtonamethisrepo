@@ -1,5 +1,85 @@
 [
   {
+    "id": "sadist_basic_strike",
+    "name": "card.sadist_basic_strike.name",
+    "description": "card.sadist_basic_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "sadist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "sadist_basic_defend",
+    "name": "card.sadist_basic_defend.name",
+    "description": "card.sadist_basic_defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "sadist",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_basic_strike",
+    "name": "card.masochist_basic_strike.name",
+    "description": "card.masochist_basic_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "masochist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "masochist_basic_defend",
+    "name": "card.masochist_basic_defend.name",
+    "description": "card.masochist_basic_defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "masochist",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
     "id": "sadist_clean_cut",
     "name": "card.sadist_clean_cut.name",
     "description": "card.sadist_clean_cut.description",

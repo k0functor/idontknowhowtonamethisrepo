@@ -4,3 +4,4 @@
 #include "run/RunState.hpp"
 
 bool runCanReceiveCard(const RunState& run, const CardDefinition& card);
+bool runCanReceiveArchetypeRewardCard(const RunState& run, const CardDefinition& card);

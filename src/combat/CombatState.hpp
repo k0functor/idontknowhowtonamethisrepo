@@ -38,8 +38,10 @@ public:
     std::vector<EnemyIntentState> enemyIntents;
 
     // Used by drone-based archetypes. Three slots by default.
-    // New summons overflow by using/removing the oldest drone first.
+    // New summons overflow by removing the oldest drone first.
     // Each slot stores a data-driven drone id plus the actor that summoned it.
+    // Drones passively act at the end of the player turn.
+    // Card-driven activation triggers the active effect and consumes the drone.
     std::vector<DroneSlot> droneSlots;
     std::size_t maxDroneSlots = 3;
 

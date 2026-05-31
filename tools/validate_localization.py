@@ -14,7 +14,22 @@ LOCALE_DIR = DATA_DIR / "localization"
 TEXT_ID_KEY_RE = re.compile(r"(^|_)(text_id|text)$|(_text_id|_text_ids)$")
 TEXT_ID_VALUE_RE = re.compile(r"^[a-z0-9_.-]+\.[a-z0-9_.-]+$")
 CPP_STRING_RE = re.compile(r'"([^"\\]*(?:\\.[^"\\]*)*)"')
-IGNORED_CPP_PREFIXES = ("src/localization/", "src/data/", "src/core/")
+# Hardcoded C++ string scanning is intentionally scoped to code that can render
+# text in the game UI. Data loading, parsers, serializers, validation and other
+# infrastructure may keep English diagnostics for developers. Mark exceptional
+# developer-facing literals in scanned files with `NOL10N`.
+PLAYER_FACING_CPP_PREFIXES = (
+    "src/flow/",
+    "src/inspect/",
+    "src/scenes/",
+    "src/ui/",
+)
+PLAYER_FACING_CPP_FILES = {
+    "src/cards/CardUpgrade.cpp",
+    "src/combat/ModifierSystem.cpp",
+    "src/relics/RelicSystem.cpp",
+}
+NOL10N_MARKER = "NOL10N"
 ALLOWED_CPP_SUBSTRINGS = (
     "data/", "config/", ".json", ".png", ".ttf", "debug", "Debug", "ERROR", "INFO",
     "WARN", "Missing", "Cannot", "failed", "Loaded", "validation", "Validation"
@@ -83,21 +98,38 @@ def collect_data_text_refs() -> set[str]:
     return {ref for ref in refs if TEXT_ID_VALUE_RE.match(ref)}
 
 
+def is_player_facing_cpp(relative: str) -> bool:
+    return relative in PLAYER_FACING_CPP_FILES or relative.startswith(PLAYER_FACING_CPP_PREFIXES)
+
+
+def is_localized_line(line: str) -> bool:
+    return (
+        "TextId(" in line or
+        ".get(" in line or
+        ".format(" in line or
+        "rawText(" in line or
+        "formatRawText(" in line
+    )
+
+
 def scan_cpp_strings() -> list[str]:
     warnings: list[str] = []
     for path in (ROOT / "src").rglob("*.cpp"):
         relative = path.relative_to(ROOT).as_posix()
-        if relative.startswith(IGNORED_CPP_PREFIXES):
+        if not is_player_facing_cpp(relative):
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for line_number, line in enumerate(text.splitlines(), start=1):
-            if "TextId(" in line or "localization_.get" in line:
+            stripped = line.strip()
+            if NOL10N_MARKER in line:
+                continue
+            if stripped.startswith("#include"):
+                continue
+            if is_localized_line(line):
                 continue
             for match in CPP_STRING_RE.finditer(line):
                 literal = match.group(1)
                 if not literal or len(literal) < 5:
-                    continue
-                if line.strip().startswith("#include"):
                     continue
                 if any(part in literal for part in ALLOWED_CPP_SUBSTRINGS):
                     continue

@@ -36,7 +36,7 @@ RewardState RewardGenerator::generateCombatReward(
     if (shouldOfferCards(context, tuning)) {
         std::vector<const CardDefinition*> candidates;
         for (const CardDefinition* card : cards.all()) {
-            if (card != nullptr && RewardPoolRules::canAppearAsCardReward(*card) && runCanReceiveCard(context.run, *card)) {
+            if (card != nullptr && RewardPoolRules::canAppearAsCardReward(*card) && runCanReceiveArchetypeRewardCard(context.run, *card)) {
                 candidates.push_back(card);
             }
         }

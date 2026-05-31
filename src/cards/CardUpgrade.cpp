@@ -2,6 +2,8 @@
 
 #include "cards/CardType.hpp"
 #include "effects/EffectType.hpp"
+#include "localization/LocalizationManager.hpp"
+#include "localization/TextId.hpp"
 
 #include <algorithm>
 #include <string>
@@ -140,18 +142,18 @@ CardDefinition effectiveDefinition(const CardDefinition& definition, const bool 
     return upgradedDefinition(definition);
 }
 
-std::string summary(const CardDefinition& base, const CardDefinition& upgraded) {
+std::string summary(const CardDefinition& base, const CardDefinition& upgraded, const LocalizationManager& localization) {
     std::string result;
 
     if (base.energyCost != upgraded.energyCost) {
-        result += "Cost " + std::to_string(base.energyCost) + " -> " + std::to_string(upgraded.energyCost);
+        result += localization.format(TextId("card.upgrade.summary.cost"), {{"before", std::to_string(base.energyCost)}, {"after", std::to_string(upgraded.energyCost)}});
     }
 
     if (base.effects.size() != upgraded.effects.size()) {
         if (!result.empty()) {
             result += "; ";
         }
-        result += "Effects changed";
+        result += localization.get(TextId("card.upgrade.summary.effects_changed"));
     } else {
         for (std::size_t i = 0; i < base.effects.size(); ++i) {
             const EffectDefinition& before = base.effects[i];
@@ -164,13 +166,13 @@ std::string summary(const CardDefinition& base, const CardDefinition& upgraded) 
                 if (!result.empty()) {
                     result += "; ";
                 }
-                result += "Effect " + std::to_string(i + 1) + " improved";
+                result += localization.format(TextId("card.upgrade.summary.effect_improved"), {{"index", std::to_string(i + 1)}});
             }
         }
     }
 
     if (result.empty()) {
-        result = "Improved version";
+        result = localization.get(TextId("card.upgrade.summary.improved_version"));
     }
 
     return result;

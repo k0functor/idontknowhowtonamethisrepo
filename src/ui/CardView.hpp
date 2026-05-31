@@ -5,9 +5,9 @@
 
 #include <raylib.h>
 
-class CardView {
+class CardVisualInstance {
 public:
-    CardView() = default;
+    CardVisualInstance() = default;
 
     void setModel(CardViewModel model);
     const CardViewModel& model() const;
@@ -20,6 +20,9 @@ public:
 
     void update(float deltaSeconds);
     void render(const Font* font) const;
+
+    static CardTransform transformForBounds(Rectangle bounds, int zIndex = 0, float fill = 0.94f);
+    static void renderStatic(const CardViewModel& model, const Font* font, CardTransform transform);
 
     bool contains(Vector2 worldPosition) const;
     bool containsAtTransform(Vector2 worldPosition, const CardTransform& transform) const;
@@ -41,3 +44,5 @@ private:
     CardTransform currentTransform_;
     CardTransform targetTransform_;
 };
+
+using CardView = CardVisualInstance;

@@ -1,5 +1,45 @@
 [
   {
+    "id": "monk_basic_strike",
+    "name": "card.monk_basic_strike.name",
+    "description": "card.monk_basic_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_basic_defend",
+    "name": "card.monk_basic_defend.name",
+    "description": "card.monk_basic_defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
     "id": "monk_enter_flame",
     "name": "card.monk_enter_flame.name",
     "description": "card.monk_enter_flame.description",
@@ -86,9 +126,9 @@
     "id": "monk_ash_guard",
     "name": "card.monk_ash_guard.name",
     "description": "card.monk_ash_guard.description",
-    "rarity": "starter",
+    "rarity": "common",
     "energy_cost": 1,
-    "gold_cost": 0,
+    "gold_cost": 65,
     "type": "skill",
     "owner_actor": "monk",
     "effects": [
@@ -106,9 +146,9 @@
     "id": "monk_smoke_step",
     "name": "card.monk_smoke_step.name",
     "description": "card.monk_smoke_step.description",
-    "rarity": "starter",
+    "rarity": "common",
     "energy_cost": 1,
-    "gold_cost": 0,
+    "gold_cost": 65,
     "type": "skill",
     "owner_actor": "monk",
     "effects": [
@@ -147,6 +187,217 @@
           "type": "dice",
           "count": 1,
           "die": "d10"
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_ember_palm",
+    "name": "card.monk_ember_palm.name",
+    "description": "card.monk_ember_palm.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_ash_breath",
+    "name": "card.monk_ash_breath.name",
+    "description": "card.monk_ash_breath.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_smoke_vanish",
+    "name": "card.monk_smoke_vanish.name",
+    "description": "card.monk_smoke_vanish.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_ringing_blow",
+    "name": "card.monk_ringing_blow.name",
+    "description": "card.monk_ringing_blow.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_coal_counter",
+    "name": "card.monk_coal_counter.name",
+    "description": "card.monk_coal_counter.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 65,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_quiet_inhale",
+    "name": "card.monk_quiet_inhale.name",
+    "description": "card.monk_quiet_inhale.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_purple_focus",
+    "name": "card.monk_purple_focus.name",
+    "description": "card.monk_purple_focus.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 80,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "strength",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "self",
+        "status": "dexterity",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_release_pressure",
+    "name": "card.monk_release_pressure.name",
+    "description": "card.monk_release_pressure.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 60,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 4
+        }
+      },
+      {
+        "type": "lose_stress",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 8
         }
       }
     ]

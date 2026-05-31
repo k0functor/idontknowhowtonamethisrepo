@@ -8,21 +8,28 @@
         "text": "event.forgotten_cache.choice.gold",
         "description": "event.forgotten_cache.choice.gold.description",
         "effects": [
-          { "type": "gain_gold", "amount": 45 }
+          {
+            "type": "gain_gold",
+            "amount": 45
+          }
         ]
       },
       {
         "text": "event.forgotten_cache.choice.card",
         "description": "event.forgotten_cache.choice.card.description",
         "effects": [
-          { "type": "gain_random_card" }
+          {
+            "type": "gain_random_card"
+          }
         ]
       },
       {
         "text": "event.choice.skip",
         "description": "event.choice.skip.description",
         "effects": [
-          { "type": "skip" }
+          {
+            "type": "skip"
+          }
         ]
       }
     ]
@@ -34,10 +41,15 @@
     "choices": [
       {
         "text": "event.rusted_vending_altar.choice.relic",
-        "description": "event.rusted_vending_altar.choice.relic.requirement_description",
+        "description": "event.rusted_vending_altar.choice.relic.description",
         "effects": [
-          { "type": "lose_gold", "amount": 60 },
-          { "type": "gain_random_relic" }
+          {
+            "type": "lose_gold",
+            "amount": 60
+          },
+          {
+            "type": "gain_random_relic"
+          }
         ],
         "requirements": {
           "min_gold": 60
@@ -47,7 +59,9 @@
         "text": "event.rusted_vending_altar.choice.consumable",
         "description": "event.rusted_vending_altar.choice.consumable.description",
         "effects": [
-          { "type": "gain_random_consumable" }
+          {
+            "type": "gain_random_consumable"
+          }
         ],
         "requirements": {
           "free_consumable_slot": true
@@ -57,7 +71,359 @@
         "text": "event.choice.skip",
         "description": "event.choice.skip.description",
         "effects": [
-          { "type": "skip" }
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sealed_armory",
+    "title": "event.sealed_armory.title",
+    "description": "event.sealed_armory.description",
+    "choices": [
+      {
+        "text": "event.sealed_armory.choice.force",
+        "description": "event.sealed_armory.choice.force.description",
+        "effects": [
+          {
+            "type": "lose_hp",
+            "amount": 6
+          },
+          {
+            "type": "gain_random_relic"
+          }
+        ],
+        "requirements": {
+          "min_hp": 8
+        }
+      },
+      {
+        "text": "event.sealed_armory.choice.coins",
+        "description": "event.sealed_armory.choice.coins.description",
+        "effects": [
+          {
+            "type": "gain_gold",
+            "amount": 25
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wounded_traveler",
+    "title": "event.wounded_traveler.title",
+    "description": "event.wounded_traveler.description",
+    "choices": [
+      {
+        "text": "event.wounded_traveler.choice.help",
+        "description": "event.wounded_traveler.choice.help.description",
+        "effects": [
+          {
+            "type": "lose_gold",
+            "amount": 25
+          },
+          {
+            "type": "lose_stress",
+            "amount": 10
+          }
+        ],
+        "requirements": {
+          "min_gold": 25
+        }
+      },
+      {
+        "text": "event.wounded_traveler.choice.rob",
+        "description": "event.wounded_traveler.choice.rob.description",
+        "effects": [
+          {
+            "type": "gain_gold",
+            "amount": 35
+          },
+          {
+            "type": "gain_stress",
+            "amount": 12
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "poisonous_well",
+    "title": "event.poisonous_well.title",
+    "description": "event.poisonous_well.description",
+    "choices": [
+      {
+        "text": "event.poisonous_well.choice.drink",
+        "description": "event.poisonous_well.choice.drink.description",
+        "effects": [
+          {
+            "type": "heal_all",
+            "amount": 10
+          },
+          {
+            "type": "gain_stress",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "text": "event.poisonous_well.choice.collect",
+        "description": "event.poisonous_well.choice.collect.description",
+        "effects": [
+          {
+            "type": "gain_random_consumable"
+          }
+        ],
+        "requirements": {
+          "free_consumable_slot": true
+        }
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "old_mapmaker",
+    "title": "event.old_mapmaker.title",
+    "description": "event.old_mapmaker.description",
+    "choices": [
+      {
+        "text": "event.old_mapmaker.choice.buy",
+        "description": "event.old_mapmaker.choice.buy.description",
+        "effects": [
+          {
+            "type": "lose_gold",
+            "amount": 35
+          },
+          {
+            "type": "gain_random_card"
+          }
+        ],
+        "requirements": {
+          "min_gold": 35
+        }
+      },
+      {
+        "text": "event.old_mapmaker.choice.steal",
+        "description": "event.old_mapmaker.choice.steal.description",
+        "effects": [
+          {
+            "type": "gain_random_card"
+          },
+          {
+            "type": "gain_stress",
+            "amount": 15
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "quiet_bonfire",
+    "title": "event.quiet_bonfire.title",
+    "description": "event.quiet_bonfire.description",
+    "choices": [
+      {
+        "text": "event.quiet_bonfire.choice.rest",
+        "description": "event.quiet_bonfire.choice.rest.description",
+        "effects": [
+          {
+            "type": "heal_all",
+            "amount": 7
+          },
+          {
+            "type": "lose_stress",
+            "amount": 8
+          }
+        ]
+      },
+      {
+        "text": "event.quiet_bonfire.choice.ashes",
+        "description": "event.quiet_bonfire.choice.ashes.description",
+        "effects": [
+          {
+            "type": "gain_random_card"
+          },
+          {
+            "type": "gain_stress",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "herbalist_workbench",
+    "title": "event.herbalist_workbench.title",
+    "description": "event.herbalist_workbench.description",
+    "choices": [
+      {
+        "text": "event.herbalist_workbench.choice.brew",
+        "description": "event.herbalist_workbench.choice.brew.description",
+        "effects": [
+          {
+            "type": "gain_random_consumable"
+          }
+        ],
+        "requirements": {
+          "free_consumable_slot": true
+        }
+      },
+      {
+        "text": "event.herbalist_workbench.choice.study",
+        "description": "event.herbalist_workbench.choice.study.description",
+        "effects": [
+          {
+            "type": "gain_random_card"
+          },
+          {
+            "type": "gain_stress",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "whispering_mushrooms",
+    "title": "event.whispering_mushrooms.title",
+    "description": "event.whispering_mushrooms.description",
+    "choices": [
+      {
+        "text": "event.whispering_mushrooms.choice.eat",
+        "description": "event.whispering_mushrooms.choice.eat.description",
+        "effects": [
+          {
+            "type": "lose_hp",
+            "amount": 4
+          },
+          {
+            "type": "gain_random_card"
+          }
+        ],
+        "requirements": {
+          "min_hp": 6
+        }
+      },
+      {
+        "text": "event.whispering_mushrooms.choice.harvest",
+        "description": "event.whispering_mushrooms.choice.harvest.description",
+        "effects": [
+          {
+            "type": "gain_random_consumable"
+          }
+        ],
+        "requirements": {
+          "free_consumable_slot": true
+        }
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cracked_mirror",
+    "title": "event.cracked_mirror.title",
+    "description": "event.cracked_mirror.description",
+    "choices": [
+      {
+        "text": "event.cracked_mirror.choice.look",
+        "description": "event.cracked_mirror.choice.look.description",
+        "effects": [
+          {
+            "type": "gain_random_relic"
+          },
+          {
+            "type": "gain_stress",
+            "amount": 18
+          }
+        ]
+      },
+      {
+        "text": "event.cracked_mirror.choice.break",
+        "description": "event.cracked_mirror.choice.break.description",
+        "effects": [
+          {
+            "type": "gain_gold",
+            "amount": 30
+          },
+          {
+            "type": "lose_hp",
+            "amount": 5
+          }
+        ],
+        "requirements": {
+          "min_hp": 7
+        }
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
         ]
       }
     ]

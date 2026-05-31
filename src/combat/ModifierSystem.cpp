@@ -1,6 +1,8 @@
 #include "ModifierSystem.hpp"
 
 #include "combat/CombatState.hpp"
+#include "localization/LocalizationManager.hpp"
+#include "localization/TextId.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -14,6 +16,15 @@ constexpr const char* stanceFlameStatusId = "stance_flame";
 constexpr const char* stanceAshStatusId = "stance_ash";
 constexpr const char* stanceSmokeStatusId = "stance_smoke";
 }
+
+namespace {
+std::string text(const LocalizationManager& localization, const char* textId) {
+    return localization.get(TextId(textId));
+}
+}
+
+ModifierSystem::ModifierSystem(const LocalizationManager& localization)
+    : localization_(localization) {}
 
 void ModifierSystem::addProvider(const IModifierProvider& provider) {
     providers_.push_back(&provider);
@@ -119,7 +130,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (strength > 0) {
             output.push_back({
                 strengthStatusId,
-                "Strength adds outgoing damage",
+                text(localization_, "modifier.status.strength.outgoing_damage_add"),
                 ModifierOperation::Add,
                 strength,
                 1.0,
@@ -130,7 +141,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (source.statuses.has(stanceFlameStatusId)) {
             output.push_back({
                 stanceFlameStatusId,
-                "Flame stance increases outgoing damage by 25%",
+                text(localization_, "modifier.status.stance_flame.outgoing_damage_increase"),
                 ModifierOperation::Multiply,
                 0,
                 1.25,
@@ -141,7 +152,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (source.statuses.has(stanceAshStatusId)) {
             output.push_back({
                 stanceAshStatusId,
-                "Ash stance reduces outgoing damage by 15%",
+                text(localization_, "modifier.status.stance_ash.outgoing_damage_reduce"),
                 ModifierOperation::Multiply,
                 0,
                 0.85,
@@ -152,7 +163,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (source.statuses.has(weakStatusId)) {
             output.push_back({
                 weakStatusId,
-                "Weak reduces outgoing damage",
+                text(localization_, "modifier.status.weak.outgoing_damage_reduce"),
                 ModifierOperation::Multiply,
                 0,
                 0.75,
@@ -163,7 +174,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (target != nullptr && target->statuses.has(stanceFlameStatusId)) {
             output.push_back({
                 stanceFlameStatusId,
-                "Flame stance increases incoming damage by 25%",
+                text(localization_, "modifier.status.stance_flame.incoming_damage_increase"),
                 ModifierOperation::Multiply,
                 0,
                 1.25,
@@ -174,7 +185,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (target != nullptr && target->statuses.has(stanceSmokeStatusId)) {
             output.push_back({
                 stanceSmokeStatusId,
-                "Smoke stance reduces incoming damage by 25%",
+                text(localization_, "modifier.status.stance_smoke.incoming_damage_reduce"),
                 ModifierOperation::Multiply,
                 0,
                 0.75,
@@ -185,7 +196,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (target != nullptr && target->statuses.has(vulnerableStatusId)) {
             output.push_back({
                 vulnerableStatusId,
-                "Vulnerable increases incoming damage",
+                text(localization_, "modifier.status.vulnerable.incoming_damage_increase"),
                 ModifierOperation::Multiply,
                 0,
                 1.5,
@@ -199,7 +210,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (source.statuses.has(stanceAshStatusId)) {
             output.push_back({
                 stanceAshStatusId,
-                "Ash stance adds block",
+                text(localization_, "modifier.status.stance_ash.block_add"),
                 ModifierOperation::Add,
                 2,
                 1.0,
@@ -210,7 +221,7 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         if (dexterity > 0) {
             output.push_back({
                 dexterityStatusId,
-                "Dexterity adds block",
+                text(localization_, "modifier.status.dexterity.block_add"),
                 ModifierOperation::Add,
                 dexterity,
                 1.0,

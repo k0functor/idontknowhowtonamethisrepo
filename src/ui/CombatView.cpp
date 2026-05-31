@@ -114,15 +114,6 @@ void CombatView::render(const Font* font) const {
     DrawRectangleRoundedLinesEx(endTurnBounds, 0.18f, 8, 2.f, Color{235, 220, 180, 255});
 
     if (font != nullptr) {
-        const std::string energyText =
-            model_.turnLabel + ": " + std::to_string(model_.turn) +
-            "   " + model_.phaseText +
-            "   " + model_.totalEnergyLabel + ": " + std::to_string(model_.energy) + "/" + std::to_string(model_.maxEnergy) +
-            "   " + model_.drawPileLabel + ": " + std::to_string(model_.drawPileSize) +
-            "   " + model_.discardPileLabel + ": " + std::to_string(model_.discardPileSize) +
-            "   " + model_.exhaustPileLabel + ": " + std::to_string(model_.exhaustPileSize);
-
-        DrawTextEx(*font, energyText.c_str(), Vector2{contentBounds().x + 10.f, 20.f}, 18.f, 1.f, WHITE);
         DrawTextEx(*font, model_.endTurnLabel.c_str(), Vector2{endTurnBounds.x + 24.f, endTurnBounds.y + 18.f}, 18.f, 1.f, WHITE);
 
         if (!model_.keyboardHintLabel.empty()) {
@@ -334,11 +325,18 @@ void CombatView::renderDronePanel(const Font* font) const {
             : (hovered ? Color{46, 48, 58, 255} : Color{34, 36, 44, 255});
         const Color border = hovered
             ? Color{255, 235, 145, 255}
-            : (slot.filled ? Color{120, 220, 235, 255} : Color{85, 95, 110, 255});
+            : (slot.cardActivationAvailable ? Color{120, 220, 235, 255} : Color{85, 95, 110, 255});
+        const Color nameColor = Color{220, 245, 250, 255};
+        const Color stateColor = slot.cardActivationAvailable
+            ? Color{150, 235, 205, 255}
+            : Color{160, 166, 176, 255};
 
         DrawRectangleRounded(bounds, 0.18f, 8, fill);
         DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, hovered ? 3.f : 2.f, border);
-        DrawTextEx(*font, UiUtf8::truncateWithEllipsis(slot.name, 13).c_str(), Vector2{bounds.x + 8.f, bounds.y + 13.f}, 14.f, 1.f, Color{220, 245, 250, 255});
+        DrawTextEx(*font, UiUtf8::truncateWithEllipsis(slot.name, 13).c_str(), Vector2{bounds.x + 8.f, bounds.y + 8.f}, 14.f, 1.f, nameColor);
+        if (!slot.cardActivationLabel.empty()) {
+            DrawTextEx(*font, UiUtf8::truncateWithEllipsis(slot.cardActivationLabel, 13).c_str(), Vector2{bounds.x + 8.f, bounds.y + 28.f}, 12.f, 1.f, stateColor);
+        }
     }
 }
 
@@ -463,7 +461,7 @@ Rectangle CombatView::consumableBounds(const std::size_t index) const {
 Rectangle CombatView::droneSlotBounds(const std::size_t index) const {
     const Rectangle content = contentBounds();
     const float slotWidth = 118.f;
-    const float slotHeight = 44.f;
+    const float slotHeight = 54.f;
     const float gap = 10.f;
     const float totalWidth = slotWidth * static_cast<float>(model_.droneSlots.size()) + gap * static_cast<float>(model_.droneSlots.size() - 1);
     const float x = content.x + content.width * 0.5f - totalWidth * 0.5f + static_cast<float>(index) * (slotWidth + gap);

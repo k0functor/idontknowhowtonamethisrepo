@@ -2,6 +2,7 @@
 
 #include "cards/CardKeyword.hpp"
 #include "cards/CardUpgrade.hpp"
+#include "run/StressRules.hpp"
 
 #include <algorithm>
 #include <string>
@@ -29,6 +30,40 @@ void PlayerTurnSystem::startTurn(
 
     drawSystem_.drawCards(state.deck, state.hand, handSize, random);
     state.log.add(CombatLogEntryType::PlayerTurnStarted, {{"turn", std::to_string(state.turn)}});
+
+    applyStartOfTurnTraitEffects(state, random);
+}
+
+void PlayerTurnSystem::applyStartOfTurnTraitEffects(CombatState& state, Random& random) const {
+    for (const CombatEntity& player : state.players) {
+        if (!player.isAlive()) {
+            continue;
+        }
+
+        if (!StressRules::hasTrait(player, StressRules::BreakdownTraitId)) {
+            continue;
+        }
+
+        if (state.hand.empty()) {
+            return;
+        }
+
+        const int randomIndex = random.rangeInclusive(0, static_cast<int>(state.hand.size() - 1u));
+        std::vector<CardInstance>& cards = state.hand.cards();
+        CardInstance discarded = std::move(cards[static_cast<std::size_t>(randomIndex)]);
+        cards.erase(cards.begin() + randomIndex);
+
+        const std::string discardedCardId = discarded.definitionId.value;
+        state.deck.discardPile.addTop(std::move(discarded));
+        state.log.add(
+            CombatLogEntryType::StressBreakdownDiscard,
+            {
+                {"actor", player.definitionId},
+                {"actor_text_id", player.nameTextId.value},
+                {"card", discardedCardId}
+            }
+        );
+    }
 }
 
 void PlayerTurnSystem::endTurn(CombatState& state) const {

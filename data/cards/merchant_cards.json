@@ -1,5 +1,45 @@
 [
   {
+    "id": "merchant_basic_strike",
+    "name": "card.merchant_basic_strike.name",
+    "description": "card.merchant_basic_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "merchant",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "merchant_basic_defend",
+    "name": "card.merchant_basic_defend.name",
+    "description": "card.merchant_basic_defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "merchant",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
     "id": "merchant_invoice_cut",
     "name": "card.merchant_invoice_cut.name",
     "description": "card.merchant_invoice_cut.description",

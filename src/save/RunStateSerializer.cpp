@@ -712,6 +712,9 @@ Json RunStateSerializer::toJson(const RunState& run) {
         {"seed", run.seed},
         {"gold", run.gold},
         {"act", run.act},
+        {"act_completed", run.actCompleted},
+        {"completed_act", run.completedAct},
+        {"defeated_boss_enemy_ids", stringArray(run.defeatedBossEnemyIds)},
         {"enemy_hp_multiplier", run.enemyHpMultiplier},
         {"enemy_damage_multiplier", run.enemyDamageMultiplier},
         {"gold_reward_multiplier", run.goldRewardMultiplier},
@@ -721,6 +724,7 @@ Json RunStateSerializer::toJson(const RunState& run) {
         {"consumable_ids", stringArray(run.consumableIds)},
         {"max_consumables", run.maxConsumables},
         {"actor_definition_ids", stringArray(run.actorDefinitionIds)},
+        {"reward_card_pool_ids", stringArray(run.rewardCardPoolIds)},
         {"actor_states", actorStatesToJson(run.actorStates)},
         {"map", mapToJson(run.map)},
         {"stats", statsToJson(run.stats)},
@@ -741,6 +745,21 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
     run.seed = requiredUnsigned(json, "seed", sourcePath);
     run.gold = requiredInt(json, "gold", sourcePath);
     run.act = requiredInt(json, "act", sourcePath);
+    if (const Json* actCompleted = optionalField(json, "act_completed", sourcePath)) {
+        if (!actCompleted->is_boolean()) {
+            throwSaveError(sourcePath, "'act_completed' must be a boolean");
+        }
+        run.actCompleted = actCompleted->get<bool>();
+    }
+    if (const Json* completedAct = optionalField(json, "completed_act", sourcePath)) {
+        if (!completedAct->is_number_integer()) {
+            throwSaveError(sourcePath, "'completed_act' must be an integer");
+        }
+        run.completedAct = completedAct->get<int>();
+    }
+    if (optionalField(json, "defeated_boss_enemy_ids", sourcePath) != nullptr) {
+        run.defeatedBossEnemyIds = requiredStringArray(json, "defeated_boss_enemy_ids", sourcePath);
+    }
     run.enemyHpMultiplier = requiredFloat(json, "enemy_hp_multiplier", sourcePath);
     run.enemyDamageMultiplier = requiredFloat(json, "enemy_damage_multiplier", sourcePath);
     run.goldRewardMultiplier = requiredFloat(json, "gold_reward_multiplier", sourcePath);
@@ -760,6 +779,11 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
     run.consumableIds = requiredStringArray(json, "consumable_ids", sourcePath);
     run.maxConsumables = requiredInt(json, "max_consumables", sourcePath);
     run.actorDefinitionIds = requiredStringArray(json, "actor_definition_ids", sourcePath);
+    if (optionalField(json, "reward_card_pool_ids", sourcePath) != nullptr) {
+        run.rewardCardPoolIds = requiredStringArray(json, "reward_card_pool_ids", sourcePath);
+    } else {
+        run.rewardCardPoolIds = run.actorDefinitionIds;
+    }
     run.actorStates = actorStatesFromJson(json, sourcePath);
     run.map = mapFromJson(requiredField(json, "map", sourcePath), sourcePath);
     run.stats = statsFromJson(requiredField(json, "stats", sourcePath), sourcePath);

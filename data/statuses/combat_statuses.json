@@ -35,6 +35,13 @@
     "duration_rule": "decrease_end_of_owner_turn"
   },
   {
+    "id": "drone_mark",
+    "name": "status.drone_mark.name",
+    "description": "status.drone_mark.description",
+    "type": "debuff",
+    "duration_rule": "persistent_combat"
+  },
+  {
     "id": "poison",
     "name": "status.poison.name",
     "description": "status.poison.description",

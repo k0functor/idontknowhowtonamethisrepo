@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
+#include <string>
 
 DroneSystem::DroneSystem(
     const DroneDatabase& drones,
@@ -49,13 +50,7 @@ void DroneSystem::summonDrone(
     }
 
     if (state.droneSlots.size() >= state.maxDroneSlots && !state.droneSlots.empty()) {
-        DroneSlot oldest = state.droneSlots.front();
         state.droneSlots.erase(state.droneSlots.begin());
-
-        const DroneDefinition& oldestDefinition = drones_.get(DroneId(oldest.droneId));
-        if (oldestDefinition.manualAction.has_value()) {
-            applyDroneAction(state, oldest, *oldestDefinition.manualAction, random);
-        }
     }
 
     DroneSlot slot;
@@ -71,23 +66,50 @@ void DroneSystem::useOldestDrone(CombatState& state, Random* random) const {
         return;
     }
 
-    DroneSlot slot = state.droneSlots.front();
-    state.droneSlots.erase(state.droneSlots.begin());
+    for (std::size_t index = 0; index < state.droneSlots.size(); ++index) {
+        const DroneSlot& slot = state.droneSlots[index];
+        const DroneDefinition& definition = drones_.get(DroneId(slot.droneId));
+        if (!definition.activeAction.has_value()) {
+            continue;
+        }
 
-    const DroneDefinition& definition = drones_.get(DroneId(slot.droneId));
-    if (!definition.manualAction.has_value()) {
-        state.log.add(CombatLogEntryType::DroneNoManualAction, {{"drone", slot.droneId}});
-        return;
+        if (activateDroneAt(state, index, random)) {
+            return;
+        }
     }
 
-    applyDroneAction(state, slot, *definition.manualAction, random);
+    state.log.add(CombatLogEntryType::DroneNoReadyAction);
 }
+
+bool DroneSystem::activateDroneAt(
+    CombatState& state,
+    const std::size_t index,
+    Random* random
+) const {
+    if (index >= state.droneSlots.size()) {
+        state.log.add(CombatLogEntryType::NoDrone);
+        return false;
+    }
+
+    const DroneSlot slot = state.droneSlots[index];
+    const DroneDefinition& definition = drones_.get(DroneId(slot.droneId));
+    if (!definition.activeAction.has_value()) {
+        state.log.add(CombatLogEntryType::DroneNoActiveAction, {{"drone", slot.droneId}});
+        return false;
+    }
+
+    applyDroneAction(state, slot, *definition.activeAction, random, DroneActionKind::Active);
+    state.droneSlots.erase(state.droneSlots.begin() + static_cast<std::ptrdiff_t>(index));
+    state.log.add(CombatLogEntryType::DroneConsumed, {{"drone", slot.droneId}});
+    return true;
+}
+
 
 void DroneSystem::processEndOfPlayerTurn(CombatState& state, Random& random) const {
     for (const DroneSlot& slot : state.droneSlots) {
         const DroneDefinition& definition = drones_.get(DroneId(slot.droneId));
-        if (definition.endTurnAction.has_value()) {
-            applyDroneAction(state, slot, *definition.endTurnAction, &random);
+        if (definition.passiveAction.has_value()) {
+            applyDroneAction(state, slot, *definition.passiveAction, &random, DroneActionKind::Passive);
         }
     }
 }
@@ -148,7 +170,8 @@ void DroneSystem::applyDroneAction(
     CombatState& state,
     const DroneSlot& slot,
     const DroneActionDefinition& action,
-    Random* random
+    Random* random,
+    const DroneActionKind kind
 ) const {
     const EntityId owner = validOwnerOrFallback(state, slot.owner);
 
@@ -195,11 +218,16 @@ void DroneSystem::applyDroneEffect(
     switch (effect.type) {
         case EffectType::Damage:
             for (const EntityId target : targets) {
+                int damage = resolvedValue.actual;
+                if (state.hasEntity(target)) {
+                    damage += std::max(0, state.entity(target).statuses.stacks("drone_mark"));
+                }
+
                 damageSystem_.dealDamage(
                     state,
                     baseContext.source,
                     target,
-                    resolvedValue.actual,
+                    damage,
                     baseContext.cardDefinitionId,
                     baseContext.diceCorruption
                 );
@@ -236,7 +264,8 @@ void DroneSystem::applyDroneEffect(
                     state,
                     target,
                     *effect.statusId,
-                    resolvedValue.actual
+                    resolvedValue.actual,
+                    baseContext.source
                 );
 
                 if (eventBus_ != nullptr) {

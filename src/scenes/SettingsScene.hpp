@@ -17,7 +17,8 @@ public:
         const LocalizationManager& localization,
         UserSettings settings,
         std::function<void(const UserSettings&)> onSettingsChanged,
-        std::function<void()> onBack
+        std::function<void()> onBack,
+        std::function<void()> onSaveAndExit = {}
     );
 
     void update(float deltaSeconds) override;
@@ -30,10 +31,11 @@ private:
         ToggleFullscreen,
         ToggleVSync,
         CycleFrameRateLimit,
-        ToggleDebug,
+        SaveAndExit,
         Back
     };
 
+    int rowCount() const;
     Rectangle rowBounds(int rowIndex) const;
     void trigger(RowAction action);
     void notifyChanged();
@@ -48,7 +50,6 @@ private:
     std::string fullscreenLabel() const;
     std::string vSyncLabel() const;
     std::string frameRateLabel() const;
-    std::string debugLabel() const;
 
 private:
     const UiFont& font_;
@@ -56,6 +57,7 @@ private:
     UserSettings settings_;
     std::function<void(const UserSettings&)> onSettingsChanged_;
     std::function<void()> onBack_;
+    std::function<void()> onSaveAndExit_;
 
     mutable std::string notificationTextId_;
     mutable std::string notificationValue_;

@@ -1,5 +1,45 @@
 [
   {
+    "id": "herbalist_basic_strike",
+    "name": "card.herbalist_basic_strike.name",
+    "description": "card.herbalist_basic_strike.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "attack",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "herbalist_basic_defend",
+    "name": "card.herbalist_basic_defend.name",
+    "description": "card.herbalist_basic_defend.description",
+    "rarity": "starter",
+    "energy_cost": 1,
+    "gold_cost": 0,
+    "type": "skill",
+    "owner_actor": "herbalist",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
     "id": "herbalist_scalpel",
     "name": "card.herbalist_scalpel.name",
     "description": "card.herbalist_scalpel.description",

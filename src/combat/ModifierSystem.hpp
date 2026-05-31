@@ -9,6 +9,7 @@
 #include <vector>
 
 class CombatState;
+class LocalizationManager;
 
 enum class ModifierOperation {
     Add,
@@ -73,6 +74,8 @@ public:
 
 class ModifierSystem {
 public:
+    explicit ModifierSystem(const LocalizationManager& localization);
+
     void addProvider(const IModifierProvider& provider);
     void clearProviders();
 
@@ -104,5 +107,6 @@ private:
     static int applyModifier(int value, const ValueModifier& modifier);
 
 private:
+    const LocalizationManager& localization_;
     std::vector<const IModifierProvider*> providers_;
 };

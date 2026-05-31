@@ -140,6 +140,7 @@ private:
     Rectangle drawPileButtonBounds() const;
     Rectangle discardPileButtonBounds() const;
     Rectangle exhaustPileButtonBounds() const;
+    Rectangle energyBubbleBounds() const;
     Rectangle pileOverlayBounds() const;
     Rectangle pileOverlayGridBounds(Rectangle modal) const;
     Rectangle pileOverlayCloseButtonBounds(Rectangle modal) const;
@@ -150,6 +151,7 @@ private:
     void openPileOverlay(PileOverlayMode mode);
     void closePileOverlay();
     void updatePileOverlay(Vector2 mousePosition);
+    void renderEnergyBubble() const;
     void renderPileButtons() const;
     void renderPileOverlay() const;
     void renderPileCard(const CardInstance& card, Rectangle bounds) const;

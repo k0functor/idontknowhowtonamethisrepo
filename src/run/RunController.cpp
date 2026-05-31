@@ -127,6 +127,17 @@ void RunController::clearActiveRun() {
     activeRun_.reset();
 }
 
+bool RunController::isActCompleted() const {
+    return hasActiveRun() && run().actCompleted;
+}
+
+void RunController::completeCurrentAct() {
+    RunState& state = run();
+    state.actCompleted = true;
+    state.completedAct = state.act;
+    state.pendingRoom.clear();
+}
+
 const RunState& RunController::run() const {
     if (!activeRun_.has_value()) {
         throw std::runtime_error("No active run");
@@ -211,6 +222,10 @@ RunMapNode& RunController::node(const int nodeId) {
     throw std::runtime_error("Unknown run map node id: " + std::to_string(nodeId));
 }
 
+void RunController::revealNodeType(const int nodeId, const RunMapNodeType type) {
+    node(nodeId).type = type;
+}
+
 bool RunController::canStartNode(const int nodeId) const {
     const RunMapNode& target = node(nodeId);
     return target.state == RunMapNodeState::Available || target.state == RunMapNodeState::Current;
@@ -268,6 +283,7 @@ RewardState RunController::completeCombatAndCreateReward(
         ++state.stats.elitesKilled;
     } else if (completedNodeType == RunMapNodeType::Boss) {
         ++state.stats.bossesKilled;
+        state.defeatedBossEnemyIds = combatResult.killedEnemyIds;
     }
 
     return rewardGenerator_.generateCombatReward(
@@ -377,6 +393,36 @@ void RunController::healAllActorsByPercent(const float percent) {
 
         const int amount = std::max(1, static_cast<int>(static_cast<float>(actor.maxHp) * percent + 0.5f));
         actor.currentHp = std::clamp(actor.currentHp + amount, 0, actor.maxHp);
+    }
+}
+
+void RunController::healAllActorsFlat(const int amount) {
+    if (amount <= 0) {
+        return;
+    }
+
+    RunState& state = run();
+    for (RunActorState& actor : state.actorStates) {
+        if (actor.maxHp <= 0) {
+            actor.maxHp = std::max(1, actor.currentHp);
+        }
+
+        actor.currentHp = std::clamp(actor.currentHp + amount, 0, actor.maxHp);
+    }
+}
+
+void RunController::damageAllActorsNonlethal(const int amount) {
+    if (amount <= 0) {
+        return;
+    }
+
+    RunState& state = run();
+    for (RunActorState& actor : state.actorStates) {
+        if (actor.currentHp <= 0) {
+            continue;
+        }
+
+        actor.currentHp = std::max(1, actor.currentHp - amount);
     }
 }
 
@@ -564,6 +610,14 @@ bool RunController::completeEventChoice(
 
             case RunEventEffectType::LoseStress:
                 reduceAllActorsStress(std::max(0, effect.amount));
+                break;
+
+            case RunEventEffectType::LoseHp:
+                damageAllActorsNonlethal(std::max(0, effect.amount));
+                break;
+
+            case RunEventEffectType::HealAll:
+                healAllActorsFlat(std::max(0, effect.amount));
                 break;
 
             case RunEventEffectType::Skip:

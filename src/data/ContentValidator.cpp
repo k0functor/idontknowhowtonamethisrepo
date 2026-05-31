@@ -13,6 +13,7 @@
 #include "run/RunMapNode.hpp"
 #include "statuses/StatusId.hpp"
 
+#include <algorithm>
 #include <array>
 #include <optional>
 #include <sstream>
@@ -116,12 +117,47 @@ void validateEffectList(
 ) {
     for (const EffectDefinition& effect : effects) {
         validateStatusReference(errors, content, owner, effect);
+
+        if (effect.type == EffectType::UseDrone) {
+            if (effect.target != EffectTarget::Self) {
+                addError(errors, owner + " has use_drone effect with target '" + toString(effect.target) + "'; use_drone must target self");
+            }
+
+            if (effect.statusId.has_value()) {
+                addError(errors, owner + " has use_drone effect with status/drone id '" + *effect.statusId + "'; use_drone activates the oldest available drone and must not name a drone directly");
+            }
+        }
     }
 }
 
 bool hasCardRewardCandidates(const ContentRegistry& content) {
     for (const CardDefinition* card : content.cards().all()) {
         if (card != nullptr && RewardPoolRules::canAppearAsCardReward(*card)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool hasArchetypeCardRewardCandidates(
+    const ContentRegistry& content,
+    const std::vector<std::string>& rewardCardPoolIds
+) {
+    for (const CardDefinition* card : content.cards().all()) {
+        if (card == nullptr) {
+            continue;
+        }
+
+        if (!RewardPoolRules::canAppearAsCardReward(*card)) {
+            continue;
+        }
+
+        if (card->ownerActorId.empty()) {
+            continue;
+        }
+
+        if (std::find(rewardCardPoolIds.begin(), rewardCardPoolIds.end(), card->ownerActorId) != rewardCardPoolIds.end()) {
             return true;
         }
     }
@@ -174,6 +210,8 @@ void validateRunEventEffect(
         case RunEventEffectType::LoseGold:
         case RunEventEffectType::GainStress:
         case RunEventEffectType::LoseStress:
+        case RunEventEffectType::LoseHp:
+        case RunEventEffectType::HealAll:
             if (effect.amount <= 0) {
                 addError(errors, owner + " has numeric event effect with non-positive amount");
             }
@@ -265,8 +303,9 @@ void validateMapGeneration(
     const bool canGenerateEventNodes =
         config.eventWeight() > 0 ||
         (config.hasFixedEvents() && config.events().maximum > 0);
+    const bool canResolveQuestionMarksToEvents = config.questionMarkCombatChance() < 100;
 
-    if (canGenerateEventNodes && content.events().all().empty()) {
+    if (canGenerateEventNodes && canResolveQuestionMarksToEvents && content.events().all().empty()) {
         addError(errors, "Act '" + config.id() + "' can generate event nodes, but no run events are loaded");
     }
 }
@@ -324,17 +363,17 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
         const std::string owner = "Drone '" + drone->id.value + "'";
         validateTextReference(errors, localization, owner, "name", drone->nameTextId);
         validateTextReference(errors, localization, owner, "description", drone->descriptionTextId);
-        if (drone->manualAction.has_value()) {
-            if (!drone->manualAction->logTextId.empty()) {
-                validateTextReference(errors, localization, owner + " manual action", "log", TextId(drone->manualAction->logTextId));
+        if (drone->activeAction.has_value()) {
+            if (!drone->activeAction->logTextId.empty()) {
+                validateTextReference(errors, localization, owner + " active action", "log", TextId(drone->activeAction->logTextId));
             }
-            validateEffectList(errors, content, owner + " manual action", drone->manualAction->effects);
+            validateEffectList(errors, content, owner + " active action", drone->activeAction->effects);
         }
-        if (drone->endTurnAction.has_value()) {
-            if (!drone->endTurnAction->logTextId.empty()) {
-                validateTextReference(errors, localization, owner + " end-turn action", "log", TextId(drone->endTurnAction->logTextId));
+        if (drone->passiveAction.has_value()) {
+            if (!drone->passiveAction->logTextId.empty()) {
+                validateTextReference(errors, localization, owner + " passive action", "log", TextId(drone->passiveAction->logTextId));
             }
-            validateEffectList(errors, content, owner + " end-turn action", drone->endTurnAction->effects);
+            validateEffectList(errors, content, owner + " passive action", drone->passiveAction->effects);
         }
     }
 
@@ -371,6 +410,20 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
         const std::string owner = "Status '" + status->id.value + "'";
         validateTextReference(errors, localization, owner, "name", status->nameTextId);
         validateTextReference(errors, localization, owner, "description", status->descriptionTextId);
+
+        if (!status->endTurnEffect.empty()) {
+            if (status->endTurnEffect != "poison_damage") {
+                addError(errors, owner + " has unknown end_turn_effect '" + status->endTurnEffect + "'");
+            }
+
+            validateTextReference(
+                errors,
+                localization,
+                owner,
+                "end_turn_effect",
+                TextId("status.end_turn_effect." + status->endTurnEffect)
+            );
+        }
     }
 
     for (const RelicDefinition* relic : content.relics().all()) {
@@ -462,6 +515,20 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
             if (!content.actors().contains(PlayerActorId(actorId))) {
                 addError(errors, owner + " references unknown actor '" + actorId + "'");
             }
+        }
+
+        if (archetype->rewardCardPoolIds.empty()) {
+            addError(errors, owner + " must define at least one reward card pool");
+        }
+
+        for (const std::string& poolId : archetype->rewardCardPoolIds) {
+            if (!content.actors().contains(PlayerActorId(poolId))) {
+                addError(errors, owner + " references unknown reward card pool '" + poolId + "'");
+            }
+        }
+
+        if (archetype->isAvailable && !hasArchetypeCardRewardCandidates(content, archetype->rewardCardPoolIds)) {
+            addError(errors, owner + " has no non-starter card reward candidates in its reward card pools");
         }
 
         for (const std::string& cardId : archetype->startingDeckCardIds) {

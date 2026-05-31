@@ -1,14 +1,23 @@
 #include "RunMapScene.hpp"
+#include "ui/CardTransform.hpp"
+#include "ui/CardViewModel.hpp"
+#include "ui/CardViewModelFactory.hpp"
+#include "ui/CardVisualInstance.hpp"
 
 #include "cards/CardDescriptionFormatter.hpp"
 #include "cards/CardUpgrade.hpp"
 #include "ui/BasicUi.hpp"
+#include "ui/CardTransform.hpp"
+#include "ui/CardViewModel.hpp"
+#include "ui/CardViewModelFactory.hpp"
+#include "ui/CardVisualInstance.hpp"
 #include "localization/TextFormatter.hpp"
 #include "relics/RelicDefinition.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <set>
 #include <sstream>
@@ -370,8 +379,8 @@ Rectangle RunMapScene::nodePreviewBounds(const RunMapNode& node) const {
     const Rectangle nodeBox = nodeBounds(node);
     const float screenWidth = static_cast<float>(GetScreenWidth());
     const float screenHeight = static_cast<float>(GetScreenHeight());
-    const float width = std::min(540.f, std::max(420.f, screenWidth - 36.f));
-    const float height = std::min(300.f, std::max(260.f, screenHeight - 36.f));
+    const float width = std::min(680.f, std::max(520.f, screenWidth - 36.f));
+    const float height = std::min(360.f, std::max(320.f, screenHeight - 36.f));
     float x = nodeBox.x + nodeBox.width + 18.f;
     float y = nodeBox.y + nodeBox.height * 0.5f - height * 0.5f;
 
@@ -585,7 +594,7 @@ std::string RunMapScene::nodeStateText(const RunMapNode& node) const {
 
 void RunMapScene::renderMapLegend() const {
     const float width = 520.f;
-    const float height = 84.f;
+    const float height = 112.f;
     const Rectangle panel{
         32.f,
         static_cast<float>(GetScreenHeight()) - height - 24.f,
@@ -598,8 +607,15 @@ void RunMapScene::renderMapLegend() const {
 
     BasicUi::drawText(
         font_,
-        localization_.get(TextId("run.map_hint")),
+        localization_.get(TextId("run.map_hint.hover")),
         Vector2{panel.x + 16.f, panel.y + 12.f},
+        15.f,
+        Color{196, 204, 224, 255}
+    );
+    BasicUi::drawText(
+        font_,
+        localization_.get(TextId("run.map_hint.available_path")),
+        Vector2{panel.x + 16.f, panel.y + 33.f},
         15.f,
         Color{196, 204, 224, 255}
     );
@@ -618,7 +634,7 @@ void RunMapScene::renderMapLegend() const {
     };
 
     float x = panel.x + 16.f;
-    const float y = panel.y + 45.f;
+    const float y = panel.y + 72.f;
     for (const LegendItem& item : items) {
         const Rectangle swatch{x, y + 2.f, 16.f, 16.f};
         DrawRectangleRounded(swatch, 0.25f, 6, item.fill);
@@ -807,37 +823,41 @@ std::string RunMapScene::restStressPreviewText() const {
 
 void RunMapScene::renderNodePreview(const RunMapNode& node) const {
     const Rectangle panel = nodePreviewBounds(node);
-    const float padding = 20.f;
+    const float padding = 22.f;
     const float textWidth = panel.width - padding * 2.f;
     DrawRectangleRounded(panel, 0.08f, 12, Color{26, 28, 38, 245});
     DrawRectangleRoundedLinesEx(panel, 0.08f, 12, 2.f, Color{238, 196, 86, 255});
 
-    BasicUi::drawText(font_, nodePreviewTitle(node), Vector2{panel.x + padding, panel.y + 16.f}, 23.f, Color{244, 235, 188, 255});
+    BeginScissorMode(
+        static_cast<int>(panel.x),
+        static_cast<int>(panel.y),
+        static_cast<int>(panel.width),
+        static_cast<int>(panel.height)
+    );
 
-    float y = panel.y + 50.f;
+    float y = panel.y + 16.f;
+    const std::vector<std::string> titleLines = BasicUi::wrapText(font_, nodePreviewTitle(node), 22.f, textWidth);
+    for (std::size_t index = 0; index < titleLines.size() && index < 2; ++index) {
+        BasicUi::drawText(
+            font_,
+            titleLines[index],
+            Vector2{panel.x + padding, y},
+            22.f,
+            Color{244, 235, 188, 255}
+        );
+        y += 26.f;
+    }
+
+    y += 5.f;
     const std::vector<std::string> stateLines = BasicUi::wrapText(
         font_,
         localization_.format(TextId("run.preview.state"), {{"state", nodeStateText(node)}}),
         15.f,
         textWidth
     );
-    for (const std::string& line : stateLines) {
-        BasicUi::drawText(font_, line, Vector2{panel.x + padding, y}, 15.f, nodeOutlineColor(node));
+    for (std::size_t index = 0; index < stateLines.size() && index < 2; ++index) {
+        BasicUi::drawText(font_, stateLines[index], Vector2{panel.x + padding, y}, 15.f, nodeOutlineColor(node));
         y += 19.f;
-        if (y > panel.y + 90.f) {
-            break;
-        }
-    }
-
-    y += 7.f;
-    const float actionTop = panel.y + panel.height - 76.f;
-    const std::vector<std::string> lines = BasicUi::wrapText(font_, nodePreviewDescription(node), 16.f, textWidth);
-    for (const std::string& line : lines) {
-        if (y > actionTop - 22.f) {
-            break;
-        }
-        BasicUi::drawText(font_, line, Vector2{panel.x + padding, y}, 16.f, Color{204, 211, 230, 255});
-        y += 21.f;
     }
 
     std::string actionText;
@@ -853,6 +873,29 @@ void RunMapScene::renderNodePreview(const RunMapNode& node) const {
         actionText = localization_.get(TextId("run.preview.action.future_locked"));
     }
 
+    const std::vector<std::string> actionLines = BasicUi::wrapText(font_, actionText, 15.f, textWidth);
+    const float actionLineHeight = 19.f;
+    const std::size_t visibleActionLineCount = std::min<std::size_t>(3, actionLines.size());
+    const float actionBlockHeight = 20.f + static_cast<float>(visibleActionLineCount) * actionLineHeight;
+    const float actionTop = panel.y + panel.height - padding - actionBlockHeight;
+
+    y += 11.f;
+    const float descriptionBottom = actionTop - 18.f;
+    const std::vector<std::string> descriptionLines = BasicUi::wrapText(
+        font_,
+        nodePreviewDescription(node),
+        16.f,
+        textWidth
+    );
+
+    for (const std::string& line : descriptionLines) {
+        if (y + 20.f > descriptionBottom) {
+            break;
+        }
+        BasicUi::drawText(font_, line, Vector2{panel.x + padding, y}, 16.f, Color{204, 211, 230, 255});
+        y += 21.f;
+    }
+
     DrawLine(
         static_cast<int>(panel.x + padding),
         static_cast<int>(actionTop - 12.f),
@@ -861,15 +904,13 @@ void RunMapScene::renderNodePreview(const RunMapNode& node) const {
         Color{78, 84, 108, 190}
     );
 
-    const std::vector<std::string> actionLines = BasicUi::wrapText(font_, actionText, 15.f, textWidth);
     y = actionTop;
-    for (const std::string& line : actionLines) {
-        if (y > panel.y + panel.height - 23.f) {
-            break;
-        }
-        BasicUi::drawText(font_, line, Vector2{panel.x + padding, y}, 15.f, Color{184, 194, 214, 255});
-        y += 19.f;
+    for (std::size_t index = 0; index < actionLines.size() && index < visibleActionLineCount; ++index) {
+        BasicUi::drawText(font_, actionLines[index], Vector2{panel.x + padding, y}, 15.f, Color{184, 194, 214, 255});
+        y += actionLineHeight;
     }
+
+    EndScissorMode();
 }
 
 std::string RunMapScene::nodePreviewTitle(const RunMapNode& node) const {
@@ -1335,28 +1376,28 @@ void RunMapScene::renderCardGrid(const Rectangle grid, const std::vector<std::si
             continue;
         }
 
+        if (!cards_.contains(cardId)) {
+            BasicUi::drawCenteredText(font_, cardId.value, cell, 16.f, Color{245, 245, 250, 255});
+            continue;
+        }
+
         const bool upgraded = isDeckCardUpgraded(deckIndex);
         const bool selected = selectionMode && selectedUpgradeDeckIndex_.has_value() && *selectedUpgradeDeckIndex_ == deckIndex;
         const bool hovered = BasicUi::contains(cell, mouse);
-        const Color fill = selected ? Color{68, 58, 38, 255} : (hovered ? Color{52, 56, 73, 255} : Color{39, 42, 55, 255});
-        const Color border = selected ? Color{255, 218, 90, 255} : (hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
-        DrawRectangleRounded(cell, 0.07f, 9, fill);
-        DrawRectangleRoundedLinesEx(cell, 0.07f, 9, selected ? 4.f : 2.f, border);
-
-        BasicUi::drawText(font_, std::to_string(cards_.contains(cardId) ? CardUpgrade::effectiveDefinition(cards_.get(cardId), upgraded).energyCost : 0), Vector2{cell.x + 13.f, cell.y + 10.f}, 18.f, Color{245, 245, 250, 255});
-        BasicUi::drawCenteredText(font_, cardName(cardId, upgraded), Rectangle{cell.x + 38.f, cell.y + 8.f, cell.width - 48.f, 40.f}, 16.f, Color{245, 245, 250, 255});
-
-        const std::vector<std::string> lines = BasicUi::wrapText(font_, cardDescription(cardId, upgraded), 12.f, cell.width - 22.f);
-        float y = cell.y + 66.f;
-        for (const std::string& line : lines) {
-            if (y > cell.y + cell.height - 18.f) break;
-            BasicUi::drawText(font_, line, Vector2{cell.x + 12.f, y}, 12.f, Color{205, 210, 225, 255});
-            y += 16.f;
-        }
+        CardViewModel model = CardViewModelFactory::buildStatic(
+            cards_.get(cardId),
+            localization_,
+            CardInstanceId{static_cast<std::uint64_t>(deckIndex + 1)},
+            upgraded,
+            selected || hovered
+        );
+        const CardTransform transform = CardVisualInstance::transformForBounds(cell, static_cast<int>(i));
+        CardVisualInstance::renderStatic(model, font_.available() ? &font_.font() : nullptr, transform);
     }
 
     EndScissorMode();
 }
+
 
 std::optional<std::size_t> RunMapScene::hoveredOverlayDeckIndex(const Vector2 mousePosition) const {
     if (overlayMode_ != OverlayMode::Deck && overlayMode_ != OverlayMode::Upgrade) {

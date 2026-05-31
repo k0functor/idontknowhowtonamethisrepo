@@ -271,12 +271,16 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/CardTransform.hpp
     src/ui/StatusViewModel.hpp
     src/ui/CardViewModel.hpp
+    src/ui/CardViewModelFactory.hpp
+    src/ui/CardViewModelFactory.cpp
     src/ui/EnemyViewModel.hpp
     src/ui/PlayerViewModel.hpp
     src/ui/ConsumableViewModel.hpp
     src/ui/CombatViewModel.hpp
     src/ui/UiFont.hpp
     src/ui/UiFont.cpp
+    src/ui/CardVisualInstance.hpp
+    src/ui/CardVisualInstance.cpp
     src/ui/CardView.hpp
     src/ui/CardView.cpp
     src/ui/HandLayout.hpp
@@ -381,6 +385,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/scenes/CombatScene.cpp
     src/scenes/RewardScene.hpp
     src/scenes/RewardScene.cpp
+    src/scenes/FloorCompleteScene.hpp
+    src/scenes/FloorCompleteScene.cpp
     src/scenes/ShopScene.hpp
     src/scenes/ShopScene.cpp
     src/scenes/EventScene.hpp

@@ -2,11 +2,33 @@
 
 #include "combat/CombatState.hpp"
 #include "effects/EffectTarget.hpp"
+#include "localization/LocalizationManager.hpp"
+#include "localization/TextId.hpp"
 
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 
-RelicSystem::RelicSystem(const RelicDatabase& database)
-    : database_(database) {}
+namespace {
+std::string compactDouble(const double value) {
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(2) << value;
+
+    std::string result = out.str();
+    while (!result.empty() && result.back() == '0') {
+        result.pop_back();
+    }
+    if (!result.empty() && result.back() == '.') {
+        result.pop_back();
+    }
+
+    return result.empty() ? "0" : result;
+}
+}
+
+RelicSystem::RelicSystem(const RelicDatabase& database, const LocalizationManager& localization)
+    : database_(database),
+      localization_(localization) {}
 
 void RelicSystem::setRelics(const std::vector<std::string>& relicIds) {
     inventory_.setFromIds(relicIds);
@@ -58,7 +80,7 @@ void RelicSystem::collectModifiers(
                     if (context.effectType == EffectType::Damage) {
                         output.push_back({
                             instance.id.value,
-                            "Relic adds outgoing damage",
+                            localization_.format(TextId("modifier.relic.outgoing_damage_add"), {{"amount", std::to_string(modifier.amount)}}),
                             ModifierOperation::Add,
                             modifier.amount,
                             1.0,
@@ -71,7 +93,7 @@ void RelicSystem::collectModifiers(
                     if (context.effectType == EffectType::Damage) {
                         output.push_back({
                             instance.id.value,
-                            "Relic multiplies outgoing damage",
+                            localization_.format(TextId("modifier.relic.outgoing_damage_multiply"), {{"multiplier", compactDouble(modifier.multiplier)}}),
                             ModifierOperation::Multiply,
                             0,
                             modifier.multiplier,
@@ -84,7 +106,7 @@ void RelicSystem::collectModifiers(
                     if (context.effectType == EffectType::Block) {
                         output.push_back({
                             instance.id.value,
-                            "Relic adds block",
+                            localization_.format(TextId("modifier.relic.block_add"), {{"amount", std::to_string(modifier.amount)}}),
                             ModifierOperation::Add,
                             modifier.amount,
                             1.0,
@@ -193,5 +215,5 @@ EntityId RelicSystem::defaultPlayerSource(const CombatState& state) const {
         return state.players.front().id;
     }
 
-    throw std::runtime_error("Relic effect requires a player source, but combat has no player");
+    throw std::runtime_error("Relic effect requires a player source, but combat has no player"); // NOL10N: developer combat state diagnostic
 }

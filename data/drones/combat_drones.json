@@ -3,13 +3,7 @@
     "id": "drone_striker",
     "name": "drone.striker",
     "description": "drone.striker.description",
-    "type": "damage",
-    "target": "single_enemy",
-    "value": {
-      "type": "fixed",
-      "amount": 3
-    },
-    "manual": {
+    "passive": {
       "effects": [
         {
           "type": "damage",
@@ -20,81 +14,146 @@
           }
         }
       ],
-      "log_text": "combat.log.drone_striker_damage"
+      "log_text": "combat.log.drone_striker_passive"
     },
-    "end_turn": {
+    "active": {
       "effects": [
         {
           "type": "damage",
           "target": "single_enemy",
-          "value": {
-            "type": "fixed",
-            "amount": 3
-          }
-        }
-      ],
-      "log_text": "combat.log.drone_striker_damage"
-    }
-  },
-  {
-    "id": "drone_guardian",
-    "name": "drone.guardian",
-    "description": "drone.guardian.description",
-    "type": "block",
-    "target": "self",
-    "value": {
-      "type": "fixed",
-      "amount": 4
-    },
-    "manual": {
-      "effects": [
-        {
-          "type": "block",
-          "target": "self",
-          "value": {
-            "type": "fixed",
-            "amount": 4
-          }
-        }
-      ],
-      "log_text": "combat.log.drone_guardian_block"
-    },
-    "end_turn": {
-      "effects": [
-        {
-          "type": "block",
-          "target": "self",
-          "value": {
-            "type": "fixed",
-            "amount": 4
-          }
-        }
-      ],
-      "log_text": "combat.log.drone_guardian_block"
-    }
-  },
-  {
-    "id": "drone_bomber",
-    "name": "drone.bomber",
-    "description": "drone.bomber.description",
-    "type": "damage",
-    "target": "all_enemies",
-    "value": {
-      "type": "fixed",
-      "amount": 8
-    },
-    "manual": {
-      "effects": [
-        {
-          "type": "damage",
-          "target": "all_enemies",
           "value": {
             "type": "fixed",
             "amount": 8
           }
         }
       ],
-      "log_text": "combat.log.drone_bomber_damage"
+      "log_text": "combat.log.drone_striker_active"
+    }
+  },
+  {
+    "id": "drone_guardian",
+    "name": "drone.guardian",
+    "description": "drone.guardian.description",
+    "passive": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ],
+      "log_text": "combat.log.drone_guardian_passive"
+    },
+    "active": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ],
+      "log_text": "combat.log.drone_guardian_active"
+    }
+  },
+  {
+    "id": "drone_marker",
+    "name": "drone.marker",
+    "description": "drone.marker.description",
+    "passive": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "random_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "drone_mark"
+        }
+      ],
+      "log_text": "combat.log.drone_marker_passive"
+    },
+    "active": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "drone_mark"
+        }
+      ],
+      "log_text": "combat.log.drone_marker_active"
+    }
+  },
+  {
+    "id": "drone_surgeon",
+    "name": "drone.surgeon",
+    "description": "drone.surgeon.description",
+    "passive": {
+      "effects": [
+        {
+          "type": "heal",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ],
+      "log_text": "combat.log.drone_surgeon_passive"
+    },
+    "active": {
+      "effects": [
+        {
+          "type": "heal",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          }
+        }
+      ],
+      "log_text": "combat.log.drone_surgeon_active"
+    }
+  },
+  {
+    "id": "drone_bomber",
+    "name": "drone.bomber",
+    "description": "drone.bomber.description",
+    "passive": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ],
+      "log_text": "combat.log.drone_bomber_passive"
+    },
+    "active": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        }
+      ],
+      "log_text": "combat.log.drone_bomber_active"
     }
   }
 ]
