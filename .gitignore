@@ -1,7 +1,38 @@
-build
-out
-.cache
-.idea
-.vs
-.vscode
-dist
+# Build outputs
+build/
+out/
+dist/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# Local caches
+.cache/
+
+# IDE/editor state
+.idea/
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# Binaries and debug artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
+*.ilk
+*.o
+*.obj
+
+# Runtime-local state
+saves/settings.json
+saves/slot_*/
+logs/
+*.log

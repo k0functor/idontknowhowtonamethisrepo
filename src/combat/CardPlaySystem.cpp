@@ -83,6 +83,7 @@ PlayCardResult CardPlaySystem::playCard(
         event.target = request.target;
         event.cardInstanceId = request.cardInstanceId;
         event.cardDefinitionId = definition.id;
+        event.cardType = definition.type;
         event.turn = state.turn;
         eventBus_->emit(event);
     }

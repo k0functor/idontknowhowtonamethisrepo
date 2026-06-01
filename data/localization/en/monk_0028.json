@@ -1,0 +1,18 @@
+{
+  "card.monk_ignition_kata.name": "Ignition Kata",
+  "card.monk_ignition_kata.description": "Deals {damage} damage. Enter Flame Stance. If another stance was replaced, gain 1 energy and draw 2 cards.",
+  "card.monk_ash_kata.name": "Ash Kata",
+  "card.monk_ash_kata.description": "Gain {block} block. Enter Ash Stance. If another stance was replaced, gain 1 energy and draw 2 cards.",
+  "card.monk_smoke_kata.name": "Smoke Kata",
+  "card.monk_smoke_kata.description": "Draw {draw_cards} card. Gain {block} block. Enter Smoke Stance. If another stance was replaced, gain 1 energy and draw 2 cards.",
+  "card.monk_flame_wheel.name": "Flame Wheel",
+  "card.monk_flame_wheel.description": "Deals {damage} damage to all enemies. Flame Stance increases this damage.",
+  "card.monk_ash_mirror.name": "Ash Mirror",
+  "card.monk_ash_mirror.description": "Gain {block} block. Draw {draw_cards} card. Ash Stance adds block.",
+  "card.monk_smoke_afterimage.name": "Smoke Afterimage",
+  "card.monk_smoke_afterimage.description": "Gain {block} block. Apply {weak} Weak to all enemies. Smoke Stance reduces incoming damage.",
+  "card.monk_threefold_release.name": "Threefold Release",
+  "card.monk_threefold_release.description": "Deals {damage} damage{repeat_suffix}. Reduce stress by {stress}.",
+  "ui.active_stance": "Stance",
+  "ui.stance_shift_bonus": "Stance shift: +1 energy, draw 2"
+}

@@ -1,9 +1,12 @@
 {
   "event.choice.unavailable.consumable_slot": "слоты зелий заняты {current}/{maximum}",
+  "event.choice.unavailable.deck_size": "карт в колоде {current}/{required}",
+  "event.choice.unavailable.forbidden_card": "карта уже есть {id}",
   "event.choice.unavailable.forbidden_relic": "реликвия {id} уже есть",
   "event.choice.unavailable.gold": "золото {current}/{required}",
   "event.choice.unavailable.hp": "HP отряда {current}/{required}",
   "event.choice.unavailable.prefix": "Недоступно:",
+  "event.choice.unavailable.required_card": "требуется карта {id}",
   "event.choice.unavailable.required_relic": "нужна реликвия {id}",
   "event.choice.unavailable.unknown": "условие не выполнено",
   "event.rusted_vending_altar.choice.relic.requirement_description": "Заплатить 60 золота и получить случайную реликвию."

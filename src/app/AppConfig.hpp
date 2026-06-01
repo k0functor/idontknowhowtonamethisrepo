@@ -7,7 +7,7 @@
 #include <string>
 
 struct WindowConfig {
-    std::string title = "Card Roguelike";
+    std::string title = "I Dont Know How To Name This Game";
 
     std::uint32_t width = 1280;
     std::uint32_t height = 720;

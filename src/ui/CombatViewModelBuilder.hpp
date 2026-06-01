@@ -40,7 +40,9 @@ public:
     ) const;
 
 private:
-    std::vector<StatusViewModel> buildStatuses(const StatusContainer& statuses) const;
+    std::vector<StatusViewModel> buildStatuses(const StatusContainer& statuses, bool includeStances = true) const;
+
+    void fillActiveStance(PlayerViewModel& model, const StatusContainer& statuses) const;
 
     std::vector<std::string> recentLogEntries(const CombatState& state, std::size_t maxCount) const;
 

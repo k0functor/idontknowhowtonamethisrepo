@@ -141,6 +141,63 @@
         "weight": 1,
         "min_layer": 3,
         "max_layer": 5
+      },
+      {
+        "id": "act1_ash_crow",
+        "enemies": [
+          "ash_crow"
+        ],
+        "weight": 3,
+        "min_layer": 0,
+        "max_layer": 4
+      },
+      {
+        "id": "act1_lockjaw_husk",
+        "enemies": [
+          "lockjaw_husk"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_mold_shepherd",
+        "enemies": [
+          "mold_shepherd"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_crow_and_mite",
+        "enemies": [
+          "ash_crow",
+          "rusted_mite"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_shepherd_and_lamp",
+        "enemies": [
+          "mold_shepherd",
+          "grave_lamp"
+        ],
+        "weight": 1,
+        "min_layer": 3,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_lockjaw_and_rat",
+        "enemies": [
+          "lockjaw_husk",
+          "rat_cultist"
+        ],
+        "weight": 1,
+        "min_layer": 3,
+        "max_layer": 5
       }
     ],
     "elite": [
@@ -170,6 +227,24 @@
         "weight": 1,
         "min_layer": 1,
         "max_layer": 5
+      },
+      {
+        "id": "act1_reliquary_guard",
+        "enemies": [
+          "reliquary_guard"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 6
+      },
+      {
+        "id": "act1_carrion_matron",
+        "enemies": [
+          "carrion_matron"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 6
       }
     ],
     "boss": [
@@ -186,6 +261,15 @@
         "id": "act1_rusted_bishop",
         "enemies": [
           "rusted_bishop"
+        ],
+        "weight": 1,
+        "min_layer": 7,
+        "max_layer": 7
+      },
+      {
+        "id": "act1_candle_king",
+        "enemies": [
+          "candle_king"
         ],
         "weight": 1,
         "min_layer": 7,

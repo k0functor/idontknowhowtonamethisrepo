@@ -62,6 +62,7 @@ DamageResult DamageSystem::dealDamage(
         dealt.cardDefinitionId = cardId;
         dealt.effectType = EffectType::Damage;
         dealt.amount = result.hpDamage;
+        dealt.blockedAmount = result.blockedDamage;
         dealt.turn = state.turn;
         eventBus_->emit(dealt);
 

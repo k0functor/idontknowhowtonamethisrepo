@@ -252,8 +252,21 @@ void EffectSystem::applyEffect(
 
             case EffectType::Heal:
                 for (const EntityId target : targets) {
-                    state.entity(target).health.heal(resolvedValue.actual);
-                    state.log.add(CombatLogEntryType::Heal, {{"amount", std::to_string(resolvedValue.actual)}});
+                    const int healed = state.entity(target).health.heal(resolvedValue.actual);
+                    state.log.add(CombatLogEntryType::Heal, {{"amount", std::to_string(healed)}});
+
+                    if (eventBus_ != nullptr && healed > 0) {
+                        GameEvent event;
+                        event.type = GameEventType::Healed;
+                        event.source = context.source;
+                        event.target = target;
+                        event.cardInstanceId = context.cardInstanceId;
+                        event.cardDefinitionId = context.cardDefinitionId;
+                        event.effectType = EffectType::Heal;
+                        event.amount = healed;
+                        event.turn = state.turn;
+                        eventBus_->emit(event);
+                    }
                 }
                 continue;
 

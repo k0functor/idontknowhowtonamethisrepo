@@ -1,19 +1,29 @@
 #include "CombatViewModelBuilder.hpp"
 
-#include "statuses/StatusType.hpp"
 #include "drones/DroneDefinition.hpp"
 #include "drones/DroneId.hpp"
+#include "statuses/StatusType.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <initializer_list>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <string_view>
-#include <optional>
 #include <unordered_map>
 
 namespace {
+constexpr const char* stanceFlameStatusId = "stance_flame";
+constexpr const char* stanceAshStatusId = "stance_ash";
+constexpr const char* stanceSmokeStatusId = "stance_smoke";
+
+bool isStanceStatus(const std::string& statusId) {
+    return statusId == stanceFlameStatusId ||
+           statusId == stanceAshStatusId ||
+           statusId == stanceSmokeStatusId;
+}
+
 std::string words(std::initializer_list<std::string_view> tokens) {
     std::string result;
     for (const std::string_view token : tokens) {
@@ -98,20 +108,29 @@ std::string intentBaseLabel(
     return localized(localization, "intent.unknown.name");
 }
 
-std::string valueRangeText(const EnemyIntent& intent) {
+std::string numericRangeText(const int minimum, const int maximum) {
+    if (minimum == maximum) {
+        return std::to_string(maximum);
+    }
+
+    return std::to_string(minimum) + "-" + std::to_string(maximum);
+}
+
+std::string valueRangeText(
+    const LocalizationManager& localization,
+    const EnemyIntent& intent
+) {
     if (intent.valueMax <= 0 && intent.valueMin <= 0) {
         return {};
     }
 
-    std::string value;
-    if (intent.valueMin == intent.valueMax) {
-        value = std::to_string(intent.valueMax);
-    } else {
-        value = std::to_string(intent.valueMin) + "-" + std::to_string(intent.valueMax);
-    }
-
+    const std::string value = numericRangeText(intent.valueMin, intent.valueMax);
     if (intent.hitCount > 1) {
-        value += " x" + std::to_string(intent.hitCount);
+        return localizedFormat(
+            localization,
+            "intent.value.multi_hit",
+            {{"value", value}, {"hits", std::to_string(intent.hitCount)}}
+        );
     }
 
     return value;
@@ -122,7 +141,7 @@ std::string intentLabel(
     const EnemyIntent& intent
 ) {
     const std::string base = intentBaseLabel(localization, intent.type);
-    const std::string value = valueRangeText(intent);
+    const std::string value = valueRangeText(localization, intent);
 
     if (value.empty() || intent.type == EnemyIntentType::Buff ||
         intent.type == EnemyIntentType::Debuff || intent.type == EnemyIntentType::Special ||
@@ -131,6 +150,60 @@ std::string intentLabel(
     }
 
     return base + " " + value;
+}
+
+std::string intentDetailText(
+    const LocalizationManager& localization,
+    const EnemyIntent& intent
+) {
+    switch (intent.type) {
+        case EnemyIntentType::Attack:
+            if (intent.hitCount > 1) {
+                const int totalMin = intent.valueMin * intent.hitCount;
+                const int totalMax = intent.valueMax * intent.hitCount;
+                return localizedFormat(
+                    localization,
+                    "intent.attack.detail_multi",
+                    {
+                        {"damage", numericRangeText(intent.valueMin, intent.valueMax)},
+                        {"hits", std::to_string(intent.hitCount)},
+                        {"total", numericRangeText(totalMin, totalMax)}
+                    }
+                );
+            }
+
+            if (intent.valueMax > 0 || intent.valueMin > 0) {
+                return localizedFormat(
+                    localization,
+                    "intent.attack.detail",
+                    {{"damage", numericRangeText(intent.valueMin, intent.valueMax)}}
+                );
+            }
+
+            return localized(localization, "intent.attack.description");
+
+        case EnemyIntentType::Block:
+            if (intent.valueMax > 0 || intent.valueMin > 0) {
+                return localizedFormat(
+                    localization,
+                    "intent.block.detail",
+                    {{"block", numericRangeText(intent.valueMin, intent.valueMax)}}
+                );
+            }
+
+            return localized(localization, "intent.block.description");
+
+        case EnemyIntentType::Buff:
+            return localized(localization, "intent.buff.description");
+        case EnemyIntentType::Debuff:
+            return localized(localization, "intent.debuff.description");
+        case EnemyIntentType::Special:
+            return localized(localization, "intent.special.description");
+        case EnemyIntentType::Unknown:
+            return localized(localization, "intent.unknown.description");
+    }
+
+    return localized(localization, "intent.unknown.description");
 }
 
 std::string variableOrFallback(
@@ -182,6 +255,54 @@ std::string statusName(
 
     const StatusDefinition& definition = statuses.get(statusId);
     return localizedOrRaw(localization, definition.nameTextId.value, statusIdText);
+}
+
+std::string statusDescription(
+    const LocalizationManager& localization,
+    const StatusDatabase& statuses,
+    const std::string& statusIdText
+) {
+    const StatusId statusId(statusIdText);
+    if (!statuses.contains(statusId)) {
+        return localizedOrRaw(localization, "inspect.status.unknown", statusIdText);
+    }
+
+    const StatusDefinition& definition = statuses.get(statusId);
+    return localizedOrRaw(localization, definition.descriptionTextId.value, statusIdText);
+}
+
+std::string statusTypeLabel(
+    const LocalizationManager& localization,
+    const StatusDefinition& definition
+) {
+    return localizedOrRaw(localization, "status.type." + toString(definition.type), toString(definition.type));
+}
+
+std::string statusDurationLabel(
+    const LocalizationManager& localization,
+    const StatusDefinition& definition
+) {
+    return localizedOrRaw(localization, "status.duration." + toString(definition.durationRule), toString(definition.durationRule));
+}
+
+std::string statusRuntimeText(
+    const LocalizationManager& localization,
+    const std::string& statusIdText,
+    const int amount
+) {
+    if (statusIdText != "poison" || amount <= 0) {
+        return {};
+    }
+
+    return localizedFormat(
+        localization,
+        "inspect.status.poison_runtime",
+        {
+            {"amount", std::to_string(amount)},
+            {"damage", std::to_string(amount)},
+            {"remaining", std::to_string(std::max(0, amount - 1))}
+        }
+    );
 }
 
 std::string droneActionText(
@@ -500,11 +621,14 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.blockLabel = localized(localization_, "ui.block");
         playerModel.stressLabel = localized(localization_, "ui.stress");
         playerModel.activeTurnLabel = localized(localization_, "ui.active_turn");
+        playerModel.activeStanceLabel = localized(localization_, "ui.active_stance");
+        playerModel.stanceShiftBonusLabel = localized(localization_, "ui.stance_shift_bonus");
+        fillActiveStance(playerModel, player.statuses);
         if (const std::optional<EntityId> activePlayer = state.activePlayerId()) {
             playerModel.activeTurn = *activePlayer == player.id;
         }
         playerModel.traitIds = player.traitIds;
-        playerModel.statuses = buildStatuses(player.statuses);
+        playerModel.statuses = buildStatuses(player.statuses, false);
         playerModel.alive = player.isAlive();
         model.players.push_back(std::move(playerModel));
     }
@@ -550,9 +674,11 @@ CombatViewModel CombatViewModelBuilder::build(
         if (intentIterator != intentsByEnemy.end()) {
             enemyModel.intent = intentIterator->second;
             enemyModel.intentText = intentLabel(localization_, enemyModel.intent);
+            enemyModel.intentDetailText = intentDetailText(localization_, enemyModel.intent);
         } else {
             enemyModel.intent.type = EnemyIntentType::Unknown;
             enemyModel.intentText = enemyModel.alive ? "..." : "";
+            enemyModel.intentDetailText = enemyModel.alive ? intentDetailText(localization_, enemyModel.intent) : "";
         }
 
         model.enemies.push_back(std::move(enemyModel));
@@ -562,8 +688,26 @@ CombatViewModel CombatViewModelBuilder::build(
     return model;
 }
 
-std::vector<StatusViewModel> CombatViewModelBuilder::buildStatuses(
+
+void CombatViewModelBuilder::fillActiveStance(
+    PlayerViewModel& model,
     const StatusContainer& statuses
+) const {
+    for (const char* stanceId : {stanceFlameStatusId, stanceAshStatusId, stanceSmokeStatusId}) {
+        if (!statuses.has(stanceId) || !statusDatabase_.contains(StatusId(stanceId))) {
+            continue;
+        }
+
+        const StatusDefinition& definition = statusDatabase_.get(StatusId(stanceId));
+        model.activeStanceName = localization_.get(definition.nameTextId);
+        model.activeStanceDescription = localization_.get(definition.descriptionTextId);
+        return;
+    }
+}
+
+std::vector<StatusViewModel> CombatViewModelBuilder::buildStatuses(
+    const StatusContainer& statuses,
+    const bool includeStances
 ) const {
     std::vector<StatusViewModel> result;
 
@@ -571,6 +715,10 @@ std::vector<StatusViewModel> CombatViewModelBuilder::buildStatuses(
     result.reserve(entries.size());
 
     for (const auto& [statusId, amount] : entries) {
+        if (!includeStances && isStanceStatus(statusId)) {
+            continue;
+        }
+
         StatusViewModel model;
         model.id = statusId;
         model.amount = amount;
@@ -578,9 +726,19 @@ std::vector<StatusViewModel> CombatViewModelBuilder::buildStatuses(
         if (statusDatabase_.contains(StatusId(statusId))) {
             const StatusDefinition& definition = statusDatabase_.get(StatusId(statusId));
             model.name = localization_.get(definition.nameTextId);
+            model.description = statusDescription(localization_, statusDatabase_, statusId);
+            model.typeLabel = statusTypeLabel(localization_, definition);
+            model.durationLabel = statusDurationLabel(localization_, definition);
+            model.runtimeText = statusRuntimeText(localization_, statusId, amount);
+            model.buff = definition.type == StatusType::Buff;
             model.debuff = definition.type == StatusType::Debuff;
         } else {
             model.name = statusId;
+            model.description = localizedOrRaw(localization_, "inspect.status.unknown", statusId);
+            model.typeLabel.clear();
+            model.durationLabel.clear();
+            model.runtimeText.clear();
+            model.buff = false;
             model.debuff = false;
         }
 

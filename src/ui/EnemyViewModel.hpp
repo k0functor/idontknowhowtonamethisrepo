@@ -4,6 +4,8 @@
 #include "enemies/EnemyIntent.hpp"
 #include "ui/StatusViewModel.hpp"
 
+#include <raylib.h>
+
 #include <string>
 #include <vector>
 
@@ -20,8 +22,13 @@ struct EnemyViewModel {
 
     EnemyIntent intent;
     std::string intentText;
+    std::string intentDetailText;
 
     std::vector<StatusViewModel> statuses;
 
     bool alive = true;
+    float opacity = 1.f;
+    Vector2 renderOffset{0.f, 0.f};
+    bool targetable = false;
+    bool previewTarget = false;
 };

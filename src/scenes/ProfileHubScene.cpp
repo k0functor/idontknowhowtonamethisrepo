@@ -1,13 +1,14 @@
 #include "ProfileHubScene.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "cards/CardId.hpp"
 #include "ui/BasicUi.hpp"
 
-#include <raylib.h>
-
 #include <algorithm>
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
+
+#include <raylib.h>
 
 namespace {
 Color archetypeAccentColor(const PlayableArchetypeDefinition& archetype, const std::uint8_t alpha = 255) {
@@ -25,6 +26,7 @@ struct ProfileHubLayout {
     Rectangle leftArrow{};
     Rectangle rightArrow{};
     Rectangle characterPanel{};
+    Rectangle continueButton{};
     Rectangle startButton{};
     Rectangle challengesButton{};
     Rectangle achievementsButton{};
@@ -41,9 +43,9 @@ struct DetailsModalLayout {
     Rectangle scrollHint{};
 };
 
-ProfileHubLayout calculateProfileHubLayout() {
-    const float screenWidth = static_cast<float>(GetScreenWidth());
-    const float screenHeight = static_cast<float>(GetScreenHeight());
+ProfileHubLayout calculateProfileHubLayout(const bool hasSavedRun) {
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float screenHeight = static_cast<float>(VirtualViewport::height());
 
     constexpr float sideButtonWidth = 230.f;
     constexpr float sideButtonHeight = 54.f;
@@ -84,11 +86,17 @@ ProfileHubLayout calculateProfileHubLayout() {
 
     const float sideX = layout.rightArrow.x + layout.rightArrow.width + panelToButtonsGap;
     const float sideY = layout.characterPanel.y + 20.f;
+    float nextButtonY = sideY;
 
-    layout.startButton = Rectangle{sideX, sideY, sideButtonWidth, sideButtonHeight};
-    layout.challengesButton = Rectangle{sideX, sideY + (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
-    layout.achievementsButton = Rectangle{sideX, sideY + 2.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
-    layout.compendiumButton = Rectangle{sideX, sideY + 3.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
+    if (hasSavedRun) {
+        layout.continueButton = Rectangle{sideX, nextButtonY, sideButtonWidth, sideButtonHeight};
+        nextButtonY += sideButtonHeight + sideButtonGap;
+    }
+
+    layout.startButton = Rectangle{sideX, nextButtonY, sideButtonWidth, sideButtonHeight};
+    layout.challengesButton = Rectangle{sideX, nextButtonY + (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
+    layout.achievementsButton = Rectangle{sideX, nextButtonY + 2.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
+    layout.compendiumButton = Rectangle{sideX, nextButtonY + 3.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
 
     layout.notification = Rectangle{0.f, screenHeight - 50.f, screenWidth, 32.f};
 
@@ -96,8 +104,8 @@ ProfileHubLayout calculateProfileHubLayout() {
 }
 
 DetailsModalLayout calculateDetailsModalLayout() {
-    const float screenWidth = static_cast<float>(GetScreenWidth());
-    const float screenHeight = static_cast<float>(GetScreenHeight());
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float screenHeight = static_cast<float>(VirtualViewport::height());
 
     const float modalWidth = std::clamp(screenWidth - 96.f, 560.f, 900.f);
     const float modalHeight = std::clamp(screenHeight - 120.f, 420.f, 680.f);
@@ -144,7 +152,9 @@ ProfileHubScene::ProfileHubScene(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     std::vector<const PlayableArchetypeDefinition*> archetypes,
+    const bool hasSavedRun,
     std::function<void(PlayableArchetypeId)> onStartRun,
+    std::function<void()> onContinueRun,
     std::function<void()> onBack
 )
     : font_(font),
@@ -153,7 +163,9 @@ ProfileHubScene::ProfileHubScene(
       cards_(cards),
       relics_(relics),
       archetypes_(std::move(archetypes)),
+      hasSavedRun_(hasSavedRun),
       onStartRun_(std::move(onStartRun)),
+      onContinueRun_(std::move(onContinueRun)),
       onBack_(std::move(onBack)) {
     if (archetypes_.empty()) {
         notification_ = localization_.get(TextId("profile_hub.no_archetypes"));
@@ -182,7 +194,7 @@ void ProfileHubScene::update(float) {
         return;
     }
 
-    const ProfileHubLayout layout = calculateProfileHubLayout();
+    const ProfileHubLayout layout = calculateProfileHubLayout(hasSavedRun_);
 
     if (BasicUi::contains(layout.leftArrow, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         moveSelection(-1);
@@ -190,6 +202,11 @@ void ProfileHubScene::update(float) {
 
     if (BasicUi::contains(layout.rightArrow, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         moveSelection(1);
+    }
+
+    if (hasSavedRun_ && BasicUi::contains(layout.continueButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        onContinueRun_();
+        return;
     }
 
     if (BasicUi::contains(layout.startButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !archetypes_.empty()) {
@@ -220,7 +237,7 @@ void ProfileHubScene::update(float) {
 void ProfileHubScene::render() const {
     const Vector2 mouse = GetMousePosition();
 
-    const ProfileHubLayout layout = calculateProfileHubLayout();
+    const ProfileHubLayout layout = calculateProfileHubLayout(hasSavedRun_);
 
     BasicUi::drawButton(font_, layout.backButton, localization_.get(TextId("ui.back")), mouse);
     BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.title")), layout.title, 38.f, Color{240, 240, 250, 255});
@@ -257,6 +274,10 @@ void ProfileHubScene::render() const {
         }
 
         BasicUi::drawCenteredText(font_, localization_.get(TextId("profile_hub.details_hint")), Rectangle{characterPanel.x, characterPanel.y + 405.f, characterPanel.width, 40.f}, 20.f, available ? Color{220, 220, 235, 255} : Color{150, 154, 174, 255});
+    }
+
+    if (hasSavedRun_) {
+        BasicUi::drawButton(font_, layout.continueButton, localization_.get(TextId("save_slot.continue_run")), mouse);
     }
 
     const bool selectedAvailable = !archetypes_.empty() && selectedArchetype().isAvailable;
@@ -357,7 +378,7 @@ void ProfileHubScene::updateDetailsModal() {
 }
 
 void ProfileHubScene::renderDetailsModal() const {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 145});
+    DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 145});
 
     const PlayableArchetypeDefinition& archetype = selectedArchetype();
     const DetailsModalLayout layout = calculateDetailsModalLayout();

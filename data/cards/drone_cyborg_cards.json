@@ -17,7 +17,19 @@
           "amount": 6
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
   },
   {
     "id": "replicant_basic_defend",
@@ -37,7 +49,19 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_striker_drone",
@@ -115,11 +139,27 @@
         "type": "damage",
         "target": "single_enemy",
         "value": {
-          "type": "fixed",
-          "amount": 6
+          "type": "dice",
+          "count": 1,
+          "die": "d6",
+          "bonus": 3
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d8",
+            "bonus": 3
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_patch_guard",
@@ -250,6 +290,67 @@
           "type": "fixed",
           "amount": 1
         }
+      }
+    ]
+  },
+  {
+    "id": "cyborg_overclock",
+    "name": "card.cyborg_overclock.name",
+    "description": "card.cyborg_overclock.description",
+    "rarity": "common",
+    "energy_cost": 0,
+    "gold_cost": 70,
+    "type": "skill",
+    "owner_actor": "replicant",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "cyborg_live_wire",
+    "name": "card.cyborg_live_wire.name",
+    "description": "card.cyborg_live_wire.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 70,
+    "type": "attack",
+    "owner_actor": "replicant",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        },
+        "repeat_count": 2
+      },
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "drone_mark"
       }
     ]
   },
@@ -439,6 +540,96 @@
     ]
   },
   {
+    "id": "cyborg_field_medic",
+    "name": "card.cyborg_field_medic.name",
+    "description": "card.cyborg_field_medic.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 105,
+    "type": "skill",
+    "owner_actor": "replicant",
+    "effects": [
+      {
+        "type": "summon_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "drone_surgeon"
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      }
+    ]
+  },
+  {
+    "id": "cyborg_bulwark_protocol",
+    "name": "card.cyborg_bulwark_protocol.name",
+    "description": "card.cyborg_bulwark_protocol.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 115,
+    "type": "skill",
+    "owner_actor": "replicant",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      },
+      {
+        "type": "summon_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "drone_guardian"
+      }
+    ]
+  },
+  {
+    "id": "cyborg_volatile_core",
+    "name": "card.cyborg_volatile_core.name",
+    "description": "card.cyborg_volatile_core.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 120,
+    "type": "skill",
+    "owner_actor": "replicant",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "summon_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "drone_bomber"
+      },
+      {
+        "type": "use_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
     "id": "cyborg_drone_swarm",
     "name": "card.cyborg_drone_swarm.name",
     "description": "card.cyborg_drone_swarm.description",
@@ -523,6 +714,46 @@
           "amount": 1
         },
         "repeat_count": 3
+      }
+    ]
+  },
+  {
+    "id": "cyborg_feedback_loop",
+    "name": "card.cyborg_feedback_loop.name",
+    "description": "card.cyborg_feedback_loop.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 165,
+    "type": "skill",
+    "owner_actor": "replicant",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "use_drone",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "repeat_count": 2
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
       }
     ]
   }

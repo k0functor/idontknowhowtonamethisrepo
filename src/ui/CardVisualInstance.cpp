@@ -6,6 +6,9 @@
 #include <cmath>
 #include <sstream>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace {
 Color cardFillColor(const CardViewModel& model) {
@@ -31,6 +34,167 @@ Color cardFillColor(const CardViewModel& model) {
 
 float uniformScale(const CardTransform& transform) {
     return (transform.scale.x + transform.scale.y) * 0.5f;
+}
+
+void drawTextLocal(
+    const Font* font,
+    const CardTransform& transform,
+    const std::string& text,
+    Vector2 localPosition,
+    float fontSize,
+    float spacing,
+    Color color
+);
+
+float measureFontTextWidth(
+    const Font& font,
+    const std::string& text,
+    const float fontSize,
+    const float spacing
+) {
+    return MeasureTextEx(font, text.c_str(), fontSize, spacing).x;
+}
+
+std::string truncateToWidth(
+    const Font& font,
+    const std::string_view text,
+    const float fontSize,
+    const float spacing,
+    const float maxWidth
+) {
+    if (measureFontTextWidth(font, std::string(text), fontSize, spacing) <= maxWidth) {
+        return std::string(text);
+    }
+
+    constexpr std::string_view ellipsis = "...";
+    if (measureFontTextWidth(font, std::string(ellipsis), fontSize, spacing) > maxWidth) {
+        return {};
+    }
+
+    std::size_t keep = UiUtf8::codepointCount(text);
+    while (keep > 0u) {
+        const std::string candidate = UiUtf8::takeCodepoints(text, keep) + std::string(ellipsis);
+        if (measureFontTextWidth(font, candidate, fontSize, spacing) <= maxWidth) {
+            return candidate;
+        }
+        --keep;
+    }
+
+    return std::string(ellipsis);
+}
+
+std::vector<std::string> wrapMeasuredText(
+    const Font& font,
+    const std::string& text,
+    const float fontSize,
+    const float spacing,
+    const float maxWidth
+) {
+    std::vector<std::string> lines;
+    std::istringstream input(text);
+    std::string word;
+    std::string currentLine;
+
+    while (input >> word) {
+        const std::string candidate = currentLine.empty()
+            ? word
+            : currentLine + " " + word;
+
+        if (measureFontTextWidth(font, candidate, fontSize, spacing) <= maxWidth || currentLine.empty()) {
+            currentLine = candidate;
+        } else {
+            lines.push_back(currentLine);
+            currentLine = word;
+        }
+    }
+
+    if (!currentLine.empty()) {
+        lines.push_back(currentLine);
+    }
+
+    if (lines.empty()) {
+        lines.push_back({});
+    }
+
+    return lines;
+}
+
+struct FittedText {
+    std::vector<std::string> lines;
+    float fontSize = 15.f;
+    float lineHeight = 17.f;
+};
+
+FittedText fitTextToBox(
+    const Font& font,
+    const std::string& text,
+    const float maxWidth,
+    const float maxHeight,
+    const std::size_t maxLines,
+    const float preferredFontSize,
+    const float minimumFontSize,
+    const float spacing
+) {
+    for (float fontSize = preferredFontSize; fontSize >= minimumFontSize; fontSize -= 0.5f) {
+        std::vector<std::string> lines = wrapMeasuredText(font, text, fontSize, spacing, maxWidth);
+        const float lineHeight = fontSize + 2.f;
+        const bool heightFits = static_cast<float>(lines.size()) * lineHeight <= maxHeight;
+
+        if (lines.size() <= maxLines && heightFits) {
+            bool widthFits = true;
+            for (const std::string& line : lines) {
+                if (measureFontTextWidth(font, line, fontSize, spacing) > maxWidth) {
+                    widthFits = false;
+                    break;
+                }
+            }
+
+            if (widthFits) {
+                return FittedText{std::move(lines), fontSize, lineHeight};
+            }
+        }
+    }
+
+    const float fontSize = minimumFontSize;
+    const float lineHeight = fontSize + 2.f;
+    std::vector<std::string> lines = wrapMeasuredText(font, text, fontSize, spacing, maxWidth);
+
+    if (lines.size() > maxLines) {
+        lines.resize(maxLines);
+    }
+
+    for (std::string& line : lines) {
+        line = truncateToWidth(font, line, fontSize, spacing, maxWidth);
+    }
+
+    if (!lines.empty() && measureFontTextWidth(font, lines.back(), fontSize, spacing) > maxWidth) {
+        lines.back() = truncateToWidth(font, lines.back(), fontSize, spacing, maxWidth);
+    }
+
+    return FittedText{std::move(lines), fontSize, lineHeight};
+}
+
+void drawTextLinesLocal(
+    const Font* font,
+    const CardTransform& transform,
+    const std::vector<std::string>& lines,
+    const Vector2 localPosition,
+    const float fontSize,
+    const float lineHeight,
+    const float spacing,
+    const Color color
+) {
+    for (std::size_t i = 0u; i < lines.size(); ++i) {
+        drawTextLocal(
+            font,
+            transform,
+            lines[i],
+            Vector2{localPosition.x, localPosition.y + static_cast<float>(i) * lineHeight},
+            fontSize,
+            spacing,
+            color
+        );
+    }
 }
 
 void drawTextLocal(
@@ -136,7 +300,7 @@ const CardTransform& CardVisualInstance::targetTransform() const {
 }
 
 void CardVisualInstance::update(const float deltaSeconds) {
-    const float speed = 18.f;
+    const float speed = 21.6f;
     const float alpha = 1.f - std::exp(-speed * deltaSeconds);
 
     currentTransform_.position.x = approach(currentTransform_.position.x, targetTransform_.position.x, alpha);
@@ -186,12 +350,24 @@ void CardVisualInstance::render(const Font* font) const {
         WHITE
     );
 
-    drawTextLocal(
+    const FittedText title = fitTextToBox(
+        *font,
+        model_.name,
+        cardSize.x - 62.f,
+        40.f,
+        2u,
+        15.f,
+        8.5f,
+        1.f
+    );
+
+    drawTextLinesLocal(
         font,
         currentTransform_,
-        UiUtf8::wrapByCodepoints(model_.name, 17, 2),
+        title.lines,
         Vector2{-cardSize.x * 0.5f + 48.f, -cardSize.y * 0.5f + 12.f},
-        15.f,
+        title.fontSize,
+        title.lineHeight,
         1.f,
         WHITE
     );
@@ -282,6 +458,29 @@ CardTransform CardVisualInstance::transformForBounds(
     };
 }
 
+CardTransform CardVisualInstance::transformForStandardSlot(
+    const Rectangle bounds,
+    const int zIndex
+) {
+    const float scale = standardScale();
+    return CardTransform{
+        Vector2{bounds.x + bounds.width * 0.5f, bounds.y + bounds.height * 0.5f},
+        Vector2{scale, scale},
+        0.f,
+        zIndex
+    };
+}
+
+float CardVisualInstance::standardScale() {
+    return 1.10f;
+}
+
+Vector2 CardVisualInstance::standardDisplaySize() {
+    const Vector2 cardSize = size();
+    const float scale = standardScale();
+    return Vector2{cardSize.x * scale, cardSize.y * scale};
+}
+
 void CardVisualInstance::renderStatic(
     const CardViewModel& model,
     const Font* font,
@@ -292,6 +491,31 @@ void CardVisualInstance::renderStatic(
     instance.setCurrentTransform(transform);
     instance.setTargetTransform(transform);
     instance.render(font);
+}
+
+void CardVisualInstance::renderStaticWithOverlay(
+    const CardViewModel& model,
+    const Font* font,
+    const CardTransform transform,
+    const Color overlayColor
+) {
+    CardVisualInstance instance;
+    instance.setModel(model);
+    instance.setCurrentTransform(transform);
+    instance.setTargetTransform(transform);
+    instance.render(font);
+
+    if (overlayColor.a == 0) {
+        return;
+    }
+
+    const Vector2 cardSize = size();
+    drawLocalRectangle(
+        transform,
+        Vector2{-cardSize.x * 0.5f, -cardSize.y * 0.5f},
+        cardSize,
+        overlayColor
+    );
 }
 
 

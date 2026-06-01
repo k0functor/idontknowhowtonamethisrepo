@@ -1,5 +1,6 @@
 #include "RewardTuning.hpp"
 
+#include "cards/CardRarity.hpp"
 #include "data/JsonLoader.hpp"
 #include "data/JsonReader.hpp"
 
@@ -27,6 +28,12 @@ NodeRewardTuning parseNodeTuning(const Json& json, const std::filesystem::path& 
     result.offerCards = reader.optionalBool("offer_cards", false);
     result.cardChoices = reader.optionalInt("card_choices", result.offerCards ? 3 : 0);
     result.guaranteedRelic = reader.optionalBool("guaranteed_relic", false);
+    result.consumableChancePercent = reader.optionalInt("consumable_chance_percent", 0);
+
+    const std::string minimumCardRarity = reader.optionalString("minimum_card_rarity", "");
+    if (!minimumCardRarity.empty()) {
+        result.minimumCardRarity = cardRarityFromString(minimumCardRarity);
+    }
 
     if (result.gold < 0) {
         throw std::runtime_error(filePath.string() + ": reward gold must not be negative");
@@ -36,18 +43,22 @@ NodeRewardTuning parseNodeTuning(const Json& json, const std::filesystem::path& 
         throw std::runtime_error(filePath.string() + ": card_choices must not be negative");
     }
 
+    if (result.consumableChancePercent < 0 || result.consumableChancePercent > 100) {
+        throw std::runtime_error(filePath.string() + ": consumable_chance_percent must be between 0 and 100");
+    }
+
     return result;
 }
 }
 
 RewardTuning::RewardTuning() {
-    combat_ = NodeRewardTuning{18, true, 3, false};
-    elite_ = NodeRewardTuning{35, true, 3, true};
-    boss_ = NodeRewardTuning{75, true, 3, false};
-    chest_ = NodeRewardTuning{0, false, 0, false};
-    event_ = NodeRewardTuning{0, false, 0, false};
-    shop_ = NodeRewardTuning{0, false, 0, false};
-    rest_ = NodeRewardTuning{0, false, 0, false};
+    combat_ = NodeRewardTuning{18, true, 3, false, 30, std::nullopt};
+    elite_ = NodeRewardTuning{35, true, 3, true, 45, std::nullopt};
+    boss_ = NodeRewardTuning{75, true, 3, true, 0, CardRarity::Uncommon};
+    chest_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
+    event_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
+    shop_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
+    rest_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
 }
 
 void RewardTuning::loadFromFile(const std::filesystem::path& filePath) {

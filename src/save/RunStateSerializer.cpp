@@ -1,16 +1,15 @@
 #include "RunStateSerializer.hpp"
 
-#include "run/StressRules.hpp"
-
 #include "cards/CardId.hpp"
-
-#include <raylib.h>
+#include "run/StressRules.hpp"
 
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include <raylib.h>
 
 namespace {
 [[noreturn]] void throwSaveError(const std::filesystem::path& sourcePath, const std::string& message) {
@@ -680,13 +679,35 @@ RunPendingRoomState pendingRoomFromJson(const Json& json, const std::filesystem:
     return pending;
 }
 
+int optionalInt(const Json& object, const std::string& key, const std::filesystem::path& sourcePath, const int fallback) {
+    const Json* value = optionalField(object, key, sourcePath);
+    if (value == nullptr) {
+        return fallback;
+    }
+
+    if (!value->is_number_integer()) {
+        throwSaveError(sourcePath, "'" + key + "' must be an integer");
+    }
+
+    return value->get<int>();
+}
+
 Json statsToJson(const RunStats& stats) {
     return Json{
         {"combats_won", stats.combatsWon},
         {"elites_killed", stats.elitesKilled},
         {"bosses_killed", stats.bossesKilled},
+        {"events_completed", stats.eventsCompleted},
+        {"shops_visited", stats.shopsVisited},
+        {"chests_opened", stats.chestsOpened},
+        {"rests_used", stats.restsUsed},
         {"gold_gained", stats.goldGained},
+        {"gold_spent", stats.goldSpent},
         {"cards_added", stats.cardsAdded},
+        {"cards_removed", stats.cardsRemoved},
+        {"cards_upgraded", stats.cardsUpgraded},
+        {"relics_gained", stats.relicsGained},
+        {"consumables_gained", stats.consumablesGained},
         {"nodes_completed", stats.nodesCompleted}
     };
 }
@@ -696,8 +717,17 @@ RunStats statsFromJson(const Json& json, const std::filesystem::path& sourcePath
     stats.combatsWon = requiredInt(json, "combats_won", sourcePath);
     stats.elitesKilled = requiredInt(json, "elites_killed", sourcePath);
     stats.bossesKilled = requiredInt(json, "bosses_killed", sourcePath);
+    stats.eventsCompleted = optionalInt(json, "events_completed", sourcePath, 0);
+    stats.shopsVisited = optionalInt(json, "shops_visited", sourcePath, 0);
+    stats.chestsOpened = optionalInt(json, "chests_opened", sourcePath, 0);
+    stats.restsUsed = optionalInt(json, "rests_used", sourcePath, 0);
     stats.goldGained = requiredInt(json, "gold_gained", sourcePath);
+    stats.goldSpent = optionalInt(json, "gold_spent", sourcePath, 0);
     stats.cardsAdded = requiredInt(json, "cards_added", sourcePath);
+    stats.cardsRemoved = optionalInt(json, "cards_removed", sourcePath, 0);
+    stats.cardsUpgraded = optionalInt(json, "cards_upgraded", sourcePath, 0);
+    stats.relicsGained = optionalInt(json, "relics_gained", sourcePath, 0);
+    stats.consumablesGained = optionalInt(json, "consumables_gained", sourcePath, 0);
     stats.nodesCompleted = requiredInt(json, "nodes_completed", sourcePath);
     return stats;
 }

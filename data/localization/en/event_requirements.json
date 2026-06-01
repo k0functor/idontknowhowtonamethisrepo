@@ -1,9 +1,12 @@
 {
   "event.choice.unavailable.consumable_slot": "consumable slots full {current}/{maximum}",
+  "event.choice.unavailable.deck_size": "deck cards {current}/{required}",
+  "event.choice.unavailable.forbidden_card": "already has card {id}",
   "event.choice.unavailable.forbidden_relic": "already has relic {id}",
   "event.choice.unavailable.gold": "gold {current}/{required}",
   "event.choice.unavailable.hp": "party HP {current}/{required}",
   "event.choice.unavailable.prefix": "Unavailable:",
+  "event.choice.unavailable.required_card": "requires card {id}",
   "event.choice.unavailable.required_relic": "requires relic {id}",
   "event.choice.unavailable.unknown": "requirement not met",
   "event.rusted_vending_altar.choice.relic.requirement_description": "Pay 60 gold and gain a random relic."

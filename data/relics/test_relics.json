@@ -10,6 +10,24 @@
         "amount": 1,
         "priority": 450
       }
+    ],
+    "triggers": [
+      {
+        "event": "card_played",
+        "card_type": "attack",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
     ]
   },
   {
@@ -155,7 +173,24 @@
     "id": "empty_dock",
     "name": "relic.empty_dock.name",
     "description": "relic.empty_dock.description",
-    "rarity": "starter"
+    "rarity": "starter",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "summon_drone",
+            "target": "self",
+            "status": "drone_striker",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "id": "bastion_seal",
@@ -229,7 +264,8 @@
               "amount": 6
             }
           }
-        ]
+        ],
+        "min_amount": 1
       }
     ]
   },
@@ -282,6 +318,128 @@
               "amount": 1
             },
             "status": "strength"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ember_lens",
+    "name": "relic.ember_lens.name",
+    "description": "relic.ember_lens.description",
+    "rarity": "uncommon",
+    "modifiers": [
+      {
+        "type": "outgoing_damage_multiply",
+        "multiplier": 1.1,
+        "priority": 420
+      }
+    ],
+    "triggers": [
+      {
+        "event": "card_played",
+        "card_type": "attack",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "splint_mail",
+    "name": "relic.splint_mail.name",
+    "description": "relic.splint_mail.description",
+    "rarity": "common",
+    "modifiers": [
+      {
+        "type": "block_add",
+        "amount": 2,
+        "priority": 450
+      }
+    ],
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "debtor_stamp",
+    "name": "relic.debtor_stamp.name",
+    "description": "relic.debtor_stamp.description",
+    "rarity": "uncommon",
+    "modifiers": [
+      {
+        "type": "gold_reward_multiply",
+        "multiplier": 1.2,
+        "priority": 500
+      }
+    ],
+    "triggers": [
+      {
+        "event": "enemy_killed",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "first_wick",
+    "name": "relic.first_wick.name",
+    "description": "relic.first_wick.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
           }
         ]
       }

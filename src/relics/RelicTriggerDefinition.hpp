@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cards/CardType.hpp"
 #include "effects/EffectDefinition.hpp"
 #include "game/GameEvent.hpp"
 
@@ -17,7 +18,11 @@ struct RelicTriggerDefinition {
 
     // Optional event filters. Empty filters match every event of eventType.
     std::optional<std::string> statusId;
+    std::optional<CardType> cardType;
     std::string sourceSide = "any";
+
+    // 0 means no minimum amount condition. Useful for “HP damage was actually dealt”.
+    int minimumAmount = 0;
 
     std::vector<EffectDefinition> effects;
 };

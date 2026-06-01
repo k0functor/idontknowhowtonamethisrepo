@@ -52,7 +52,11 @@ RelicTriggerDefinition parseTrigger(
     if (reader.has("status")) {
         trigger.statusId = reader.requiredString("status");
     }
+    if (reader.has("card_type")) {
+        trigger.cardType = cardTypeFromString(reader.requiredString("card_type"));
+    }
     trigger.sourceSide = reader.optionalString("source_side", "any");
+    trigger.minimumAmount = reader.optionalInt("min_amount", 0);
 
     if (trigger.sourceSide != "any" && trigger.sourceSide != "player" && trigger.sourceSide != "enemy") {
         throw std::runtime_error(
@@ -64,6 +68,12 @@ RelicTriggerDefinition parseTrigger(
     if (trigger.everyNTurns < 0) {
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() + "': every_n_turns must not be negative"
+        );
+    }
+
+    if (trigger.minimumAmount < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': min_amount must not be negative"
         );
     }
 

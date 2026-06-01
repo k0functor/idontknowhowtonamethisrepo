@@ -1,19 +1,50 @@
 #include "RewardGenerator.hpp"
 
-#include "rewards/RewardOption.hpp"
+#include "cards/CardRarity.hpp"
+#include "consumables/ConsumableDefinition.hpp"
 #include "relics/RelicDefinition.hpp"
+#include "rewards/RewardOption.hpp"
 #include "rewards/RewardPoolRules.hpp"
 #include "run/RunCardEligibility.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
+namespace {
+int rarityRank(const CardRarity rarity) {
+    switch (rarity) {
+        case CardRarity::Starter:
+            return 0;
+        case CardRarity::Common:
+            return 1;
+        case CardRarity::Uncommon:
+            return 2;
+        case CardRarity::Rare:
+            return 3;
+        case CardRarity::Special:
+            return 4;
+    }
+
+    return 0;
+}
+
+bool meetsMinimumCardRarity(const CardDefinition& card, const std::optional<CardRarity>& minimumRarity) {
+    if (!minimumRarity.has_value()) {
+        return true;
+    }
+
+    return rarityRank(card.rarity) >= rarityRank(*minimumRarity);
+}
+}
 
 RewardState RewardGenerator::generateCombatReward(
     const RewardContext& context,
     const CardDatabase& cards,
     const RelicDatabase& relics,
+    const ConsumableDatabase& consumables,
     const RewardTuning& tuning,
     Random& random
 ) const {
@@ -36,7 +67,10 @@ RewardState RewardGenerator::generateCombatReward(
     if (shouldOfferCards(context, tuning)) {
         std::vector<const CardDefinition*> candidates;
         for (const CardDefinition* card : cards.all()) {
-            if (card != nullptr && RewardPoolRules::canAppearAsCardReward(*card) && runCanReceiveArchetypeRewardCard(context.run, *card)) {
+            if (card != nullptr &&
+                RewardPoolRules::canAppearAsCardReward(*card) &&
+                runCanReceiveArchetypeRewardCard(context.run, *card) &&
+                meetsMinimumCardRarity(*card, nodeTuning.minimumCardRarity)) {
                 candidates.push_back(card);
             }
         }
@@ -58,6 +92,11 @@ RewardState RewardGenerator::generateCombatReward(
                 reward.options.push_back(RewardOption::cardChoice(std::move(cardOptions)));
             }
         }
+    }
+
+    const std::optional<std::string> consumable = chooseConsumableReward(context, consumables, tuning, random);
+    if (consumable.has_value()) {
+        reward.options.push_back(RewardOption::consumable(*consumable));
     }
 
     if (nodeTuning.guaranteedRelic) {
@@ -82,6 +121,39 @@ int RewardGenerator::cardRewardCount(const RewardContext& context, const RewardT
     return tuning.node(context.nodeType).cardChoices;
 }
 
+std::optional<std::string> RewardGenerator::chooseConsumableReward(
+    const RewardContext& context,
+    const ConsumableDatabase& consumables,
+    const RewardTuning& tuning,
+    Random& random
+) const {
+    const NodeRewardTuning& nodeTuning = tuning.node(context.nodeType);
+    if (nodeTuning.consumableChancePercent <= 0) {
+        return std::nullopt;
+    }
+
+    if (static_cast<int>(context.run.consumableIds.size()) >= context.run.maxConsumables) {
+        return std::nullopt;
+    }
+
+    if (!random.chance(static_cast<double>(nodeTuning.consumableChancePercent) / 100.0)) {
+        return std::nullopt;
+    }
+
+    std::vector<const ConsumableDefinition*> candidates;
+    for (const ConsumableDefinition* consumable : consumables.all()) {
+        if (consumable != nullptr) {
+            candidates.push_back(consumable);
+        }
+    }
+
+    if (candidates.empty()) {
+        return std::nullopt;
+    }
+
+    const int index = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
+    return candidates[static_cast<std::size_t>(index)]->id.value;
+}
 
 double RewardGenerator::relicGoldMultiplier(
     const RewardContext& context,

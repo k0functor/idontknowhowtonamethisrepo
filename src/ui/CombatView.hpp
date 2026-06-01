@@ -6,6 +6,7 @@
 #include "ui/EnemyView.hpp"
 #include "ui/HandView.hpp"
 #include "ui/PlayerView.hpp"
+#include "ui/StatusViewModel.hpp"
 
 #include <raylib.h>
 
@@ -32,6 +33,8 @@ public:
     std::optional<EntityId> hoveredPlayerId() const;
     std::optional<Rectangle> hoveredPlayerBounds() const;
     std::optional<Rectangle> playerBounds(EntityId entityId) const;
+    std::optional<StatusViewModel> hoveredStatus() const;
+    std::optional<Rectangle> hoveredStatusBounds() const;
     std::optional<std::size_t> hoveredRelicIndex() const;
     std::optional<std::size_t> hoveredConsumableIndex() const;
     std::optional<std::size_t> hoveredDroneSlotIndex() const;
@@ -62,6 +65,8 @@ private:
 
     std::optional<EntityId> hoveredEnemyId_;
     std::optional<EntityId> hoveredPlayerId_;
+    std::optional<StatusViewModel> hoveredStatus_;
+    std::optional<Rectangle> hoveredStatusBounds_;
     std::optional<std::size_t> hoveredRelicIndex_;
     std::optional<std::size_t> hoveredConsumableIndex_;
     std::optional<std::size_t> hoveredDroneSlotIndex_;

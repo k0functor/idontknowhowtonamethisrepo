@@ -33,6 +33,25 @@ void drawCenteredText(
     Color color
 );
 
+void drawTextFitted(
+    const UiFont& font,
+    const std::string& text,
+    Vector2 position,
+    float maxWidth,
+    float preferredFontSize,
+    float minimumFontSize,
+    Color color
+);
+
+void drawCenteredTextFitted(
+    const UiFont& font,
+    const std::string& text,
+    Rectangle bounds,
+    float preferredFontSize,
+    float minimumFontSize,
+    Color color
+);
+
 float measureTextWidth(
     const UiFont& font,
     const std::string& text,

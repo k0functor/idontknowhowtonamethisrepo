@@ -5,6 +5,7 @@
 #include "core/Random.hpp"
 #include "entities/EntityId.hpp"
 
+#include <optional>
 #include <string>
 
 class ConsumableSystem {
@@ -15,6 +16,7 @@ public:
         CombatState& state,
         const std::string& consumableId,
         EntityId source,
+        std::optional<EntityId> explicitTarget,
         const EffectSystem& effectSystem,
         Random& random
     ) const;

@@ -20,7 +20,9 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         std::vector<const PlayableArchetypeDefinition*> archetypes,
+        bool hasSavedRun,
         std::function<void(PlayableArchetypeId)> onStartRun,
+        std::function<void()> onContinueRun,
         std::function<void()> onBack
     );
 
@@ -47,7 +49,9 @@ private:
     const CardDatabase& cards_;
     const RelicDatabase& relics_;
     std::vector<const PlayableArchetypeDefinition*> archetypes_;
+    bool hasSavedRun_ = false;
     std::function<void(PlayableArchetypeId)> onStartRun_;
+    std::function<void()> onContinueRun_;
     std::function<void()> onBack_;
 
     std::size_t selectedIndex_ = 0;

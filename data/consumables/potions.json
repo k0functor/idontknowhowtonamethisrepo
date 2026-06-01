@@ -199,5 +199,108 @@
         "status": "weak"
       }
     ]
+  },
+  {
+    "id": "focus_tonic",
+    "name": "consumable.focus_tonic.name",
+    "description": "consumable.focus_tonic.description",
+    "rarity": "uncommon",
+    "gold_cost": 55,
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "smoke_bomb",
+    "name": "consumable.smoke_bomb.name",
+    "description": "consumable.smoke_bomb.description",
+    "rarity": "common",
+    "gold_cost": 45,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "field_salve",
+    "name": "consumable.field_salve.name",
+    "description": "consumable.field_salve.description",
+    "rarity": "common",
+    "gold_cost": 45,
+    "effects": [
+      {
+        "type": "heal",
+        "target": "ally",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      },
+      {
+        "type": "block",
+        "target": "ally",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "throwing_knife",
+    "name": "consumable.throwing_knife.name",
+    "description": "consumable.throwing_knife.description",
+    "rarity": "common",
+    "gold_cost": 40,
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 12
+        }
+      }
+    ]
+  },
+  {
+    "id": "poison_dart",
+    "name": "consumable.poison_dart.name",
+    "description": "consumable.poison_dart.description",
+    "rarity": "uncommon",
+    "gold_cost": 55,
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "single_enemy",
+        "status": "poison",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      }
+    ]
   }
 ]

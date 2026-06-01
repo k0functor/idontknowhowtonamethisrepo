@@ -18,6 +18,7 @@ void RewardSystem::applyReward(
     for (const std::string& consumableId : selection.selectedConsumableIds) {
         if (static_cast<int>(run.consumableIds.size()) < run.maxConsumables) {
             run.consumableIds.push_back(consumableId);
+            ++run.stats.consumablesGained;
         }
     }
 
@@ -32,6 +33,7 @@ void RewardSystem::applyReward(
 
         if (!alreadyOwned) {
             run.relicIds.push_back(relicId);
+            ++run.stats.relicsGained;
         }
     }
 }

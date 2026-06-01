@@ -1,4 +1,5 @@
 #include "MainMenuScene.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/BasicUi.hpp"
 
@@ -19,7 +20,7 @@ MainMenuScene::MainMenuScene(
 
 void MainMenuScene::update(float) {
     const Vector2 mouse = GetMousePosition();
-    const float centerX = GetScreenWidth() * 0.5f;
+    const float centerX = VirtualViewport::width() * 0.5f;
     const float startY = 260.f;
     const float width = 260.f;
     const float height = 54.f;
@@ -53,7 +54,7 @@ void MainMenuScene::update(float) {
 
 void MainMenuScene::render() const {
     const Vector2 mouse = GetMousePosition();
-    const float centerX = GetScreenWidth() * 0.5f;
+    const float centerX = VirtualViewport::width() * 0.5f;
     const float startY = 260.f;
     const float width = 260.f;
     const float height = 54.f;
@@ -62,7 +63,7 @@ void MainMenuScene::render() const {
     BasicUi::drawCenteredText(
         font_,
         localization_.get(TextId("game.title")),
-        Rectangle{0.f, 90.f, static_cast<float>(GetScreenWidth()), 90.f},
+        Rectangle{0.f, 90.f, static_cast<float>(VirtualViewport::width()), 90.f},
         48.f,
         Color{240, 240, 250, 255}
     );
@@ -76,7 +77,7 @@ void MainMenuScene::render() const {
         BasicUi::drawCenteredText(
             font_,
             notification_,
-            Rectangle{0.f, 620.f, static_cast<float>(GetScreenWidth()), 40.f},
+            Rectangle{0.f, 620.f, static_cast<float>(VirtualViewport::width()), 40.f},
             18.f,
             Color{190, 195, 215, 255}
         );

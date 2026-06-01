@@ -77,6 +77,7 @@ TextFormatter::Variables CardDescriptionFormatter::defaultVariables() const {
     variables.emplace("free_next_card", "?");
     variables.emplace("value", "?");
     variables.emplace("times", "?");
+    variables.emplace("repeat_suffix", "");
 
     return variables;
 }
@@ -90,6 +91,7 @@ void CardDescriptionFormatter::fillVariablesFromStaticEffect(
 
     switch (effect.type) {
         case EffectType::Damage:
+            variables["repeat_suffix"] = repeatSuffix(effect.repeatCount);
             variables["damage"] = value;
             variables["hp_damage"] = value;
             variables["value"] = value;
@@ -178,6 +180,7 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
                     );
                 }
 
+                variables["repeat_suffix"] = repeatSuffix(effectPreview.repeatCount);
                 variables["damage"] = damageText;
                 variables["hp_damage"] = rangeToString(
                     effectPreview.damage->hpDamageMin,
@@ -186,6 +189,7 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
                 variables["value"] = damageText;
             } else {
                 const std::string value = effectPreview.value.toDisplayString();
+                variables["repeat_suffix"] = repeatSuffix(effectPreview.repeatCount);
                 variables["damage"] = value;
                 variables["hp_damage"] = value;
                 variables["value"] = value;
@@ -276,6 +280,28 @@ std::string CardDescriptionFormatter::rangeToString(const int minimum, const int
     }
 
     return std::to_string(minimum) + "-" + std::to_string(maximum);
+}
+
+std::string CardDescriptionFormatter::repeatSuffix(const int repeatCount) const {
+    if (repeatCount <= 1) {
+        return "";
+    }
+
+    if (localization_.currentLocale().code() == "ru") {
+        const int lastTwoDigits = repeatCount % 100;
+        const int lastDigit = repeatCount % 10;
+
+        const char* word = "раз";
+        if (lastTwoDigits < 11 || lastTwoDigits > 14) {
+            if (lastDigit >= 2 && lastDigit <= 4) {
+                word = "раза";
+            }
+        }
+
+        return " " + std::to_string(repeatCount) + " " + word;
+    }
+
+    return " " + std::to_string(repeatCount) + " times";
 }
 
 std::string CardDescriptionFormatter::formulaSuffixForDamage(

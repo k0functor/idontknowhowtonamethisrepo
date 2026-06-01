@@ -49,6 +49,7 @@ public:
     RunState& run();
 
     bool hasPendingRoom() const;
+    bool hasPendingRoomForNode(int nodeId) const;
     const RunPendingRoomState& pendingRoom() const;
     void clearPendingRoom();
     void setPendingCombatReward(int nodeId, RewardState reward);
@@ -61,13 +62,21 @@ public:
     void revealNodeType(int nodeId, RunMapNodeType type);
 
     bool canStartNode(int nodeId) const;
+    bool canCompleteNode(int nodeId) const;
+    bool canUseRestNode(int nodeId) const;
     void startNode(int nodeId);
+
+    void completeCombat(
+        int nodeId,
+        const CombatResult& combatResult
+    );
 
     RewardState completeCombatAndCreateReward(
         int nodeId,
         const CombatResult& combatResult,
         const CardDatabase& cards,
         const RelicDatabase& relics,
+        const ConsumableDatabase& consumables,
         const RewardTuning& rewardTuning,
         Random& random
     );
@@ -76,6 +85,7 @@ public:
         int nodeId,
         const CardDatabase& cards,
         const RelicDatabase& relics,
+        const ConsumableDatabase& consumables,
         const RewardTuning& rewardTuning,
         Random& random
     );
@@ -100,7 +110,7 @@ public:
     void completeChestNode(int nodeId);
     void completeEventNode(int nodeId);
     void completeRestHeal(int nodeId);
-    void completeRestUpgrade(int nodeId, std::size_t deckIndex);
+    bool completeRestUpgrade(int nodeId, std::size_t deckIndex);
     void completeRestSkip(int nodeId);
 
     bool purchaseShopItem(const ShopPurchase& purchase);

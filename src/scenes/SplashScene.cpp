@@ -1,4 +1,5 @@
 #include "SplashScene.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/BasicUi.hpp"
 
@@ -28,8 +29,8 @@ void SplashScene::update(const float deltaSeconds) {
 }
 
 void SplashScene::render() const {
-    const int width = GetScreenWidth();
-    const int height = GetScreenHeight();
+    const int width = VirtualViewport::width();
+    const int height = VirtualViewport::height();
 
     BasicUi::drawCenteredText(
         font_,

@@ -1,12 +1,13 @@
 #include "SettingsScene.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/BasicUi.hpp"
-
-#include <raylib.h>
 
 #include <array>
 #include <string>
 #include <utility>
+
+#include <raylib.h>
 
 namespace {
 struct ResolutionPreset {
@@ -87,7 +88,7 @@ void SettingsScene::render() const {
     BasicUi::drawCenteredText(
         font_,
         text("settings.title"),
-        Rectangle{0.f, 60.f, static_cast<float>(GetScreenWidth()), 70.f},
+        Rectangle{0.f, 60.f, static_cast<float>(VirtualViewport::width()), 70.f},
         44.f,
         Color{240, 240, 250, 255}
     );
@@ -95,7 +96,7 @@ void SettingsScene::render() const {
     BasicUi::drawCenteredText(
         font_,
         text("settings.saved_to_file"),
-        Rectangle{0.f, 122.f, static_cast<float>(GetScreenWidth()), 34.f},
+        Rectangle{0.f, 122.f, static_cast<float>(VirtualViewport::width()), 34.f},
         18.f,
         Color{180, 186, 205, 255}
     );
@@ -117,7 +118,7 @@ void SettingsScene::render() const {
         BasicUi::drawCenteredText(
             font_,
             notificationText(),
-            Rectangle{0.f, static_cast<float>(GetScreenHeight()) - 74.f, static_cast<float>(GetScreenWidth()), 34.f},
+            Rectangle{0.f, static_cast<float>(VirtualViewport::height()) - 74.f, static_cast<float>(VirtualViewport::width()), 34.f},
             18.f,
             Color{196, 202, 220, 255}
         );
@@ -133,7 +134,7 @@ Rectangle SettingsScene::rowBounds(const int rowIndex) const {
     const float height = onSaveAndExit_ ? 44.f : 48.f;
     const float gap = onSaveAndExit_ ? 10.f : 14.f;
     const float startY = onSaveAndExit_ ? 178.f : 190.f;
-    const float x = static_cast<float>(GetScreenWidth()) * 0.5f - width * 0.5f;
+    const float x = static_cast<float>(VirtualViewport::width()) * 0.5f - width * 0.5f;
 
     return Rectangle{x, startY + static_cast<float>(rowIndex) * (height + gap), width, height};
 }

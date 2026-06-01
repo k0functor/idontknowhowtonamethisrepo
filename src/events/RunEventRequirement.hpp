@@ -9,16 +9,22 @@ struct RunEventChoiceRequirements {
     int minGold = 0;
     int minHp = 0;
     bool freeConsumableSlot = false;
+    int minDeckSize = 0;
     std::vector<std::string> requiredRelicIds;
     std::vector<std::string> forbiddenRelicIds;
+    std::vector<std::string> requiredCardIds;
+    std::vector<std::string> forbiddenCardIds;
 };
 
 enum class RunEventChoiceBlockReasonType {
     NotEnoughGold,
     NotEnoughHp,
     NoFreeConsumableSlot,
+    NotEnoughCards,
     MissingRequiredRelic,
-    HasForbiddenRelic
+    HasForbiddenRelic,
+    MissingRequiredCard,
+    HasForbiddenCard
 };
 
 struct RunEventChoiceBlockReason {

@@ -1,4 +1,5 @@
 #include "EventScene.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/BasicUi.hpp"
 
@@ -50,7 +51,7 @@ void EventScene::render() const {
     BasicUi::drawCenteredText(
         font_,
         localization_.get(event_.titleTextId),
-        Rectangle{0.f, 64.f, static_cast<float>(GetScreenWidth()), 54.f},
+        Rectangle{0.f, 64.f, static_cast<float>(VirtualViewport::width()), 54.f},
         40.f,
         Color{244, 233, 188, 255}
     );
@@ -119,10 +120,10 @@ void EventScene::render() const {
 }
 
 Rectangle EventScene::panelBounds() const {
-    const float width = std::min(920.f, static_cast<float>(GetScreenWidth()) - 90.f);
-    const float height = std::min(600.f, static_cast<float>(GetScreenHeight()) - 170.f);
+    const float width = std::min(920.f, static_cast<float>(VirtualViewport::width()) - 90.f);
+    const float height = std::min(600.f, static_cast<float>(VirtualViewport::height()) - 170.f);
     return Rectangle{
-        (static_cast<float>(GetScreenWidth()) - width) * 0.5f,
+        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
         145.f,
         width,
         height
@@ -190,6 +191,12 @@ std::string EventScene::blockReasonText(const RunEventChoiceBlockReason& reason)
                 {{"current", std::to_string(reason.current)}, {"maximum", std::to_string(reason.required)}}
             );
 
+        case RunEventChoiceBlockReasonType::NotEnoughCards:
+            return localization_.format(
+                TextId("event.choice.unavailable.deck_size"),
+                {{"current", std::to_string(reason.current)}, {"required", std::to_string(reason.required)}}
+            );
+
         case RunEventChoiceBlockReasonType::MissingRequiredRelic:
             return localization_.format(
                 TextId("event.choice.unavailable.required_relic"),
@@ -199,6 +206,18 @@ std::string EventScene::blockReasonText(const RunEventChoiceBlockReason& reason)
         case RunEventChoiceBlockReasonType::HasForbiddenRelic:
             return localization_.format(
                 TextId("event.choice.unavailable.forbidden_relic"),
+                {{"id", reason.id}}
+            );
+
+        case RunEventChoiceBlockReasonType::MissingRequiredCard:
+            return localization_.format(
+                TextId("event.choice.unavailable.required_card"),
+                {{"id", reason.id}}
+            );
+
+        case RunEventChoiceBlockReasonType::HasForbiddenCard:
+            return localization_.format(
+                TextId("event.choice.unavailable.forbidden_card"),
                 {{"id", reason.id}}
             );
     }

@@ -233,6 +233,7 @@ More info -> Run anyway.
 This happens because the build is not code-signed yet.
 
 If the game does not start, keep the whole extracted folder intact and send the developer a screenshot of the error.
+If Windows shows 0xc000007b, the build is probably mixing incompatible 32-bit/64-bit DLLs. Do not add random DLLs from the internet; rebuild and repackage from the same MSYS2 UCRT64 environment.
 "@
 
     Set-Content -Path (Join-Path $PackageDir "README.txt") -Value $readme -Encoding UTF8
@@ -254,7 +255,12 @@ Push-Location $projectRoot
 try {
     if (-not $SkipBuild) {
         Write-Step "Configuring CMake preset '$ConfigurePreset'"
-        Invoke-CheckedCommand -FilePath "cmake" -Arguments @("--preset", $ConfigurePreset)
+        Invoke-CheckedCommand -FilePath "cmake" -Arguments @(
+            "--preset", $ConfigurePreset,
+            "-DGAME_STATIC_MINGW_RUNTIME=ON",
+            "-DGAME_FORCE_FETCH_RAYLIB=ON",
+            "-DBUILD_SHARED_LIBS=OFF"
+        )
 
         Write-Step "Building CMake preset '$BuildPreset'"
         Invoke-CheckedCommand -FilePath "cmake" -Arguments @("--build", "--preset", $BuildPreset)

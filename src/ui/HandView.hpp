@@ -16,6 +16,7 @@ public:
     void setSelectedCard(std::optional<CardInstanceId> selectedCardId);
     void setDraggedCard(std::optional<CardInstanceId> draggedCardId, Vector2 dragPosition);
     void setViewport(float width, float height);
+    void setDrawPileOrigin(Vector2 origin);
 
     void update(float deltaSeconds, Vector2 mousePosition);
     void render(const Font* font) const;
@@ -31,9 +32,11 @@ private:
 private:
     HandLayout layout_;
     std::vector<CardView> cards_;
+    std::vector<float> entryDelaySeconds_;
 
     std::optional<CardInstanceId> selectedCardId_;
     std::optional<CardInstanceId> hoveredCardId_;
     std::optional<CardInstanceId> draggedCardId_;
     Vector2 dragPosition_{0.f, 0.f};
+    Vector2 drawPileOrigin_{82.f, 1039.f};
 };

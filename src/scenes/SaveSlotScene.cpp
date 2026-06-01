@@ -1,11 +1,12 @@
 #include "SaveSlotScene.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/BasicUi.hpp"
 
-#include <raylib.h>
-
 #include <string>
 #include <utility>
+
+#include <raylib.h>
 
 namespace {
 constexpr float panelWidth = 760.f;
@@ -95,7 +96,7 @@ void SaveSlotScene::render() const {
     BasicUi::drawCenteredText(
         font_,
         localization_.get(TextId("save_slot.title")),
-        Rectangle{0.f, 95.f, static_cast<float>(GetScreenWidth()), 70.f},
+        Rectangle{0.f, 95.f, static_cast<float>(VirtualViewport::width()), 70.f},
         40.f,
         Color{240, 240, 250, 255}
     );
@@ -136,7 +137,7 @@ void SaveSlotScene::render() const {
 
 Rectangle SaveSlotScene::slotPanelBounds(const std::size_t slotIndex) const {
     return Rectangle{
-        static_cast<float>(GetScreenWidth()) * 0.5f - panelWidth * 0.5f,
+        static_cast<float>(VirtualViewport::width()) * 0.5f - panelWidth * 0.5f,
         startY + static_cast<float>(slotIndex) * (panelHeight + panelGap),
         panelWidth,
         panelHeight

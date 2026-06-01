@@ -2,8 +2,7 @@
 
 #include "data/ContentValidator.hpp"
 #include "settings/UserSettingsRepository.hpp"
-
-#include <raylib.h>
+#include "ui/VirtualViewport.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -12,6 +11,8 @@
 #include <limits>
 #include <stdexcept>
 #include <thread>
+
+#include <raylib.h>
 
 namespace {
     constexpr unsigned int safeWindowedWidth = 1280u;
@@ -44,6 +45,7 @@ Application::Application()
 
 Application::~Application() {
     gameFlow_.reset();
+    shutdownVirtualViewport();
 
     if (windowInitialized_) {
         CloseWindow();
@@ -53,6 +55,8 @@ Application::~Application() {
 
 std::int32_t Application::run() {
     while (!WindowShouldClose()) {
+        updateVirtualViewportMouseTransform();
+
         const float deltaSeconds = clampDeltaSeconds(GetFrameTime());
 
         processEvents();
@@ -83,12 +87,34 @@ void Application::update(const float deltaSeconds) {
 }
 
 void Application::render() {
-    BeginDrawing();
+    BeginTextureMode(virtualRenderTexture_);
     ClearBackground(Color{20, 20, 24, 255});
 
     if (gameFlow_ != nullptr) {
         gameFlow_->render();
     }
+
+    EndTextureMode();
+
+    BeginDrawing();
+    ClearBackground(Color{0, 0, 0, 255});
+
+    const Rectangle source{
+        0.f,
+        0.f,
+        VirtualViewport::widthF(),
+        -VirtualViewport::heightF()
+    };
+    const Rectangle destination = virtualViewportDestination();
+
+    DrawTexturePro(
+        virtualRenderTexture_.texture,
+        source,
+        destination,
+        Vector2{0.f, 0.f},
+        0.f,
+        WHITE
+    );
 
     EndDrawing();
 }
@@ -102,9 +128,63 @@ void Application::initializeWindow() {
     SetExitKey(KEY_NULL);
     windowInitialized_ = true;
 
+    initializeVirtualViewport();
+
     if (config_.window.fullscreen) {
         enterBorderlessFullscreen();
     }
+}
+
+void Application::initializeVirtualViewport() {
+    virtualRenderTexture_ = LoadRenderTexture(VirtualViewport::width(), VirtualViewport::height());
+    SetTextureFilter(virtualRenderTexture_.texture, TEXTURE_FILTER_BILINEAR);
+    virtualRenderTextureInitialized_ = true;
+    updateVirtualViewportMouseTransform();
+}
+
+void Application::shutdownVirtualViewport() {
+    if (!virtualRenderTextureInitialized_) {
+        return;
+    }
+
+    UnloadRenderTexture(virtualRenderTexture_);
+    virtualRenderTextureInitialized_ = false;
+}
+
+Rectangle Application::virtualViewportDestination() const {
+    const float windowWidth = static_cast<float>(GetScreenWidth());
+    const float windowHeight = static_cast<float>(GetScreenHeight());
+
+    const float scale = std::min(
+        windowWidth / VirtualViewport::widthF(),
+        windowHeight / VirtualViewport::heightF()
+    );
+
+    const float width = VirtualViewport::widthF() * scale;
+    const float height = VirtualViewport::heightF() * scale;
+
+    return Rectangle{
+        (windowWidth - width) * 0.5f,
+        (windowHeight - height) * 0.5f,
+        width,
+        height
+    };
+}
+
+void Application::updateVirtualViewportMouseTransform() const {
+    const Rectangle destination = virtualViewportDestination();
+    if (destination.width <= 0.f || destination.height <= 0.f) {
+        SetMouseOffset(0, 0);
+        SetMouseScale(1.f, 1.f);
+        return;
+    }
+
+    const float scale = destination.width / VirtualViewport::widthF();
+    SetMouseOffset(
+        -static_cast<int>(destination.x),
+        -static_cast<int>(destination.y)
+    );
+    SetMouseScale(1.f / scale, 1.f / scale);
 }
 
 void Application::applyUserSettingsToConfig() {

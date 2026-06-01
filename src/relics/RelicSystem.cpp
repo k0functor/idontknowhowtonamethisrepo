@@ -193,6 +193,14 @@ bool RelicSystem::triggerMatches(
         return false;
     }
 
+    if (trigger.cardType.has_value() && (!event.cardType.has_value() || event.cardType != *trigger.cardType)) {
+        return false;
+    }
+
+    if (trigger.minimumAmount > 0 && event.amount < trigger.minimumAmount) {
+        return false;
+    }
+
     if (trigger.sourceSide == "player") {
         return event.source.has_value() && state.isPlayer(*event.source);
     }

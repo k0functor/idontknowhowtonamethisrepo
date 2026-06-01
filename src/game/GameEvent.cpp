@@ -21,6 +21,8 @@ std::string toString(const GameEventType type) {
             return "damage_taken";
         case GameEventType::BlockGained:
             return "block_gained";
+        case GameEventType::Healed:
+            return "healed";
         case GameEventType::StatusApplied:
             return "status_applied";
         case GameEventType::EnemyKilled:
@@ -45,6 +47,7 @@ GameEventType gameEventTypeFromString(const std::string_view value) {
     if (value == "damage_dealt") return GameEventType::DamageDealt;
     if (value == "damage_taken") return GameEventType::DamageTaken;
     if (value == "block_gained") return GameEventType::BlockGained;
+    if (value == "healed") return GameEventType::Healed;
     if (value == "status_applied") return GameEventType::StatusApplied;
     if (value == "enemy_killed") return GameEventType::EnemyKilled;
     if (value == "reward_generated") return GameEventType::RewardGenerated;

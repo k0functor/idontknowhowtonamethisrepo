@@ -1,4 +1,5 @@
 #include "DifficultySelectScene.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/BasicUi.hpp"
 
@@ -19,7 +20,7 @@ DifficultySelectScene::DifficultySelectScene(
 
 void DifficultySelectScene::update(float) {
     const Vector2 mouse = GetMousePosition();
-    const float centerX = GetScreenWidth() * 0.5f;
+    const float centerX = VirtualViewport::width() * 0.5f;
     const float width = 520.f;
     const float height = 82.f;
     const float startY = 250.f;
@@ -41,14 +42,14 @@ void DifficultySelectScene::update(float) {
 
 void DifficultySelectScene::render() const {
     const Vector2 mouse = GetMousePosition();
-    const float centerX = GetScreenWidth() * 0.5f;
+    const float centerX = VirtualViewport::width() * 0.5f;
     const float width = 520.f;
     const float height = 82.f;
     const float startY = 250.f;
     const float gap = 24.f;
 
     BasicUi::drawButton(font_, Rectangle{32.f, 32.f, 140.f, 48.f}, localization_.get(TextId("ui.back")), mouse);
-    BasicUi::drawCenteredText(font_, localization_.get(TextId("difficulty_select.title")), Rectangle{0.f, 110.f, static_cast<float>(GetScreenWidth()), 70.f}, 40.f, Color{240, 240, 250, 255});
+    BasicUi::drawCenteredText(font_, localization_.get(TextId("difficulty_select.title")), Rectangle{0.f, 110.f, static_cast<float>(VirtualViewport::width()), 70.f}, 40.f, Color{240, 240, 250, 255});
 
     for (std::size_t i = 0; i < difficulties_.size(); ++i) {
         const DifficultyDefinition& difficulty = *difficulties_[i];

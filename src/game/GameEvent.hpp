@@ -2,6 +2,7 @@
 
 #include "cards/CardId.hpp"
 #include "cards/CardInstanceId.hpp"
+#include "cards/CardType.hpp"
 #include "effects/EffectType.hpp"
 #include "entities/EntityId.hpp"
 
@@ -23,6 +24,7 @@ enum class GameEventType {
     DamageDealt,
     DamageTaken,
     BlockGained,
+    Healed,
     StatusApplied,
     EnemyKilled,
     RewardGenerated,
@@ -41,11 +43,13 @@ struct GameEvent {
 
     std::optional<CardInstanceId> cardInstanceId;
     std::optional<CardId> cardDefinitionId;
+    std::optional<CardType> cardType;
 
     std::string statusId;
     std::string relicId;
 
     EffectType effectType = EffectType::Damage;
     int amount = 0;
+    int blockedAmount = 0;
     int turn = 0;
 };

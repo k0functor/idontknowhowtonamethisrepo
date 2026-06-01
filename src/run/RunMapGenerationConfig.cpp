@@ -1,8 +1,8 @@
 #include "RunMapGenerationConfig.hpp"
 
+#include "core/Random.hpp"
 #include "data/JsonLoader.hpp"
 #include "data/JsonReader.hpp"
-#include "core/Random.hpp"
 
 #include <stdexcept>
 #include <string>

@@ -1,4 +1,5 @@
 #include "RelicInspectModal.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/BasicUi.hpp"
 
@@ -7,8 +8,8 @@
 
 namespace {
 Rectangle modalBounds() {
-    const float screenWidth = static_cast<float>(GetScreenWidth());
-    const float screenHeight = static_cast<float>(GetScreenHeight());
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float screenHeight = static_cast<float>(VirtualViewport::height());
 
     const float width = std::min(560.f, screenWidth - 80.f);
     const float height = 300.f;
@@ -141,7 +142,7 @@ void RelicInspectModal::render(
 
     const RelicViewModel& relic = relics[*currentIndex_];
 
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 120});
+    DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 120});
 
     const Rectangle bounds = modalBounds();
 

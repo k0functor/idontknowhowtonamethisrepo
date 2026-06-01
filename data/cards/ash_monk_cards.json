@@ -17,7 +17,19 @@
           "amount": 6
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_basic_defend",
@@ -37,7 +49,19 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_enter_flame",
@@ -116,11 +140,27 @@
         "type": "damage",
         "target": "single_enemy",
         "value": {
-          "type": "fixed",
-          "amount": 7
+          "type": "dice",
+          "count": 1,
+          "die": "d8",
+          "bonus": 3
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d10",
+            "bonus": 3
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_ash_guard",
@@ -398,6 +438,207 @@
         "value": {
           "type": "fixed",
           "amount": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_ignition_kata",
+    "name": "card.monk_ignition_kata.name",
+    "description": "card.monk_ignition_kata.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 72,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_flame"
+      }
+    ]
+  },
+  {
+    "id": "monk_ash_kata",
+    "name": "card.monk_ash_kata.name",
+    "description": "card.monk_ash_kata.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 72,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        }
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_ash"
+      }
+    ]
+  },
+  {
+    "id": "monk_smoke_kata",
+    "name": "card.monk_smoke_kata.name",
+    "description": "card.monk_smoke_kata.description",
+    "rarity": "common",
+    "energy_cost": 1,
+    "gold_cost": 72,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 3
+        }
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_smoke"
+      }
+    ]
+  },
+  {
+    "id": "monk_flame_wheel",
+    "name": "card.monk_flame_wheel.name",
+    "description": "card.monk_flame_wheel.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 105,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_ash_mirror",
+    "name": "card.monk_ash_mirror.name",
+    "description": "card.monk_ash_mirror.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 105,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_smoke_afterimage",
+    "name": "card.monk_smoke_afterimage.name",
+    "description": "card.monk_smoke_afterimage.description",
+    "rarity": "uncommon",
+    "energy_cost": 1,
+    "gold_cost": 105,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "status": "weak",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "monk_threefold_release",
+    "name": "card.monk_threefold_release.name",
+    "description": "card.monk_threefold_release.description",
+    "rarity": "rare",
+    "energy_cost": 2,
+    "gold_cost": 150,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        },
+        "repeat_count": 3
+      },
+      {
+        "type": "lose_stress",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 10
         }
       }
     ]

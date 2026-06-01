@@ -1,6 +1,8 @@
 #include "ContentValidator.hpp"
 
 #include "cards/CardId.hpp"
+#include "cards/CardRarity.hpp"
+#include "cards/CardUpgrade.hpp"
 #include "consumables/ConsumableId.hpp"
 #include "drones/DroneId.hpp"
 #include "effects/EffectDefinition.hpp"
@@ -16,6 +18,7 @@
 #include <algorithm>
 #include <array>
 #include <optional>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -25,6 +28,31 @@
 namespace {
 void addError(std::vector<std::string>& errors, std::string message) {
     errors.push_back(std::move(message));
+}
+
+int rarityRank(const CardRarity rarity) {
+    switch (rarity) {
+        case CardRarity::Starter:
+            return 0;
+        case CardRarity::Common:
+            return 1;
+        case CardRarity::Uncommon:
+            return 2;
+        case CardRarity::Rare:
+            return 3;
+        case CardRarity::Special:
+            return 4;
+    }
+
+    return 0;
+}
+
+bool meetsMinimumCardRarity(const CardDefinition& card, const std::optional<CardRarity>& minimumRarity) {
+    if (!minimumRarity.has_value()) {
+        return true;
+    }
+
+    return rarityRank(card.rarity) >= rarityRank(*minimumRarity);
 }
 
 void validateTextReference(
@@ -140,6 +168,21 @@ bool hasCardRewardCandidates(const ContentRegistry& content) {
     return false;
 }
 
+bool hasCardRewardCandidatesAtMinimum(
+    const ContentRegistry& content,
+    const std::optional<CardRarity>& minimumRarity
+) {
+    for (const CardDefinition* card : content.cards().all()) {
+        if (card != nullptr &&
+            RewardPoolRules::canAppearAsCardReward(*card) &&
+            meetsMinimumCardRarity(*card, minimumRarity)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool hasArchetypeCardRewardCandidates(
     const ContentRegistry& content,
     const std::vector<std::string>& rewardCardPoolIds
@@ -216,9 +259,24 @@ void validateRunEventEffect(
                 addError(errors, owner + " has numeric event effect with non-positive amount");
             }
             break;
+        case RunEventEffectType::GainCard:
+        case RunEventEffectType::RemoveCard:
+            if (effect.contentId.empty()) {
+                addError(errors, owner + " has card event effect without content id");
+            } else if (!content.cards().contains(CardId(effect.contentId))) {
+                addError(errors, owner + " references unknown card '" + effect.contentId + "'");
+            }
+            break;
         case RunEventEffectType::GainRandomCard:
             if (!hasCardRewardCandidates(content)) {
                 addError(errors, owner + " can generate a random card, but the card reward pool is empty");
+            }
+            break;
+        case RunEventEffectType::GainRelic:
+            if (effect.contentId.empty()) {
+                addError(errors, owner + " has relic event effect without content id");
+            } else if (!content.relics().contains(RelicId(effect.contentId))) {
+                addError(errors, owner + " references unknown relic '" + effect.contentId + "'");
             }
             break;
         case RunEventEffectType::GainRandomRelic:
@@ -226,9 +284,21 @@ void validateRunEventEffect(
                 addError(errors, owner + " can generate a random relic, but the relic reward pool is empty");
             }
             break;
+        case RunEventEffectType::GainConsumable:
+            if (effect.contentId.empty()) {
+                addError(errors, owner + " has consumable event effect without content id");
+            } else if (!content.consumables().contains(ConsumableId(effect.contentId))) {
+                addError(errors, owner + " references unknown consumable '" + effect.contentId + "'");
+            }
+            break;
         case RunEventEffectType::GainRandomConsumable:
             if (!hasConsumableCandidates(content)) {
                 addError(errors, owner + " can generate a random consumable, but the consumable pool is empty");
+            }
+            break;
+        case RunEventEffectType::RemoveRandomCard:
+            if (effect.amount != 0) {
+                addError(errors, owner + " has remove_random_card event effect with a non-zero amount");
             }
             break;
         case RunEventEffectType::Skip:
@@ -236,6 +306,233 @@ void validateRunEventEffect(
                 addError(errors, owner + " has skip event effect with a non-zero amount");
             }
             break;
+    }
+}
+
+
+int configuredLayerWidth(const RunMapGenerationConfig& config, const int layer) {
+    if (layer < 0 || layer >= config.layerCount()) {
+        return 0;
+    }
+
+    if (config.hasLayerNodeCounts()) {
+        return config.layerNodeCounts()[static_cast<std::size_t>(layer)];
+    }
+
+    return (layer == 0 || layer == config.layerCount() - 2 || layer == config.layerCount() - 1)
+        ? 1
+        : config.middleMaxNodes();
+}
+
+bool hasEncounterForType(const ContentRegistry& content, const RunMapNodeType nodeType) {
+    for (const EncounterDefinition* encounter : content.encounters().all()) {
+        if (encounter != nullptr && encounter->nodeType == nodeType) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool hasEncounterEligibleOnLayer(
+    const ContentRegistry& content,
+    const RunMapNodeType nodeType,
+    const int layer
+) {
+    for (const EncounterDefinition* encounter : content.encounters().all()) {
+        if (encounter != nullptr &&
+            encounter->nodeType == nodeType &&
+            encounter->isAllowedOnLayer(layer)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool hasEncounterEligibleInLayerRange(
+    const ContentRegistry& content,
+    const RunMapNodeType nodeType,
+    const int minLayer,
+    const int maxLayer
+) {
+    for (int layer = minLayer; layer <= maxLayer; ++layer) {
+        if (hasEncounterEligibleOnLayer(content, nodeType, layer)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool hasAvailableArchetype(const ContentRegistry& content) {
+    for (const PlayableArchetypeDefinition* archetype : content.archetypes().all()) {
+        if (archetype != nullptr && archetype->isAvailable) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool hasUpgradableCardForAvailableArchetype(const ContentRegistry& content) {
+    std::set<std::string> relevantActorIds;
+
+    for (const PlayableArchetypeDefinition* archetype : content.archetypes().all()) {
+        if (archetype == nullptr || !archetype->isAvailable) {
+            continue;
+        }
+
+        relevantActorIds.insert(archetype->rewardCardPoolIds.begin(), archetype->rewardCardPoolIds.end());
+
+        for (const std::string& cardId : archetype->startingDeckCardIds) {
+            const CardId id(cardId);
+            if (!content.cards().contains(id)) {
+                continue;
+            }
+
+            if (CardUpgrade::isUpgradable(content.cards().get(id))) {
+                return true;
+            }
+        }
+    }
+
+    for (const CardDefinition* card : content.cards().all()) {
+        if (card == nullptr || card->ownerActorId.empty()) {
+            continue;
+        }
+
+        if (relevantActorIds.contains(card->ownerActorId) &&
+            RewardPoolRules::canAppearAsCardReward(*card) &&
+            CardUpgrade::isUpgradable(*card)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void validateCardUpgradeDefinition(
+    std::vector<std::string>& errors,
+    const ContentRegistry& content,
+    const std::string& owner,
+    const CardDefinition& card
+) {
+    if (card.upgrade.empty()) {
+        return;
+    }
+
+    if (card.upgrade.effects.has_value() && card.upgrade.effects->empty()) {
+        addError(errors, owner + " upgrade overrides effects with an empty list");
+    }
+
+    const CardDefinition upgraded = CardUpgrade::upgradedDefinition(card);
+    if (upgraded.energyCost < 0) {
+        addError(errors, owner + " upgrade produces a negative energy cost");
+    }
+    if (upgraded.goldCost < 0) {
+        addError(errors, owner + " upgrade produces a negative gold cost");
+    }
+    if (upgraded.effects.empty()) {
+        addError(errors, owner + " upgrade produces a card with no effects");
+    }
+
+    validateEffectList(errors, content, owner + " upgraded definition", upgraded.effects);
+}
+
+void validateFirstFloorContent(
+    std::vector<std::string>& errors,
+    const ContentRegistry& content
+) {
+    const RunMapGenerationConfig& config = content.actOneMapGeneration();
+    const int preBossLayer = config.layerCount() - 2;
+    const int bossLayer = config.layerCount() - 1;
+
+    if (configuredLayerWidth(config, 0) != 1) {
+        addError(errors, "Act '" + config.id() + "' must start with exactly one combat room");
+    }
+
+    if (configuredLayerWidth(config, preBossLayer) <= 0) {
+        addError(errors, "Act '" + config.id() + "' must have at least one rest room before the boss");
+    }
+
+    if (configuredLayerWidth(config, bossLayer) != 1) {
+        addError(errors, "Act '" + config.id() + "' must end with exactly one boss room");
+    }
+
+    if (!hasEncounterForType(content, RunMapNodeType::Combat)) {
+        addError(errors, "Act '" + config.id() + "' needs at least one normal combat encounter");
+    } else if (!hasEncounterEligibleOnLayer(content, RunMapNodeType::Combat, 0)) {
+        addError(errors, "Act '" + config.id() + "' has no normal combat encounter eligible for the start layer");
+    }
+
+    if (config.combatWeight() > 0) {
+        const int lastRandomCombatLayer = std::max(0, preBossLayer - 1);
+        if (!hasEncounterEligibleInLayerRange(content, RunMapNodeType::Combat, 1, lastRandomCombatLayer)) {
+            addError(errors, "Act '" + config.id() + "' can generate normal combat rooms, but no normal encounter is eligible for middle layers");
+        }
+    }
+
+    const bool canResolveEventsToCombat = config.questionMarkCombatChance() > 0 &&
+        (config.eventWeight() > 0 || (config.hasFixedEvents() && config.events().maximum > 0));
+    if (canResolveEventsToCombat && !hasEncounterEligibleInLayerRange(content, RunMapNodeType::Combat, 1, preBossLayer - 1)) {
+        addError(errors, "Act '" + config.id() + "' event rooms can turn into combat, but no normal encounter is eligible for event layers");
+    }
+
+    if (config.elites().maximum > 0) {
+        if (!hasEncounterForType(content, RunMapNodeType::Elite)) {
+            addError(errors, "Act '" + config.id() + "' can generate elite rooms, but the elite encounter pool is empty");
+        } else if (!hasEncounterEligibleInLayerRange(content, RunMapNodeType::Elite, config.elites().minLayer, config.elites().maxLayer)) {
+            addError(errors, "Act '" + config.id() + "' can generate elite rooms, but no elite encounter is eligible for configured elite layers");
+        }
+
+        if (!content.rewardTuning().node(RunMapNodeType::Elite).guaranteedRelic) {
+            addError(errors, "Act '" + config.id() + "' has elite rooms, but elite reward tuning does not guarantee a relic");
+        }
+    }
+
+    if (!hasEncounterForType(content, RunMapNodeType::Boss)) {
+        addError(errors, "Act '" + config.id() + "' needs at least one boss encounter");
+    } else if (!hasEncounterEligibleOnLayer(content, RunMapNodeType::Boss, bossLayer)) {
+        addError(errors, "Act '" + config.id() + "' has no boss encounter eligible for the boss layer");
+    }
+
+    const NodeRewardTuning& bossReward = content.rewardTuning().node(RunMapNodeType::Boss);
+    if (bossReward.gold <= 0 && !bossReward.offerCards && !bossReward.guaranteedRelic) {
+        addError(errors, "Act '" + config.id() + "' boss reward tuning gives no gold, cards, or relics");
+    }
+    if (!bossReward.guaranteedRelic) {
+        addError(errors, "Act '" + config.id() + "' has a boss room, but boss reward tuning does not guarantee a relic");
+    }
+
+    const bool canGenerateEventNodes = config.eventWeight() > 0 ||
+        (config.hasFixedEvents() && config.events().maximum > 0);
+    if (canGenerateEventNodes && content.events().size() == 0) {
+        addError(errors, "Act '" + config.id() + "' can generate event rooms, but the event pool is empty");
+    }
+
+    if (config.chests().count > 0 && !hasRelicRewardCandidates(content)) {
+        addError(errors, "Act '" + config.id() + "' has chest rooms, but the relic reward pool is empty");
+    }
+
+    if (config.shop().count > 0 &&
+        content.shopTuning().cardOfferCount() <= 0 &&
+        content.shopTuning().relicOfferCount() <= 0 &&
+        content.shopTuning().consumableOfferCount() <= 0 &&
+        content.shopTuning().cardRemovalPrice() <= 0) {
+        addError(errors, "Act '" + config.id() + "' has shop rooms, but shop tuning exposes no offers or services");
+    }
+
+    if (!hasAvailableArchetype(content)) {
+        addError(errors, "Act '" + config.id() + "' cannot start because there are no available playable archetypes");
+    }
+
+    if (content.difficulties().size() == 0) {
+        addError(errors, "Act '" + config.id() + "' cannot start because there are no difficulties loaded");
+    }
+
+    if (!hasUpgradableCardForAvailableArchetype(content)) {
+        addError(errors, "Act '" + config.id() + "' rest room has upgrade action, but no available archetype has an upgradable starting or reward card");
     }
 }
 
@@ -255,6 +552,7 @@ void validateRewardTuning(
 
     const bool cardRewardPoolAvailable = hasCardRewardCandidates(content);
     const bool relicRewardPoolAvailable = hasRelicRewardCandidates(content);
+    const bool consumableRewardPoolAvailable = hasConsumableCandidates(content);
 
     for (const RunMapNodeType nodeType : nodeTypes) {
         const NodeRewardTuning& tuning = content.rewardTuning().node(nodeType);
@@ -272,8 +570,22 @@ void validateRewardTuning(
             addError(errors, owner + " offers cards, but the card reward pool is empty");
         }
 
+        if (tuning.offerCards && tuning.cardChoices > 0 &&
+            tuning.minimumCardRarity.has_value() &&
+            !hasCardRewardCandidatesAtMinimum(content, tuning.minimumCardRarity)) {
+            addError(errors, owner + " requires a minimum card rarity, but no matching card reward candidates exist");
+        }
+
         if (tuning.guaranteedRelic && !relicRewardPoolAvailable) {
             addError(errors, owner + " guarantees a relic, but the relic reward pool is empty");
+        }
+
+        if (tuning.consumableChancePercent < 0 || tuning.consumableChancePercent > 100) {
+            addError(errors, owner + " has consumable_chance_percent outside 0..100");
+        }
+
+        if (tuning.consumableChancePercent > 0 && !consumableRewardPoolAvailable) {
+            addError(errors, owner + " can offer a consumable, but the consumable pool is empty");
         }
     }
 }
@@ -338,6 +650,7 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
         if (card->upgrade.effects.has_value()) {
             validateEffectList(errors, content, owner + " upgrade", *card->upgrade.effects);
         }
+        validateCardUpgradeDefinition(errors, content, owner, *card);
 
         if (!card->ownerActorId.empty() && !content.actors().contains(PlayerActorId(card->ownerActorId))) {
             addError(errors, owner + " references unknown owner actor '" + card->ownerActorId + "'");
@@ -438,6 +751,12 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
             if (trigger.statusId.has_value() && !content.statuses().contains(StatusId(*trigger.statusId))) {
                 addError(errors, owner + " trigger references unknown status filter '" + *trigger.statusId + "'");
             }
+            if (trigger.cardType.has_value() && trigger.eventType != GameEventType::CardPlayed) {
+                addError(errors, owner + " trigger has card_type filter, but card_type is currently supported only for card_played events");
+            }
+            if (trigger.minimumAmount < 0) {
+                addError(errors, owner + " trigger has negative min_amount");
+            }
             if (trigger.sourceSide != "any" && trigger.sourceSide != "player" && trigger.sourceSide != "enemy") {
                 addError(errors, owner + " trigger has invalid source_side '" + trigger.sourceSide + "'");
             }
@@ -470,6 +789,18 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
             for (const std::string& relicId : choice.requirements.forbiddenRelicIds) {
                 if (!content.relics().contains(RelicId(relicId))) {
                     addError(errors, owner + " forbids unknown relic '" + relicId + "'");
+                }
+            }
+
+            for (const std::string& cardId : choice.requirements.requiredCardIds) {
+                if (!content.cards().contains(CardId(cardId))) {
+                    addError(errors, owner + " requires unknown card '" + cardId + "'");
+                }
+            }
+
+            for (const std::string& cardId : choice.requirements.forbiddenCardIds) {
+                if (!content.cards().contains(CardId(cardId))) {
+                    addError(errors, owner + " forbids unknown card '" + cardId + "'");
                 }
             }
 
@@ -578,6 +909,7 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
     validateRewardTuning(errors, content);
     validateShopTuning(errors, content);
     validateMapGeneration(errors, content);
+    validateFirstFloorContent(errors, content);
 
     if (!errors.empty()) {
         throw std::runtime_error(joinErrors(errors));

@@ -1,23 +1,23 @@
 #include "RewardScene.hpp"
-
-#include "cards/CardDescriptionFormatter.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "cards/CardDefinition.hpp"
+#include "cards/CardDescriptionFormatter.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "consumables/ConsumableId.hpp"
-#include "relics/RelicDefinition.hpp"
 #include "inspect/InspectPanelModel.hpp"
+#include "relics/RelicDefinition.hpp"
 #include "ui/BasicUi.hpp"
 #include "ui/CardViewModelFactory.hpp"
 #include "ui/CardVisualInstance.hpp"
-
-#include <raylib.h>
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <utility>
 #include <vector>
+
+#include <raylib.h>
 
 RewardScene::RewardScene(
     const UiFont& font,
@@ -70,20 +70,20 @@ void RewardScene::render() const {
     BasicUi::drawCenteredText(
         font_,
         rewardTitle(),
-        Rectangle{0.f, 65.f, static_cast<float>(GetScreenWidth()), 70.f},
+        Rectangle{0.f, 65.f, static_cast<float>(VirtualViewport::width()), 70.f},
         42.f,
         Color{240, 240, 250, 255}
     );
 
-    const Rectangle panel{GetScreenWidth() * 0.5f - 310.f, 150.f, 620.f, 430.f};
+    const Rectangle panel{VirtualViewport::width() * 0.5f - 310.f, 150.f, 620.f, 430.f};
     DrawRectangleRounded(panel, 0.06f, 12, Color{31, 34, 44, 255});
     DrawRectangleRoundedLinesEx(panel, 0.06f, 12, 2.f, Color{120, 130, 160, 255});
 
     BasicUi::drawText(
         font_,
         rewardHint(),
-        Vector2{panel.x + 30.f, panel.y + 56.f},
-        17.f,
+        Vector2{panel.x + 30.f, panel.y + 54.f},
+        20.f,
         Color{190, 196, 215, 255}
     );
 
@@ -104,7 +104,7 @@ void RewardScene::render() const {
             DrawRectangleRounded(row, 0.08f, 10, hovered ? Color{53, 58, 75, 255} : Color{40, 43, 56, 255});
             DrawRectangleRoundedLinesEx(row, 0.08f, 10, 2.f, hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
 
-            BasicUi::drawText(font_, optionTitle(option), Vector2{row.x + 22.f, row.y + 12.f}, 23.f, Color{245, 245, 250, 255});
+            BasicUi::drawTextFitted(font_, optionTitle(option), Vector2{row.x + 22.f, row.y + 10.f}, row.width - 44.f, 25.f, 18.f, Color{245, 245, 250, 255});
 
             const std::string description = optionDescription(option);
             if (!description.empty()) {
@@ -112,7 +112,7 @@ void RewardScene::render() const {
                     font_,
                     description,
                     Vector2{row.x + 22.f, row.y + 42.f},
-                    15.f,
+                    18.f,
                     Color{190, 198, 220, 255}
                 );
             }
@@ -136,30 +136,31 @@ void RewardScene::render() const {
 }
 
 Rectangle RewardScene::rewardOptionBounds(const std::size_t index) const {
-    const Rectangle panel{GetScreenWidth() * 0.5f - 310.f, 150.f, 620.f, 430.f};
+    const Rectangle panel{VirtualViewport::width() * 0.5f - 310.f, 150.f, 620.f, 430.f};
     return Rectangle{panel.x + 35.f, panel.y + 92.f + static_cast<float>(index) * 76.f, panel.width - 70.f, 58.f};
 }
 
 Rectangle RewardScene::continueButtonBounds() const {
-    return Rectangle{GetScreenWidth() * 0.5f - 170.f, 610.f, 340.f, 52.f};
+    return Rectangle{VirtualViewport::width() * 0.5f - 170.f, 610.f, 340.f, 52.f};
 }
 
 Rectangle RewardScene::cardChoiceModalBounds() const {
-    const float width = std::min(1040.f, static_cast<float>(GetScreenWidth()) - 72.f);
-    const float height = std::min(560.f, static_cast<float>(GetScreenHeight()) - 72.f);
-    return Rectangle{GetScreenWidth() * 0.5f - width * 0.5f, GetScreenHeight() * 0.5f - height * 0.5f, width, height};
+    const float width = std::min(1040.f, static_cast<float>(VirtualViewport::width()) - 72.f);
+    const float height = std::min(560.f, static_cast<float>(VirtualViewport::height()) - 72.f);
+    return Rectangle{VirtualViewport::width() * 0.5f - width * 0.5f, VirtualViewport::height() * 0.5f - height * 0.5f, width, height};
 }
 
 Rectangle RewardScene::cardOptionBounds(const std::size_t index) const {
     const Rectangle panel = cardChoiceModalBounds();
     const RewardOption* option = activeOption();
     const std::size_t count = option != nullptr ? std::min<std::size_t>(3, option->cardOptions.size()) : 0;
-    const float spacing = 24.f;
-    const float width = count > 0 ? std::min(285.f, (panel.width - 80.f - spacing * static_cast<float>(count - 1)) / static_cast<float>(count)) : 285.f;
-    const float height = 260.f;
+    const float spacing = 34.f;
+    const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
+    const float width = cardSize.x + 18.f;
+    const float height = cardSize.y + 26.f;
     const float total = width * static_cast<float>(count) + spacing * static_cast<float>(count > 0 ? count - 1 : 0);
     const float startX = panel.x + panel.width * 0.5f - total * 0.5f;
-    return Rectangle{startX + static_cast<float>(index) * (width + spacing), panel.y + 90.f, width, height};
+    return Rectangle{startX + static_cast<float>(index) * (width + spacing), panel.y + 88.f, width, height};
 }
 
 Rectangle RewardScene::cancelButtonBounds() const {
@@ -245,7 +246,7 @@ void RewardScene::renderCardChoice() const {
 
     const Vector2 mouse = GetMousePosition();
     const Rectangle panel = cardChoiceModalBounds();
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 120});
+    DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 120});
     DrawRectangleRounded(panel, 0.045f, 14, Color{25, 27, 38, 252});
     DrawRectangleRoundedLinesEx(panel, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
 
@@ -267,7 +268,7 @@ void RewardScene::renderCardChoice() const {
             false,
             selected
         );
-        const CardTransform transform = CardVisualInstance::transformForBounds(bounds, static_cast<int>(i));
+        const CardTransform transform = CardVisualInstance::transformForStandardSlot(bounds, static_cast<int>(i));
         CardVisualInstance::renderStatic(model, font_.available() ? &font_.font() : nullptr, transform);
     }
 
@@ -290,15 +291,15 @@ void RewardScene::renderRelicInspect(const RewardOption& option, const Rectangle
 
     constexpr float gap = 14.f;
     constexpr float screenMargin = 18.f;
-    constexpr float preferredWidth = 340.f;
-    const float screenWidth = static_cast<float>(GetScreenWidth());
-    const float screenHeight = static_cast<float>(GetScreenHeight());
+    constexpr float preferredWidth = 460.f;
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float screenHeight = static_cast<float>(VirtualViewport::height());
 
     Rectangle bounds{
         row.x + row.width + gap,
         row.y,
         std::min(preferredWidth, screenWidth - screenMargin * 2.f),
-        std::min(260.f, screenHeight - screenMargin * 2.f)
+        std::min(380.f, screenHeight - screenMargin * 2.f)
     };
 
     if (bounds.x + bounds.width > screenWidth - screenMargin) {
@@ -352,7 +353,7 @@ std::string RewardScene::optionDescription(const RewardOption& option) const {
         case RewardOptionType::Consumable:
             return consumableDescription(option.consumableId);
         case RewardOptionType::Relic:
-            return relicDescription(option.relicId);
+            return {};
     }
 
     return {};
@@ -404,12 +405,20 @@ std::string RewardScene::rewardTitle() const {
         return localization_.get(TextId("reward.chest_title"));
     }
 
+    if (reward_.sourceNodeType == RunMapNodeType::Boss) {
+        return localization_.get(TextId("reward.boss_title"));
+    }
+
     return localization_.get(TextId("reward.title"));
 }
 
 std::string RewardScene::rewardHint() const {
     if (reward_.sourceNodeType == RunMapNodeType::Chest) {
         return localization_.get(TextId("reward.chest_optional_hint"));
+    }
+
+    if (reward_.sourceNodeType == RunMapNodeType::Boss) {
+        return localization_.get(TextId("reward.boss_optional_hint"));
     }
 
     return localization_.get(TextId("reward.optional_hint"));

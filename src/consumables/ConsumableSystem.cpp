@@ -9,6 +9,7 @@ bool ConsumableSystem::useConsumable(
     CombatState& state,
     const std::string& consumableId,
     const EntityId source,
+    const std::optional<EntityId> explicitTarget,
     const EffectSystem& effectSystem,
     Random& random
 ) const {
@@ -21,7 +22,7 @@ bool ConsumableSystem::useConsumable(
 
     EffectContext context;
     context.source = source;
-    context.explicitTarget = source;
+    context.explicitTarget = explicitTarget.has_value() ? explicitTarget : std::optional<EntityId>{source};
     context.cardDefinitionId = CardId("consumable." + consumableId);
     context.random = &random;
 

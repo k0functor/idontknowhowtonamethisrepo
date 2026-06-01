@@ -505,5 +505,185 @@
         ]
       }
     ]
+  },
+  {
+    "id": "ash_crow",
+    "name": "enemy.ash_crow.name",
+    "max_hp": 20,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "ash_crow_double_peck",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "repeat_count": 2
+          }
+        ]
+      },
+      {
+        "id": "ash_crow_scatter_embers",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "burn",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "ash_crow_cracked_caw",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "lockjaw_husk",
+    "name": "enemy.lockjaw_husk.name",
+    "max_hp": 30,
+    "starting_block": 6,
+    "actions": [
+      {
+        "id": "lockjaw_husk_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "lockjaw_husk_curl",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ]
+      },
+      {
+        "id": "lockjaw_husk_lunge",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mold_shepherd",
+    "name": "enemy.mold_shepherd.name",
+    "max_hp": 34,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "mold_shepherd_spore_blessing",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "mold_shepherd_green_sermon",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "mold_shepherd_staff_sweep",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

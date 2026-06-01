@@ -1,14 +1,18 @@
 #pragma once
 
+#include "cards/CardRarity.hpp"
 #include "run/RunMapNode.hpp"
 
 #include <filesystem>
+#include <optional>
 
 struct NodeRewardTuning {
     int gold = 0;
     bool offerCards = false;
     int cardChoices = 0;
     bool guaranteedRelic = false;
+    int consumableChancePercent = 0;
+    std::optional<CardRarity> minimumCardRarity;
 };
 
 class RewardTuning {

@@ -46,6 +46,8 @@ private:
     static std::string effectValueText(const EffectValue& value);
     static std::string rangeToString(int minimum, int maximum);
 
+    std::string repeatSuffix(int repeatCount) const;
+
     static std::string formulaSuffixForDamage(
         const CombatState& state,
         EntityId source,

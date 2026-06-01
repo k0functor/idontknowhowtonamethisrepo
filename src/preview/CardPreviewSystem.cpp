@@ -1,8 +1,8 @@
 #include "CardPreviewSystem.hpp"
 
-#include "combat/EffectContext.hpp"
-#include "combat/CardCost.hpp"
 #include "cards/CardUpgrade.hpp"
+#include "combat/CardCost.hpp"
+#include "combat/EffectContext.hpp"
 
 CardPreviewSystem::CardPreviewSystem(
     const CardDatabase& cardDatabase,

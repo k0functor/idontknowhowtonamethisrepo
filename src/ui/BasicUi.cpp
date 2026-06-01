@@ -1,7 +1,9 @@
 #include "BasicUi.hpp"
 
 #include <algorithm>
+#include <cstddef>
 #include <sstream>
+#include <string>
 
 namespace BasicUi {
 namespace {
@@ -13,6 +15,51 @@ Vector2 textSize(const UiFont& font, const std::string& text, const float fontSi
     }
 
     return Vector2{static_cast<float>(MeasureText(text.c_str(), static_cast<int>(fontSize))), fontSize};
+}
+
+void popUtf8Codepoint(std::string& text) {
+    if (text.empty()) {
+        return;
+    }
+
+    std::size_t start = text.size() - 1u;
+    while (start > 0u && (static_cast<unsigned char>(text[start]) & 0xC0u) == 0x80u) {
+        --start;
+    }
+    text.erase(start);
+}
+
+std::string ellipsizeToWidth(
+    const UiFont& font,
+    const std::string& text,
+    const float fontSize,
+    const float maxWidth
+) {
+    if (measureTextWidth(font, text, fontSize) <= maxWidth) {
+        return text;
+    }
+
+    constexpr const char* suffix = "...";
+    std::string result = text;
+    while (!result.empty() && measureTextWidth(font, result + suffix, fontSize) > maxWidth) {
+        popUtf8Codepoint(result);
+    }
+
+    return result.empty() ? std::string(suffix) : result + suffix;
+}
+
+float fittedFontSize(
+    const UiFont& font,
+    const std::string& text,
+    const float preferredFontSize,
+    const float minimumFontSize,
+    const float maxWidth
+) {
+    float size = preferredFontSize;
+    while (size > minimumFontSize && measureTextWidth(font, text, size) > maxWidth) {
+        size -= 1.f;
+    }
+    return std::max(minimumFontSize, size);
 }
 }
 
@@ -47,6 +94,38 @@ void drawCenteredText(
     drawText(font, text, position, fontSize, color);
 }
 
+void drawTextFitted(
+    const UiFont& font,
+    const std::string& text,
+    const Vector2 position,
+    const float maxWidth,
+    const float preferredFontSize,
+    const float minimumFontSize,
+    const Color color
+) {
+    const float fontSize = fittedFontSize(font, text, preferredFontSize, minimumFontSize, maxWidth);
+    drawText(font, ellipsizeToWidth(font, text, fontSize, maxWidth), position, fontSize, color);
+}
+
+void drawCenteredTextFitted(
+    const UiFont& font,
+    const std::string& text,
+    const Rectangle bounds,
+    const float preferredFontSize,
+    const float minimumFontSize,
+    const Color color
+) {
+    const float fontSize = fittedFontSize(font, text, preferredFontSize, minimumFontSize, bounds.width);
+    const std::string fittedText = ellipsizeToWidth(font, text, fontSize, bounds.width);
+    const Vector2 size = textSize(font, fittedText, fontSize);
+    const Vector2 position{
+        bounds.x + (bounds.width - size.x) * 0.5f,
+        bounds.y + (bounds.height - size.y) * 0.5f
+    };
+
+    drawText(font, fittedText, position, fontSize, color);
+}
+
 float measureTextWidth(
     const UiFont& font,
     const std::string& text,
@@ -78,7 +157,7 @@ bool drawButton(
 
     DrawRectangleRounded(bounds, 0.18f, 8, fill);
     DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, 2.f, style.border);
-    drawCenteredText(font, label, bounds, 24.f, textColor);
+    drawCenteredTextFitted(font, label, Rectangle{bounds.x + 10.f, bounds.y, bounds.width - 20.f, bounds.height}, 27.f, 18.f, textColor);
 
     return enabled && hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 }

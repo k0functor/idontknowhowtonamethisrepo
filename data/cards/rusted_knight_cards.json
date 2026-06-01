@@ -133,8 +133,10 @@
         "type": "damage",
         "target": "single_enemy",
         "value": {
-          "type": "fixed",
-          "amount": 6
+          "type": "dice",
+          "count": 1,
+          "die": "d6",
+          "bonus": 3
         }
       },
       {
@@ -153,8 +155,10 @@
           "type": "damage",
           "target": "single_enemy",
           "value": {
-            "type": "fixed",
-            "amount": 8
+            "type": "dice",
+            "count": 1,
+            "die": "d8",
+            "bonus": 3
           }
         },
         {

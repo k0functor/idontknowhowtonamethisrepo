@@ -10,6 +10,8 @@
 #include <cstdint>
 #include <memory>
 
+#include <raylib.h>
+
 class Application {
 public:
     Application();
@@ -26,6 +28,10 @@ private:
     void render();
 
     void initializeWindow();
+    void initializeVirtualViewport();
+    void shutdownVirtualViewport();
+    Rectangle virtualViewportDestination() const;
+    void updateVirtualViewportMouseTransform() const;
     void applyUserSettingsToConfig();
     void applyWindowSettings();
     void enterBorderlessFullscreen();
@@ -45,6 +51,9 @@ private:
 
     std::unique_ptr<GameFlowController> gameFlow_;
 
+    RenderTexture2D virtualRenderTexture_{};
+
     bool windowInitialized_ = false;
+    bool virtualRenderTextureInitialized_ = false;
     bool borderlessFullscreenActive_ = false;
 };

@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cstddef>
 #include <stdexcept>
-#include <vector>
 #include <string>
+#include <vector>
 
 DroneSystem::DroneSystem(
     const DroneDatabase& drones,

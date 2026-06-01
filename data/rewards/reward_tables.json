@@ -5,43 +5,51 @@
       "gold": 18,
       "offer_cards": true,
       "card_choices": 3,
-      "guaranteed_relic": false
+      "guaranteed_relic": false,
+      "consumable_chance_percent": 30
     },
     "elite": {
       "gold": 35,
       "offer_cards": true,
       "card_choices": 3,
-      "guaranteed_relic": true
+      "guaranteed_relic": true,
+      "consumable_chance_percent": 45
     },
     "boss": {
       "gold": 75,
       "offer_cards": true,
       "card_choices": 3,
-      "guaranteed_relic": false
+      "guaranteed_relic": true,
+      "consumable_chance_percent": 0,
+      "minimum_card_rarity": "uncommon"
     },
     "chest": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
-      "guaranteed_relic": false
+      "guaranteed_relic": false,
+      "consumable_chance_percent": 0
     },
     "event": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
-      "guaranteed_relic": false
+      "guaranteed_relic": false,
+      "consumable_chance_percent": 0
     },
     "shop": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
-      "guaranteed_relic": false
+      "guaranteed_relic": false,
+      "consumable_chance_percent": 0
     },
     "rest": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
-      "guaranteed_relic": false
+      "guaranteed_relic": false,
+      "consumable_chance_percent": 0
     }
   }
 }

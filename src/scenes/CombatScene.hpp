@@ -33,6 +33,7 @@
 #include "run/RunState.hpp"
 #include "scenes/Scene.hpp"
 #include "statuses/StatusSystem.hpp"
+#include "ui/CardTransform.hpp"
 #include "ui/CardViewModel.hpp"
 #include "ui/CardViewModelBuilder.hpp"
 #include "ui/CombatView.hpp"
@@ -46,6 +47,7 @@
 #include <raylib.h>
 
 #include <cstddef>
+#include <deque>
 #include <filesystem>
 #include <functional>
 #include <optional>
@@ -104,9 +106,17 @@ private:
     void openConsumableConfirmation(std::size_t index);
     void cancelConsumableConfirmation();
     void confirmConsumableUse();
-    void tryUseConsumable(std::size_t index);
+    void startConsumableTargeting(std::size_t index);
+    void cancelConsumableTargeting();
+    void tryUseConsumable(std::size_t index, std::optional<EntityId> target);
     void updateConsumableConfirmationInput(Vector2 mousePosition);
+    void updateConsumableTargetingInput(Vector2 mousePosition);
     void renderConsumableConfirmationModal() const;
+    bool consumableRequiresTarget(std::size_t index) const;
+    bool consumableCanTargetEnemy(std::size_t index) const;
+    bool consumableCanTargetPlayer(std::size_t index) const;
+    std::vector<EntityId> targetCandidatesForConsumable(std::size_t index) const;
+    std::optional<EntityId> previewTargetForConsumable(std::size_t index) const;
 
     bool combatItemInspectOpen() const;
     void openRelicInspect(std::size_t index);
@@ -127,7 +137,88 @@ private:
     Rectangle consumableCancelButtonBounds(Rectangle modal) const;
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
+
+    enum class CardFlightAnimationKind {
+        PlayedToDiscard,
+        HandToDiscard
+    };
+
+    struct PlayedCardAnimation {
+        CardViewModel model;
+        Vector2 sourcePosition{0.f, 0.f};
+        CardFlightAnimationKind kind = CardFlightAnimationKind::PlayedToDiscard;
+        bool waitedInQueue = false;
+        float elapsedSeconds = 0.f;
+    };
+
+    struct EnemyDeathAnimation {
+        EntityId enemyId;
+        float elapsedSeconds = 0.f;
+    };
+
+    struct EnemyAttackAnimation {
+        EntityId enemyId;
+        EntityId targetId;
+        float elapsedSeconds = 0.f;
+    };
+
+    enum class CombatFeedbackKind {
+        Damage,
+        Block,
+        Heal,
+        Status
+    };
+
+    struct CombatFloatingFeedback {
+        EntityId targetId;
+        std::string text;
+        CombatFeedbackKind kind = CombatFeedbackKind::Damage;
+        float delaySeconds = 0.f;
+        float elapsedSeconds = 0.f;
+    };
+
+    struct CombatHitFeedback {
+        EntityId targetId;
+        CombatFeedbackKind kind = CombatFeedbackKind::Damage;
+        float delaySeconds = 0.f;
+        float elapsedSeconds = 0.f;
+    };
+
+    void updatePlayedCardAnimations(float deltaSeconds);
+    void enqueueEndTurnDiscardAnimations();
+    bool cardRetainsOnTurnEnd(const CardInstance& card) const;
+    bool endPlayerTurnWillDiscardHand() const;
+    void resolvePendingEndTurn();
+    bool isVisuallyDiscardingCard(CardInstanceId cardInstanceId) const;
+    void renderPlayedCardAnimations() const;
+    CardTransform playedCardAnimationTransform(const PlayedCardAnimation& animation) const;
+    CardTransform handDiscardAnimationTransform(const PlayedCardAnimation& animation) const;
+    Vector2 playedCardQueuePosition(std::size_t queueIndex) const;
+    Vector2 playedCardCenterPosition() const;
+    Vector2 discardPileCenterPosition() const;
+
     void endPlayerTurn();
+
+    void updateCombatFeedbackAnimations(float deltaSeconds);
+    void enqueueFloatingFeedback(EntityId targetId, std::string text, CombatFeedbackKind kind);
+    void enqueueHitFeedback(EntityId targetId, CombatFeedbackKind kind);
+    void enqueueDamageFeedback(const GameEvent& event);
+    void enqueueBlockFeedback(const GameEvent& event);
+    void enqueueHealFeedback(const GameEvent& event);
+    void enqueueStatusFeedback(const GameEvent& event);
+    void applyCombatFeedbackVisuals(CombatViewModel& model) const;
+    void renderCombatFeedbackAnimations() const;
+    Vector2 feedbackAnchor(EntityId targetId) const;
+    Rectangle feedbackTargetBounds(EntityId targetId) const;
+    Color feedbackColor(CombatFeedbackKind kind, float opacity) const;
+    void updateEnemyDeathAnimations(float deltaSeconds);
+    void enqueueEnemyAttackAnimation(EntityId enemyId, EntityId targetId);
+    void updateEnemyAttackAnimations(float deltaSeconds);
+    void applyEnemyAttackVisuals(CombatViewModel& model) const;
+    void startDeathAnimationsForNewlyDeadEnemies();
+    bool deathAnimationExists(EntityId enemyId) const;
+    bool enemyDeathAnimationsComplete() const;
+    void applyEnemyDeathVisuals(CombatViewModel& model) const;
 
     std::vector<CardInstanceId> handCardIds() const;
     std::optional<std::size_t> handCardIndex(CardInstanceId cardInstanceId) const;
@@ -258,6 +349,15 @@ private:
     std::optional<std::size_t> inspectedRelicIndex_;
     std::optional<std::size_t> inspectedConsumableIndex_;
     std::optional<std::size_t> pendingConsumableIndex_;
+    std::optional<std::size_t> targetingConsumableIndex_;
+    std::deque<PlayedCardAnimation> playedCardAnimations_;
+    std::deque<EnemyAttackAnimation> enemyAttackAnimations_;
+    std::vector<EnemyDeathAnimation> enemyDeathAnimations_;
+    std::vector<CombatFloatingFeedback> floatingFeedbacks_;
+    std::vector<CombatHitFeedback> hitFeedbacks_;
+    float feedbackStaggerCursorSeconds_ = 0.f;
+    std::vector<CardInstanceId> visuallyDiscardingCardIds_;
+    bool pendingEndTurnResolution_ = false;
     PileOverlayMode pileOverlayMode_ = PileOverlayMode::None;
     float pileOverlayScrollOffset_ = 0.f;
 

@@ -196,5 +196,119 @@
         ]
       }
     ]
+  },
+  {
+    "id": "candle_king",
+    "name": "enemy.candle_king.name",
+    "max_hp": 158,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "candle_king_royal_flame",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "burn",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      },
+      {
+        "id": "candle_king_waxen_decree",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          }
+        ]
+      },
+      {
+        "id": "candle_king_melted_crown",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 19
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "candle_king_feeding_wick",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ]
+      },
+      {
+        "id": "candle_king_final_candle",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

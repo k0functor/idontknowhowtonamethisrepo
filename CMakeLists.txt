@@ -6,13 +6,20 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(GAME_FORCE_FETCH_RAYLIB "Always build bundled raylib instead of using a system raylib package" OFF)
+option(GAME_STATIC_MINGW_RUNTIME "Link GCC/MinGW runtime libraries statically on Windows" ON)
+
 include(FetchContent)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build dependencies as static libraries" FORCE)
 
-find_package(raylib 6.0 QUIET)
-if (NOT raylib_FOUND)
+if (NOT GAME_FORCE_FETCH_RAYLIB)
+    find_package(raylib 6.0 QUIET)
+endif()
+
+if (GAME_FORCE_FETCH_RAYLIB OR NOT raylib_FOUND)
     FetchContent_Declare(
         raylib
         URL https://github.com/raysan5/raylib/archive/refs/tags/6.0.tar.gz
@@ -255,6 +262,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/combat/EnergySystem.cpp
     src/combat/CardCost.hpp
     src/combat/CardCost.cpp
+    src/combat/CardPlayFailureReason.hpp
     src/combat/EffectSystem.hpp
     src/combat/EffectSystem.cpp
     src/combat/CardPlayValidator.hpp
@@ -271,6 +279,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/CardTransform.hpp
     src/ui/StatusViewModel.hpp
     src/ui/CardViewModel.hpp
+    src/ui/RelicViewModel.hpp
     src/ui/CardViewModelFactory.hpp
     src/ui/CardViewModelFactory.cpp
     src/ui/EnemyViewModel.hpp
@@ -279,6 +288,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/ui/CombatViewModel.hpp
     src/ui/UiFont.hpp
     src/ui/UiFont.cpp
+    src/ui/Utf8.hpp
+    src/ui/VirtualViewport.hpp
     src/ui/CardVisualInstance.hpp
     src/ui/CardVisualInstance.cpp
     src/ui/CardView.hpp
@@ -332,6 +343,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/run/RunMapNode.cpp
     src/run/RunMap.hpp
     src/run/RunState.hpp
+    src/run/RunPendingRoomState.hpp
     src/run/RunMapGenerationConfig.hpp
     src/run/RunMapGenerationConfig.cpp
     src/run/RunMapGenerator.hpp
@@ -393,6 +405,7 @@ add_executable(i_dont_know_how_to_name_this_game
     src/scenes/EventScene.cpp
 )
 
+
 target_include_directories(i_dont_know_how_to_name_this_game PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -418,6 +431,17 @@ target_link_libraries(i_dont_know_how_to_name_this_game PRIVATE
     raylib
     nlohmann_json::nlohmann_json
 )
+
+# Static runtime linking is useful for MinGW release builds, but must not be
+# applied unconditionally: Linux/macOS toolchains and some package managers do
+# not provide static system libraries.
+if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND GAME_STATIC_MINGW_RUNTIME)
+    target_link_options(i_dont_know_how_to_name_this_game PRIVATE
+        -static
+        -static-libgcc
+        -static-libstdc++
+    )
+endif()
 
 add_custom_command(TARGET i_dont_know_how_to_name_this_game POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E remove_directory

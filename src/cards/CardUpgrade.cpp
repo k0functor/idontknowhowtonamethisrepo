@@ -1,13 +1,10 @@
 #include "CardUpgrade.hpp"
 
 #include "cards/CardType.hpp"
-#include "effects/EffectType.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "localization/TextId.hpp"
 
-#include <algorithm>
 #include <string>
-#include <utility>
 
 bool CardUpgradeDefinition::empty() const {
     return !nameTextId.has_value() &&
@@ -20,118 +17,47 @@ bool CardUpgradeDefinition::empty() const {
 }
 
 namespace {
-bool canImproveValue(const EffectType type) {
-    switch (type) {
-        case EffectType::Damage:
-        case EffectType::Block:
-        case EffectType::Heal:
-        case EffectType::DrawCards:
-        case EffectType::ApplyStatus:
-        case EffectType::GainEnergy:
-        case EffectType::LoseStress:
-            return true;
-        case EffectType::DiscardCards:
-        case EffectType::GainStress:
-        case EffectType::LoseEnergy:
-        case EffectType::LoseHp:
-        case EffectType::EnterStance:
-        case EffectType::SummonDrone:
-        case EffectType::UseDrone:
-            return false;
+void applyUpgradeOverride(CardDefinition& result, const CardUpgradeDefinition& upgrade) {
+    if (upgrade.nameTextId.has_value()) {
+        result.nameTextId = *upgrade.nameTextId;
     }
-
-    return false;
-}
-
-int improvementFor(const EffectType type) {
-    switch (type) {
-        case EffectType::Damage:
-        case EffectType::Block:
-        case EffectType::Heal:
-            return 2;
-        case EffectType::ApplyStatus:
-        case EffectType::DrawCards:
-        case EffectType::GainEnergy:
-        case EffectType::LoseStress:
-            return 1;
-        default:
-            return 0;
+    if (upgrade.descriptionTextId.has_value()) {
+        result.descriptionTextId = *upgrade.descriptionTextId;
     }
-}
-
-EffectValue improvedValue(const EffectValue& value, const int delta) {
-    if (value.isFixed()) {
-        return EffectValue::fixed(value.fixedAmount() + delta);
+    if (upgrade.energyCost.has_value()) {
+        result.energyCost = *upgrade.energyCost;
     }
-
-    DiceExpression expression = value.diceExpression();
-    expression.bonus += delta;
-    return EffectValue::dice(expression);
-}
-
-bool improveFirstEffect(std::vector<EffectDefinition>& effects) {
-    for (EffectDefinition& effect : effects) {
-        if (!canImproveValue(effect.type)) {
-            continue;
-        }
-
-        const int delta = improvementFor(effect.type);
-        if (delta <= 0) {
-            continue;
-        }
-
-        effect.value = improvedValue(effect.value, delta);
-        return true;
+    if (upgrade.goldCost.has_value()) {
+        result.goldCost = *upgrade.goldCost;
     }
-
-    return false;
-}
-
-CardDefinition automaticallyUpgraded(CardDefinition result) {
-    if (result.energyCost > 0) {
-        --result.energyCost;
-        return result;
+    if (upgrade.keywords.has_value()) {
+        result.keywords = *upgrade.keywords;
     }
-
-    improveFirstEffect(result.effects);
-    return result;
+    if (upgrade.diceCorruption.has_value()) {
+        result.diceCorruption = *upgrade.diceCorruption;
+    }
+    if (upgrade.effects.has_value()) {
+        result.effects = *upgrade.effects;
+    }
 }
 }
 
 namespace CardUpgrade {
 bool isUpgradable(const CardDefinition& definition) {
-    return definition.type != CardType::Status && definition.type != CardType::Curse;
+    return definition.type != CardType::Status &&
+        definition.type != CardType::Curse &&
+        !definition.upgrade.empty();
 }
 
 CardDefinition upgradedDefinition(const CardDefinition& definition) {
     CardDefinition result = definition;
 
-    if (!definition.upgrade.empty()) {
-        if (definition.upgrade.nameTextId.has_value()) {
-            result.nameTextId = *definition.upgrade.nameTextId;
-        }
-        if (definition.upgrade.descriptionTextId.has_value()) {
-            result.descriptionTextId = *definition.upgrade.descriptionTextId;
-        }
-        if (definition.upgrade.energyCost.has_value()) {
-            result.energyCost = *definition.upgrade.energyCost;
-        }
-        if (definition.upgrade.goldCost.has_value()) {
-            result.goldCost = *definition.upgrade.goldCost;
-        }
-        if (definition.upgrade.keywords.has_value()) {
-            result.keywords = *definition.upgrade.keywords;
-        }
-        if (definition.upgrade.diceCorruption.has_value()) {
-            result.diceCorruption = *definition.upgrade.diceCorruption;
-        }
-        if (definition.upgrade.effects.has_value()) {
-            result.effects = *definition.upgrade.effects;
-        }
+    if (definition.upgrade.empty()) {
         return result;
     }
 
-    return automaticallyUpgraded(std::move(result));
+    applyUpgradeOverride(result, definition.upgrade);
+    return result;
 }
 
 CardDefinition effectiveDefinition(const CardDefinition& definition, const bool upgraded) {

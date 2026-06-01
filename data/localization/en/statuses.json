@@ -60,5 +60,9 @@
   "trait.stress_breakdown.name": "Stress Breakdown",
   "trait.stress_breakdown.description": "At the start of each player turn, after the hand is drawn, this actor makes you discard one random card.",
   "trait.stress_resolve.name": "Stress Resolve",
-  "trait.stress_resolve.description": "This actor resisted a stress check. It currently marks the positive resolve outcome and replaces Stress Breakdown."
+  "trait.stress_resolve.description": "This actor resisted a stress check. It currently marks the positive resolve outcome and replaces Stress Breakdown.",
+  "inspect.status.current_rule.name": "Current effect",
+  "inspect.status.duration.name": "Duration",
+  "inspect.status.rules.name": "Rules",
+  "inspect.status.type.name": "Type"
 }

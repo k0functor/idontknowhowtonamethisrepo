@@ -1,43 +1,43 @@
 #include "GameFlowController.hpp"
+#include "ui/VirtualViewport.hpp"
 
-#include "relics/RelicId.hpp"
 #include "cards/CardDefinition.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "consumables/ConsumableId.hpp"
 #include "relics/RelicDefinition.hpp"
+#include "relics/RelicId.hpp"
 #include "rewards/RewardPoolRules.hpp"
 #include "run/RunCardEligibility.hpp"
-#include "shop/ShopTuning.hpp"
 #include "scenes/CombatScene.hpp"
 #include "scenes/DifficultySelectScene.hpp"
+#include "scenes/EventScene.hpp"
 #include "scenes/FloorCompleteScene.hpp"
 #include "scenes/MainMenuScene.hpp"
 #include "scenes/ProfileHubScene.hpp"
 #include "scenes/RewardScene.hpp"
 #include "scenes/RunMapScene.hpp"
-#include "scenes/ShopScene.hpp"
-#include "scenes/EventScene.hpp"
 #include "scenes/SaveSlotScene.hpp"
 #include "scenes/SettingsScene.hpp"
+#include "scenes/ShopScene.hpp"
 #include "scenes/SplashScene.hpp"
+#include "shop/ShopTuning.hpp"
 #include "statuses/StatusDefinition.hpp"
 #include "ui/BasicUi.hpp"
 
-#include <iostream>
-#include <stdexcept>
-#include <utility>
 #include <algorithm>
-#include <vector>
-#include <sstream>
-#include <set>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <iostream>
+#include <set>
+#include <sstream>
+#include <stdexcept>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include <raylib.h>
-
 
 namespace {
 
@@ -143,7 +143,7 @@ Rectangle inGameSettingsButtonBounds() {
     constexpr float width = 170.f;
     constexpr float height = 42.f;
     return Rectangle{
-        static_cast<float>(GetScreenWidth()) - width - 24.f,
+        static_cast<float>(VirtualViewport::width()) - width - 24.f,
         24.f,
         width,
         height
@@ -151,11 +151,11 @@ Rectangle inGameSettingsButtonBounds() {
 }
 
 Rectangle debugPanelBounds() {
-    const float width = std::min(760.f, static_cast<float>(GetScreenWidth()) - 64.f);
-    const float height = std::min(520.f, static_cast<float>(GetScreenHeight()) - 64.f);
+    const float width = std::min(760.f, static_cast<float>(VirtualViewport::width()) - 64.f);
+    const float height = std::min(520.f, static_cast<float>(VirtualViewport::height()) - 64.f);
     return Rectangle{
-        (static_cast<float>(GetScreenWidth()) - width) * 0.5f,
-        (static_cast<float>(GetScreenHeight()) - height) * 0.5f,
+        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
+        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
         width,
         height
     };
@@ -315,13 +315,13 @@ void GameFlowController::render() const {
     sceneManager_.render();
 
     if (settingsOverlay_ != nullptr) {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 170});
+        DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 170});
         settingsOverlay_->render();
         return;
     }
 
     if (debugPanelOpen_) {
-        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Color{0, 0, 0, 150});
+        DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 150});
         renderDebugPanel();
         return;
     }
@@ -414,7 +414,7 @@ void GameFlowController::openSettingsOverlay() {
             }
         },
         [this]() { closeSettingsOverlay(); },
-        [this]() { saveAndExitRunToMainMenu(); }
+        [this]() { saveAndExitRunToSaveSlots(); }
     );
 }
 
@@ -422,13 +422,18 @@ void GameFlowController::closeSettingsOverlay() {
     settingsOverlay_.reset();
 }
 
-void GameFlowController::saveAndExitRunToMainMenu() {
-    saveActiveRun();
+void GameFlowController::saveAndExitRunToSaveSlots() {
+    if (runController_.hasActiveRun() && runController_.isActCompleted()) {
+        finishCompletedRunAndDeleteSave();
+    } else {
+        saveActiveRun();
+        runController_.clearActiveRun();
+    }
+
     settingsOverlay_.reset();
-    runController_.clearActiveRun();
     selectedArchetypeId_.reset();
     selectedDifficultyId_.reset();
-    queueTransition([this]() { setMainMenuScene(); });
+    queueTransition([this]() { setSaveSlotScene(); });
 }
 
 bool GameFlowController::shouldShowInGameSettingsButton() const {
@@ -929,7 +934,9 @@ void GameFlowController::setProfileHubScene() {
             content_.cards(),
             content_.relics(),
             content_.archetypes().all(),
+            hasRunSave(profileManager_.selectedSlotIndex()),
             [this](PlayableArchetypeId archetypeId) { selectArchetype(std::move(archetypeId)); },
+            [this]() { continueRunInSlot(profileManager_.selectedSlotIndex()); },
             [this]() { showSaveSlots(); }
         )
     );
@@ -950,6 +957,11 @@ void GameFlowController::setDifficultySelectScene() {
 void GameFlowController::setRunMapScene() {
     if (!runController_.hasActiveRun()) {
         throw std::runtime_error("Cannot open run map: no active run");
+    }
+
+    if (runController_.isActCompleted()) {
+        setFloorCompleteScene();
+        return;
     }
 
     sceneManager_.setScene(
@@ -979,8 +991,10 @@ void GameFlowController::setFloorCompleteScene() {
             uiFont_,
             localization_,
             content_.enemies(),
+            content_.relics(),
             runController_.run(),
-            [this]() { finishFloorComplete(); }
+            [this]() { finishFloorCompleteContinue(); },
+            [this]() { finishFloorCompleteMainMenu(); }
         )
     );
 }
@@ -1030,6 +1044,14 @@ bool GameFlowController::setPendingRoomSceneIfNeeded() {
     return false;
 }
 
+bool GameFlowController::setPendingRoomSceneForNodeIfNeeded(const int nodeId) {
+    if (!runController_.hasPendingRoomForNode(nodeId)) {
+        return false;
+    }
+
+    return setPendingRoomSceneIfNeeded();
+}
+
 void GameFlowController::setCombatScene(const int nodeId) {
     if (!runController_.hasActiveRun()) {
         throw std::runtime_error("Cannot start combat: no active run");
@@ -1048,9 +1070,11 @@ void GameFlowController::setCombatScene(const int nodeId) {
                     result,
                     content_.cards(),
                     content_.relics(),
+                    content_.consumables(),
                     content_.rewardTuning(),
                     random_
                 );
+
                 runController_.setPendingCombatReward(nodeId, reward);
                 saveActiveRun();
                 queueTransition([this, nodeId, reward = std::move(reward)]() mutable {
@@ -1153,7 +1177,6 @@ void GameFlowController::showSaveSlots() {
 void GameFlowController::startNewRunInSlot(const std::size_t slotIndex) {
     queueTransition([this, slotIndex]() {
         profileManager_.selectSlot(slotIndex);
-        runSaveSystem_.deleteRun(slotIndex);
         runController_.clearActiveRun();
         selectedArchetypeId_.reset();
         selectedDifficultyId_.reset();
@@ -1167,12 +1190,16 @@ void GameFlowController::continueRunInSlot(const std::size_t slotIndex) {
         runController_.restoreRun(runSaveSystem_.loadRun(slotIndex));
         selectedArchetypeId_.reset();
         selectedDifficultyId_.reset();
+
+        if (runController_.isActCompleted()) {
+            runController_.clearPendingRoom();
+            saveActiveRun();
+            setFloorCompleteScene();
+            return;
+        }
+
         if (!setPendingRoomSceneIfNeeded()) {
-            if (runController_.isActCompleted()) {
-                setFloorCompleteScene();
-            } else {
-                setRunMapScene();
-            }
+            setRunMapScene();
         }
     });
 }
@@ -1230,6 +1257,20 @@ void GameFlowController::selectDifficulty(DifficultyId difficultyId) {
 
 void GameFlowController::startMapNode(const int nodeId) {
     queueTransition([this, nodeId]() {
+        if (setPendingRoomSceneForNodeIfNeeded(nodeId)) {
+            return;
+        }
+
+        if (runController_.hasPendingRoom()) {
+            setPendingRoomSceneIfNeeded();
+            return;
+        }
+
+        if (!runController_.canStartNode(nodeId)) {
+            setRunMapScene();
+            return;
+        }
+
         const RunMapNodeType nodeType = runController_.node(nodeId).type;
         runController_.startNode(nodeId);
         saveActiveRun();
@@ -1297,6 +1338,11 @@ void GameFlowController::startMapNode(const int nodeId) {
 
 void GameFlowController::restHeal(const int nodeId) {
     queueTransition([this, nodeId]() {
+        if (!runController_.canUseRestNode(nodeId)) {
+            setRunMapScene();
+            return;
+        }
+
         runController_.startNode(nodeId);
         runController_.completeRestHeal(nodeId);
         saveActiveRun();
@@ -1306,15 +1352,26 @@ void GameFlowController::restHeal(const int nodeId) {
 
 void GameFlowController::restUpgrade(const int nodeId, const std::size_t deckIndex) {
     queueTransition([this, nodeId, deckIndex]() {
+        if (!runController_.canUseRestNode(nodeId)) {
+            setRunMapScene();
+            return;
+        }
+
         runController_.startNode(nodeId);
-        runController_.completeRestUpgrade(nodeId, deckIndex);
-        saveActiveRun();
+        if (runController_.completeRestUpgrade(nodeId, deckIndex)) {
+            saveActiveRun();
+        }
         setRunMapScene();
     });
 }
 
 void GameFlowController::restSkip(const int nodeId) {
     queueTransition([this, nodeId]() {
+        if (!runController_.canUseRestNode(nodeId)) {
+            setRunMapScene();
+            return;
+        }
+
         runController_.startNode(nodeId);
         runController_.completeRestSkip(nodeId);
         saveActiveRun();
@@ -1341,6 +1398,12 @@ void GameFlowController::updatePendingShopState(const int nodeId, const ShopStat
 
 void GameFlowController::finishShop(const int nodeId) {
     queueTransition([this, nodeId]() {
+        if (!runController_.hasPendingRoomForNode(nodeId) ||
+            runController_.pendingRoom().type != RunPendingRoomType::Shop) {
+            setRunMapScene();
+            return;
+        }
+
         runController_.completeShopNode(nodeId);
         saveActiveRun();
         setRunMapScene();
@@ -1349,6 +1412,13 @@ void GameFlowController::finishShop(const int nodeId) {
 
 void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefinition& choice) {
     queueTransition([this, nodeId, choice]() {
+        if (!runController_.hasPendingRoomForNode(nodeId) ||
+            runController_.pendingRoom().type != RunPendingRoomType::Event) {
+            setRunMapScene();
+            return;
+        }
+
+        const std::string eventId = runController_.pendingRoom().eventId;
         const bool completed = runController_.completeEventChoice(
             nodeId,
             choice,
@@ -1358,7 +1428,7 @@ void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefin
             random_
         );
         if (!completed) {
-            setEventScene(nodeId, content_.events().get(runController_.pendingRoom().eventId));
+            setEventScene(nodeId, content_.events().get(eventId));
             return;
         }
         saveActiveRun();
@@ -1366,11 +1436,18 @@ void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefin
     });
 }
 
-void GameFlowController::finishReward(const RewardState& reward, RewardSelection selection) {
-    queueTransition([this, reward, selection = std::move(selection)]() mutable {
-        const bool completedBoss = reward.sourceNodeType == RunMapNodeType::Boss;
+void GameFlowController::finishReward(const RewardState&, RewardSelection selection) {
+    queueTransition([this, selection = std::move(selection)]() mutable {
+        if (!runController_.hasPendingRoom() ||
+            runController_.pendingRoom().type != RunPendingRoomType::CombatReward) {
+            setRunMapScene();
+            return;
+        }
 
-        runController_.applyReward(reward, selection);
+        const RewardState pendingReward = runController_.pendingRoom().reward;
+        const bool completedBoss = pendingReward.sourceNodeType == RunMapNodeType::Boss;
+
+        runController_.applyReward(pendingReward, selection);
         runController_.clearPendingRoom();
 
         if (completedBoss) {
@@ -1390,19 +1467,43 @@ void GameFlowController::finishChestReward(
     RewardSelection selection
 ) {
     queueTransition([this, nodeId, selection = std::move(selection)]() mutable {
-        runController_.applyReward(RewardState{}, selection);
+        if (!runController_.hasPendingRoomForNode(nodeId) ||
+            runController_.pendingRoom().type != RunPendingRoomType::ChestReward) {
+            setRunMapScene();
+            return;
+        }
+
+        const RewardState reward = runController_.pendingRoom().reward;
+        runController_.applyReward(reward, selection);
         runController_.completeChestNode(nodeId);
         saveActiveRun();
         setRunMapScene();
     });
 }
 
-void GameFlowController::finishFloorComplete() {
+void GameFlowController::finishFloorCompleteContinue() {
     queueTransition([this]() {
-        deleteSelectedRunSave();
-        runController_.clearActiveRun();
+        finishCompletedRunAndDeleteSave();
         setProfileHubScene();
     });
+}
+
+void GameFlowController::finishFloorCompleteMainMenu() {
+    queueTransition([this]() {
+        finishCompletedRunAndDeleteSave();
+        setMainMenuScene();
+    });
+}
+
+void GameFlowController::finishCompletedRunAndDeleteSave() {
+    if (runController_.hasActiveRun() && runController_.isActCompleted()) {
+        if (ProfileData* profile = profileManager_.selectedProfile()) {
+            ++profile->victories;
+        }
+    }
+
+    deleteSelectedRunSave();
+    runController_.clearActiveRun();
 }
 
 bool GameFlowController::hasRunSave(const std::size_t slotIndex) const {

@@ -60,13 +60,14 @@
       "herbalist"
     ],
     "starting_deck": [
-      "herbalist_scalpel",
-      "herbalist_scalpel",
-      "herbalist_toxin_vial",
-      "herbalist_toxin_vial",
-      "herbalist_smoke_mask",
+      "herbalist_basic_strike",
+      "herbalist_basic_strike",
       "herbalist_basic_defend",
-      "herbalist_basic_strike"
+      "herbalist_basic_defend",
+      "herbalist_scalpel",
+      "herbalist_scalpel",
+      "herbalist_toxin_vial",
+      "herbalist_smoke_mask"
     ],
     "starting_relics": [
       "copper_inhaler"
@@ -105,13 +106,14 @@
       "replicant"
     ],
     "starting_deck": [
+      "replicant_basic_strike",
+      "replicant_basic_strike",
+      "replicant_basic_defend",
+      "replicant_basic_defend",
       "cyborg_striker_drone",
       "cyborg_guardian_drone",
       "cyborg_trigger_drone",
-      "cyborg_wrench_hit",
-      "cyborg_wrench_hit",
-      "cyborg_patch_guard",
-      "replicant_basic_defend"
+      "cyborg_wrench_hit"
     ],
     "starting_relics": [
       "empty_dock"

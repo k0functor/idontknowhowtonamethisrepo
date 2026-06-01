@@ -32,6 +32,7 @@ public:
     InspectPanelModel buildConsumable(const ConsumableDefinition& consumable) const;
     InspectPanelModel buildRelic(const RelicDefinition& relic) const;
     InspectPanelModel buildDroneSlot(const DroneSlotViewModel& droneSlot) const;
+    InspectPanelModel buildStatus(const StatusViewModel& status) const;
 
     InspectPanelModel buildCard(
         const CardDefinition& definition,

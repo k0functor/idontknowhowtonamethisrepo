@@ -4,7 +4,20 @@ struct RunStats {
     int combatsWon = 0;
     int elitesKilled = 0;
     int bossesKilled = 0;
+    int eventsCompleted = 0;
+    int shopsVisited = 0;
+    int chestsOpened = 0;
+    int restsUsed = 0;
+
     int goldGained = 0;
+    int goldSpent = 0;
+
     int cardsAdded = 0;
+    int cardsRemoved = 0;
+    int cardsUpgraded = 0;
+
+    int relicsGained = 0;
+    int consumablesGained = 0;
+
     int nodesCompleted = 0;
 };

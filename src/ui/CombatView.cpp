@@ -1,4 +1,5 @@
 #include "CombatView.hpp"
+#include "ui/VirtualViewport.hpp"
 
 #include "ui/Utf8.hpp"
 
@@ -13,7 +14,6 @@ constexpr float maxContentWidth = 1520.f;
 
 void CombatView::setModel(const CombatViewModel& model) {
     model_ = model;
-    handView_.setCards(model_.handCards);
 
     playerViews_.resize(model_.players.size());
     for (std::size_t i = 0; i < model_.players.size(); ++i) {
@@ -26,6 +26,7 @@ void CombatView::setModel(const CombatViewModel& model) {
     }
 
     applyResponsiveLayout();
+    handView_.setCards(model_.handCards);
 }
 
 const CombatViewModel& CombatView::model() const {
@@ -77,26 +78,41 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
         }
     }
 
+    hoveredStatus_.reset();
+    hoveredStatusBounds_.reset();
+
     hoveredPlayerId_.reset();
     for (const PlayerView& playerView : playerViews_) {
         if (playerView.contains(mousePosition)) {
             hoveredPlayerId_ = playerView.model().entityId;
+
+            const std::optional<std::size_t> statusIndex = playerView.statusIndexAt(mousePosition);
+            if (statusIndex.has_value() && *statusIndex < playerView.model().statuses.size()) {
+                hoveredStatus_ = playerView.model().statuses[*statusIndex];
+                hoveredStatusBounds_ = playerView.statusBounds(*statusIndex);
+            }
             break;
         }
     }
 
     hoveredEnemyId_.reset();
     for (const EnemyView& enemyView : enemyViews_) {
-        if (enemyView.contains(mousePosition)) {
+        if (enemyView.model().opacity > 0.05f && enemyView.contains(mousePosition)) {
             hoveredEnemyId_ = enemyView.model().entityId;
+
+            const std::optional<std::size_t> statusIndex = enemyView.statusIndexAt(mousePosition);
+            if (statusIndex.has_value() && *statusIndex < enemyView.model().statuses.size()) {
+                hoveredStatus_ = enemyView.model().statuses[*statusIndex];
+                hoveredStatusBounds_ = enemyView.statusBounds(*statusIndex);
+            }
             break;
         }
     }
 }
 
 void CombatView::render(const Font* font) const {
-    const int screenWidth = GetScreenWidth();
-    const int screenHeight = GetScreenHeight();
+    const int screenWidth = VirtualViewport::width();
+    const int screenHeight = VirtualViewport::height();
 
     DrawRectangle(0, 0, screenWidth, screenHeight, Color{20, 20, 24, 255});
     DrawRectangle(0, 0, screenWidth, 72, Color{26, 28, 36, 255});
@@ -117,7 +133,11 @@ void CombatView::render(const Font* font) const {
         DrawTextEx(*font, model_.endTurnLabel.c_str(), Vector2{endTurnBounds.x + 24.f, endTurnBounds.y + 18.f}, 18.f, 1.f, WHITE);
 
         if (!model_.keyboardHintLabel.empty()) {
-            DrawTextEx(*font, model_.keyboardHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 30.f}, 14.f, 1.f, Color{168, 176, 198, 255});
+            DrawTextEx(*font, model_.keyboardHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 34.f}, 14.f, 1.f, Color{168, 176, 198, 255});
+        }
+
+        if (!model_.targetHintLabel.empty()) {
+            DrawTextEx(*font, model_.targetHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 16.f}, 14.f, 1.f, Color{150, 235, 180, 255});
         }
 
         if (!model_.turnOrderLabel.empty()) {
@@ -231,6 +251,14 @@ std::optional<Rectangle> CombatView::playerBounds(const EntityId entityId) const
     return std::nullopt;
 }
 
+std::optional<StatusViewModel> CombatView::hoveredStatus() const {
+    return hoveredStatus_;
+}
+
+std::optional<Rectangle> CombatView::hoveredStatusBounds() const {
+    return hoveredStatusBounds_;
+}
+
 std::optional<std::size_t> CombatView::hoveredRelicIndex() const {
     return hoveredRelicIndex_;
 }
@@ -257,8 +285,8 @@ bool CombatView::endTurnButtonContains(const Vector2 mousePosition) const {
 
 void CombatView::applyResponsiveLayout() {
     handView_.setViewport(
-        static_cast<float>(GetScreenWidth()),
-        static_cast<float>(GetScreenHeight())
+        static_cast<float>(VirtualViewport::width()),
+        static_cast<float>(VirtualViewport::height())
     );
     layoutPlayers();
     layoutEnemies();
@@ -393,8 +421,8 @@ void CombatView::renderCardTooltip(const Font* font) const {
 }
 
 Rectangle CombatView::contentBounds() const {
-    const float screenWidth = static_cast<float>(GetScreenWidth());
-    const float screenHeight = static_cast<float>(GetScreenHeight());
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float screenHeight = static_cast<float>(VirtualViewport::height());
     const float margin = 14.f;
     const float availableWidth = std::max(1.f, screenWidth - margin * 2.f);
     const float contentWidth = std::clamp(availableWidth, std::min(minContentWidth, availableWidth), maxContentWidth);
@@ -410,8 +438,8 @@ Rectangle CombatView::battlefieldBounds() const {
     const Rectangle content = contentBounds();
     const float margin = 14.f;
     const float top = 82.f;
-    const float handHeight = std::clamp(static_cast<float>(GetScreenHeight()) * 0.36f, 250.f, 330.f);
-    const float bottom = static_cast<float>(GetScreenHeight()) - handHeight - 10.f;
+    const float handHeight = std::clamp(static_cast<float>(VirtualViewport::height()) * 0.36f, 250.f, 330.f);
+    const float bottom = static_cast<float>(VirtualViewport::height()) - handHeight - 10.f;
     return Rectangle{
         content.x + margin,
         top,
@@ -423,10 +451,10 @@ Rectangle CombatView::battlefieldBounds() const {
 Rectangle CombatView::handBounds() const {
     const Rectangle content = contentBounds();
     const float margin = 14.f;
-    const float handHeight = std::clamp(static_cast<float>(GetScreenHeight()) * 0.36f, 250.f, 330.f);
+    const float handHeight = std::clamp(static_cast<float>(VirtualViewport::height()) * 0.36f, 250.f, 330.f);
     return Rectangle{
         content.x + margin,
-        static_cast<float>(GetScreenHeight()) - handHeight,
+        static_cast<float>(VirtualViewport::height()) - handHeight,
         std::max(1.f, content.width - margin * 2.f),
         handHeight - 10.f
     };

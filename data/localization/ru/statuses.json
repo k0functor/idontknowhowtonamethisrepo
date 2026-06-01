@@ -60,5 +60,9 @@
   "trait.stress_breakdown.name": "Срыв от стресса",
   "trait.stress_breakdown.description": "В начале каждого хода игрока, после добора руки, этот персонаж заставляет сбросить одну случайную карту.",
   "trait.stress_resolve.name": "Решимость",
-  "trait.stress_resolve.description": "Персонаж выдержал проверку стресса. Сейчас эта черта отмечает положительный исход проверки и заменяет срыв от стресса."
+  "trait.stress_resolve.description": "Персонаж выдержал проверку стресса. Сейчас эта черта отмечает положительный исход проверки и заменяет срыв от стресса.",
+  "inspect.status.current_rule.name": "Текущий эффект",
+  "inspect.status.duration.name": "Длительность",
+  "inspect.status.rules.name": "Правила",
+  "inspect.status.type.name": "Тип"
 }

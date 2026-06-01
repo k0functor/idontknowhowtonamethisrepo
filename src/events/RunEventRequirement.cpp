@@ -7,6 +7,10 @@ bool containsId(const std::vector<std::string>& ids, const std::string& id) {
     return std::find(ids.begin(), ids.end(), id) != ids.end();
 }
 
+bool deckContainsCardId(const std::vector<CardId>& ids, const std::string& id) {
+    return std::find(ids.begin(), ids.end(), CardId(id)) != ids.end();
+}
+
 int totalCurrentHp(const RunState& state) {
     int total = 0;
     for (const RunActorState& actor : state.actorStates) {
@@ -48,6 +52,37 @@ RunEventChoiceAvailability evaluateRunEventChoiceRequirements(
             static_cast<int>(state.consumableIds.size()),
             {}
         });
+    }
+
+    if (requirements.minDeckSize > 0 && static_cast<int>(state.deckCardIds.size()) < requirements.minDeckSize) {
+        result.reasons.push_back(RunEventChoiceBlockReason{
+            RunEventChoiceBlockReasonType::NotEnoughCards,
+            requirements.minDeckSize,
+            static_cast<int>(state.deckCardIds.size()),
+            {}
+        });
+    }
+
+    for (const std::string& cardId : requirements.requiredCardIds) {
+        if (!deckContainsCardId(state.deckCardIds, cardId)) {
+            result.reasons.push_back(RunEventChoiceBlockReason{
+                RunEventChoiceBlockReasonType::MissingRequiredCard,
+                0,
+                0,
+                cardId
+            });
+        }
+    }
+
+    for (const std::string& cardId : requirements.forbiddenCardIds) {
+        if (deckContainsCardId(state.deckCardIds, cardId)) {
+            result.reasons.push_back(RunEventChoiceBlockReason{
+                RunEventChoiceBlockReasonType::HasForbiddenCard,
+                0,
+                0,
+                cardId
+            });
+        }
     }
 
     for (const std::string& relicId : requirements.requiredRelicIds) {

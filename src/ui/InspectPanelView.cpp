@@ -5,11 +5,11 @@
 #include <algorithm>
 
 namespace {
-constexpr float padding = 10.f;
-constexpr float headerFontSize = 17.f;
-constexpr float subheaderFontSize = 12.f;
-constexpr float entryTitleFontSize = 13.f;
-constexpr float entryDescriptionFontSize = 12.f;
+constexpr float padding = 16.f;
+constexpr float headerFontSize = 24.f;
+constexpr float subheaderFontSize = 18.f;
+constexpr float entryTitleFontSize = 20.f;
+constexpr float entryDescriptionFontSize = 18.f;
 
 Color panelFill() {
     return Color{24, 26, 34, 238};
@@ -66,7 +66,7 @@ void drawWrapped(
         }
 
         BasicUi::drawText(font, line, Vector2{bounds.x, y}, fontSize, color);
-        y += fontSize + 2.f;
+        y += fontSize + 5.f;
     }
 }
 }
@@ -101,7 +101,7 @@ void InspectPanelView::render(
             Color{255, 235, 170, 255},
             y
         );
-        y += 4.f;
+        y += 8.f;
     }
 
     if (!model.subheader.empty()) {
@@ -113,7 +113,7 @@ void InspectPanelView::render(
             Color{220, 220, 230, 255},
             y
         );
-        y += 5.f;
+        y += 10.f;
     }
 
     for (const InspectEntry& entry : model.entries) {
@@ -143,6 +143,6 @@ void InspectPanelView::render(
             );
         }
 
-        y += 5.f;
+        y += 10.f;
     }
 }

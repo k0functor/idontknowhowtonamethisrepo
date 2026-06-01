@@ -247,5 +247,162 @@
         ]
       }
     ]
+  },
+  {
+    "id": "reliquary_guard",
+    "name": "enemy.reliquary_guard.name",
+    "max_hp": 88,
+    "starting_block": 12,
+    "actions": [
+      {
+        "id": "reliquary_guard_sacred_wall",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "reliquary_guard_key_smite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "reliquary_guard_shattering_swing",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          }
+        ]
+      },
+      {
+        "id": "reliquary_guard_denial",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "carrion_matron",
+    "name": "enemy.carrion_matron.name",
+    "max_hp": 78,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "carrion_matron_sickly_brood",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "carrion_matron_hooked_beak",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "carrion_matron_rotten_cover",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          }
+        ]
+      },
+      {
+        "id": "carrion_matron_wingstorm",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

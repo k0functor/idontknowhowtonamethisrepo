@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <utility>
 
 namespace {
 float clampFloat(const float value, const float minimum, const float maximum) {
@@ -37,6 +38,7 @@ void HandView::setDraggedCard(
 }
 
 void HandView::setViewport(const float width, const float height) {
+    drawPileOrigin_ = Vector2{82.f, height - 41.f};
     const Vector2 cardSize = CardView::size();
     const float widthScale = width / 1280.f;
     const float heightScale = height / 720.f;
@@ -68,6 +70,10 @@ void HandView::setViewport(const float width, const float height) {
     updateTargets();
 }
 
+void HandView::setDrawPileOrigin(const Vector2 origin) {
+    drawPileOrigin_ = origin;
+}
+
 void HandView::update(const float deltaSeconds, const Vector2 mousePosition) {
     const std::optional<std::size_t> hoveredIndex = draggedCardId_.has_value()
         ? std::nullopt
@@ -80,8 +86,13 @@ void HandView::update(const float deltaSeconds, const Vector2 mousePosition) {
 
     updateTargets();
 
-    for (CardView& card : cards_) {
-        card.update(deltaSeconds);
+    for (std::size_t i = 0; i < cards_.size(); ++i) {
+        if (i < entryDelaySeconds_.size() && entryDelaySeconds_[i] > 0.f) {
+            entryDelaySeconds_[i] = std::max(0.f, entryDelaySeconds_[i] - deltaSeconds);
+            continue;
+        }
+
+        cards_[i].update(deltaSeconds);
     }
 }
 
@@ -128,14 +139,57 @@ void HandView::rebuildIfNeeded(const std::vector<CardViewModel>& models) {
         return;
     }
 
+    struct PreviousCardState {
+        CardInstanceId id;
+        CardTransform transform;
+        float entryDelaySeconds = 0.f;
+    };
+
+    std::vector<PreviousCardState> previousStates;
+    previousStates.reserve(cards_.size());
+    for (std::size_t i = 0; i < cards_.size(); ++i) {
+        PreviousCardState state;
+        state.id = cards_[i].model().instanceId;
+        state.transform = cards_[i].currentTransform();
+        if (i < entryDelaySeconds_.size()) {
+            state.entryDelaySeconds = entryDelaySeconds_[i];
+        }
+        previousStates.push_back(state);
+    }
+
     cards_.clear();
     cards_.resize(models.size());
+    entryDelaySeconds_.assign(models.size(), 0.f);
 
     const std::vector<CardTransform> baseTransforms = layout_.calculateBaseTransforms(models.size());
 
+    std::size_t newCardSequence = 0u;
     for (std::size_t i = 0; i < models.size(); ++i) {
         cards_[i].setModel(models[i]);
-        cards_[i].setCurrentTransform(baseTransforms[i]);
+
+        const auto previous = std::find_if(
+            previousStates.begin(),
+            previousStates.end(),
+            [&](const PreviousCardState& entry) {
+                return entry.id == models[i].instanceId;
+            }
+        );
+
+        CardTransform current = baseTransforms[i];
+        if (previous != previousStates.end()) {
+            current = previous->transform;
+            entryDelaySeconds_[i] = previous->entryDelaySeconds;
+        } else {
+            const float sourceScale = std::max(0.20f, layout_.config().baseScale * 0.42f);
+            current.position = drawPileOrigin_;
+            current.scale = Vector2{sourceScale, sourceScale};
+            current.rotationDegrees = -12.f;
+            current.zIndex = baseTransforms[i].zIndex + 500;
+            entryDelaySeconds_[i] = 0.24f * static_cast<float>(newCardSequence);
+            ++newCardSequence;
+        }
+
+        cards_[i].setCurrentTransform(current);
         cards_[i].setTargetTransform(baseTransforms[i]);
     }
 }

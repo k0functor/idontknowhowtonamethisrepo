@@ -427,5 +427,197 @@
         ]
       }
     ]
+  },
+  {
+    "id": "abandoned_satchel",
+    "title": "event.abandoned_satchel.title",
+    "description": "event.abandoned_satchel.description",
+    "choices": [
+      {
+        "text": "event.abandoned_satchel.choice.potion",
+        "description": "event.abandoned_satchel.choice.potion.description",
+        "effects": [
+          {
+            "type": "gain_consumable",
+            "consumable_id": "guard_potion"
+          }
+        ],
+        "requirements": {
+          "free_consumable_slot": true
+        }
+      },
+      {
+        "text": "event.abandoned_satchel.choice.coin",
+        "description": "event.abandoned_satchel.choice.coin.description",
+        "effects": [
+          {
+            "type": "gain_relic",
+            "relic_id": "copper_coin"
+          }
+        ],
+        "requirements": {
+          "missing_relic": "copper_coin"
+        }
+      },
+      {
+        "text": "event.abandoned_satchel.choice.burn",
+        "description": "event.abandoned_satchel.choice.burn.description",
+        "effects": [
+          {
+            "type": "remove_random_card"
+          },
+          {
+            "type": "gain_stress",
+            "amount": 6
+          }
+        ],
+        "requirements": {
+          "min_deck_size": 8
+        }
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "toll_bridge",
+    "title": "event.toll_bridge.title",
+    "description": "event.toll_bridge.description",
+    "choices": [
+      {
+        "text": "event.toll_bridge.choice.pay",
+        "description": "event.toll_bridge.choice.pay.description",
+        "effects": [
+          {
+            "type": "lose_gold",
+            "amount": 35
+          },
+          {
+            "type": "gain_random_relic"
+          }
+        ],
+        "requirements": {
+          "min_gold": 35
+        }
+      },
+      {
+        "text": "event.toll_bridge.choice.pry",
+        "description": "event.toll_bridge.choice.pry.description",
+        "effects": [
+          {
+            "type": "gain_gold",
+            "amount": 25
+          },
+          {
+            "type": "gain_stress",
+            "amount": 5
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "blood_scriptorium",
+    "title": "event.blood_scriptorium.title",
+    "description": "event.blood_scriptorium.description",
+    "choices": [
+      {
+        "text": "event.blood_scriptorium.choice.copy",
+        "description": "event.blood_scriptorium.choice.copy.description",
+        "effects": [
+          {
+            "type": "lose_hp",
+            "amount": 6
+          },
+          {
+            "type": "gain_random_card"
+          }
+        ]
+      },
+      {
+        "text": "event.blood_scriptorium.choice.erase",
+        "description": "event.blood_scriptorium.choice.erase.description",
+        "effects": [
+          {
+            "type": "remove_random_card"
+          },
+          {
+            "type": "gain_stress",
+            "amount": 8
+          }
+        ],
+        "requirements": {
+          "min_deck_size": 8
+        }
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "broken_apothecary",
+    "title": "event.broken_apothecary.title",
+    "description": "event.broken_apothecary.description",
+    "choices": [
+      {
+        "text": "event.broken_apothecary.choice.tonic",
+        "description": "event.broken_apothecary.choice.tonic.description",
+        "effects": [
+          {
+            "type": "gain_consumable",
+            "consumable_id": "focus_tonic"
+          }
+        ],
+        "requirements": {
+          "free_consumable_slot": true
+        }
+      },
+      {
+        "text": "event.broken_apothecary.choice.brew",
+        "description": "event.broken_apothecary.choice.brew.description",
+        "effects": [
+          {
+            "type": "heal_all",
+            "amount": 10
+          },
+          {
+            "type": "gain_stress",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
   }
 ]

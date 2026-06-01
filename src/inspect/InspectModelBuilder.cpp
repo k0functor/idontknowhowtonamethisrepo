@@ -45,6 +45,14 @@ InspectPanelModel InspectModelBuilder::buildEnemy(const EnemyViewModel& enemy) c
         });
     }
 
+    if (!enemy.intentDetailText.empty()) {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.enemy.intent_detail"),
+            enemy.intentDetailText,
+            InspectEntryStyle::Hint
+        });
+    }
+
     if (enemy.block > 0) {
         model.entries.push_back(InspectEntry{
             rawText("inspect.combat.block.name"),
@@ -291,6 +299,51 @@ InspectPanelModel InspectModelBuilder::buildDroneSlot(const DroneSlotViewModel& 
             rawText("inspect.drone.passive_action.name"),
             droneActionSummary(*definition.passiveAction),
             InspectEntryStyle::Hint
+        });
+    }
+
+    return model;
+}
+
+InspectPanelModel InspectModelBuilder::buildStatus(const StatusViewModel& status) const {
+    InspectPanelModel model;
+    model.header = status.amount > 0
+        ? formatRawText("inspect.status.title_with_amount",
+            {{"name", status.name}, {"amount", std::to_string(status.amount)}})
+        : status.name;
+    model.subheader = !status.description.empty()
+        ? status.description
+        : statusDescription(status.id);
+
+    if (!status.runtimeText.empty()) {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.status.current_rule.name"),
+            status.runtimeText,
+            InspectEntryStyle::Hint
+        });
+    }
+
+    const std::string type = !status.typeLabel.empty()
+        ? status.typeLabel
+        : rawText("status.type.neutral");
+    model.entries.push_back(InspectEntry{
+        rawText("inspect.status.type.name"),
+        type
+    });
+
+    if (!status.durationLabel.empty()) {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.status.duration.name"),
+            status.durationLabel
+        });
+    }
+
+    const std::string rule = statusRuleDescription(status.id);
+    if (!rule.empty()) {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.status.rules.name"),
+            rule,
+            status.debuff ? InspectEntryStyle::Warning : InspectEntryStyle::Hint
         });
     }
 
@@ -691,6 +744,20 @@ std::string InspectModelBuilder::relicTriggerSummary(const RelicTriggerDefinitio
 
     if (trigger.oncePerCombat) {
         out << ", " << rawText("inspect.relic.once_per_combat");
+    }
+
+    if (trigger.cardType.has_value()) {
+        out << ", " << formatRawText(
+            "inspect.relic.card_type_filter",
+            {{"type", rawTextOrFallback("card.type." + toString(*trigger.cardType), toString(*trigger.cardType))}}
+        );
+    }
+
+    if (trigger.minimumAmount > 0) {
+        out << ", " << formatRawText(
+            "inspect.relic.min_amount",
+            {{"amount", std::to_string(trigger.minimumAmount)}}
+        );
     }
 
     if (!trigger.effects.empty()) {

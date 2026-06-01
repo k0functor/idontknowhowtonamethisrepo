@@ -45,6 +45,7 @@ struct CombatViewModel {
     std::string emptyLabel = {};
     std::string droneSlotsLabel = {};
     std::string keyboardHintLabel;
+    std::string targetHintLabel;
     std::string turnOrderLabel;
     std::string activeActorLabel;
 
