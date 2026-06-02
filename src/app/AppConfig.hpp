@@ -25,7 +25,7 @@ struct PathConfig {
 };
 
 struct DebugConfig {
-    bool enabled = true;
+    bool enabled = false;
 };
 
 struct AppConfig {

@@ -82,7 +82,10 @@
         },
         "status": "drone_striker"
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 0
+    }
   },
   {
     "id": "cyborg_guardian_drone",
@@ -103,7 +106,10 @@
         },
         "status": "drone_guardian"
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 0
+    }
   },
   {
     "id": "cyborg_trigger_drone",
@@ -123,7 +129,21 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "use_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "repeat_count": 2
+        }
+      ],
+      "description": "card.cyborg_trigger_drone.upgrade.description"
+    }
   },
   {
     "id": "cyborg_wrench_hit",
@@ -179,7 +199,19 @@
           "amount": 6
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_marker_drone",
@@ -200,7 +232,10 @@
         },
         "status": "drone_marker"
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 0
+    }
   },
   {
     "id": "cyborg_surgeon_drone",
@@ -221,7 +256,10 @@
         },
         "status": "drone_surgeon"
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 0
+    }
   },
   {
     "id": "cyborg_bomber_drone",
@@ -242,7 +280,10 @@
         },
         "status": "drone_bomber"
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 0
+    }
   },
   {
     "id": "cyborg_marking_beam",
@@ -263,7 +304,20 @@
         },
         "status": "drone_mark"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "drone_mark"
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_spare_battery",
@@ -291,7 +345,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_overclock",
@@ -322,7 +396,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_live_wire",
@@ -352,7 +446,29 @@
         },
         "status": "drone_mark"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          },
+          "repeat_count": 2
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "drone_mark"
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_servo_guard",
@@ -372,7 +488,19 @@
           "amount": 8
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_precision_ping",
@@ -401,7 +529,28 @@
         },
         "status": "drone_mark"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "drone_mark"
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_sync_pulse",
@@ -429,7 +578,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "use_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_parallel_trigger",
@@ -450,7 +619,20 @@
         },
         "repeat_count": 2
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "use_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "repeat_count": 3
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_redeploy",
@@ -480,7 +662,10 @@
         },
         "status": "drone_guardian"
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 1
+    }
   },
   {
     "id": "cyborg_hard_reset",
@@ -508,7 +693,27 @@
           "amount": 4
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_target_lock",
@@ -537,7 +742,28 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          },
+          "status": "drone_mark"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_field_medic",
@@ -566,7 +792,28 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "summon_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "drone_surgeon"
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_bulwark_protocol",
@@ -595,7 +842,28 @@
         },
         "status": "drone_guardian"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 16
+          }
+        },
+        {
+          "type": "summon_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "drone_guardian"
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_volatile_core",
@@ -627,7 +895,30 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "summon_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "drone_bomber"
+        },
+        {
+          "type": "use_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "repeat_count": 2
+        }
+      ],
+      "description": "card.cyborg_volatile_core.upgrade.description"
+    }
   },
   {
     "id": "cyborg_drone_swarm",
@@ -665,7 +956,10 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 1
+    }
   },
   {
     "id": "cyborg_targeting_matrix",
@@ -694,7 +988,28 @@
           "amount": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "drone_mark"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_full_activation",
@@ -715,7 +1030,20 @@
         },
         "repeat_count": 3
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "use_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "repeat_count": 4
+        }
+      ]
+    }
   },
   {
     "id": "cyborg_feedback_loop",
@@ -755,6 +1083,35 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "use_drone",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "repeat_count": 3
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   }
 ]

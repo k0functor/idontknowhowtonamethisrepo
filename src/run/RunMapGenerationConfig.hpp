@@ -15,6 +15,7 @@ struct RunMapSpecialNodeConfig {
     int count = 0;
     int minLayer = 1;
     int maxLayer = 1;
+    bool fullLayer = false;
 };
 
 struct RunMapEliteConfig {
@@ -66,8 +67,8 @@ private:
     int eventWeight_ = 30;
     int extraConnectionChance_ = 35;
     int questionMarkCombatChance_ = 30;
-    RunMapSpecialNodeConfig shop_{1, 2, 8};
-    RunMapSpecialNodeConfig chests_{0, 1, 1};
+    RunMapSpecialNodeConfig shop_{1, 2, 8, false};
+    RunMapSpecialNodeConfig chests_{0, 1, 1, false};
     RunMapEliteConfig elites_{1, 2, 3, 8};
     RunMapEventConfig events_{0, 0, 1, 1};
     bool hasFixedEvents_ = false;

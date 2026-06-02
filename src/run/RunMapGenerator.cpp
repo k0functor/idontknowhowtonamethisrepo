@@ -418,6 +418,27 @@ int countNodesOfTypeOnLayer(
     ));
 }
 
+void requireWholeLayerType(
+    const RunMap& map,
+    const std::vector<std::vector<int>>& layerIds,
+    const int layer,
+    const RunMapNodeType type,
+    const std::string& label
+) {
+    if (layer < 0 || layer >= static_cast<int>(layerIds.size())) {
+        throw std::runtime_error("Generated act 1 map is missing the " + label + " layer");
+    }
+
+    const int layerWidth = static_cast<int>(layerIds[static_cast<std::size_t>(layer)].size());
+    if (layerWidth <= 0) {
+        throw std::runtime_error("Generated act 1 map has an empty " + label + " layer");
+    }
+
+    if (countNodesOfTypeOnLayer(map, layerIds, type, layer) != layerWidth) {
+        throw std::runtime_error("Generated act 1 map violates the " + label + " layer contract");
+    }
+}
+
 std::unordered_map<int, NodeLocation> buildNodeLocations(const std::vector<std::vector<int>>& layerIds) {
     std::unordered_map<int, NodeLocation> result;
 
@@ -435,6 +456,16 @@ void validateGeneratedActOneMap(
     const std::vector<std::vector<int>>& layerIds,
     const RunMapGenerationConfig& config
 ) {
+    if (layerIds.empty()) {
+        throw std::runtime_error("Generated act 1 map has no layers");
+    }
+
+    const int preBossLayer = static_cast<int>(layerIds.size()) - 2;
+    const int bossLayer = static_cast<int>(layerIds.size()) - 1;
+    requireWholeLayerType(map, layerIds, 0, RunMapNodeType::Combat, "start combat");
+    requireWholeLayerType(map, layerIds, preBossLayer, RunMapNodeType::Rest, "pre-boss rest");
+    requireWholeLayerType(map, layerIds, bossLayer, RunMapNodeType::Boss, "boss");
+
     const int shopCount = countNodesOfType(map, RunMapNodeType::Shop);
     const int chestCount = countNodesOfType(map, RunMapNodeType::Chest);
     const int eliteCount = countNodesOfType(map, RunMapNodeType::Elite);
@@ -452,6 +483,10 @@ void validateGeneratedActOneMap(
         const int chestLayerCount = countNodesOfTypeOnLayer(map, layerIds, RunMapNodeType::Chest, config.chests().minLayer);
         if (chestLayerCount != config.chests().count) {
             throw std::runtime_error("Generated act 1 map has invalid chest layer placement");
+        }
+
+        if (config.chests().fullLayer && chestLayerCount != static_cast<int>(layerIds[static_cast<std::size_t>(config.chests().minLayer)].size())) {
+            throw std::runtime_error("Generated act 1 map violates the full chest layer contract");
         }
     }
 

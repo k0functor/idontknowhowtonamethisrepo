@@ -7,6 +7,13 @@
 #include <optional>
 #include <string>
 
+struct RunSaveLoadResult {
+    bool loaded = false;
+    bool loadedFromBackup = false;
+    RunState run;
+    std::string errorMessage;
+};
+
 class RunSaveSystem {
 public:
     explicit RunSaveSystem(std::filesystem::path savesRoot = "saves");
@@ -15,9 +22,13 @@ public:
 
     bool hasRunSave(std::size_t slotIndex) const;
     std::filesystem::path savePath(std::size_t slotIndex) const;
+    std::filesystem::path backupSavePath(std::size_t slotIndex) const;
+    std::filesystem::path temporarySavePath(std::size_t slotIndex) const;
 
     void saveRun(std::size_t slotIndex, const RunState& run) const;
     RunState loadRun(std::size_t slotIndex) const;
+    RunSaveLoadResult tryLoadRun(std::size_t slotIndex) const;
+    void restoreBackupAsPrimary(std::size_t slotIndex) const;
     void deleteRun(std::size_t slotIndex) const;
 
 private:

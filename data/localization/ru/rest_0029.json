@@ -1,4 +1,5 @@
 {
   "rest.upgrade_selected_copy": "Будет улучшена только копия карты #{index} в колоде. Другие копии той же карты не изменятся.",
-  "rest.upgrade_summary": "Что изменится"
+  "rest.upgrade_summary": "Что изменится",
+  "rest.upgradable_count": "Можно улучшить: {upgradable}/{total}"
 }

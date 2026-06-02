@@ -16,6 +16,7 @@
 #include "scenes/ProfileHubScene.hpp"
 #include "scenes/RewardScene.hpp"
 #include "scenes/RunMapScene.hpp"
+#include "scenes/RunDefeatScene.hpp"
 #include "scenes/SaveSlotScene.hpp"
 #include "scenes/SettingsScene.hpp"
 #include "scenes/ShopScene.hpp"
@@ -434,6 +435,21 @@ void GameFlowController::saveAndExitRunToSaveSlots() {
     selectedArchetypeId_.reset();
     selectedDifficultyId_.reset();
     queueTransition([this]() { setSaveSlotScene(); });
+}
+
+void GameFlowController::saveAndExitRunToProfileHub() {
+    if (runController_.hasActiveRun() && runController_.isActCompleted()) {
+        finishCompletedRunAndDeleteSave();
+    } else {
+        saveActiveRun();
+        runController_.clearActiveRun();
+    }
+
+    settingsOverlay_.reset();
+    debugPanelOpen_ = false;
+    selectedArchetypeId_.reset();
+    selectedDifficultyId_.reset();
+    queueTransition([this]() { setProfileHubScene(); });
 }
 
 bool GameFlowController::shouldShowInGameSettingsButton() const {
@@ -920,7 +936,8 @@ void GameFlowController::setSaveSlotScene() {
             [this](const std::size_t slotIndex) { startNewRunInSlot(slotIndex); },
             [this](const std::size_t slotIndex) { continueRunInSlot(slotIndex); },
             [this](const std::size_t slotIndex) { deleteRunInSlot(slotIndex); },
-            [this]() { showMainMenu(); }
+            [this]() { showMainMenu(); },
+            saveSlotStatusMessage_
         )
     );
 }
@@ -976,7 +993,7 @@ void GameFlowController::setRunMapScene() {
             [this](const int nodeId) { restHeal(nodeId); },
             [this](const int nodeId, const std::size_t deckIndex) { restUpgrade(nodeId, deckIndex); },
             [this](const int nodeId) { restSkip(nodeId); },
-            [this]() { queueTransition([this]() { setProfileHubScene(); }); }
+            [this]() { saveAndExitRunToProfileHub(); }
         )
     );
 }
@@ -995,6 +1012,24 @@ void GameFlowController::setFloorCompleteScene() {
             runController_.run(),
             [this]() { finishFloorCompleteContinue(); },
             [this]() { finishFloorCompleteMainMenu(); }
+        )
+    );
+}
+
+
+void GameFlowController::setRunDefeatScene() {
+    if (!runController_.hasActiveRun()) {
+        throw std::runtime_error("Cannot open run defeat scene: no active run");
+    }
+
+    sceneManager_.setScene(
+        std::make_unique<RunDefeatScene>(
+            uiFont_,
+            localization_,
+            content_.relics(),
+            runController_.run(),
+            [this]() { finishRunDefeatToProfileHub(); },
+            [this]() { finishRunDefeatToMainMenu(); }
         )
     );
 }
@@ -1032,7 +1067,13 @@ bool GameFlowController::setPendingRoomSceneIfNeeded() {
 
         case RunPendingRoomType::Event:
             if (!content_.events().contains(pending.eventId)) {
-                throw std::runtime_error("Cannot restore pending event room: unknown event id '" + pending.eventId + "'");
+                std::cout << "Cannot restore pending event room: unknown event id '" // NOL10N: developer diagnostic
+                          << pending.eventId
+                          << "'. Returning to the run map.\n"; // NOL10N: developer diagnostic
+                runController_.clearPendingRoom();
+                saveActiveRun();
+                setRunMapScene();
+                return true;
             }
             setEventScene(pending.nodeId, content_.events().get(pending.eventId));
             return true;
@@ -1081,11 +1122,15 @@ void GameFlowController::setCombatScene(const int nodeId) {
                     setCombatRewardScene(nodeId, std::move(reward));
                 });
             },
-            [this](const CombatResult&) {
-                queueTransition([this]() {
-                    deleteSelectedRunSave();
-                    runController_.clearActiveRun();
-                    setProfileHubScene();
+            [this](const CombatResult& result) {
+                queueTransition([this, result]() {
+                    if (!runController_.hasActiveRun()) {
+                        setProfileHubScene();
+                        return;
+                    }
+
+                    runController_.recordCombatDefeat(result);
+                    setRunDefeatScene();
                 });
             }
         )
@@ -1176,6 +1221,7 @@ void GameFlowController::showSaveSlots() {
 
 void GameFlowController::startNewRunInSlot(const std::size_t slotIndex) {
     queueTransition([this, slotIndex]() {
+        saveSlotStatusMessage_.clear();
         profileManager_.selectSlot(slotIndex);
         runController_.clearActiveRun();
         selectedArchetypeId_.reset();
@@ -1187,9 +1233,38 @@ void GameFlowController::startNewRunInSlot(const std::size_t slotIndex) {
 void GameFlowController::continueRunInSlot(const std::size_t slotIndex) {
     queueTransition([this, slotIndex]() {
         profileManager_.selectSlot(slotIndex);
-        runController_.restoreRun(runSaveSystem_.loadRun(slotIndex));
+
+        const RunSaveLoadResult loadResult = runSaveSystem_.tryLoadRun(slotIndex);
+        if (!loadResult.loaded) {
+            runController_.clearActiveRun();
+            selectedArchetypeId_.reset();
+            selectedDifficultyId_.reset();
+            saveSlotStatusMessage_ = localization_.format(
+                TextId("save_slot.load_failed"),
+                {{"slot", std::to_string(slotIndex + 1)}}
+            );
+            std::cout << "Failed to load run save from slot " << (slotIndex + 1) // NOL10N: developer diagnostic
+                      << ": " << loadResult.errorMessage << '\n';
+            setSaveSlotScene();
+            return;
+        }
+
+        saveSlotStatusMessage_.clear();
+        runController_.restoreRun(loadResult.run);
         selectedArchetypeId_.reset();
         selectedDifficultyId_.reset();
+
+        if (loadResult.loadedFromBackup) {
+            try {
+                runSaveSystem_.restoreBackupAsPrimary(slotIndex);
+                std::cout << "Restored run save for slot " << (slotIndex + 1) // NOL10N: developer diagnostic
+                          << " from backup.\n"; // NOL10N: developer diagnostic
+            } catch (const std::exception& error) {
+                std::cout << "Loaded run save for slot " << (slotIndex + 1) // NOL10N: developer diagnostic
+                          << " from backup, but failed to restore the primary save: " // NOL10N: developer diagnostic
+                          << error.what() << '\n';
+            }
+        }
 
         if (runController_.isActCompleted()) {
             runController_.clearPendingRoom();
@@ -1206,6 +1281,7 @@ void GameFlowController::continueRunInSlot(const std::size_t slotIndex) {
 
 void GameFlowController::deleteRunInSlot(const std::size_t slotIndex) {
     queueTransition([this, slotIndex]() {
+        saveSlotStatusMessage_.clear();
         runSaveSystem_.deleteRun(slotIndex);
         if (profileManager_.selectedSlotIndex() == slotIndex && runController_.hasActiveRun()) {
             runController_.clearActiveRun();
@@ -1499,6 +1575,32 @@ void GameFlowController::finishCompletedRunAndDeleteSave() {
     if (runController_.hasActiveRun() && runController_.isActCompleted()) {
         if (ProfileData* profile = profileManager_.selectedProfile()) {
             ++profile->victories;
+        }
+    }
+
+    deleteSelectedRunSave();
+    runController_.clearActiveRun();
+}
+
+
+void GameFlowController::finishRunDefeatToProfileHub() {
+    queueTransition([this]() {
+        finishDefeatedRunAndDeleteSave();
+        setProfileHubScene();
+    });
+}
+
+void GameFlowController::finishRunDefeatToMainMenu() {
+    queueTransition([this]() {
+        finishDefeatedRunAndDeleteSave();
+        setMainMenuScene();
+    });
+}
+
+void GameFlowController::finishDefeatedRunAndDeleteSave() {
+    if (runController_.hasActiveRun()) {
+        if (ProfileData* profile = profileManager_.selectedProfile()) {
+            ++profile->defeats;
         }
     }
 

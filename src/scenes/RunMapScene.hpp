@@ -134,6 +134,7 @@ private:
     bool isDeckCardUpgraded(std::size_t deckIndex) const;
     bool canUpgradeDeckIndex(std::size_t deckIndex) const;
     std::vector<std::size_t> upgradableDeckIndices() const;
+    std::vector<std::size_t> visibleOverlayDeckIndices() const;
     std::string cardName(const CardId& cardId, bool upgraded) const;
     std::string cardDescription(const CardId& cardId, bool upgraded) const;
     std::string relicRarityText(RelicRarity rarity) const;

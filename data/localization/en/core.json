@@ -1,5 +1,6 @@
 {
   "combat.log.draw_cards": "Draw cards: {amount}",
+  "combat.log.discard_cards": "Discard cards: {amount}",
   "combat.log.drone_bomber_damage": "Bomber drone deals 8 damage to all enemies",
   "combat.log.drone_guardian_block": "Guardian drone grants 4 block",
   "combat.log.drone_striker_damage": "Striker drone deals damage",
@@ -7,6 +8,7 @@
   "combat.log.enemy_turn_ended": "Enemy turn ended",
   "combat.log.enemy_turn_started": "Enemy turn started",
   "combat.log.gain_energy": "Gain energy: {amount}",
+  "combat.log.lose_energy": "Lose energy: {amount}",
   "combat.log.heal": "Heal: {amount}",
   "combat.log.lost": "Combat lost",
   "combat.log.no_drone": "No drone to use",
@@ -108,6 +110,7 @@
   "save_slot.delete_run": "Delete",
   "save_slot.empty": "Slot {slot}: empty",
   "save_slot.has_run": "Slot {slot}: active run found",
+  "save_slot.load_failed": "Failed to load the run in slot {slot}. The save is corrupted or outdated.",
   "save_slot.new_run": "New Run",
   "save_slot.no_run_save": "No active run save.",
   "save_slot.run_save_found": "A run save was found.",
@@ -305,5 +308,6 @@
   "consumable.target_hint.any": "Choose a highlighted target for the consumable. Right-click or Esc cancels.",
   "consumable.target_hint.enemy": "Choose an enemy for the consumable. Right-click or Esc cancels.",
   "consumable.target_hint.none": "This consumable has no valid target.",
-  "consumable.target_hint.player": "Choose an ally for the consumable. Right-click or Esc cancels."
+  "consumable.target_hint.player": "Choose an ally for the consumable. Right-click or Esc cancels.",
+  "save_slot.record": "Slot {slot}: victories {victories}, defeats {defeats}"
 }

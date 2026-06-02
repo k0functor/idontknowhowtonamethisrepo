@@ -70,6 +70,7 @@ public:
         int nodeId,
         const CombatResult& combatResult
     );
+    void recordCombatDefeat(const CombatResult& combatResult);
 
     RewardState completeCombatAndCreateReward(
         int nodeId,

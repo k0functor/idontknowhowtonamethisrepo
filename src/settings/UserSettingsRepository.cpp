@@ -162,7 +162,7 @@ Json toJson(const UserSettings& settings) {
             {"sfx_volume", settings.audio.sfxVolume}
         }},
         {"debug", Json{
-            {"enabled", settings.debug.enabled}
+            {"enabled", UserSettings::debugToolsAvailable() && settings.debug.enabled}
         }}
     };
 }
@@ -211,6 +211,7 @@ UserSettings UserSettingsRepository::load(
 
     const Json& debug = readOptionalObject(root, "debug", filePath);
     settings.debug.enabled = readBool(debug, "enabled", settings.debug.enabled, filePath);
+    settings.enforceBuildSafety();
 
     return settings;
 }

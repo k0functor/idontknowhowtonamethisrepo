@@ -29,6 +29,10 @@ std::string signedAdd(const int value) {
 
     return "";
 }
+
+bool shouldUseRepeatCountAsTimes(const EffectType type, const int repeatCount) {
+    return type == EffectType::UseDrone || repeatCount > 1;
+}
 }
 
 CardDescriptionFormatter::CardDescriptionFormatter(const LocalizationManager& localization)
@@ -87,7 +91,9 @@ void CardDescriptionFormatter::fillVariablesFromStaticEffect(
     const EffectDefinition& effect
 ) const {
     const std::string value = effectValueText(effect.value);
-    variables["times"] = std::to_string(effect.repeatCount);
+    if (shouldUseRepeatCountAsTimes(effect.type, effect.repeatCount)) {
+        variables["times"] = std::to_string(effect.repeatCount);
+    }
 
     switch (effect.type) {
         case EffectType::Damage:
@@ -208,7 +214,9 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
         }
 
         const std::string valueText = effectPreview.value.toDisplayString();
-        variables["times"] = std::to_string(effectPreview.repeatCount);
+        if (shouldUseRepeatCountAsTimes(effectPreview.type, effectPreview.repeatCount)) {
+            variables["times"] = std::to_string(effectPreview.repeatCount);
+        }
 
         switch (effectPreview.type) {
             case EffectType::Heal:

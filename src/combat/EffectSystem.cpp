@@ -5,9 +5,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace {
 constexpr const char* monkActorId = "monk";
@@ -49,6 +52,51 @@ bool shouldTriggerMonkStanceShiftReward(
            isStanceStatus(nextStance);
 }
 
+std::size_t chooseDiscardIndex(const std::vector<CardInstance>& cards, const EffectContext& context) {
+    std::vector<std::size_t> candidates;
+    candidates.reserve(cards.size());
+
+    for (std::size_t index = 0; index < cards.size(); ++index) {
+        if (context.cardInstanceId.value != 0 && cards[index].instanceId == context.cardInstanceId) {
+            continue;
+        }
+        candidates.push_back(index);
+    }
+
+    if (candidates.empty()) {
+        return std::numeric_limits<std::size_t>::max();
+    }
+
+    if (context.random == nullptr) {
+        return candidates.front();
+    }
+
+    const int rolledIndex = context.random->rangeInclusive(0, static_cast<int>(candidates.size() - 1));
+    return candidates[static_cast<std::size_t>(rolledIndex)];
+}
+
+int discardRandomCardsFromHand(CombatState& state, const int amount, const EffectContext& context) {
+    if (amount <= 0) {
+        return 0;
+    }
+
+    int discardedCount = 0;
+
+    while (discardedCount < amount) {
+        std::vector<CardInstance>& cards = state.hand.cards();
+        const std::size_t discardIndex = chooseDiscardIndex(cards, context);
+        if (discardIndex == std::numeric_limits<std::size_t>::max()) {
+            break;
+        }
+
+        CardInstance discarded = std::move(cards[discardIndex]);
+        cards.erase(cards.begin() + static_cast<std::ptrdiff_t>(discardIndex));
+        state.deck.discardPile.addTop(std::move(discarded));
+        ++discardedCount;
+    }
+
+    return discardedCount;
+}
 
 void logStressResolveOutcome(CombatState& state, const CombatEntity& entity, const StressRules::StressAdjustmentResult& result) {
     if (!result.resolveCheckTriggered) {
@@ -280,10 +328,33 @@ void EffectSystem::applyEffect(
                 state.log.add(CombatLogEntryType::DrawCards, {{"amount", std::to_string(resolvedValue.actual)}});
                 continue;
 
+            case EffectType::DiscardCards: {
+                const bool targetsPlayer = std::any_of(targets.begin(), targets.end(), [&state](const EntityId target) {
+                    return state.isPlayer(target);
+                });
+                const int discarded = targetsPlayer
+                    ? discardRandomCardsFromHand(state, resolvedValue.actual, context)
+                    : 0;
+                state.log.add(CombatLogEntryType::DiscardCards, {{"amount", std::to_string(discarded)}});
+                continue;
+            }
+
             case EffectType::GainEnergy:
                 energySystem_.gain(state, context.source, resolvedValue.actual);
                 state.log.add(CombatLogEntryType::GainEnergy, {{"amount", std::to_string(resolvedValue.actual)}});
                 continue;
+
+            case EffectType::LoseEnergy: {
+                int lost = 0;
+                for (const EntityId target : targets) {
+                    if (!state.isPlayer(target)) {
+                        continue;
+                    }
+                    lost += energySystem_.lose(state, target, resolvedValue.actual);
+                }
+                state.log.add(CombatLogEntryType::LoseEnergy, {{"amount", std::to_string(lost)}});
+                continue;
+            }
 
             case EffectType::LoseHp:
                 for (const EntityId target : targets) {
@@ -304,10 +375,6 @@ void EffectSystem::applyEffect(
                 }
                 continue;
 
-            case EffectType::DiscardCards:
-            case EffectType::LoseEnergy:
-                state.log.add(CombatLogEntryType::EffectNotImplemented, {{"effect", toString(effect.type)}});
-                continue;
         }
 
         throw std::runtime_error("Unknown effect type");

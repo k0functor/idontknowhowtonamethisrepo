@@ -82,7 +82,30 @@
         },
         "status": "stance_flame"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_flame"
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "strength"
+        }
+      ],
+      "description": "card.monk_enter_flame.upgrade.description"
+    }
   },
   {
     "id": "monk_enter_ash",
@@ -103,7 +126,29 @@
         },
         "status": "stance_ash"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_ash"
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ],
+      "description": "card.monk_enter_ash.upgrade.description"
+    }
   },
   {
     "id": "monk_enter_smoke",
@@ -124,7 +169,29 @@
         },
         "status": "stance_smoke"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_smoke"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ],
+      "description": "card.monk_enter_smoke.upgrade.description"
+    }
   },
   {
     "id": "monk_palm_strike",
@@ -180,7 +247,19 @@
           "amount": 7
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_smoke_step",
@@ -208,7 +287,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_burning_kick",
@@ -229,7 +328,20 @@
           "die": "d10"
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d12"
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_ember_palm",
@@ -249,7 +361,19 @@
           "amount": 8
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_ash_breath",
@@ -269,7 +393,19 @@
           "amount": 8
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_smoke_vanish",
@@ -297,7 +433,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_ringing_blow",
@@ -326,7 +482,28 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "weak"
+        }
+      ]
+    }
   },
   {
     "id": "monk_coal_counter",
@@ -354,7 +531,27 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_quiet_inhale",
@@ -382,7 +579,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        },
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_purple_focus",
@@ -412,7 +629,10 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "energy_cost": 0
+    }
   },
   {
     "id": "monk_release_pressure",
@@ -440,7 +660,27 @@
           "amount": 8
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "lose_stress",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 12
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_ignition_kata",
@@ -469,7 +709,28 @@
         },
         "status": "stance_flame"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_flame"
+        }
+      ]
+    }
   },
   {
     "id": "monk_ash_kata",
@@ -498,7 +759,28 @@
         },
         "status": "stance_ash"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_ash"
+        }
+      ]
+    }
   },
   {
     "id": "monk_smoke_kata",
@@ -535,7 +817,36 @@
         },
         "status": "stance_smoke"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          }
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_smoke"
+        }
+      ]
+    }
   },
   {
     "id": "monk_flame_wheel",
@@ -555,7 +866,19 @@
           "amount": 7
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_ash_mirror",
@@ -583,7 +906,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 13
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   },
   {
     "id": "monk_smoke_afterimage",
@@ -612,7 +955,28 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "weak"
+        }
+      ]
+    }
   },
   {
     "id": "monk_threefold_release",
@@ -641,6 +1005,27 @@
           "amount": 10
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          },
+          "repeat_count": 3
+        },
+        {
+          "type": "lose_stress",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 15
+          }
+        }
+      ]
+    }
   }
 ]

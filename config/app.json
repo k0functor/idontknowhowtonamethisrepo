@@ -17,6 +17,6 @@
     },
 
     "debug": {
-        "enabled": true
+        "enabled": false
     }
 }

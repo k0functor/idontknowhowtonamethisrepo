@@ -1,0 +1,43 @@
+#pragma once
+
+#include "localization/LocalizationManager.hpp"
+#include "relics/RelicDatabase.hpp"
+#include "run/RunState.hpp"
+#include "scenes/Scene.hpp"
+#include "ui/UiFont.hpp"
+
+#include <functional>
+#include <string>
+#include <vector>
+
+class RunDefeatScene final : public Scene {
+public:
+    RunDefeatScene(
+        const UiFont& font,
+        const LocalizationManager& localization,
+        const RelicDatabase& relics,
+        const RunState& run,
+        std::function<void()> onProfileHub,
+        std::function<void()> onMainMenu
+    );
+
+    void update(float deltaSeconds) override;
+    void render() const override;
+
+private:
+    Rectangle panelBounds() const;
+    Rectangle profileHubButtonBounds() const;
+    Rectangle mainMenuButtonBounds() const;
+    std::string hpSummary() const;
+    std::string relicSummary() const;
+    std::string consumableSummary() const;
+    std::vector<std::pair<std::string, std::string>> statRows() const;
+
+private:
+    const UiFont& font_;
+    const LocalizationManager& localization_;
+    const RelicDatabase& relics_;
+    const RunState& run_;
+    std::function<void()> onProfileHub_;
+    std::function<void()> onMainMenu_;
+};

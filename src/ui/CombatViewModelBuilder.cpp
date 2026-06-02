@@ -459,8 +459,14 @@ std::string localizeLogEntry(
         case CombatLogEntryType::DrawCards:
             return localizedFormat(localization, "combat.log.draw_cards", entry.variables);
 
+        case CombatLogEntryType::DiscardCards:
+            return localizedFormat(localization, "combat.log.discard_cards", entry.variables);
+
         case CombatLogEntryType::GainEnergy:
             return localizedFormat(localization, "combat.log.gain_energy", entry.variables);
+
+        case CombatLogEntryType::LoseEnergy:
+            return localizedFormat(localization, "combat.log.lose_energy", entry.variables);
 
         case CombatLogEntryType::LoseHp:
             return localizedFormat(localization, "combat.log.lose_hp", entry.variables);

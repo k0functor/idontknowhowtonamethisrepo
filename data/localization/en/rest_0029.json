@@ -1,4 +1,5 @@
 {
   "rest.upgrade_selected_copy": "Only deck copy #{index} will be upgraded. Other copies of the same card stay unchanged.",
-  "rest.upgrade_summary": "Upgrade summary"
+  "rest.upgrade_summary": "Upgrade summary",
+  "rest.upgradable_count": "Upgradable: {upgradable}/{total}"
 }

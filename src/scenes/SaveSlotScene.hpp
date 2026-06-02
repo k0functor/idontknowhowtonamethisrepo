@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <string>
 
 class SaveSlotScene final : public Scene {
 public:
@@ -18,7 +19,8 @@ public:
         std::function<void(std::size_t)> onNewRun,
         std::function<void(std::size_t)> onContinueRun,
         std::function<void(std::size_t)> onDeleteRun,
-        std::function<void()> onBack
+        std::function<void()> onBack,
+        std::string statusMessage = {}
     );
 
     void update(float deltaSeconds) override;
@@ -39,4 +41,5 @@ private:
     std::function<void(std::size_t)> onContinueRun_;
     std::function<void(std::size_t)> onDeleteRun_;
     std::function<void()> onBack_;
+    std::string statusMessage_;
 };

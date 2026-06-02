@@ -5,12 +5,12 @@
         "sfx_volume": 0.800000011920929
     },
     "debug": {
-        "enabled": true
+        "enabled": false
     },
     "locale": "ru",
     "version": 1,
     "window": {
-        "framerate_limit": 144,
+        "framerate_limit": 60,
         "fullscreen": true,
         "height": 720,
         "vertical_sync": false,

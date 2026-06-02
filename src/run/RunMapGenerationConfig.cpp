@@ -23,6 +23,7 @@ RunMapSpecialNodeConfig parseSpecialNodeConfig(
     result.count = reader.optionalInt("count", result.count);
     result.minLayer = reader.optionalInt("min_layer", result.minLayer);
     result.maxLayer = reader.optionalInt("max_layer", result.maxLayer);
+    result.fullLayer = reader.optionalBool("full_layer", result.fullLayer);
     return result;
 }
 
@@ -102,6 +103,40 @@ RunMapLayoutConfig parseLayoutConfig(
     result.centerY = static_cast<float>(reader.optionalDouble("center_y", result.centerY));
     result.nodeSpacingY = static_cast<float>(reader.optionalDouble("node_spacing_y", result.nodeSpacingY));
     return result;
+}
+
+int configuredLayerWidth(
+    const std::vector<int>& layerNodeCounts,
+    const int layer,
+    const std::filesystem::path& filePath,
+    const std::string& owner
+) {
+    if (layerNodeCounts.empty()) {
+        throw std::runtime_error(filePath.string() + ": " + owner + ".full_layer requires explicit layer_node_counts");
+    }
+
+    if (layer < 0 || layer >= static_cast<int>(layerNodeCounts.size())) {
+        throw std::runtime_error(filePath.string() + ": " + owner + ".full_layer references a layer outside layer_node_counts");
+    }
+
+    return layerNodeCounts[static_cast<std::size_t>(layer)];
+}
+
+int capacityInRange(
+    const std::vector<int>& layerNodeCounts,
+    const int minLayer,
+    const int maxLayer,
+    const int fallbackLayerCapacity
+) {
+    if (layerNodeCounts.empty()) {
+        return (maxLayer - minLayer + 1) * fallbackLayerCapacity;
+    }
+
+    int capacity = 0;
+    for (int layer = minLayer; layer <= maxLayer; ++layer) {
+        capacity += layerNodeCounts[static_cast<std::size_t>(layer)];
+    }
+    return capacity;
 }
 }
 
@@ -283,6 +318,21 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
         throw std::runtime_error(filePath.string() + ": chests layer range must be inside middle layers");
     }
 
+    if (chests_.fullLayer) {
+        if (chests_.count <= 0) {
+            throw std::runtime_error(filePath.string() + ": chests.full_layer requires chests.count > 0");
+        }
+
+        if (chests_.minLayer != chests_.maxLayer) {
+            throw std::runtime_error(filePath.string() + ": chests.full_layer requires min_layer == max_layer");
+        }
+
+        const int chestLayerWidth = configuredLayerWidth(layerNodeCounts_, chests_.minLayer, filePath, "chests");
+        if (chests_.count != chestLayerWidth) {
+            throw std::runtime_error(filePath.string() + ": chests.full_layer requires chests.count to match the configured layer width");
+        }
+    }
+
     if (elites_.minimum < 0 || elites_.maximum < 0 || elites_.minimum > elites_.maximum) {
         throw std::runtime_error(filePath.string() + ": elite min/max must be non-negative and min <= max");
     }
@@ -301,19 +351,32 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
         }
     }
 
+    const int middleCapacity = capacityInRange(layerNodeCounts_, firstMiddleLayer, lastMiddleLayer, middleMaxNodes_);
     const int guaranteedSpecials = shop_.count + chests_.count + elites_.maximum + (hasFixedEvents_ ? events_.maximum : 0);
-    int middleCapacity = 0;
-    if (hasLayerNodeCounts()) {
-        for (int layer = firstMiddleLayer; layer <= lastMiddleLayer; ++layer) {
-            middleCapacity += layerNodeCounts_[static_cast<std::size_t>(layer)];
-        }
-    } else {
-        const int middleLayerCount = lastMiddleLayer - firstMiddleLayer + 1;
-        middleCapacity = middleLayerCount * middleMaxNodes_;
-    }
-
     if (guaranteedSpecials > middleCapacity) {
         throw std::runtime_error(filePath.string() + ": requested specials cannot fit into middle layers");
+    }
+
+    const int shopCapacity = capacityInRange(layerNodeCounts_, shop_.minLayer, shop_.maxLayer, middleMaxNodes_);
+    if (shop_.count > shopCapacity) {
+        throw std::runtime_error(filePath.string() + ": requested shops cannot fit into the configured shop layer range");
+    }
+
+    const int chestCapacity = capacityInRange(layerNodeCounts_, chests_.minLayer, chests_.maxLayer, middleMaxNodes_);
+    if (chests_.count > chestCapacity) {
+        throw std::runtime_error(filePath.string() + ": requested chests cannot fit into the configured chest layer range");
+    }
+
+    const int eliteCapacity = capacityInRange(layerNodeCounts_, elites_.minLayer, elites_.maxLayer, middleMaxNodes_);
+    if (elites_.maximum > eliteCapacity) {
+        throw std::runtime_error(filePath.string() + ": requested elites cannot fit into the configured elite layer range");
+    }
+
+    if (hasFixedEvents_) {
+        const int eventCapacity = capacityInRange(layerNodeCounts_, events_.minLayer, events_.maxLayer, middleMaxNodes_);
+        if (events_.maximum > eventCapacity) {
+            throw std::runtime_error(filePath.string() + ": requested events cannot fit into the configured event layer range");
+        }
     }
 
     if (layout_.layerStepX <= 0.f || layout_.nodeSpacingY <= 0.f) {

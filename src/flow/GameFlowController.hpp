@@ -55,6 +55,7 @@ private:
     void openSettingsOverlay();
     void closeSettingsOverlay();
     void saveAndExitRunToSaveSlots();
+    void saveAndExitRunToProfileHub();
     bool shouldShowInGameSettingsButton() const;
     bool debugPanelEnabled() const;
     void toggleDebugPanel();
@@ -71,6 +72,7 @@ private:
     void setDifficultySelectScene();
     void setRunMapScene();
     void setFloorCompleteScene();
+    void setRunDefeatScene();
     bool setPendingRoomSceneIfNeeded();
     bool setPendingRoomSceneForNodeIfNeeded(int nodeId);
     void setCombatScene(int nodeId);
@@ -100,6 +102,9 @@ private:
     void finishFloorCompleteContinue();
     void finishFloorCompleteMainMenu();
     void finishCompletedRunAndDeleteSave();
+    void finishRunDefeatToProfileHub();
+    void finishRunDefeatToMainMenu();
+    void finishDefeatedRunAndDeleteSave();
     void requestExit();
 
     bool hasRunSave(std::size_t slotIndex) const;
@@ -131,4 +136,5 @@ private:
     float debugBackspaceHeldSeconds_ = 0.f;
     float debugBackspaceRepeatSeconds_ = 0.f;
     std::vector<std::string> debugMessages_;
+    std::string saveSlotStatusMessage_;
 };

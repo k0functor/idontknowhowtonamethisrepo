@@ -36,8 +36,12 @@ std::string slotTitle(
     }
 
     return localization.format(
-        TextId("save_slot.victories"),
-        {{"slot", slotNumber}, {"victories", std::to_string(profile.victories)}}
+        TextId("save_slot.record"),
+        {
+            {"slot", slotNumber},
+            {"victories", std::to_string(profile.victories)},
+            {"defeats", std::to_string(profile.defeats)}
+        }
     );
 }
 }
@@ -50,7 +54,8 @@ SaveSlotScene::SaveSlotScene(
     std::function<void(std::size_t)> onNewRun,
     std::function<void(std::size_t)> onContinueRun,
     std::function<void(std::size_t)> onDeleteRun,
-    std::function<void()> onBack
+    std::function<void()> onBack,
+    std::string statusMessage
 )
     : font_(font),
       localization_(localization),
@@ -59,7 +64,8 @@ SaveSlotScene::SaveSlotScene(
       onNewRun_(std::move(onNewRun)),
       onContinueRun_(std::move(onContinueRun)),
       onDeleteRun_(std::move(onDeleteRun)),
-      onBack_(std::move(onBack)) {}
+      onBack_(std::move(onBack)),
+      statusMessage_(std::move(statusMessage)) {}
 
 void SaveSlotScene::update(float) {
     const Vector2 mouse = GetMousePosition();
@@ -100,6 +106,16 @@ void SaveSlotScene::render() const {
         40.f,
         Color{240, 240, 250, 255}
     );
+
+    if (!statusMessage_.empty()) {
+        BasicUi::drawCenteredText(
+            font_,
+            statusMessage_,
+            Rectangle{0.f, 160.f, static_cast<float>(VirtualViewport::width()), 32.f},
+            18.f,
+            Color{240, 176, 136, 255}
+        );
+    }
 
     for (std::size_t i = 0; i < profiles_.slots().size(); ++i) {
         const bool hasSave = hasRunSave_ ? hasRunSave_(i) : false;

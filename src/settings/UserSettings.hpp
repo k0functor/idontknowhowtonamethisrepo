@@ -20,7 +20,7 @@ struct UserAudioSettings {
 };
 
 struct UserDebugSettings {
-    bool enabled = true;
+    bool enabled = false;
 };
 
 struct UserSettings {
@@ -31,5 +31,8 @@ struct UserSettings {
 
     static UserSettings fromAppConfig(const AppConfig& config);
 
+    static bool debugToolsAvailable();
+
+    void enforceBuildSafety();
     void applyTo(AppConfig& config) const;
 };

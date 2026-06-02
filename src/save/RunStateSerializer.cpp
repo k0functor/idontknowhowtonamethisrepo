@@ -695,12 +695,16 @@ int optionalInt(const Json& object, const std::string& key, const std::filesyste
 Json statsToJson(const RunStats& stats) {
     return Json{
         {"combats_won", stats.combatsWon},
+        {"combats_lost", stats.combatsLost},
         {"elites_killed", stats.elitesKilled},
         {"bosses_killed", stats.bossesKilled},
+        {"enemies_killed", stats.enemiesKilled},
         {"events_completed", stats.eventsCompleted},
         {"shops_visited", stats.shopsVisited},
         {"chests_opened", stats.chestsOpened},
         {"rests_used", stats.restsUsed},
+        {"damage_taken", stats.damageTaken},
+        {"consumables_used", stats.consumablesUsed},
         {"gold_gained", stats.goldGained},
         {"gold_spent", stats.goldSpent},
         {"cards_added", stats.cardsAdded},
@@ -715,12 +719,16 @@ Json statsToJson(const RunStats& stats) {
 RunStats statsFromJson(const Json& json, const std::filesystem::path& sourcePath) {
     RunStats stats;
     stats.combatsWon = requiredInt(json, "combats_won", sourcePath);
+    stats.combatsLost = optionalInt(json, "combats_lost", sourcePath, 0);
     stats.elitesKilled = requiredInt(json, "elites_killed", sourcePath);
     stats.bossesKilled = requiredInt(json, "bosses_killed", sourcePath);
+    stats.enemiesKilled = optionalInt(json, "enemies_killed", sourcePath, stats.elitesKilled + stats.bossesKilled);
     stats.eventsCompleted = optionalInt(json, "events_completed", sourcePath, 0);
     stats.shopsVisited = optionalInt(json, "shops_visited", sourcePath, 0);
     stats.chestsOpened = optionalInt(json, "chests_opened", sourcePath, 0);
     stats.restsUsed = optionalInt(json, "rests_used", sourcePath, 0);
+    stats.damageTaken = optionalInt(json, "damage_taken", sourcePath, 0);
+    stats.consumablesUsed = optionalInt(json, "consumables_used", sourcePath, 0);
     stats.goldGained = requiredInt(json, "gold_gained", sourcePath);
     stats.goldSpent = optionalInt(json, "gold_spent", sourcePath, 0);
     stats.cardsAdded = requiredInt(json, "cards_added", sourcePath);

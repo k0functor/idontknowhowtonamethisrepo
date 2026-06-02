@@ -1,5 +1,13 @@
 #include "UserSettings.hpp"
 
+bool UserSettings::debugToolsAvailable() {
+#ifdef NDEBUG
+    return false;
+#else
+    return true;
+#endif
+}
+
 UserSettings UserSettings::fromAppConfig(const AppConfig& config) {
     UserSettings settings;
 
@@ -10,8 +18,15 @@ UserSettings UserSettings::fromAppConfig(const AppConfig& config) {
     settings.window.verticalSync = config.window.verticalSync;
     settings.window.frameRateLimit = config.window.frameRateLimit;
     settings.debug.enabled = config.debug.enabled;
+    settings.enforceBuildSafety();
 
     return settings;
+}
+
+void UserSettings::enforceBuildSafety() {
+    if (!debugToolsAvailable()) {
+        debug.enabled = false;
+    }
 }
 
 void UserSettings::applyTo(AppConfig& config) const {
@@ -21,5 +36,5 @@ void UserSettings::applyTo(AppConfig& config) const {
     config.window.fullscreen = window.fullscreen;
     config.window.verticalSync = window.verticalSync;
     config.window.frameRateLimit = window.frameRateLimit;
-    config.debug.enabled = debug.enabled;
+    config.debug.enabled = debugToolsAvailable() && debug.enabled;
 }

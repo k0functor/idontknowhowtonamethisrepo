@@ -1,5 +1,6 @@
 {
   "combat.log.draw_cards": "Добор карт: {amount}",
+  "combat.log.discard_cards": "Сброшено карт: {amount}",
   "combat.log.drone_bomber_damage": "Дрон-бомбардир наносит 8 урона всем врагам",
   "combat.log.drone_guardian_block": "Дрон-защитник даёт 4 блока",
   "combat.log.drone_striker_damage": "Дрон-ударник наносит урон",
@@ -7,6 +8,7 @@
   "combat.log.enemy_turn_ended": "Ход врага завершён",
   "combat.log.enemy_turn_started": "Ход врага начался",
   "combat.log.gain_energy": "Получено энергии: {amount}",
+  "combat.log.lose_energy": "Потеряно энергии: {amount}",
   "combat.log.heal": "Лечение: {amount}",
   "combat.log.lost": "Бой проигран",
   "combat.log.no_drone": "Нет дрона для использования",
@@ -108,6 +110,7 @@
   "save_slot.delete_run": "Удалить",
   "save_slot.empty": "Слот {slot}: пустой",
   "save_slot.has_run": "Слот {slot}: есть активный забег",
+  "save_slot.load_failed": "Не удалось загрузить забег в слоте {slot}. Сохранение повреждено или устарело.",
   "save_slot.new_run": "Новый забег",
   "save_slot.no_run_save": "Активного забега нет.",
   "save_slot.run_save_found": "Найдено сохранение забега.",
@@ -305,5 +308,6 @@
   "consumable.target_hint.any": "Выберите подсвеченную цель для расходника. ПКМ или Esc отменяет.",
   "consumable.target_hint.enemy": "Выберите врага для расходника. ПКМ или Esc отменяет.",
   "consumable.target_hint.none": "У этого расходника нет допустимой цели.",
-  "consumable.target_hint.player": "Выберите союзника для расходника. ПКМ или Esc отменяет."
+  "consumable.target_hint.player": "Выберите союзника для расходника. ПКМ или Esc отменяет.",
+  "save_slot.record": "Слот {slot}: побед {victories}, поражений {defeats}"
 }

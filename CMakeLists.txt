@@ -7,7 +7,34 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(GAME_FORCE_FETCH_RAYLIB "Always build bundled raylib instead of using a system raylib package" OFF)
-option(GAME_STATIC_MINGW_RUNTIME "Link GCC/MinGW runtime libraries statically on Windows" ON)
+option(GAME_STATIC_LINK_LIBRARIES "Link libraries and GCC runtime statically when using the GNU toolchain" ON)
+
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if (Python3_Interpreter_FOUND)
+    add_custom_target(validate_content
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_localization.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_project.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Validating localization and data content"
+        VERBATIM
+    )
+
+    add_custom_target(snapshot_act1_map
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/snapshot_act1_map.py --seed 1
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Printing an act 1 map snapshot"
+        VERBATIM
+    )
+
+    add_custom_target(report_upgrade_coverage
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/report_upgrade_coverage.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Reporting card upgrade coverage"
+        VERBATIM
+    )
+else()
+    message(STATUS "Python3 was not found; validate_content target is disabled")
+endif()
 
 include(FetchContent)
 
@@ -395,10 +422,16 @@ add_executable(i_dont_know_how_to_name_this_game
     src/scenes/RunMapScene.cpp
     src/scenes/CombatScene.hpp
     src/scenes/CombatScene.cpp
+    src/scenes/CombatScenePiles.cpp
+    src/scenes/CombatSceneRewards.cpp
+    src/scenes/CombatSceneInputTargeting.cpp
+    src/scenes/CombatSceneInspectConsumables.cpp
     src/scenes/RewardScene.hpp
     src/scenes/RewardScene.cpp
     src/scenes/FloorCompleteScene.hpp
     src/scenes/FloorCompleteScene.cpp
+    src/scenes/RunDefeatScene.hpp
+    src/scenes/RunDefeatScene.cpp
     src/scenes/ShopScene.hpp
     src/scenes/ShopScene.cpp
     src/scenes/EventScene.hpp
@@ -432,10 +465,11 @@ target_link_libraries(i_dont_know_how_to_name_this_game PRIVATE
     nlohmann_json::nlohmann_json
 )
 
-# Static runtime linking is useful for MinGW release builds, but must not be
-# applied unconditionally: Linux/macOS toolchains and some package managers do
-# not provide static system libraries.
-if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND GAME_STATIC_MINGW_RUNTIME)
+# The game is distributed as a small standalone binary first, so prefer static
+# linking by default when building with GCC/MinGW. This intentionally restores
+# the old project behavior while keeping a CMake option for package-manager or
+# Linux/macOS builds that cannot provide every dependency as a static library.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND GAME_STATIC_LINK_LIBRARIES)
     target_link_options(i_dont_know_how_to_name_this_game PRIVATE
         -static
         -static-libgcc

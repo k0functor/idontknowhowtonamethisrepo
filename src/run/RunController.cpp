@@ -112,6 +112,67 @@ bool containsDeckIndex(const std::vector<int>& indices, const std::size_t deckIn
     return std::find(indices.begin(), indices.end(), value) != indices.end();
 }
 
+
+int combatDamageTaken(const std::vector<RunActorState>& before, const std::vector<RunActorState>& after) {
+    int damage = 0;
+    std::vector<bool> matched(before.size(), false);
+
+    for (std::size_t afterIndex = 0; afterIndex < after.size(); ++afterIndex) {
+        const RunActorState& current = after[afterIndex];
+        std::optional<std::size_t> beforeIndex;
+
+        for (std::size_t index = 0; index < before.size(); ++index) {
+            if (!matched[index] && before[index].definitionId == current.definitionId) {
+                beforeIndex = index;
+                break;
+            }
+        }
+
+        if (!beforeIndex.has_value() && afterIndex < before.size() && !matched[afterIndex]) {
+            beforeIndex = afterIndex;
+        }
+
+        if (!beforeIndex.has_value()) {
+            continue;
+        }
+
+        matched[*beforeIndex] = true;
+        damage += std::max(0, before[*beforeIndex].currentHp - current.currentHp);
+    }
+
+    return damage;
+}
+
+int combatConsumablesUsed(
+    const std::vector<std::string>& before,
+    const std::optional<std::vector<std::string>>& after
+) {
+    if (!after.has_value()) {
+        return 0;
+    }
+
+    return std::max(0, static_cast<int>(before.size()) - static_cast<int>(after->size()));
+}
+
+void recordCombatTelemetry(RunState& state, const CombatResult& combatResult) {
+    state.stats.enemiesKilled += combatResult.enemiesKilled;
+
+    if (!combatResult.actorStates.empty()) {
+        state.stats.damageTaken += combatDamageTaken(state.actorStates, combatResult.actorStates);
+        state.actorStates = combatResult.actorStates;
+        state.actorDefinitionIds.clear();
+        state.actorDefinitionIds.reserve(state.actorStates.size());
+        for (const RunActorState& actorState : state.actorStates) {
+            state.actorDefinitionIds.push_back(actorState.definitionId);
+        }
+    }
+
+    if (combatResult.remainingConsumableIds.has_value()) {
+        state.stats.consumablesUsed += combatConsumablesUsed(state.consumableIds, combatResult.remainingConsumableIds);
+        state.consumableIds = *combatResult.remainingConsumableIds;
+    }
+}
+
 bool eraseDeckIndexAndShiftUpgrades(RunState& state, const std::size_t erasedIndex) {
     if (erasedIndex >= state.deckCardIds.size()) {
         return false;
@@ -309,18 +370,7 @@ void RunController::completeCombat(
     const RunMapNodeType completedNodeType = node(nodeId).type;
 
     RunState& state = run();
-    if (!combatResult.actorStates.empty()) {
-        state.actorStates = combatResult.actorStates;
-        state.actorDefinitionIds.clear();
-        state.actorDefinitionIds.reserve(state.actorStates.size());
-        for (const RunActorState& actorState : state.actorStates) {
-            state.actorDefinitionIds.push_back(actorState.definitionId);
-        }
-    }
-
-    if (combatResult.remainingConsumableIds.has_value()) {
-        state.consumableIds = *combatResult.remainingConsumableIds;
-    }
+    recordCombatTelemetry(state, combatResult);
 
     markNodeCompletedAndUnlockNext(nodeId);
 
@@ -332,6 +382,12 @@ void RunController::completeCombat(
         ++state.stats.bossesKilled;
         state.defeatedBossEnemyIds = combatResult.killedEnemyIds;
     }
+}
+
+void RunController::recordCombatDefeat(const CombatResult& combatResult) {
+    RunState& state = run();
+    recordCombatTelemetry(state, combatResult);
+    ++state.stats.combatsLost;
 }
 
 RewardState RunController::completeCombatAndCreateReward(
