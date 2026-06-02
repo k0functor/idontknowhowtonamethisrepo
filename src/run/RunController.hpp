@@ -50,6 +50,8 @@ public:
 
     bool hasPendingRoom() const;
     bool hasPendingRoomForNode(int nodeId) const;
+    bool pendingRoomMatchesRunMap() const;
+    bool partyDefeated() const;
     const RunPendingRoomState& pendingRoom() const;
     void clearPendingRoom();
     void setPendingCombatReward(int nodeId, RewardState reward);

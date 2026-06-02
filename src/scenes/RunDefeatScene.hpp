@@ -37,7 +37,7 @@ private:
     const UiFont& font_;
     const LocalizationManager& localization_;
     const RelicDatabase& relics_;
-    const RunState& run_;
+    RunState run_;
     std::function<void()> onProfileHub_;
     std::function<void()> onMainMenu_;
 };

@@ -465,11 +465,7 @@ target_link_libraries(i_dont_know_how_to_name_this_game PRIVATE
     nlohmann_json::nlohmann_json
 )
 
-# The game is distributed as a small standalone binary first, so prefer static
-# linking by default when building with GCC/MinGW. This intentionally restores
-# the old project behavior while keeping a CMake option for package-manager or
-# Linux/macOS builds that cannot provide every dependency as a static library.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND GAME_STATIC_LINK_LIBRARIES)
+if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND GAME_STATIC_LINK_LIBRARIES)
     target_link_options(i_dont_know_how_to_name_this_game PRIVATE
         -static
         -static-libgcc

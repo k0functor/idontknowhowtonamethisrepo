@@ -453,7 +453,7 @@ void GameFlowController::saveAndExitRunToProfileHub() {
 }
 
 bool GameFlowController::shouldShowInGameSettingsButton() const {
-    return runController_.hasActiveRun();
+    return runController_.hasActiveRun() && !runController_.isActCompleted();
 }
 
 bool GameFlowController::debugPanelEnabled() const {
@@ -981,6 +981,11 @@ void GameFlowController::setRunMapScene() {
         return;
     }
 
+    if (runController_.partyDefeated()) {
+        setRunDefeatScene();
+        return;
+    }
+
     sceneManager_.setScene(
         std::make_unique<RunMapScene>(
             uiFont_,
@@ -1022,12 +1027,15 @@ void GameFlowController::setRunDefeatScene() {
         throw std::runtime_error("Cannot open run defeat scene: no active run");
     }
 
+    const RunState defeatedRun = runController_.run();
+    finishDefeatedRunAndDeleteSave();
+
     sceneManager_.setScene(
         std::make_unique<RunDefeatScene>(
             uiFont_,
             localization_,
             content_.relics(),
-            runController_.run(),
+            defeatedRun,
             [this]() { finishRunDefeatToProfileHub(); },
             [this]() { finishRunDefeatToMainMenu(); }
         )
@@ -1037,6 +1045,16 @@ void GameFlowController::setRunDefeatScene() {
 bool GameFlowController::setPendingRoomSceneIfNeeded() {
     if (!runController_.hasPendingRoom()) {
         return false;
+    }
+
+    if (!runController_.pendingRoomMatchesRunMap()) {
+        std::cout << "Discarding stale pending room state for node " // NOL10N: developer diagnostic
+                  << runController_.pendingRoom().nodeId
+                  << ". Returning to the run map.\n"; // NOL10N: developer diagnostic
+        runController_.clearPendingRoom();
+        saveActiveRun();
+        setRunMapScene();
+        return true;
     }
 
     const RunPendingRoomState& pending = runController_.pendingRoom();
@@ -1270,6 +1288,11 @@ void GameFlowController::continueRunInSlot(const std::size_t slotIndex) {
             runController_.clearPendingRoom();
             saveActiveRun();
             setFloorCompleteScene();
+            return;
+        }
+
+        if (runController_.partyDefeated()) {
+            setRunDefeatScene();
             return;
         }
 
@@ -1507,6 +1530,12 @@ void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefin
             setEventScene(nodeId, content_.events().get(eventId));
             return;
         }
+
+        if (runController_.partyDefeated()) {
+            setRunDefeatScene();
+            return;
+        }
+
         saveActiveRun();
         setRunMapScene();
     });

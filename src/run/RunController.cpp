@@ -201,6 +201,30 @@ bool eraseDeckIndexAndShiftUpgrades(RunState& state, const std::size_t erasedInd
     return true;
 }
 
+
+bool pendingRoomUsesCompletedNode(const RunPendingRoomState& pending) {
+    return pending.type == RunPendingRoomType::CombatReward;
+}
+
+bool pendingRoomTypeMatchesNodeType(const RunPendingRoomState& pending, const RunMapNodeType nodeType) {
+    switch (pending.type) {
+        case RunPendingRoomType::CombatReward:
+            return nodeType == RunMapNodeType::Combat ||
+                nodeType == RunMapNodeType::Elite ||
+                nodeType == RunMapNodeType::Boss;
+        case RunPendingRoomType::ChestReward:
+            return nodeType == RunMapNodeType::Chest;
+        case RunPendingRoomType::Shop:
+            return nodeType == RunMapNodeType::Shop;
+        case RunPendingRoomType::Event:
+            return nodeType == RunMapNodeType::Event;
+        case RunPendingRoomType::None:
+            return true;
+    }
+
+    return false;
+}
+
 }
 
 void RunController::startNewRun(
@@ -258,6 +282,49 @@ bool RunController::hasPendingRoom() const {
 
 bool RunController::hasPendingRoomForNode(const int nodeId) const {
     return hasPendingRoom() && run().pendingRoom.nodeId == nodeId;
+}
+
+
+bool RunController::pendingRoomMatchesRunMap() const {
+    if (!hasPendingRoom()) {
+        return true;
+    }
+
+    const RunPendingRoomState& pending = run().pendingRoom;
+    const RunMapNode* pendingNode = nullptr;
+    for (const RunMapNode& nodeCandidate : run().map.nodes) {
+        if (nodeCandidate.id == pending.nodeId) {
+            pendingNode = &nodeCandidate;
+            break;
+        }
+    }
+
+    if (pendingNode == nullptr) {
+        return false;
+    }
+
+    if (!pendingRoomTypeMatchesNodeType(pending, pendingNode->type)) {
+        return false;
+    }
+
+    const RunMapNodeState expectedState = pendingRoomUsesCompletedNode(pending)
+        ? RunMapNodeState::Completed
+        : RunMapNodeState::Current;
+    return pendingNode->state == expectedState;
+}
+
+bool RunController::partyDefeated() const {
+    if (!hasActiveRun() || run().actorStates.empty()) {
+        return false;
+    }
+
+    return std::all_of(
+        run().actorStates.begin(),
+        run().actorStates.end(),
+        [](const RunActorState& actor) {
+            return actor.currentHp <= 0;
+        }
+    );
 }
 
 const RunPendingRoomState& RunController::pendingRoom() const {
