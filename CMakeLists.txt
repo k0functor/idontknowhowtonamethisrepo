@@ -32,6 +32,20 @@ if (Python3_Interpreter_FOUND)
         COMMENT "Reporting card upgrade coverage"
         VERBATIM
     )
+
+    add_custom_target(report_act1_content
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/report_act1_content.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Reporting act 1 relic, event, and consumable coverage"
+        VERBATIM
+    )
+
+    add_custom_target(report_merchant_economy
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/report_merchant_economy.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Reporting merchant economy tuning"
+        VERBATIM
+    )
 else()
     message(STATUS "Python3 was not found; validate_content target is disabled")
 endif()

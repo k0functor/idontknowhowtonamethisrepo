@@ -651,6 +651,9 @@ class ProjectValidator:
     def validate_reward_and_shop_tables(self) -> None:
         reward_data = self.load_json(ROOT / "data/rewards/reward_tables.json")
         if isinstance(reward_data, dict):
+            merchant_gold_multiplier = reward_data.get("merchant_gold_multiplier")
+            if not isinstance(merchant_gold_multiplier, (int, float)) or isinstance(merchant_gold_multiplier, bool) or merchant_gold_multiplier < 1.0:
+                self.error("data/rewards/reward_tables.json", "merchant_gold_multiplier must be a number >= 1.0")
             nodes = reward_data.get("nodes")
             if not isinstance(nodes, dict):
                 self.error("data/rewards/reward_tables.json", "nodes must be an object")
@@ -678,8 +681,32 @@ class ProjectValidator:
         shop_data = self.load_json(ROOT / "data/shop/shop_tables.json")
         if isinstance(shop_data, dict):
             owner = "data/shop/shop_tables.json"
-            for key in ("card_offers", "relic_offers", "consumable_offers", "card_removal_price", "minimum_card_price", "minimum_consumable_price"):
+            for key in (
+                "card_offers",
+                "relic_offers",
+                "consumable_offers",
+                "card_removal_price",
+                "minimum_card_price",
+                "minimum_consumable_price",
+                "merchant_rest_card_offers",
+                "merchant_rest_max_card_purchases",
+            ):
                 self.expect_int(owner, key, shop_data.get(key), minimum=0)
+            price_multiplier = shop_data.get("merchant_rest_card_price_multiplier")
+            if not isinstance(price_multiplier, (int, float)) or isinstance(price_multiplier, bool) or price_multiplier < 0:
+                self.error(owner, "merchant_rest_card_price_multiplier must be a non-negative number")
+            if isinstance(shop_data.get("merchant_rest_card_offers"), int) and isinstance(shop_data.get("merchant_rest_max_card_purchases"), int):
+                if shop_data["merchant_rest_max_card_purchases"] > shop_data["merchant_rest_card_offers"]:
+                    self.error(owner, "merchant_rest_max_card_purchases cannot exceed merchant_rest_card_offers")
+                merchant_is_available = any(
+                    archetype.get("id") == "merchant" and archetype.get("is_available") is True
+                    for archetype in self.content.archetypes.items.values()
+                )
+                if merchant_is_available:
+                    if shop_data["merchant_rest_card_offers"] <= 0:
+                        self.error(owner, "merchant_rest_card_offers must be positive while merchant is available")
+                    if shop_data["merchant_rest_max_card_purchases"] <= 0:
+                        self.error(owner, "merchant_rest_max_card_purchases must be positive while merchant is available")
             relic_prices = shop_data.get("relic_prices")
             if not isinstance(relic_prices, dict):
                 self.error(owner, "relic_prices must be an object")

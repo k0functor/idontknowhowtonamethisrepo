@@ -302,5 +302,81 @@
         }
       }
     ]
+  },
+  {
+    "id": "tactics_scroll",
+    "name": "consumable.tactics_scroll.name",
+    "description": "consumable.tactics_scroll.description",
+    "rarity": "common",
+    "gold_cost": 45,
+    "effects": [
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
+        "type": "gain_energy",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "acid_flask",
+    "name": "consumable.acid_flask.name",
+    "description": "consumable.acid_flask.description",
+    "rarity": "uncommon",
+    "gold_cost": 65,
+    "effects": [
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 8
+        }
+      },
+      {
+        "type": "apply_status",
+        "target": "all_enemies",
+        "status": "poison",
+        "value": {
+          "type": "fixed",
+          "amount": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "panic_button",
+    "name": "consumable.panic_button.name",
+    "description": "consumable.panic_button.description",
+    "rarity": "rare",
+    "gold_cost": 80,
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 18
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      }
+    ]
   }
 ]

@@ -444,5 +444,158 @@
         ]
       }
     ]
+  },
+  {
+    "id": "tattered_manual",
+    "name": "relic.tattered_manual.name",
+    "description": "relic.tattered_manual.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "card_played",
+        "card_type": "skill",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "thorn_buckle",
+    "name": "relic.thorn_buckle.name",
+    "description": "relic.thorn_buckle.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "damage_taken",
+        "source_side": "enemy",
+        "once_per_combat": true,
+        "min_amount": 1,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_enemy",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "storm_charm",
+    "name": "relic.storm_charm.name",
+    "description": "relic.storm_charm.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "turn_started",
+        "every_n_turns": 2,
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "black_candle",
+    "name": "relic.black_candle.name",
+    "description": "relic.black_candle.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "brass_locket",
+    "name": "relic.brass_locket.name",
+    "description": "relic.brass_locket.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "debt_ledger",
+    "name": "relic.debt_ledger.name",
+    "description": "relic.debt_ledger.description",
+    "rarity": "rare",
+    "modifiers": [
+      {
+        "type": "gold_reward_multiply",
+        "multiplier": 1.35,
+        "priority": 500
+      }
+    ],
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "gain_stress",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

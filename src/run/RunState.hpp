@@ -19,6 +19,7 @@ struct RunState {
     std::string archetypeMechanicId = "default";
 
     std::uint32_t seed = 0;
+    std::string randomState;
     int gold = 0;
     int act = 1;
     bool actCompleted = false;

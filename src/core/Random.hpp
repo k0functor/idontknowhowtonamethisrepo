@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <random>
+#include <string>
 
 class Random {
 public:
@@ -11,6 +12,9 @@ public:
     void setSeed(std::uint32_t seed);
 
     std::uint32_t seed() const;
+
+    std::string state() const;
+    void setState(const std::string& state);
 
     int rangeInclusive(int minimum, int maximum);
     bool chance(double probability);

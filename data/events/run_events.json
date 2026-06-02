@@ -619,5 +619,147 @@
         ]
       }
     ]
+  },
+  {
+    "id": "shrine_of_sharpening",
+    "title": "event.shrine_of_sharpening.title",
+    "description": "event.shrine_of_sharpening.description",
+    "choices": [
+      {
+        "text": "event.shrine_of_sharpening.choice.train",
+        "description": "event.shrine_of_sharpening.choice.train.description",
+        "requirements": {
+          "min_hp": 7
+        },
+        "effects": [
+          {
+            "type": "lose_hp",
+            "amount": 5
+          },
+          {
+            "type": "gain_random_card"
+          }
+        ]
+      },
+      {
+        "text": "event.shrine_of_sharpening.choice.sell_scraps",
+        "description": "event.shrine_of_sharpening.choice.sell_scraps.description",
+        "effects": [
+          {
+            "type": "gain_gold",
+            "amount": 30
+          },
+          {
+            "type": "gain_stress",
+            "amount": 4
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "locked_curio",
+    "title": "event.locked_curio.title",
+    "description": "event.locked_curio.description",
+    "choices": [
+      {
+        "text": "event.locked_curio.choice.buy_key",
+        "description": "event.locked_curio.choice.buy_key.description",
+        "requirements": {
+          "min_gold": 55
+        },
+        "effects": [
+          {
+            "type": "lose_gold",
+            "amount": 55
+          },
+          {
+            "type": "gain_random_relic"
+          }
+        ]
+      },
+      {
+        "text": "event.locked_curio.choice.break_lock",
+        "description": "event.locked_curio.choice.break_lock.description",
+        "requirements": {
+          "min_hp": 9,
+          "free_consumable_slot": true
+        },
+        "effects": [
+          {
+            "type": "lose_hp",
+            "amount": 7
+          },
+          {
+            "type": "gain_random_consumable"
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "quiet_ledger",
+    "title": "event.quiet_ledger.title",
+    "description": "event.quiet_ledger.description",
+    "choices": [
+      {
+        "text": "event.quiet_ledger.choice.erase",
+        "description": "event.quiet_ledger.choice.erase.description",
+        "requirements": {
+          "min_gold": 50,
+          "min_deck_size": 2
+        },
+        "effects": [
+          {
+            "type": "lose_gold",
+            "amount": 50
+          },
+          {
+            "type": "remove_random_card"
+          }
+        ]
+      },
+      {
+        "text": "event.quiet_ledger.choice.copy",
+        "description": "event.quiet_ledger.choice.copy.description",
+        "effects": [
+          {
+            "type": "gain_gold",
+            "amount": 25
+          },
+          {
+            "type": "gain_stress",
+            "amount": 6
+          }
+        ]
+      },
+      {
+        "text": "event.choice.skip",
+        "description": "event.choice.skip.description",
+        "effects": [
+          {
+            "type": "skip"
+          }
+        ]
+      }
+    ]
   }
 ]

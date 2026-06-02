@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <random>
+#include <sstream>
 #include <stdexcept>
 
 Random::Random()
@@ -18,6 +19,20 @@ void Random::setSeed(const std::uint32_t seed) {
 
 std::uint32_t Random::seed() const {
     return seed_;
+}
+
+std::string Random::state() const {
+    std::ostringstream output;
+    output << engine_;
+    return output.str();
+}
+
+void Random::setState(const std::string& state) {
+    std::istringstream input(state);
+    input >> engine_;
+    if (input.fail()) {
+        throw std::runtime_error("Invalid Random state");
+    }
 }
 
 int Random::rangeInclusive(int minimum, int maximum) {

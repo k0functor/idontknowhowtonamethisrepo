@@ -216,6 +216,8 @@ bool pendingRoomTypeMatchesNodeType(const RunPendingRoomState& pending, const Ru
             return nodeType == RunMapNodeType::Chest;
         case RunPendingRoomType::Shop:
             return nodeType == RunMapNodeType::Shop;
+        case RunPendingRoomType::MerchantRest:
+            return nodeType == RunMapNodeType::Rest;
         case RunPendingRoomType::Event:
             return nodeType == RunMapNodeType::Event;
         case RunPendingRoomType::None:
@@ -235,6 +237,8 @@ void RunController::startNewRun(
     const std::uint32_t seed
 ) {
     activeRun_ = runFactory_.createRun(archetype, difficulty, actors, mapGeneration, seed);
+    activeRunRandom_.emplace(activeRun_->seed);
+    activeRunRandom_->setState(activeRun_->randomState);
 }
 
 bool RunController::hasActiveRun() const {
@@ -243,10 +247,31 @@ bool RunController::hasActiveRun() const {
 
 void RunController::restoreRun(RunState run) {
     activeRun_ = std::move(run);
+    activeRunRandom_.emplace(activeRun_->seed);
+    if (!activeRun_->randomState.empty()) {
+        activeRunRandom_->setState(activeRun_->randomState);
+    } else {
+        activeRun_->randomState = activeRunRandom_->state();
+    }
 }
 
 void RunController::clearActiveRun() {
     activeRun_.reset();
+    activeRunRandom_.reset();
+}
+
+Random& RunController::random() {
+    if (!activeRunRandom_.has_value()) {
+        throw std::runtime_error("No active run random generator");
+    }
+
+    return *activeRunRandom_;
+}
+
+void RunController::syncRandomStateToRun() {
+    if (activeRun_.has_value() && activeRunRandom_.has_value()) {
+        activeRun_->randomState = activeRunRandom_->state();
+    }
 }
 
 bool RunController::isActCompleted() const {
@@ -354,6 +379,14 @@ void RunController::setPendingChestReward(const int nodeId, RewardState reward) 
 void RunController::setPendingShop(const int nodeId, ShopState shop) {
     RunPendingRoomState pending;
     pending.type = RunPendingRoomType::Shop;
+    pending.nodeId = nodeId;
+    pending.shop = std::move(shop);
+    run().pendingRoom = std::move(pending);
+}
+
+void RunController::setPendingMerchantRest(const int nodeId, ShopState shop) {
+    RunPendingRoomState pending;
+    pending.type = RunPendingRoomType::MerchantRest;
     pending.nodeId = nodeId;
     pending.shop = std::move(shop);
     run().pendingRoom = std::move(pending);
@@ -572,6 +605,7 @@ void RunController::completeRestHeal(const int nodeId) {
 
     healAllActorsByPercent(0.30f);
     reduceAllActorsStress(30);
+    ++run().stats.restHealsUsed;
     markNodeCompletedAndUnlockNext(nodeId);
 }
 
@@ -652,6 +686,7 @@ bool RunController::completeRestUpgrade(const int nodeId, const std::size_t deck
         state.upgradedDeckIndices.end()
     );
     ++state.stats.cardsUpgraded;
+    ++state.stats.restUpgradesUsed;
 
     markNodeCompletedAndUnlockNext(nodeId);
     return true;
@@ -663,6 +698,7 @@ void RunController::completeRestSkip(const int nodeId) {
         throw std::runtime_error("Cannot skip rest at a non-rest map node: " + std::to_string(nodeId));
     }
 
+    ++run().stats.restSkips;
     markNodeCompletedAndUnlockNext(nodeId);
 }
 
@@ -671,6 +707,13 @@ bool RunController::purchaseShopItem(const ShopPurchase& purchase) {
 
     if (purchase.price < 0 || state.gold < purchase.price) {
         return false;
+    }
+
+    if (state.pendingRoom.type == RunPendingRoomType::MerchantRest) {
+        const ShopState& merchantRest = state.pendingRoom.shop;
+        if (purchase.type != ShopOfferType::Card || merchantRest.cardPurchasesRemaining() <= 0) {
+            return false;
+        }
     }
 
     switch (purchase.type) {
@@ -747,6 +790,14 @@ bool RunController::purchaseShopItem(const ShopPurchase& purchase) {
 }
 
 void RunController::completeShopNode(const int nodeId) {
+    markNodeCompletedAndUnlockNext(nodeId);
+}
+
+void RunController::completeMerchantRestNode(const int nodeId) {
+    if (node(nodeId).type != RunMapNodeType::Rest) {
+        throw std::runtime_error("Cannot complete merchant rest at a non-rest map node: " + std::to_string(nodeId));
+    }
+
     markNodeCompletedAndUnlockNext(nodeId);
 }
 

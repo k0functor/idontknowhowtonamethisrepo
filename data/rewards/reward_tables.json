@@ -1,5 +1,5 @@
 {
-  "merchant_gold_multiplier": 1.25,
+  "merchant_gold_multiplier": 1.35,
   "nodes": {
     "combat": {
       "gold": 18,

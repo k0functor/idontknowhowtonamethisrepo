@@ -24,6 +24,9 @@ void ShopTuning::loadFromFile(const std::filesystem::path& filePath) {
     cardRemovalPrice_ = reader.optionalInt("card_removal_price", cardRemovalPrice_);
     minimumCardPrice_ = reader.optionalInt("minimum_card_price", minimumCardPrice_);
     minimumConsumablePrice_ = reader.optionalInt("minimum_consumable_price", minimumConsumablePrice_);
+    merchantRestCardOfferCount_ = reader.optionalInt("merchant_rest_card_offers", merchantRestCardOfferCount_);
+    merchantRestMaxCardPurchases_ = reader.optionalInt("merchant_rest_max_card_purchases", merchantRestMaxCardPurchases_);
+    merchantRestCardPriceMultiplier_ = reader.optionalDouble("merchant_rest_card_price_multiplier", merchantRestCardPriceMultiplier_);
 
     requireNonNegative(filePath, "card_offers", cardOfferCount_);
     requireNonNegative(filePath, "relic_offers", relicOfferCount_);
@@ -31,6 +34,11 @@ void ShopTuning::loadFromFile(const std::filesystem::path& filePath) {
     requireNonNegative(filePath, "card_removal_price", cardRemovalPrice_);
     requireNonNegative(filePath, "minimum_card_price", minimumCardPrice_);
     requireNonNegative(filePath, "minimum_consumable_price", minimumConsumablePrice_);
+    requireNonNegative(filePath, "merchant_rest_card_offers", merchantRestCardOfferCount_);
+    requireNonNegative(filePath, "merchant_rest_max_card_purchases", merchantRestMaxCardPurchases_);
+    if (merchantRestCardPriceMultiplier_ < 0.0) {
+        throw std::runtime_error(filePath.string() + ": 'merchant_rest_card_price_multiplier' must not be negative");
+    }
 
     const Json& relicPrices = reader.optionalObject("relic_prices");
     if (!relicPrices.empty()) {
@@ -71,6 +79,18 @@ int ShopTuning::minimumCardPrice() const {
 
 int ShopTuning::minimumConsumablePrice() const {
     return minimumConsumablePrice_;
+}
+
+int ShopTuning::merchantRestCardOfferCount() const {
+    return merchantRestCardOfferCount_;
+}
+
+int ShopTuning::merchantRestMaxCardPurchases() const {
+    return merchantRestMaxCardPurchases_;
+}
+
+double ShopTuning::merchantRestCardPriceMultiplier() const {
+    return merchantRestCardPriceMultiplier_;
 }
 
 int ShopTuning::relicPrice(const RelicRarity rarity) const {

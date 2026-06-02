@@ -12,6 +12,7 @@ enum class RunPendingRoomType {
     CombatReward,
     ChestReward,
     Shop,
+    MerchantRest,
     Event
 };
 

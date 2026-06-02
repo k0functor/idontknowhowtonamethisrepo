@@ -1,4 +1,6 @@
 {
+  "consumable.acid_flask.description": "Deal 8 damage to all enemies and apply 2 Poison to them.",
+  "consumable.acid_flask.name": "Acid Flask",
   "consumable.antidote_potion.description": "Heal 8 HP.",
   "consumable.antidote_potion.name": "Healing Potion",
   "consumable.energy_potion.description": "Gain 2 energy.",
@@ -15,6 +17,10 @@
   "consumable.guard_potion.name": "Guard Potion",
   "consumable.iron_skin_potion.description": "Gain 2 Dexterity and 6 block.",
   "consumable.iron_skin_potion.name": "Iron Skin Potion",
+  "consumable.panic_button.description": "Gain 18 block and draw 1 card.",
+  "consumable.panic_button.name": "Panic Button",
+  "consumable.poison_dart.description": "Choose an enemy. Apply 6 Poison.",
+  "consumable.poison_dart.name": "Poison Dart",
   "consumable.rage_potion.description": "Gain 3 Strength and 1 Weak.",
   "consumable.rage_potion.name": "Rage Potion",
   "consumable.smoke_bomb.description": "Apply 2 Weak to all enemies.",
@@ -23,10 +29,10 @@
   "consumable.strength_potion.name": "Strength Potion",
   "consumable.swift_potion.description": "Draw 2 cards.",
   "consumable.swift_potion.name": "Swift Potion",
+  "consumable.tactics_scroll.description": "Draw 1 card and gain 1 energy.",
+  "consumable.tactics_scroll.name": "Tactics Scroll",
   "consumable.throwing_knife.description": "Choose an enemy. Deal 12 damage.",
   "consumable.throwing_knife.name": "Throwing Knife",
-  "consumable.poison_dart.description": "Choose an enemy. Apply 6 Poison.",
-  "consumable.poison_dart.name": "Poison Dart",
   "consumable.venom_vial.description": "Apply 4 Poison to all enemies.",
   "consumable.venom_vial.name": "Venom Vial"
 }

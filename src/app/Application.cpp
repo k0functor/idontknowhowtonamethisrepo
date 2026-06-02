@@ -33,8 +33,7 @@ Application::Application()
       userSettings_(UserSettingsRepository::loadOrCreate(
           config_.paths.saves / "settings.json",
           UserSettings::fromAppConfig(config_)
-      )),
-      random_(12345u) {
+      )) {
     applyUserSettingsToConfig();
     initializeWindow();
     loadLocalization();

@@ -52,5 +52,6 @@ RunState RunFactory::createRun(
     }
 
     run.map = generator.generateActOneMap(mapRandom, mapGeneration);
+    run.randomState = mapRandom.state();
     return run;
 }

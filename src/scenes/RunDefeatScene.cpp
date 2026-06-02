@@ -28,6 +28,15 @@ std::string joinNames(const std::vector<std::string>& names) {
 std::string number(const int value) {
     return std::to_string(value);
 }
+
+std::string averagePerCombat(const int total, const int combats) {
+    if (combats <= 0) {
+        return "0";
+    }
+
+    const int rounded = static_cast<int>(static_cast<float>(total) / static_cast<float>(combats) + 0.5f);
+    return std::to_string(rounded);
+}
 }
 
 RunDefeatScene::RunDefeatScene(
@@ -116,37 +125,41 @@ void RunDefeatScene::render() const {
     y += 38.f;
 
     const std::vector<std::pair<std::string, std::string>> rows = statRows();
-    const std::size_t firstColumnCount = (rows.size() + 1u) / 2u;
-    const float columnGap = 24.f;
-    const float columnWidth = (panel.width - 96.f - columnGap) * 0.5f;
-    const float rowHeight = 29.f;
-    const float rowGap = 5.f;
+    const std::size_t columnCount = rows.size() > 20u && panel.width >= 820.f ? 3u : 2u;
+    const std::size_t rowsPerColumn = (rows.size() + columnCount - 1u) / columnCount;
+    const float columnGap = columnCount == 3u ? 18.f : 24.f;
+    const float columnWidth = (panel.width - 96.f - columnGap * static_cast<float>(columnCount - 1u)) /
+        static_cast<float>(columnCount);
+    const float rowHeight = columnCount == 3u ? 25.f : 29.f;
+    const float rowGap = columnCount == 3u ? 4.f : 5.f;
+    const float rowLabelFontSize = columnCount == 3u ? 13.f : 16.f;
+    const float rowMinimumFontSize = columnCount == 3u ? 11.f : 13.f;
 
     auto drawRow = [&](const Rectangle row, const std::string& label, const std::string& value) {
         DrawRectangleRounded(row, 0.16f, 8, Color{43, 38, 52, 230});
         BasicUi::drawTextFitted(
             font_,
             label,
-            Vector2{row.x + 12.f, row.y + 7.f},
-            row.width * 0.46f,
-            16.f,
-            13.f,
+            Vector2{row.x + 10.f, row.y + 6.f},
+            row.width * 0.48f,
+            rowLabelFontSize,
+            rowMinimumFontSize,
             Color{178, 168, 196, 255}
         );
         BasicUi::drawTextFitted(
             font_,
             value,
-            Vector2{row.x + row.width * 0.52f, row.y + 7.f},
-            row.width * 0.45f,
-            16.f,
-            13.f,
+            Vector2{row.x + row.width * 0.54f, row.y + 6.f},
+            row.width * 0.40f,
+            rowLabelFontSize,
+            rowMinimumFontSize,
             Color{238, 240, 248, 255}
         );
     };
 
     for (std::size_t index = 0; index < rows.size(); ++index) {
-        const std::size_t column = index < firstColumnCount ? 0u : 1u;
-        const std::size_t rowIndex = column == 0u ? index : index - firstColumnCount;
+        const std::size_t column = index / rowsPerColumn;
+        const std::size_t rowIndex = index % rowsPerColumn;
         const Rectangle row{
             panel.x + 48.f + static_cast<float>(column) * (columnWidth + columnGap),
             y + static_cast<float>(rowIndex) * (rowHeight + rowGap),
@@ -156,33 +169,42 @@ void RunDefeatScene::render() const {
         drawRow(row, rows[index].first, rows[index].second);
     }
 
-    y += static_cast<float>(firstColumnCount) * (rowHeight + rowGap) + 16.f;
+    y += static_cast<float>(rowsPerColumn) * (rowHeight + rowGap) + 12.f;
 
-    BasicUi::drawText(
-        font_,
-        localization_.get(TextId("run_defeat.relic_list_label")),
-        Vector2{panel.x + 48.f, y},
-        20.f,
-        Color{238, 116, 116, 255}
-    );
-    y += 30.f;
-
-    const std::vector<std::string> relicLines = BasicUi::wrapText(font_, relicSummary(), 17.f, panel.width - 96.f);
-    for (const std::string& line : relicLines) {
-        BasicUi::drawText(font_, line, Vector2{panel.x + 48.f, y}, 17.f, Color{205, 211, 232, 255});
-        y += 22.f;
+    const float contentBottom = profileHubButtonBounds().y - 18.f;
+    if (y + 26.f < contentBottom) {
+        BasicUi::drawText(
+            font_,
+            localization_.get(TextId("run_defeat.relic_list_label")),
+            Vector2{panel.x + 48.f, y},
+            19.f,
+            Color{238, 116, 116, 255}
+        );
+        y += 27.f;
     }
 
-    y += 14.f;
+    const std::vector<std::string> relicLines = BasicUi::wrapText(font_, relicSummary(), 16.f, panel.width - 96.f);
+    for (const std::string& line : relicLines) {
+        if (y + 20.f >= contentBottom) {
+            break;
+        }
+        BasicUi::drawText(font_, line, Vector2{panel.x + 48.f, y}, 16.f, Color{205, 211, 232, 255});
+        y += 20.f;
+    }
+
+    y += 8.f;
     const std::vector<std::string> nextLines = BasicUi::wrapText(
         font_,
         localization_.get(TextId("run_defeat.save_cleanup_note")),
-        16.f,
+        15.f,
         panel.width - 96.f
     );
     for (const std::string& line : nextLines) {
-        BasicUi::drawText(font_, line, Vector2{panel.x + 48.f, y}, 16.f, Color{190, 166, 112, 255});
-        y += 21.f;
+        if (y + 18.f >= contentBottom) {
+            break;
+        }
+        BasicUi::drawText(font_, line, Vector2{panel.x + 48.f, y}, 15.f, Color{190, 166, 112, 255});
+        y += 19.f;
     }
 
     BasicUi::drawButton(font_, profileHubButtonBounds(), localization_.get(TextId("run_defeat.profile_hub")), mouse);
@@ -267,14 +289,24 @@ std::vector<std::pair<std::string, std::string>> RunDefeatScene::statRows() cons
         {localization_.get(TextId("run_defeat.rooms_label")), number(run_.stats.nodesCompleted)},
         {localization_.get(TextId("run_defeat.combats_won_label")), number(run_.stats.combatsWon)},
         {localization_.get(TextId("run_defeat.combats_lost_label")), number(run_.stats.combatsLost)},
+        {localization_.get(TextId("run_defeat.average_damage_label")), averagePerCombat(run_.stats.damageTaken, run_.stats.combatsWon + run_.stats.combatsLost)},
         {localization_.get(TextId("run_defeat.enemies_label")), number(run_.stats.enemiesKilled)},
         {localization_.get(TextId("run_defeat.elites_label")), number(run_.stats.elitesKilled)},
         {localization_.get(TextId("run_defeat.damage_taken_label")), number(run_.stats.damageTaken)},
+        {localization_.get(TextId("run_defeat.events_label")), number(run_.stats.eventsCompleted)},
+        {localization_.get(TextId("run_defeat.shops_label")), number(run_.stats.shopsVisited)},
+        {localization_.get(TextId("run_defeat.chests_label")), number(run_.stats.chestsOpened)},
+        {localization_.get(TextId("run_defeat.rests_label")), number(run_.stats.restsUsed)},
+        {localization_.get(TextId("run_defeat.rest_heals_label")), number(run_.stats.restHealsUsed)},
+        {localization_.get(TextId("run_defeat.rest_upgrades_label")), number(run_.stats.restUpgradesUsed)},
+        {localization_.get(TextId("run_defeat.rest_skips_label")), number(run_.stats.restSkips)},
         {localization_.get(TextId("run_defeat.gold_gained_label")), number(run_.stats.goldGained)},
         {localization_.get(TextId("run_defeat.gold_spent_label")), number(run_.stats.goldSpent)},
         {localization_.get(TextId("run_defeat.cards_added_label")), number(run_.stats.cardsAdded)},
         {localization_.get(TextId("run_defeat.cards_removed_label")), number(run_.stats.cardsRemoved)},
         {localization_.get(TextId("run_defeat.cards_upgraded_label")), number(run_.stats.cardsUpgraded)},
+        {localization_.get(TextId("run_defeat.cards_skipped_label")), number(run_.stats.cardsSkipped)},
+        {localization_.get(TextId("run_defeat.rewards_skipped_label")), number(run_.stats.rewardsSkipped)},
         {localization_.get(TextId("run_defeat.consumables_used_label")), number(run_.stats.consumablesUsed)}
     };
 }

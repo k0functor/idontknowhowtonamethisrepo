@@ -30,6 +30,15 @@ std::string joinNames(const std::vector<std::string>& names) {
 std::string number(const int value) {
     return std::to_string(value);
 }
+
+std::string averagePerCombat(const int total, const int combats) {
+    if (combats <= 0) {
+        return "0";
+    }
+
+    const int rounded = static_cast<int>(static_cast<float>(total) / static_cast<float>(combats) + 0.5f);
+    return std::to_string(rounded);
+}
 }
 
 FloorCompleteScene::FloorCompleteScene(
@@ -287,12 +296,16 @@ std::vector<std::pair<std::string, std::string>> FloorCompleteScene::statRows() 
         {localization_.get(TextId("floor_complete.relics_label")), number(static_cast<int>(run_.relicIds.size()))},
         {localization_.get(TextId("floor_complete.consumables_label")), consumableSummary()},
         {localization_.get(TextId("floor_complete.combats_label")), number(run_.stats.combatsWon)},
+        {localization_.get(TextId("floor_complete.average_damage_label")), averagePerCombat(run_.stats.damageTaken, run_.stats.combatsWon + run_.stats.combatsLost)},
         {localization_.get(TextId("floor_complete.enemies_label")), number(run_.stats.enemiesKilled)},
         {localization_.get(TextId("floor_complete.elites_label")), number(run_.stats.elitesKilled)},
         {localization_.get(TextId("floor_complete.events_label")), number(run_.stats.eventsCompleted)},
         {localization_.get(TextId("floor_complete.shops_label")), number(run_.stats.shopsVisited)},
         {localization_.get(TextId("floor_complete.chests_label")), number(run_.stats.chestsOpened)},
         {localization_.get(TextId("floor_complete.rests_label")), number(run_.stats.restsUsed)},
+        {localization_.get(TextId("floor_complete.rest_heals_label")), number(run_.stats.restHealsUsed)},
+        {localization_.get(TextId("floor_complete.rest_upgrades_label")), number(run_.stats.restUpgradesUsed)},
+        {localization_.get(TextId("floor_complete.rest_skips_label")), number(run_.stats.restSkips)},
         {localization_.get(TextId("floor_complete.damage_taken_label")), number(run_.stats.damageTaken)},
         {localization_.get(TextId("floor_complete.consumables_used_label")), number(run_.stats.consumablesUsed)},
         {localization_.get(TextId("floor_complete.gold_gained_label")), number(run_.stats.goldGained)},
@@ -300,6 +313,8 @@ std::vector<std::pair<std::string, std::string>> FloorCompleteScene::statRows() 
         {localization_.get(TextId("floor_complete.cards_added_label")), number(run_.stats.cardsAdded)},
         {localization_.get(TextId("floor_complete.cards_removed_label")), number(run_.stats.cardsRemoved)},
         {localization_.get(TextId("floor_complete.cards_upgraded_label")), number(run_.stats.cardsUpgraded)},
+        {localization_.get(TextId("floor_complete.cards_skipped_label")), number(run_.stats.cardsSkipped)},
+        {localization_.get(TextId("floor_complete.rewards_skipped_label")), number(run_.stats.rewardsSkipped)},
         {localization_.get(TextId("floor_complete.nodes_label")), number(run_.stats.nodesCompleted)}
     };
 }

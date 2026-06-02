@@ -1,4 +1,6 @@
 {
+  "consumable.acid_flask.description": "Нанесите 8 урона всем врагам и наложите на них 2 яда.",
+  "consumable.acid_flask.name": "Кислотная колба",
   "consumable.antidote_potion.description": "Восстановите 8 здоровья.",
   "consumable.antidote_potion.name": "Лечебное зелье",
   "consumable.energy_potion.description": "Получите 2 энергии.",
@@ -15,6 +17,10 @@
   "consumable.guard_potion.name": "Зелье защиты",
   "consumable.iron_skin_potion.description": "Получите 2 ловкости и 6 защиты.",
   "consumable.iron_skin_potion.name": "Зелье железной кожи",
+  "consumable.panic_button.description": "Получите 18 защиты и доберите 1 карту.",
+  "consumable.panic_button.name": "Кнопка паники",
+  "consumable.poison_dart.description": "Выберите врага. Наложите 6 яда.",
+  "consumable.poison_dart.name": "Ядовитый дротик",
   "consumable.rage_potion.description": "Получите 3 силы и 1 слабость.",
   "consumable.rage_potion.name": "Зелье ярости",
   "consumable.smoke_bomb.description": "Наложите 2 слабости на всех врагов.",
@@ -23,10 +29,10 @@
   "consumable.strength_potion.name": "Зелье силы",
   "consumable.swift_potion.description": "Доберите 2 карты.",
   "consumable.swift_potion.name": "Зелье скорости",
+  "consumable.tactics_scroll.description": "Доберите 1 карту и получите 1 энергию.",
+  "consumable.tactics_scroll.name": "Тактический свиток",
   "consumable.throwing_knife.description": "Выберите врага. Нанесите 12 урона.",
   "consumable.throwing_knife.name": "Метательный нож",
-  "consumable.poison_dart.description": "Выберите врага. Наложите 6 яда.",
-  "consumable.poison_dart.name": "Ядовитый дротик",
   "consumable.venom_vial.description": "Наложите 4 яда всем врагам.",
   "consumable.venom_vial.name": "Флакон яда"
 }

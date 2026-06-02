@@ -212,7 +212,7 @@
       "bone_purse",
       "copper_coin"
     ],
-    "starting_gold": 140,
+    "starting_gold": 120,
     "strengths": [
       "archetype.merchant.strength.gold_income",
       "archetype.merchant.strength.shop_control"
@@ -232,7 +232,7 @@
     },
     "visual_identity": "archetype.merchant.visual_identity",
     "selection_order": 50,
-    "is_available": false
+    "is_available": true
   },
   {
     "id": "lost_psychopath",

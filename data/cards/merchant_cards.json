@@ -17,7 +17,19 @@
           "amount": 6
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_basic_defend",
@@ -37,7 +49,19 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_invoice_cut",
@@ -66,7 +90,28 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "vulnerable",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_discount_guard",
@@ -94,7 +139,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_coin_flip",
@@ -115,7 +180,20 @@
           "die": "d8"
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d10"
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_receipt_shield",
@@ -137,7 +215,21 @@
           "bonus": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d8",
+            "bonus": 3
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_poisoned_contract",
@@ -166,7 +258,28 @@
           "amount": 4
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "poison",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_loaned_strength",
@@ -190,7 +303,20 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "status": "strength",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_emergency_fund",
@@ -221,7 +347,27 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_cut_corners",
@@ -250,7 +396,28 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 13
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "status": "weak",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_black_market_map",
@@ -273,7 +440,19 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_interest_rate",
@@ -303,7 +482,29 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "vulnerable",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "weak",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_audit",
@@ -332,7 +533,28 @@
           "amount": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 17
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "weak",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_marked_price",
@@ -361,7 +583,28 @@
           "amount": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "vulnerable",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_silver_barrier",
@@ -381,7 +624,19 @@
           "amount": 16
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 22
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_loaded_dice",
@@ -405,6 +660,20 @@
     ],
     "dice_corruption": {
       "type": "unstable"
+    },
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 2,
+            "die": "d6",
+            "bonus": 3
+          }
+        }
+      ]
     }
   },
   {
@@ -435,7 +704,29 @@
           "amount": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 2,
+            "die": "d10"
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "vulnerable",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_liquid_assets",
@@ -466,7 +757,27 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_exclusive_offer",
@@ -498,7 +809,28 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "status": "free_next_card",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_debt_collector",
@@ -518,7 +850,19 @@
           "amount": 10
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 14
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_gilded_bandage",
@@ -546,7 +890,27 @@
           "amount": 6
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "heal",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_risk_clause",
@@ -579,6 +943,29 @@
     ],
     "dice_corruption": {
       "type": "cursed"
+    },
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d12",
+            "bonus": 4
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "poison",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        }
+      ]
     }
   },
   {
@@ -608,7 +995,28 @@
         },
         "status": "vulnerable"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "status": "vulnerable",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_cash_guard",
@@ -628,7 +1036,19 @@
           "amount": 7
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 10
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_quick_deal",
@@ -659,7 +1079,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_hired_knives",
@@ -679,7 +1119,19 @@
           "amount": 14
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 20
+          }
+        }
+      ]
+    }
   },
   {
     "id": "merchant_insurance",
@@ -708,6 +1160,27 @@
         },
         "status": "dexterity"
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "status": "dexterity",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    }
   }
 ]

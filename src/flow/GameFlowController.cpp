@@ -130,6 +130,41 @@ ShopState createShopState(
     return shop;
 }
 
+
+ShopState createMerchantRestState(
+    const RunState& run,
+    const CardDatabase& cards,
+    const ShopTuning& tuning,
+    Random& random
+) {
+    ShopState state;
+    state.mode = ShopStateMode::MerchantRest;
+    state.maxCardPurchases = tuning.merchantRestMaxCardPurchases();
+    state.cardPurchasesMade = 0;
+
+    std::vector<const CardDefinition*> candidates;
+    for (const CardDefinition* card : cards.all()) {
+        if (card != nullptr &&
+            RewardPoolRules::canAppearAsCardReward(*card) &&
+            runCanReceiveArchetypeRewardCard(run, *card)) {
+            candidates.push_back(card);
+        }
+    }
+
+    std::vector<const CardDefinition*> pickedCards;
+    pickUniqueRandom(candidates, tuning.merchantRestCardOfferCount(), random, pickedCards);
+    for (const CardDefinition* card : pickedCards) {
+        ShopOffer offer;
+        offer.type = ShopOfferType::Card;
+        offer.contentId = card->id.value;
+        const double scaledPrice = static_cast<double>(card->goldCost) * tuning.merchantRestCardPriceMultiplier();
+        offer.price = std::max(tuning.minimumCardPrice(), static_cast<int>(scaledPrice + 0.5));
+        state.offers.push_back(offer);
+    }
+
+    return state;
+}
+
 const RunEventDefinition& chooseRunEvent(const EventDatabase& events, Random& random) {
     const std::vector<const RunEventDefinition*> all = events.all();
     if (all.empty()) {
@@ -894,7 +929,7 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
             return true;
         }
         const int delta = parseIntOr(tokens, 1u, 0);
-        runController_.adjustAllActorsStress(delta, &random_);
+        runController_.adjustAllActorsStress(delta, &runController_.random());
         saveActiveRun();
         output = localization_.format(TextId("debug.run_actor_stress_adjusted"), {{"amount", std::to_string(delta)}});
         return true;
@@ -1083,6 +1118,10 @@ bool GameFlowController::setPendingRoomSceneIfNeeded() {
             setShopScene(pending.nodeId, pending.shop);
             return true;
 
+        case RunPendingRoomType::MerchantRest:
+            setMerchantRestScene(pending.nodeId, pending.shop);
+            return true;
+
         case RunPendingRoomType::Event:
             if (!content_.events().contains(pending.eventId)) {
                 std::cout << "Cannot restore pending event room: unknown event id '" // NOL10N: developer diagnostic
@@ -1120,7 +1159,7 @@ void GameFlowController::setCombatScene(const int nodeId) {
         std::make_unique<CombatScene>(
             content_,
             localization_,
-            random_,
+            runController_.random(),
             uiFont_,
             runController_.run(),
             [this, nodeId](const CombatResult& result) {
@@ -1131,7 +1170,7 @@ void GameFlowController::setCombatScene(const int nodeId) {
                     content_.relics(),
                     content_.consumables(),
                     content_.rewardTuning(),
-                    random_
+                    runController_.random()
                 );
 
                 runController_.setPendingCombatReward(nodeId, reward);
@@ -1197,6 +1236,24 @@ void GameFlowController::setChestRewardScene(const int nodeId, RewardState rewar
 
 
 void GameFlowController::setShopScene(const int nodeId, ShopState shopState) {
+    sceneManager_.setScene(
+        std::make_unique<ShopScene>(
+            uiFont_,
+            localization_,
+            content_.cards(),
+            content_.relics(),
+            content_.consumables(),
+            runController_.run(),
+            std::move(shopState),
+            [this](const ShopPurchase& purchase) { return purchaseShopItem(purchase); },
+            [this, nodeId](const ShopState& changedShopState) { updatePendingShopState(nodeId, changedShopState); },
+            [this, nodeId]() { finishShop(nodeId); }
+        )
+    );
+}
+
+void GameFlowController::setMerchantRestScene(const int nodeId, ShopState shopState) {
+    shopState.mode = ShopStateMode::MerchantRest;
     sceneManager_.setScene(
         std::make_unique<ShopScene>(
             uiFont_,
@@ -1385,7 +1442,7 @@ void GameFlowController::startMapNode(const int nodeId) {
                 RewardState reward;
                 reward.sourceNodeType = RunMapNodeType::Chest;
 
-                const std::optional<RelicId> relic = runController_.chooseChestRelic(content_.relics(), random_);
+                const std::optional<RelicId> relic = runController_.chooseChestRelic(content_.relics(), runController_.random());
                 if (relic.has_value()) {
                     reward.options.push_back(RewardOption::relic(relic->value));
                 }
@@ -1398,14 +1455,14 @@ void GameFlowController::startMapNode(const int nodeId) {
 
             case RunMapNodeType::Event: {
                 const int combatChance = content_.actOneMapGeneration().questionMarkCombatChance();
-                if (random_.chance(static_cast<double>(combatChance) / 100.0)) {
+                if (runController_.random().chance(static_cast<double>(combatChance) / 100.0)) {
                     runController_.revealNodeType(nodeId, RunMapNodeType::Combat);
                     saveActiveRun();
                     setCombatScene(nodeId);
                     return;
                 }
 
-                const RunEventDefinition& event = chooseRunEvent(content_.events(), random_);
+                const RunEventDefinition& event = chooseRunEvent(content_.events(), runController_.random());
                 runController_.setPendingEvent(nodeId, event.id);
                 saveActiveRun();
                 setEventScene(nodeId, event);
@@ -1419,7 +1476,7 @@ void GameFlowController::startMapNode(const int nodeId) {
                     content_.relics(),
                     content_.consumables(),
                     content_.shopTuning(),
-                    random_
+                    runController_.random()
                 );
                 runController_.setPendingShop(nodeId, shopState);
                 saveActiveRun();
@@ -1428,6 +1485,19 @@ void GameFlowController::startMapNode(const int nodeId) {
             }
 
             case RunMapNodeType::Rest:
+                if (runController_.run().archetypeMechanicId == "merchant_progression") {
+                    ShopState merchantRest = createMerchantRestState(
+                        runController_.run(),
+                        content_.cards(),
+                        content_.shopTuning(),
+                        runController_.random()
+                    );
+                    runController_.setPendingMerchantRest(nodeId, merchantRest);
+                    saveActiveRun();
+                    setMerchantRestScene(nodeId, std::move(merchantRest));
+                    return;
+                }
+
                 // Rest is normally handled inside RunMapScene through its modal.
                 setRunMapScene();
                 return;
@@ -1487,23 +1557,37 @@ bool GameFlowController::purchaseShopItem(const ShopPurchase& purchase) {
 }
 
 void GameFlowController::updatePendingShopState(const int nodeId, const ShopState& shopState) {
-    if (runController_.hasPendingRoom() &&
-        runController_.pendingRoom().type == RunPendingRoomType::Shop &&
-        runController_.pendingRoom().nodeId == nodeId) {
+    if (!runController_.hasPendingRoom() || runController_.pendingRoom().nodeId != nodeId) {
+        return;
+    }
+
+    const RunPendingRoomType type = runController_.pendingRoom().type;
+    if (type == RunPendingRoomType::Shop) {
         runController_.setPendingShop(nodeId, shopState);
+        saveActiveRun();
+    } else if (type == RunPendingRoomType::MerchantRest) {
+        runController_.setPendingMerchantRest(nodeId, shopState);
         saveActiveRun();
     }
 }
 
 void GameFlowController::finishShop(const int nodeId) {
     queueTransition([this, nodeId]() {
-        if (!runController_.hasPendingRoomForNode(nodeId) ||
-            runController_.pendingRoom().type != RunPendingRoomType::Shop) {
+        if (!runController_.hasPendingRoomForNode(nodeId)) {
             setRunMapScene();
             return;
         }
 
-        runController_.completeShopNode(nodeId);
+        const RunPendingRoomType type = runController_.pendingRoom().type;
+        if (type == RunPendingRoomType::Shop) {
+            runController_.completeShopNode(nodeId);
+        } else if (type == RunPendingRoomType::MerchantRest) {
+            runController_.completeMerchantRestNode(nodeId);
+        } else {
+            setRunMapScene();
+            return;
+        }
+
         saveActiveRun();
         setRunMapScene();
     });
@@ -1524,7 +1608,7 @@ void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefin
             content_.cards(),
             content_.relics(),
             content_.consumables(),
-            random_
+            runController_.random()
         );
         if (!completed) {
             setEventScene(nodeId, content_.events().get(eventId));
@@ -1646,6 +1730,7 @@ void GameFlowController::saveActiveRun() {
         return;
     }
 
+    runController_.syncRandomStateToRun();
     runSaveSystem_.saveRun(profileManager_.selectedSlotIndex(), runController_.run());
 }
 

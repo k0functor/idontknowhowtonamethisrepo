@@ -43,6 +43,8 @@ private:
     Rectangle cardOffersAreaBounds() const;
     Rectangle otherOffersAreaBounds() const;
     Rectangle cardOfferVisualBounds(Rectangle cell) const;
+    std::size_t cardOfferColumnCount() const;
+    float cardOfferCellHeight() const;
     Rectangle leaveButtonBounds() const;
     Rectangle removeModeBounds() const;
     Rectangle removeCardBounds(std::size_t visibleIndex) const;
@@ -79,6 +81,9 @@ private:
     std::string cardName(const CardId& cardId) const;
     std::string cardDescription(const CardId& cardId) const;
 
+    std::string sceneTitle() const;
+    std::string sceneSubtitle() const;
+    std::string leaveButtonText() const;
     std::string priceText(int price) const;
 
 private:

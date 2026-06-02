@@ -42,6 +42,9 @@ public:
     void restoreRun(RunState run);
     void clearActiveRun();
 
+    Random& random();
+    void syncRandomStateToRun();
+
     bool isActCompleted() const;
     void completeCurrentAct();
 
@@ -57,6 +60,7 @@ public:
     void setPendingCombatReward(int nodeId, RewardState reward);
     void setPendingChestReward(int nodeId, RewardState reward);
     void setPendingShop(int nodeId, ShopState shop);
+    void setPendingMerchantRest(int nodeId, ShopState shop);
     void setPendingEvent(int nodeId, std::string eventId);
 
     const RunMapNode& node(int nodeId) const;
@@ -118,6 +122,7 @@ public:
 
     bool purchaseShopItem(const ShopPurchase& purchase);
     void completeShopNode(int nodeId);
+    void completeMerchantRestNode(int nodeId);
 
     bool completeEventChoice(
         int nodeId,
@@ -136,4 +141,5 @@ private:
     RewardGenerator rewardGenerator_;
     RewardSystem rewardSystem_;
     std::optional<RunState> activeRun_;
+    std::optional<Random> activeRunRandom_;
 };

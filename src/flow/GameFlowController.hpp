@@ -79,6 +79,7 @@ private:
     void setCombatRewardScene(int nodeId, RewardState reward);
     void setChestRewardScene(int nodeId, RewardState reward);
     void setShopScene(int nodeId, ShopState shopState);
+    void setMerchantRestScene(int nodeId, ShopState shopState);
     void setEventScene(int nodeId, const RunEventDefinition& event);
 
     void showMainMenu();

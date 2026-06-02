@@ -182,6 +182,11 @@ void RunMapScene::update(float) {
         }
 
         if (node.type == RunMapNodeType::Rest) {
+            if (runState_.archetypeMechanicId == "merchant_progression") {
+                onNodeSelected_(node.id);
+                return;
+            }
+
             restModalNodeId_ = node.id;
             return;
         }

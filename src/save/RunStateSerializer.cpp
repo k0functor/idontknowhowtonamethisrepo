@@ -1,6 +1,7 @@
 #include "RunStateSerializer.hpp"
 
 #include "cards/CardId.hpp"
+#include "core/Random.hpp"
 #include "run/StressRules.hpp"
 
 #include <algorithm>
@@ -535,6 +536,31 @@ RewardState rewardStateFromJson(const Json& json, const std::filesystem::path& s
     return reward;
 }
 
+
+int optionalInt(const Json& object, const std::string& key, const std::filesystem::path& sourcePath, int fallback);
+
+std::string shopStateModeToString(const ShopStateMode mode) {
+    switch (mode) {
+        case ShopStateMode::Shop:
+            return "shop";
+        case ShopStateMode::MerchantRest:
+            return "merchant_rest";
+    }
+
+    return "shop";
+}
+
+ShopStateMode shopStateModeFromString(const std::string& value, const std::filesystem::path& sourcePath) {
+    if (value == "shop") {
+        return ShopStateMode::Shop;
+    }
+    if (value == "merchant_rest") {
+        return ShopStateMode::MerchantRest;
+    }
+
+    throwSaveError(sourcePath, "Unknown shop state mode '" + value + "'");
+}
+
 std::string shopOfferTypeToString(const ShopOfferType type) {
     switch (type) {
         case ShopOfferType::Card:
@@ -596,20 +622,35 @@ Json shopStateToJson(const ShopState& shop) {
     }
 
     return Json{
+        {"mode", shopStateModeToString(shop.mode)},
         {"offers", offers},
         {"card_removal_price", shop.cardRemovalPrice},
-        {"card_removal_used", shop.cardRemovalUsed}
+        {"card_removal_used", shop.cardRemovalUsed},
+        {"max_card_purchases", shop.maxCardPurchases},
+        {"card_purchases_made", shop.cardPurchasesMade}
     };
 }
 
 ShopState shopStateFromJson(const Json& json, const std::filesystem::path& sourcePath) {
     ShopState shop;
+    if (const Json* mode = optionalField(json, "mode", sourcePath)) {
+        if (!mode->is_string()) {
+            throwSaveError(sourcePath, "'mode' must be a string");
+        }
+        shop.mode = shopStateModeFromString(mode->get<std::string>(), sourcePath);
+    }
     shop.cardRemovalPrice = requiredInt(json, "card_removal_price", sourcePath);
     const Json cardRemovalUsed = requiredField(json, "card_removal_used", sourcePath);
     if (!cardRemovalUsed.is_boolean()) {
         throwSaveError(sourcePath, "'card_removal_used' must be a boolean");
     }
     shop.cardRemovalUsed = cardRemovalUsed.get<bool>();
+    shop.maxCardPurchases = optionalInt(json, "max_card_purchases", sourcePath, 0);
+    shop.cardPurchasesMade = optionalInt(json, "card_purchases_made", sourcePath, 0);
+    if (shop.maxCardPurchases < 0 || shop.cardPurchasesMade < 0) {
+        throwSaveError(sourcePath, "shop card purchase counters must not be negative");
+    }
+    shop.cardPurchasesMade = std::min(shop.cardPurchasesMade, shop.maxCardPurchases);
 
     const Json offers = requiredField(json, "offers", sourcePath);
     if (!offers.is_array()) {
@@ -632,6 +673,8 @@ std::string pendingRoomTypeToString(const RunPendingRoomType type) {
             return "chest_reward";
         case RunPendingRoomType::Shop:
             return "shop";
+        case RunPendingRoomType::MerchantRest:
+            return "merchant_rest";
         case RunPendingRoomType::Event:
             return "event";
     }
@@ -651,6 +694,9 @@ RunPendingRoomType pendingRoomTypeFromString(const std::string& value, const std
     }
     if (value == "shop") {
         return RunPendingRoomType::Shop;
+    }
+    if (value == "merchant_rest") {
+        return RunPendingRoomType::MerchantRest;
     }
     if (value == "event") {
         return RunPendingRoomType::Event;
@@ -703,6 +749,9 @@ Json statsToJson(const RunStats& stats) {
         {"shops_visited", stats.shopsVisited},
         {"chests_opened", stats.chestsOpened},
         {"rests_used", stats.restsUsed},
+        {"rest_heals_used", stats.restHealsUsed},
+        {"rest_upgrades_used", stats.restUpgradesUsed},
+        {"rest_skips", stats.restSkips},
         {"damage_taken", stats.damageTaken},
         {"consumables_used", stats.consumablesUsed},
         {"gold_gained", stats.goldGained},
@@ -710,6 +759,8 @@ Json statsToJson(const RunStats& stats) {
         {"cards_added", stats.cardsAdded},
         {"cards_removed", stats.cardsRemoved},
         {"cards_upgraded", stats.cardsUpgraded},
+        {"cards_skipped", stats.cardsSkipped},
+        {"rewards_skipped", stats.rewardsSkipped},
         {"relics_gained", stats.relicsGained},
         {"consumables_gained", stats.consumablesGained},
         {"nodes_completed", stats.nodesCompleted}
@@ -727,6 +778,9 @@ RunStats statsFromJson(const Json& json, const std::filesystem::path& sourcePath
     stats.shopsVisited = optionalInt(json, "shops_visited", sourcePath, 0);
     stats.chestsOpened = optionalInt(json, "chests_opened", sourcePath, 0);
     stats.restsUsed = optionalInt(json, "rests_used", sourcePath, 0);
+    stats.restHealsUsed = optionalInt(json, "rest_heals_used", sourcePath, 0);
+    stats.restUpgradesUsed = optionalInt(json, "rest_upgrades_used", sourcePath, 0);
+    stats.restSkips = optionalInt(json, "rest_skips", sourcePath, 0);
     stats.damageTaken = optionalInt(json, "damage_taken", sourcePath, 0);
     stats.consumablesUsed = optionalInt(json, "consumables_used", sourcePath, 0);
     stats.goldGained = requiredInt(json, "gold_gained", sourcePath);
@@ -734,6 +788,8 @@ RunStats statsFromJson(const Json& json, const std::filesystem::path& sourcePath
     stats.cardsAdded = requiredInt(json, "cards_added", sourcePath);
     stats.cardsRemoved = optionalInt(json, "cards_removed", sourcePath, 0);
     stats.cardsUpgraded = optionalInt(json, "cards_upgraded", sourcePath, 0);
+    stats.cardsSkipped = optionalInt(json, "cards_skipped", sourcePath, 0);
+    stats.rewardsSkipped = optionalInt(json, "rewards_skipped", sourcePath, 0);
     stats.relicsGained = optionalInt(json, "relics_gained", sourcePath, 0);
     stats.consumablesGained = optionalInt(json, "consumables_gained", sourcePath, 0);
     stats.nodesCompleted = requiredInt(json, "nodes_completed", sourcePath);
@@ -748,6 +804,7 @@ Json RunStateSerializer::toJson(const RunState& run) {
         {"difficulty_id", run.difficultyId.value},
         {"archetype_mechanic_id", run.archetypeMechanicId},
         {"seed", run.seed},
+        {"random_state", run.randomState},
         {"gold", run.gold},
         {"act", run.act},
         {"act_completed", run.actCompleted},
@@ -781,6 +838,18 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
     run.difficultyId = DifficultyId(requiredString(json, "difficulty_id", sourcePath));
     run.archetypeMechanicId = requiredString(json, "archetype_mechanic_id", sourcePath);
     run.seed = requiredUnsigned(json, "seed", sourcePath);
+    if (const Json* randomState = optionalField(json, "random_state", sourcePath)) {
+        if (!randomState->is_string()) {
+            throwSaveError(sourcePath, "'random_state' must be a string");
+        }
+        run.randomState = randomState->get<std::string>();
+        try {
+            Random validationRandom(run.seed);
+            validationRandom.setState(run.randomState);
+        } catch (const std::exception& error) {
+            throwSaveError(sourcePath, std::string("Invalid 'random_state': ") + error.what());
+        }
+    }
     run.gold = requiredInt(json, "gold", sourcePath);
     run.act = requiredInt(json, "act", sourcePath);
     if (const Json* actCompleted = optionalField(json, "act_completed", sourcePath)) {

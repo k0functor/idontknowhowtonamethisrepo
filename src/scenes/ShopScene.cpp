@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cmath>
 #include <string>
 #include <utility>
 #include <vector>
@@ -68,7 +69,7 @@ void ShopScene::render() const {
 
     BasicUi::drawCenteredText(
         font_,
-        localization_.get(TextId("shop.title")),
+        sceneTitle(),
         Rectangle{0.f, 26.f, static_cast<float>(VirtualViewport::width()), 54.f},
         40.f,
         Color{244, 233, 188, 255}
@@ -82,13 +83,24 @@ void ShopScene::render() const {
         Color{219, 205, 130, 255}
     );
 
+    const std::string subtitle = sceneSubtitle();
+    if (!subtitle.empty()) {
+        BasicUi::drawCenteredText(
+            font_,
+            subtitle,
+            Rectangle{70.f, 116.f, static_cast<float>(VirtualViewport::width()) - 140.f, 30.f},
+            18.f,
+            Color{184, 193, 214, 255}
+        );
+    }
+
     const Rectangle panel = panelBounds();
     DrawRectangleRounded(panel, 0.04f, 14, Color{29, 31, 41, 250});
     DrawRectangleRoundedLinesEx(panel, 0.04f, 14, 2.f, Color{111, 122, 150, 255});
 
     renderOffers();
 
-    BasicUi::drawButton(font_, leaveButtonBounds(), localization_.get(TextId("shop.leave")), mouse);
+    BasicUi::drawButton(font_, leaveButtonBounds(), leaveButtonText(), mouse);
 
     if (!removeMode_ && !pendingPurchaseIndex_.has_value()) {
         renderHoverDescription();
@@ -116,12 +128,20 @@ Rectangle ShopScene::panelBounds() const {
 
 Rectangle ShopScene::cardOffersAreaBounds() const {
     const Rectangle panel = panelBounds();
+    if (shopState_.isMerchantRest()) {
+        return Rectangle{panel.x + 34.f, panel.y + 34.f, panel.width - 68.f, panel.height - 82.f};
+    }
+
     const float width = std::min(930.f, panel.width * 0.60f);
     return Rectangle{panel.x + 34.f, panel.y + 34.f, width, panel.height - 82.f};
 }
 
 Rectangle ShopScene::otherOffersAreaBounds() const {
     const Rectangle panel = panelBounds();
+    if (shopState_.isMerchantRest()) {
+        return Rectangle{panel.x + panel.width - 34.f, panel.y + 34.f, 0.f, panel.height - 82.f};
+    }
+
     const Rectangle cards = cardOffersAreaBounds();
     const float x = cards.x + cards.width + 34.f;
     return Rectangle{x, panel.y + 34.f, std::max(420.f, panel.x + panel.width - x - 34.f), panel.height - 82.f};
@@ -135,12 +155,13 @@ Rectangle ShopScene::offerBounds(const std::size_t index) const {
     const ShopOffer& offer = shopState_.offers[index];
     if (offer.type == ShopOfferType::Card) {
         const Rectangle area = cardOffersAreaBounds();
-        constexpr float columns = 3.f;
-        const float cellWidth = (area.width - offerSpacing * (columns - 1.f)) / columns;
-        const float cellHeight = std::min(area.height, 376.f);
+        const std::size_t columns = cardOfferColumnCount();
+        const float columnCount = static_cast<float>(std::max<std::size_t>(1u, columns));
+        const float cellWidth = (area.width - offerSpacing * (columnCount - 1.f)) / columnCount;
+        const float cellHeight = cardOfferCellHeight();
         const std::size_t ordinal = cardOfferOrdinal(index);
-        const std::size_t column = ordinal % static_cast<std::size_t>(columns);
-        const std::size_t row = ordinal / static_cast<std::size_t>(columns);
+        const std::size_t column = ordinal % columns;
+        const std::size_t row = ordinal / columns;
         return Rectangle{
             area.x + static_cast<float>(column) * (cellWidth + offerSpacing),
             area.y + static_cast<float>(row) * (cellHeight + offerSpacing),
@@ -161,6 +182,39 @@ Rectangle ShopScene::offerBounds(const std::size_t index) const {
 
 Rectangle ShopScene::cardOfferVisualBounds(const Rectangle cell) const {
     return Rectangle{cell.x + 8.f, cell.y + 10.f, cell.width - 16.f, cell.height - 92.f};
+}
+
+std::size_t ShopScene::cardOfferColumnCount() const {
+    const Rectangle area = cardOffersAreaBounds();
+    const std::size_t cardCount = std::max<std::size_t>(1u, std::count_if(
+        shopState_.offers.begin(),
+        shopState_.offers.end(),
+        [](const ShopOffer& offer) { return offer.type == ShopOfferType::Card && !offer.purchased; }
+    ));
+
+    if (shopState_.isMerchantRest()) {
+        if (area.width >= 720.f || cardCount >= 5u) {
+            return 3u;
+        }
+        return 2u;
+    }
+
+    return area.width < 760.f ? 2u : 3u;
+}
+
+float ShopScene::cardOfferCellHeight() const {
+    const Rectangle area = cardOffersAreaBounds();
+    const std::size_t columns = cardOfferColumnCount();
+    const std::size_t cardCount = std::max<std::size_t>(1u, std::count_if(
+        shopState_.offers.begin(),
+        shopState_.offers.end(),
+        [](const ShopOffer& offer) { return offer.type == ShopOfferType::Card && !offer.purchased; }
+    ));
+    const std::size_t rows = std::max<std::size_t>(1u, (cardCount + columns - 1u) / columns);
+    const float availableHeight = area.height - offerSpacing * static_cast<float>(rows - 1u);
+    const float fittedHeight = availableHeight / static_cast<float>(rows);
+    const float maximumHeight = shopState_.isMerchantRest() ? 330.f : 376.f;
+    return std::clamp(fittedHeight, 260.f, maximumHeight);
 }
 
 Rectangle ShopScene::leaveButtonBounds() const {
@@ -622,6 +676,10 @@ void ShopScene::purchaseOfferAtIndex(const std::size_t offerIndex) {
         return;
     }
 
+    if (shopState_.isMerchantRest() && offer.type == ShopOfferType::Card) {
+        ++shopState_.cardPurchasesMade;
+    }
+
     shopState_.offers.erase(shopState_.offers.begin() + static_cast<std::ptrdiff_t>(offerIndex));
     if (onShopStateChanged_) {
         onShopStateChanged_(shopState_);
@@ -635,6 +693,10 @@ bool ShopScene::canBuy(const ShopOffer& offer) const {
 
     if (runState_.gold < offer.price) {
         return false;
+    }
+
+    if (shopState_.isMerchantRest()) {
+        return offer.type == ShopOfferType::Card && shopState_.cardPurchasesRemaining() > 0;
     }
 
     if (offer.type == ShopOfferType::Consumable && static_cast<int>(runState_.consumableIds.size()) >= runState_.maxConsumables) {
@@ -708,6 +770,10 @@ std::string ShopScene::offerKind(const ShopOffer& offer) const {
 std::string ShopScene::offerStatus(const ShopOffer& offer) const {
     if (offer.purchased) {
         return localization_.get(TextId("shop.status.sold"));
+    }
+
+    if (shopState_.isMerchantRest() && shopState_.cardPurchasesRemaining() <= 0) {
+        return localization_.get(TextId("merchant_rest.status.limit_reached"));
     }
 
     if (offer.type == ShopOfferType::Consumable && static_cast<int>(runState_.consumableIds.size()) >= runState_.maxConsumables) {
@@ -812,6 +878,28 @@ std::string ShopScene::cardDescription(const CardId& cardId) const {
 
     const CardDescriptionFormatter descriptionFormatter(localization_);
     return descriptionFormatter.formatStaticDescription(cards_.get(cardId));
+}
+
+std::string ShopScene::sceneTitle() const {
+    return localization_.get(TextId(shopState_.isMerchantRest() ? "merchant_rest.title" : "shop.title"));
+}
+
+std::string ShopScene::sceneSubtitle() const {
+    if (!shopState_.isMerchantRest()) {
+        return {};
+    }
+
+    return localization_.format(
+        TextId("merchant_rest.subtitle"),
+        {
+            {"remaining", std::to_string(shopState_.cardPurchasesRemaining())},
+            {"maximum", std::to_string(shopState_.maxCardPurchases)}
+        }
+    );
+}
+
+std::string ShopScene::leaveButtonText() const {
+    return localization_.get(TextId(shopState_.isMerchantRest() ? "merchant_rest.leave" : "shop.leave"));
 }
 
 std::string ShopScene::priceText(const int price) const {

@@ -11,5 +11,8 @@
     "rare": 220,
     "boss": 300,
     "special": 999
-  }
+  },
+  "merchant_rest_card_offers": 5,
+  "merchant_rest_max_card_purchases": 2,
+  "merchant_rest_card_price_multiplier": 0.85
 }
