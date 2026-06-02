@@ -14,6 +14,7 @@ public:
 
     void setPosition(Vector2 position);
     void setSize(Vector2 size);
+    void setStatusesOnRight(bool statusesOnRight);
 
     bool contains(Vector2 worldPosition) const;
     void render(const Font* font, bool hovered) const;
@@ -28,4 +29,5 @@ private:
     PlayerViewModel model_;
     Vector2 position_{160.f, 240.f};
     Vector2 size_{230.f, 180.f};
+    bool statusesOnRight_ = true;
 };

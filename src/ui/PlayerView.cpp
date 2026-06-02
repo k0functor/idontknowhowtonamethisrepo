@@ -52,6 +52,10 @@ void PlayerView::setSize(const Vector2 size) {
     size_ = size;
 }
 
+void PlayerView::setStatusesOnRight(const bool statusesOnRight) {
+    statusesOnRight_ = statusesOnRight;
+}
+
 bool PlayerView::contains(const Vector2 worldPosition) const {
     return CheckCollisionPointRec(worldPosition, bounds());
 }
@@ -166,7 +170,19 @@ Rectangle PlayerView::bounds() const {
 
 Rectangle PlayerView::statusAreaBounds() const {
     const Vector2 renderPosition{position_.x + model_.renderOffset.x, position_.y + model_.renderOffset.y};
-    return Rectangle{renderPosition.x + 12.f, renderPosition.y + size_.y - 70.f, size_.x - 24.f, 28.f};
+    constexpr float gap = 10.f;
+    constexpr float columnWidth = 112.f;
+
+    const float x = statusesOnRight_
+        ? renderPosition.x + size_.x + gap
+        : renderPosition.x - columnWidth - gap;
+
+    return Rectangle{
+        x,
+        renderPosition.y + 10.f,
+        columnWidth,
+        std::max(24.f, size_.y - 20.f)
+    };
 }
 
 std::optional<Rectangle> PlayerView::statusBounds(const std::size_t index) const {
@@ -177,34 +193,19 @@ std::optional<Rectangle> PlayerView::statusBounds(const std::size_t index) const
     const Rectangle area = statusAreaBounds();
     constexpr float chipHeight = 24.f;
     constexpr float gap = 6.f;
-    constexpr float minChipWidth = 42.f;
-    constexpr float maxChipWidth = 94.f;
 
-    float x = area.x;
+    const float x = area.x;
     float y = area.y;
     for (std::size_t i = 0; i <= index && i < model_.statuses.size(); ++i) {
-        const StatusViewModel& status = model_.statuses[i];
-        const float width = std::clamp(
-            26.f + static_cast<float>(UiUtf8::truncateWithEllipsis(status.name, 8).size()) * 6.5f +
-                (status.amount > 0 ? 20.f : 0.f),
-            minChipWidth,
-            maxChipWidth
-        );
-
-        if (x + width > area.x + area.width && x > area.x) {
-            x = area.x;
-            y += chipHeight + gap;
-        }
-
-        const Rectangle bounds{x, y, width, chipHeight};
+        const Rectangle bounds{x, y, area.width, chipHeight};
         if (i == index) {
-            if (bounds.y + bounds.height > area.y + 2.f * (chipHeight + gap)) {
+            if (bounds.y + bounds.height > area.y + area.height) {
                 return std::nullopt;
             }
             return bounds;
         }
 
-        x += width + gap;
+        y += chipHeight + gap;
     }
 
     return std::nullopt;

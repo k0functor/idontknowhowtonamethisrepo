@@ -311,39 +311,16 @@ InspectPanelModel InspectModelBuilder::buildStatus(const StatusViewModel& status
         ? formatRawText("inspect.status.title_with_amount",
             {{"name", status.name}, {"amount", std::to_string(status.amount)}})
         : status.name;
-    model.subheader = !status.description.empty()
+
+    const std::string description = !status.description.empty()
         ? status.description
         : statusDescription(status.id);
+    model.subheader = description;
 
-    if (!status.runtimeText.empty()) {
+    if (!status.runtimeText.empty() && status.runtimeText != description) {
         model.entries.push_back(InspectEntry{
-            rawText("inspect.status.current_rule.name"),
-            status.runtimeText,
-            InspectEntryStyle::Hint
-        });
-    }
-
-    const std::string type = !status.typeLabel.empty()
-        ? status.typeLabel
-        : rawText("status.type.neutral");
-    model.entries.push_back(InspectEntry{
-        rawText("inspect.status.type.name"),
-        type
-    });
-
-    if (!status.durationLabel.empty()) {
-        model.entries.push_back(InspectEntry{
-            rawText("inspect.status.duration.name"),
-            status.durationLabel
-        });
-    }
-
-    const std::string rule = statusRuleDescription(status.id);
-    if (!rule.empty()) {
-        model.entries.push_back(InspectEntry{
-            rawText("inspect.status.rules.name"),
-            rule,
-            status.debuff ? InspectEntryStyle::Warning : InspectEntryStyle::Hint
+            {},
+            status.runtimeText
         });
     }
 
@@ -435,11 +412,6 @@ void InspectModelBuilder::appendStatusEntry(InspectPanelModel& model, const std:
     const std::string runtime = statusStackRuntimeDescription(statusId, amount);
     if (!runtime.empty()) {
         description += "\n" + runtime;
-    }
-
-    const std::string rule = statusRuleDescription(statusId);
-    if (!rule.empty()) {
-        description += "\n" + rule;
     }
 
     model.entries.push_back(InspectEntry{title, description});

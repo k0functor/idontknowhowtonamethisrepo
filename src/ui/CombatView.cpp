@@ -83,10 +83,10 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
 
     hoveredPlayerId_.reset();
     for (const PlayerView& playerView : playerViews_) {
-        if (playerView.contains(mousePosition)) {
+        const std::optional<std::size_t> statusIndex = playerView.statusIndexAt(mousePosition);
+        if (playerView.contains(mousePosition) || statusIndex.has_value()) {
             hoveredPlayerId_ = playerView.model().entityId;
 
-            const std::optional<std::size_t> statusIndex = playerView.statusIndexAt(mousePosition);
             if (statusIndex.has_value() && *statusIndex < playerView.model().statuses.size()) {
                 hoveredStatus_ = playerView.model().statuses[*statusIndex];
                 hoveredStatusBounds_ = playerView.statusBounds(*statusIndex);
@@ -97,10 +97,14 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
 
     hoveredEnemyId_.reset();
     for (const EnemyView& enemyView : enemyViews_) {
-        if (enemyView.model().opacity > 0.05f && enemyView.contains(mousePosition)) {
+        if (enemyView.model().opacity <= 0.05f) {
+            continue;
+        }
+
+        const std::optional<std::size_t> statusIndex = enemyView.statusIndexAt(mousePosition);
+        if (enemyView.contains(mousePosition) || statusIndex.has_value()) {
             hoveredEnemyId_ = enemyView.model().entityId;
 
-            const std::optional<std::size_t> statusIndex = enemyView.statusIndexAt(mousePosition);
             if (statusIndex.has_value() && *statusIndex < enemyView.model().statuses.size()) {
                 hoveredStatus_ = enemyView.model().statuses[*statusIndex];
                 hoveredStatusBounds_ = enemyView.statusBounds(*statusIndex);
@@ -309,6 +313,10 @@ void CombatView::layoutPlayers() {
     for (std::size_t i = 0; i < playerViews_.size(); ++i) {
         playerViews_[i].setSize(Vector2{viewWidth, viewHeight});
         playerViews_[i].setPosition(Vector2{startX + spacingX * static_cast<float>(i), y});
+
+        const bool hasSeveralPlayers = playerViews_.size() > 1;
+        const bool isRightmostPlayer = i + 1 == playerViews_.size();
+        playerViews_[i].setStatusesOnRight(!hasSeveralPlayers || isRightmostPlayer);
     }
 }
 
@@ -327,6 +335,10 @@ void CombatView::layoutEnemies() {
 
     for (std::size_t i = 0; i < enemyViews_.size(); ++i) {
         enemyViews_[i].setPosition(Vector2{startX + spacingX * static_cast<float>(i), y});
+
+        const bool hasSeveralEnemies = enemyViews_.size() > 1;
+        const bool isLeftmostEnemy = i == 0;
+        enemyViews_[i].setStatusesOnRight(hasSeveralEnemies && !isLeftmostEnemy);
     }
 }
 

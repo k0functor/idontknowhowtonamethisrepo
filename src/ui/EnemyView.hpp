@@ -13,6 +13,7 @@ public:
     const EnemyViewModel& model() const;
 
     void setPosition(Vector2 position);
+    void setStatusesOnRight(bool statusesOnRight);
 
     bool contains(Vector2 worldPosition) const;
     void render(const Font* font, bool hovered) const;
@@ -27,4 +28,5 @@ private:
     EnemyViewModel model_;
     Vector2 position_{900.f, 235.f};
     Vector2 size_{230.f, 180.f};
+    bool statusesOnRight_ = false;
 };
