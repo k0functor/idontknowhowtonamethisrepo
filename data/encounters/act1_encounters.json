@@ -198,6 +198,101 @@
         "weight": 1,
         "min_layer": 3,
         "max_layer": 5
+      },
+      {
+        "id": "act1_censer_imp",
+        "enemies": [
+          "censer_imp"
+        ],
+        "weight": 3,
+        "min_layer": 0,
+        "max_layer": 3
+      },
+      {
+        "id": "act1_bone_debtor",
+        "enemies": [
+          "bone_debtor"
+        ],
+        "weight": 3,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_wax_undertaker",
+        "enemies": [
+          "wax_undertaker"
+        ],
+        "weight": 2,
+        "min_layer": 3,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_chain_novice",
+        "enemies": [
+          "chain_novice"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_grave_scribe",
+        "enemies": [
+          "grave_scribe"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_imp_and_mite",
+        "enemies": [
+          "censer_imp",
+          "rusted_mite"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 4
+      },
+      {
+        "id": "act1_debtor_and_lamp",
+        "enemies": [
+          "bone_debtor",
+          "grave_lamp"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_scribe_and_spider",
+        "enemies": [
+          "grave_scribe",
+          "plague_spider"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_chain_and_hound",
+        "enemies": [
+          "chain_novice",
+          "ash_hound"
+        ],
+        "weight": 1,
+        "min_layer": 3,
+        "max_layer": 5
+      },
+      {
+        "id": "act1_undertaker_and_crow",
+        "enemies": [
+          "wax_undertaker",
+          "ash_crow"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 5
       }
     ],
     "elite": [
@@ -241,6 +336,24 @@
         "id": "act1_carrion_matron",
         "enemies": [
           "carrion_matron"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 6
+      },
+      {
+        "id": "act1_rust_tithe_collector",
+        "enemies": [
+          "rust_tithe_collector"
+        ],
+        "weight": 1,
+        "min_layer": 2,
+        "max_layer": 6
+      },
+      {
+        "id": "act1_waxen_headsman",
+        "enemies": [
+          "waxen_headsman"
         ],
         "weight": 1,
         "min_layer": 2,

@@ -4,6 +4,7 @@
 #include "data/parsers/DifficultyDefinitionParser.hpp"
 
 #include <stdexcept>
+#include <string>
 
 void DifficultyDatabase::clear() {
     difficulties_.clear();
@@ -22,8 +23,19 @@ void DifficultyDatabase::loadFromDirectory(const std::filesystem::path& director
         return;
     }
 
+    const std::filesystem::path canonicalFile = directoryPath / "difficulties.json";
+    if (std::filesystem::exists(canonicalFile)) {
+        loadFromFile(canonicalFile);
+        return;
+    }
+
     for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(directoryPath)) {
         if (!entry.is_regular_file() || entry.path().extension() != ".json") {
+            continue;
+        }
+
+        const std::string filename = entry.path().filename().string();
+        if (filename == "floors.json") {
             continue;
         }
 

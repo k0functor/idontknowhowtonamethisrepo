@@ -1,7 +1,9 @@
 #include "Targeting.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <stdexcept>
+#include <vector>
 
 namespace {
 EntityId chooseRandomTarget(const std::vector<EntityId>& targets, const EffectContext& context) {
@@ -19,7 +21,49 @@ EntityId chooseRandomTarget(const std::vector<EntityId>& targets, const EffectCo
     );
     return targets[static_cast<std::size_t>(index)];
 }
+
+bool isAliveEnemy(const CombatState& state, const EntityId id) {
+    return state.hasEntity(id) && state.isEnemy(id) && state.entity(id).isAlive();
 }
+
+bool isAliveAlly(const CombatState& state, const EntityId id, const EntityId source) {
+    return state.hasEntity(id) && state.isPlayer(id) && id != source && state.entity(id).isAlive();
+}
+
+std::vector<EntityId> aliveAlliesExceptSource(const CombatState& state, const EntityId source) {
+    std::vector<EntityId> allies;
+    for (const EntityId candidate : state.alivePlayerIds()) {
+        if (candidate != source) {
+            allies.push_back(candidate);
+        }
+    }
+    return allies;
+}
+
+std::optional<EntityId> explicitEnemyTarget(const CombatState& state, const EffectContext& context) {
+    if (context.explicitEnemyTarget.has_value() && isAliveEnemy(state, *context.explicitEnemyTarget)) {
+        return context.explicitEnemyTarget;
+    }
+
+    if (context.explicitTarget.has_value() && isAliveEnemy(state, *context.explicitTarget)) {
+        return context.explicitTarget;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<EntityId> explicitAllyTarget(const CombatState& state, const EffectContext& context) {
+    if (context.explicitAllyTarget.has_value() && isAliveAlly(state, *context.explicitAllyTarget, context.source)) {
+        return context.explicitAllyTarget;
+    }
+
+    if (context.explicitTarget.has_value() && isAliveAlly(state, *context.explicitTarget, context.source)) {
+        return context.explicitTarget;
+    }
+
+    return std::nullopt;
+}
+} // namespace
 
 std::vector<EntityId> Targeting::resolveTargets(
     const CombatState& state,
@@ -28,16 +72,18 @@ std::vector<EntityId> Targeting::resolveTargets(
 ) const {
     switch (target) {
         case EffectTarget::Self:
-            if (context.explicitTarget.has_value() && state.hasEntity(*context.explicitTarget) && state.isPlayer(*context.explicitTarget)) {
-                return {*context.explicitTarget};
+            if (!state.hasEntity(context.source) || !state.entity(context.source).isAlive()) {
+                return {};
             }
             return {context.source};
 
-        case EffectTarget::SingleEnemy:
-            if (!context.explicitTarget.has_value()) {
-                throw std::runtime_error("SingleEnemy effect requires explicit target");
+        case EffectTarget::SingleEnemy: {
+            const std::optional<EntityId> targetId = explicitEnemyTarget(state, context);
+            if (!targetId.has_value()) {
+                throw std::runtime_error("SingleEnemy effect requires explicit enemy target");
             }
-            return {*context.explicitTarget};
+            return {*targetId};
+        }
 
         case EffectTarget::AllEnemies:
             return state.aliveEnemyIds();
@@ -50,17 +96,23 @@ std::vector<EntityId> Targeting::resolveTargets(
             return {chooseRandomTarget(enemies, context)};
         }
 
-        case EffectTarget::Ally:
-            if (!context.explicitTarget.has_value()) {
-                throw std::runtime_error("Ally effect requires explicit target");
+        case EffectTarget::Ally: {
+            const std::optional<EntityId> targetId = explicitAllyTarget(state, context);
+            if (targetId.has_value()) {
+                return {*targetId};
             }
-            return {*context.explicitTarget};
+
+            // Mixed cards such as Sadist -> Masochist + enemy strike choose the
+            // enemy as the primary UI target. In that case the ally side is
+            // unambiguous for the current two-actor party: the other living actor.
+            return aliveAlliesExceptSource(state, context.source);
+        }
 
         case EffectTarget::AllAllies:
             return state.alivePlayerIds();
 
         case EffectTarget::RandomAlly: {
-            const std::vector<EntityId> allies = state.alivePlayerIds();
+            const std::vector<EntityId> allies = aliveAlliesExceptSource(state, context.source);
             if (allies.empty()) {
                 return {};
             }

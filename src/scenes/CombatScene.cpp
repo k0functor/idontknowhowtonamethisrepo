@@ -13,6 +13,7 @@
 #include "enemies/EnemyInstance.hpp"
 #include "relics/RelicDefinition.hpp"
 #include "run/RunMapNode.hpp"
+#include "run/SadistMasochistRules.hpp"
 #include "run/StressRules.hpp"
 #include "statuses/StatusDefinition.hpp"
 #include "ui/BasicUi.hpp"
@@ -184,6 +185,13 @@ Vector2 lerpVector(const Vector2 from, const Vector2 to, const float t) {
     };
 }
 
+Vector2 quadraticBezierVector(const Vector2 start, const Vector2 control, const Vector2 end, const float t) {
+    const float clamped = std::clamp(t, 0.f, 1.f);
+    const Vector2 first = lerpVector(start, control, clamped);
+    const Vector2 second = lerpVector(control, end, clamped);
+    return lerpVector(first, second, clamped);
+}
+
 float smoothStep(const float t) {
     const float clamped = std::clamp(t, 0.f, 1.f);
     return clamped * clamped * (3.f - 2.f * clamped);
@@ -285,7 +293,7 @@ CombatScene::CombatScene(
           cardViewModelBuilder_
       ),
       inspectModelBuilder_(content_, localization_) {
-    relicSystem_.setRelics(runState_.relicIds);
+    relicSystem_.setRelics(runState_);
     modifierSystem_.addProvider(relicSystem_);
     eventBus_.subscribe([this](const GameEvent& event) {
         relicSystem_.handleEvent(state_, event, effectSystem_, random_);
@@ -317,33 +325,8 @@ CombatScene::CombatScene(
                 break;
         }
 
-        if (isSadistMasochistParty() &&
-            event.type == GameEventType::DamageDealt &&
-            event.source.has_value() &&
-            event.target.has_value() &&
-            event.amount > 0 &&
-            state_.hasEntity(*event.source) &&
-            state_.hasEntity(*event.target)) {
-            CombatEntity& source = state_.entity(*event.source);
-            CombatEntity& target = state_.entity(*event.target);
-
-            if (source.definitionId == "sadist" && target.definitionId == "masochist") {
-                source.statuses.add("strength", 1);
-                state_.log.add(CombatLogEntryType::SadistHurtsMasochist);
-            }
-        }
-
-        if (isSadistMasochistParty() &&
-            event.type == GameEventType::DamageTaken &&
-            event.target.has_value() &&
-            event.amount > 0 &&
-            state_.hasEntity(*event.target)) {
-            CombatEntity& target = state_.entity(*event.target);
-            if (target.definitionId == "masochist") {
-                target.statuses.add("strength", 1);
-                target.statuses.add("dexterity", 1);
-                state_.log.add(CombatLogEntryType::MasochistPainBonus);
-            }
+        if (isSadistMasochistParty()) {
+            SadistMasochistRules::handleEvent(state_, event);
         }
 
         viewModelDirty_ = true;
@@ -909,6 +892,9 @@ void CombatScene::initializeCombat() {
     rewardAccepted_ = false;
 
     state_.resources.clearActorEnergy();
+    // Sadist/Masochist has one shared hand and two separate energy pools.
+    // The same hand is played in a fixed subturn order: Sadist, then
+    // Masochist, then the enemies.
     state_.useSequentialPlayerTurns = isSadistMasochistParty();
     state_.activePlayerIndex = 0;
 
@@ -926,7 +912,11 @@ void CombatScene::initializeCombat() {
     playerId_ = state_.players.front().id;
     combatConsumableIds_ = runState_.consumableIds;
 
-    const std::vector<std::string> encounterEnemyIds = enemyIdsForNode(runState_, content_.encounters(), random_);
+    const std::vector<std::string> encounterEnemyIds = enemyIdsForNode(
+        runState_,
+        content_.encountersForFloor(runState_.currentFloorId),
+        random_
+    );
     for (const std::string& enemyId : encounterEnemyIds) {
         addEnemyToCombat(
             state_,
@@ -990,9 +980,13 @@ void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) 
     }
 
     if (isSadistMasochistParty()) {
-        model.turnOrderLabel = localizedOrFallback(TextId("ui.turn_order.sadist_masochist"), "Turn order: Sadist -> Masochist -> Enemy");
+        model.turnOrderLabel = localization_.get(TextId("ui.turn_order.sadist_masochist_sequence"));
         if (const CombatEntity* active = state_.activePlayer()) {
-            model.activeActorLabel = localizedOrFallback(TextId("ui.active_actor"), "Acting") + ": " + localizedOrFallback(active->nameTextId, active->definitionId);
+            model.activeActorLabel = localization_.format(TextId("ui.active_subturn.detail"), {
+                {"actor", localizedOrFallback(active->nameTextId, active->definitionId)},
+                {"current", std::to_string(state_.resources.energyFor(active->id))},
+                {"max", std::to_string(state_.resources.maxEnergyFor(active->id))}
+            });
         }
     }
 
@@ -1071,6 +1065,7 @@ void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) 
     applyEnemyDeathVisuals(model);
 
     model.relics = buildRelicViewModels();
+    attachActorRelicsToPlayers(model);
     model.droneSlotsLabel = localizedOrFallback(TextId("ui.drone_slots"), "Drone slots");
     model.emptyLabel = localizedOrFallback(TextId("ui.empty"), "Empty");
     model.droneSlots = buildDroneSlotViewModels();
@@ -1136,22 +1131,77 @@ EntityId CombatScene::sourceForCard(const CardInstanceId cardInstanceId) const {
 }
 
 bool CombatScene::isSadistMasochistParty() const {
-    return runState_.archetypeMechanicId == "sadist_masochist_party";
+    return SadistMasochistRules::appliesTo(runState_.archetypeMechanicId);
 }
 
-bool CombatScene::isDroneCyborgParty() const {
+bool CombatScene::canSelectCardSourceActors() const {
+    return false;
+}
+
+void CombatScene::selectActivePlayerActor(const EntityId actorId) {
+    if (!canSelectCardSourceActors()) {
+        return;
+    }
+
+    for (std::size_t i = 0; i < state_.players.size(); ++i) {
+        if (state_.players[i].id != actorId || !state_.players[i].isAlive()) {
+            continue;
+        }
+
+        if (state_.activePlayerIndex == i) {
+            return;
+        }
+
+        state_.activePlayerIndex = i;
+        keyboardTargetId_.reset();
+        lastPreviewTarget_.reset();
+        if (selectedCardId_.has_value()) {
+            ensureKeyboardTargetForSelectedCard();
+        }
+        viewModelDirty_ = true;
+        return;
+    }
+}
+
+void CombatScene::cycleActivePlayerActor(const int offset) {
+    if (!canSelectCardSourceActors() || offset == 0) {
+        return;
+    }
+
+    const int count = static_cast<int>(state_.players.size());
+    if (count <= 0) {
+        return;
+    }
+
+    const int current = static_cast<int>(std::min(state_.activePlayerIndex, state_.players.size() - 1u));
+    for (int step = 1; step <= count; ++step) {
+        const int index = (current + offset * step + count * step) % count;
+        if (state_.players[static_cast<std::size_t>(index)].isAlive()) {
+            selectActivePlayerActor(state_.players[static_cast<std::size_t>(index)].id);
+            return;
+        }
+    }
+}
+
+bool CombatScene::isReplicantParty() const {
     return runState_.archetypeMechanicId == "replicant_drones";
 }
 
 std::vector<RelicViewModel> CombatScene::buildRelicViewModels() const {
     std::vector<RelicViewModel> result;
-    result.reserve(runState_.relicIds.size());
 
-    for (const std::string& relicId : runState_.relicIds) {
+    auto appendRelic = [this, &result](const std::string& relicId, const std::string& ownerActorDefinitionId) {
         const RelicId id(relicId);
 
         RelicViewModel model;
         model.id = relicId;
+        model.ownerActorDefinitionId = ownerActorDefinitionId;
+
+        if (!ownerActorDefinitionId.empty() && content_.actors().contains(PlayerActorId(ownerActorDefinitionId))) {
+            model.ownerName = localization_.get(content_.actors().get(PlayerActorId(ownerActorDefinitionId)).nameTextId);
+        } else {
+            model.ownerName = ownerActorDefinitionId;
+        }
 
         if (content_.relics().contains(id)) {
             const RelicDefinition& definition = content_.relics().get(id);
@@ -1163,13 +1213,51 @@ std::vector<RelicViewModel> CombatScene::buildRelicViewModels() const {
         }
 
         result.push_back(std::move(model));
+    };
+
+    for (const RunActorState& actor : runState_.actorStates) {
+        for (const std::string& relicId : actor.relicIds) {
+            appendRelic(relicId, actor.definitionId);
+        }
+    }
+
+    for (const std::string& relicId : runState_.relicIds) {
+        const bool alreadyVisible = std::any_of(result.begin(), result.end(), [&relicId](const RelicViewModel& model) {
+            return model.id == relicId;
+        });
+        if (!alreadyVisible) {
+            appendRelic(relicId, {});
+        }
     }
 
     return result;
 }
 
+void CombatScene::attachActorRelicsToPlayers(CombatViewModel& model) const {
+    bool hasActorOwnedRelics = false;
+    bool hasUnownedRelics = false;
+
+    for (PlayerViewModel& player : model.players) {
+        player.relics.clear();
+
+        for (const RelicViewModel& relic : model.relics) {
+            if (relic.ownerActorDefinitionId.empty()) {
+                hasUnownedRelics = true;
+                continue;
+            }
+
+            if (relic.ownerActorDefinitionId == player.definitionId) {
+                player.relics.push_back(relic);
+                hasActorOwnedRelics = true;
+            }
+        }
+    }
+
+    model.showTopRelics = model.players.size() <= 1 || hasUnownedRelics || !hasActorOwnedRelics;
+}
+
 std::vector<DroneSlotViewModel> CombatScene::buildDroneSlotViewModels() const {
-    if (!isDroneCyborgParty() && state_.droneSlots.empty()) {
+    if (!isReplicantParty() && state_.droneSlots.empty()) {
         return {};
     }
 
@@ -1275,10 +1363,38 @@ void CombatScene::updatePlayedCardAnimations(const float deltaSeconds) {
         return;
     }
 
-    PlayedCardAnimation& active = playedCardAnimations_.front();
-    active.elapsedSeconds += std::max(0.f, deltaSeconds);
+    const float clampedDelta = std::max(0.f, deltaSeconds);
 
-    const float totalDuration = active.kind == CardFlightAnimationKind::HandToDiscard ? 0.24f : 0.688f;
+    if (playedCardAnimations_.front().kind == CardFlightAnimationKind::HandToDiscard) {
+        for (PlayedCardAnimation& animation : playedCardAnimations_) {
+            if (animation.kind != CardFlightAnimationKind::HandToDiscard) {
+                break;
+            }
+            animation.elapsedSeconds += clampedDelta;
+        }
+
+        playedCardAnimations_.erase(
+            std::remove_if(
+                playedCardAnimations_.begin(),
+                playedCardAnimations_.end(),
+                [](const PlayedCardAnimation& animation) {
+                    if (animation.kind != CardFlightAnimationKind::HandToDiscard) {
+                        return false;
+                    }
+
+                    const float duration = animation.durationSeconds > 0.f ? animation.durationSeconds : 0.42f;
+                    return animation.elapsedSeconds >= duration;
+                }
+            ),
+            playedCardAnimations_.end()
+        );
+        return;
+    }
+
+    PlayedCardAnimation& active = playedCardAnimations_.front();
+    active.elapsedSeconds += clampedDelta;
+
+    constexpr float totalDuration = 0.688f;
     if (active.elapsedSeconds >= totalDuration) {
         playedCardAnimations_.pop_front();
         if (!playedCardAnimations_.empty()) {
@@ -1349,15 +1465,23 @@ CardTransform CombatScene::playedCardAnimationTransform(const PlayedCardAnimatio
 }
 
 CardTransform CombatScene::handDiscardAnimationTransform(const PlayedCardAnimation& animation) const {
-    const float t = smoothStep(animation.elapsedSeconds / 0.24f);
+    const float duration = animation.durationSeconds > 0.f ? animation.durationSeconds : 0.42f;
+    const float t = smoothStep(animation.elapsedSeconds / duration);
     const float baseScale = CardVisualInstance::standardScale();
     const Vector2 discard = discardPileCenterPosition();
+    const Vector2 midpoint = lerpVector(animation.sourcePosition, discard, 0.5f);
+    const float arcHeight = animation.discardArcHeight > 0.f ? animation.discardArcHeight : 118.f;
+    const Vector2 control{
+        midpoint.x + animation.discardArcBend,
+        std::min(animation.sourcePosition.y, discard.y) - arcHeight
+    };
 
     CardTransform transform;
-    transform.position = lerpVector(animation.sourcePosition, discard, t);
+    transform.position = quadraticBezierVector(animation.sourcePosition, control, discard, t);
     const float scale = baseScale * (1.0f + (0.20f - 1.0f) * t);
     transform.scale = Vector2{scale, scale};
-    transform.rotationDegrees = -10.f * t;
+    const float bendRotation = animation.discardArcBend < 0.f ? -1.f : 1.f;
+    transform.rotationDegrees = (-8.f * bendRotation) + (22.f * bendRotation * t);
     transform.zIndex = 8950;
     return transform;
 }
@@ -1368,36 +1492,38 @@ void CombatScene::renderPlayedCardAnimations() const {
     }
 
     const Font* font = uiFont_.available() ? &uiFont_.font() : nullptr;
+
+    if (playedCardAnimations_.front().kind == CardFlightAnimationKind::HandToDiscard) {
+        for (std::size_t i = 0u; i < playedCardAnimations_.size(); ++i) {
+            const PlayedCardAnimation& animation = playedCardAnimations_[i];
+            if (animation.kind != CardFlightAnimationKind::HandToDiscard) {
+                break;
+            }
+
+            CardTransform transform = handDiscardAnimationTransform(animation);
+            transform.zIndex = 8950 + static_cast<int>(i);
+            CardVisualInstance::renderStatic(animation.model, font, transform);
+        }
+        return;
+    }
+
     const std::size_t visibleQueuedCards = std::min<std::size_t>(playedCardAnimations_.size(), 5u);
 
     for (std::size_t i = visibleQueuedCards; i-- > 1u;) {
         const PlayedCardAnimation& animation = playedCardAnimations_[i];
         const float queueDepth = static_cast<float>(i - 1u);
-        CardTransform transform;
-        if (animation.kind == CardFlightAnimationKind::HandToDiscard) {
-            const float scale = CardVisualInstance::standardScale() * std::max(0.70f, 0.92f - queueDepth * 0.05f);
-            transform = CardTransform{
-                animation.sourcePosition,
-                Vector2{scale, scale},
-                -3.f,
-                8450 - static_cast<int>(i)
-            };
-        } else {
-            const float scale = CardVisualInstance::standardScale() * std::max(0.58f, 0.78f - queueDepth * 0.06f);
-            transform = CardTransform{
-                playedCardQueuePosition(i),
-                Vector2{scale, scale},
-                -5.f,
-                8500 - static_cast<int>(i)
-            };
-        }
+        const float scale = CardVisualInstance::standardScale() * std::max(0.58f, 0.78f - queueDepth * 0.06f);
+        const CardTransform transform{
+            playedCardQueuePosition(i),
+            Vector2{scale, scale},
+            -5.f,
+            8500 - static_cast<int>(i)
+        };
         CardVisualInstance::renderStaticWithOverlay(animation.model, font, transform, Color{0, 0, 0, 110});
     }
 
     const PlayedCardAnimation& active = playedCardAnimations_.front();
-    const CardTransform transform = active.kind == CardFlightAnimationKind::HandToDiscard
-        ? handDiscardAnimationTransform(active)
-        : playedCardAnimationTransform(active);
+    const CardTransform transform = playedCardAnimationTransform(active);
     CardVisualInstance::renderStatic(active.model, font, transform);
 }
 
@@ -1411,7 +1537,8 @@ bool CombatScene::cardRetainsOnTurnEnd(const CardInstance& card) const {
 }
 
 void CombatScene::enqueueEndTurnDiscardAnimations() {
-    std::size_t queued = 0u;
+    std::vector<const CardInstance*> discardingCards;
+    discardingCards.reserve(state_.hand.size());
     visuallyDiscardingCardIds_.clear();
 
     for (const CardInstance& card : state_.hand.cards()) {
@@ -1420,27 +1547,35 @@ void CombatScene::enqueueEndTurnDiscardAnimations() {
         }
 
         visuallyDiscardingCardIds_.push_back(card.instanceId);
+        discardingCards.push_back(&card);
+    }
 
+    const float centerIndex = discardingCards.empty()
+        ? 0.f
+        : (static_cast<float>(discardingCards.size()) - 1.f) * 0.5f;
+
+    for (std::size_t index = 0u; index < discardingCards.size(); ++index) {
+        const CardInstance& card = *discardingCards[index];
         const EntityId source = sourceForCard(card);
         CardViewModel model = cardViewModelBuilder_.build(state_, card.instanceId, source, source);
         model.selected = false;
         model.playable = true;
         model.unplayableReason.clear();
 
+        const float relativeIndex = static_cast<float>(index) - centerIndex;
         const std::optional<Vector2> currentCenter = view_.cardCenter(card.instanceId);
         PlayedCardAnimation animation{
             std::move(model),
             currentCenter.value_or(Vector2{playedCardCenterPosition().x, static_cast<float>(VirtualViewport::height()) - 150.f}),
             CardFlightAnimationKind::HandToDiscard,
             false,
-            0.f
+            0.f,
+            0.42f,
+            112.f + std::abs(relativeIndex) * 22.f,
+            relativeIndex * 34.f
         };
 
-        if (!playedCardAnimations_.empty() || queued > 0u) {
-            animation.elapsedSeconds = 0.f;
-        }
         playedCardAnimations_.push_back(std::move(animation));
-        ++queued;
     }
 }
 

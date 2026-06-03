@@ -171,6 +171,7 @@ RunEventDefinition RunEventDefinitionParser::parse(
     definition.id = reader.requiredString("id");
     definition.titleTextId = TextId(reader.requiredString("title"));
     definition.descriptionTextId = TextId(reader.requiredString("description"));
+    definition.eventPoolIds = optionalStringOrArray(json, sourcePath, "event_pool_id", "event_pools");
 
     const Json& choicesJson = reader.requiredArray("choices");
     for (const Json& choiceJson : choicesJson) {

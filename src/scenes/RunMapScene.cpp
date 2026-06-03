@@ -1297,7 +1297,19 @@ void RunMapScene::renderRelicsOverlay(const Rectangle modal) const {
             rarity = relicRarityText(relic.rarity);
         }
 
-        BasicUi::drawText(font_, name, Vector2{row.x + 18.f, row.y + 12.f}, 21.f, Color{245, 235, 190, 255});
+        BasicUi::drawText(font_, name, Vector2{row.x + 18.f, row.y + 9.f}, 21.f, Color{245, 235, 190, 255});
+
+        const std::string owner = relicOwnerLabel(relicId);
+        if (!owner.empty()) {
+            BasicUi::drawText(
+                font_,
+                localizedOrFallback(TextId("inspect.relic.owner.name"), "Owner") + ": " + owner,
+                Vector2{row.x + 18.f, row.y + 35.f},
+                14.f,
+                Color{178, 188, 212, 255}
+            );
+        }
+
         if (!rarity.empty()) {
             BasicUi::drawText(font_, rarity, Vector2{row.x + row.width - 170.f, row.y + 15.f}, 15.f, Color{205, 212, 230, 255});
         }
@@ -1696,6 +1708,18 @@ void RunMapScene::renderRelicInspectModal() const {
     );
     y += 26.f;
 
+    const std::string owner = relicOwnerLabel(relicId.value);
+    if (!owner.empty()) {
+        BasicUi::drawText(
+            font_,
+            localizedOrFallback(TextId("inspect.relic.owner.name"), "Owner") + ": " + owner,
+            Vector2{modal.x + 28.f, y},
+            15.f,
+            Color{205, 212, 230, 255}
+        );
+        y += 24.f;
+    }
+
     if (!relic.mechanicId.empty() && relic.mechanicId != "default") {
         BasicUi::drawText(
             font_,
@@ -1965,6 +1989,20 @@ void RunMapScene::inspectNextOverlayItem() {
     }
 }
 
+
+std::string RunMapScene::relicOwnerLabel(const std::string& relicId) const {
+    if (relicId.empty()) {
+        return {};
+    }
+
+    for (const RunActorState& actor : runState_.actorStates) {
+        if (std::find(actor.relicIds.begin(), actor.relicIds.end(), relicId) != actor.relicIds.end()) {
+            return actor.definitionId;
+        }
+    }
+
+    return {};
+}
 
 std::string RunMapScene::localizedOrFallback(const TextId& textId, const std::string& fallback) const {
     if (localization_.hasText(textId)) {

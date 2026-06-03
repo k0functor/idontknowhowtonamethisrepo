@@ -389,23 +389,11 @@ void CardVisualInstance::render(const Font* font) const {
         Color{210, 210, 210, 255}
     );
 
-    if (!model_.ownerLabel.empty()) {
-        drawTextLocal(
-            font,
-            currentTransform_,
-            UiUtf8::truncateWithEllipsis(model_.ownerLabel, 22),
-            Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 143.f},
-            10.f,
-            1.f,
-            model_.playable ? Color{185, 195, 215, 255} : Color{145, 145, 152, 255}
-        );
-    }
-
     drawTextLocal(
         font,
         currentTransform_,
         UiUtf8::wrapByCodepoints(model_.description, 24, 5),
-        Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 160.f},
+        Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 148.f},
         12.f,
         1.f,
         model_.playable ? WHITE : Color{170, 170, 170, 255}

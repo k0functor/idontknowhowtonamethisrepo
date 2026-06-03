@@ -34,6 +34,29 @@ std::string statusChipText(const StatusViewModel& status) {
     }
     return text;
 }
+
+constexpr std::size_t maxVisibleRelicSlots = 6;
+constexpr float relicChipHeight = 22.f;
+constexpr float relicChipGap = 6.f;
+
+std::string relicChipText(
+    const RelicViewModel& relic,
+    const std::size_t index,
+    const std::size_t totalCount
+) {
+    if (totalCount > maxVisibleRelicSlots && index + 1 == maxVisibleRelicSlots) {
+        return "+" + std::to_string(totalCount - maxVisibleRelicSlots + 1);
+    }
+
+    return UiUtf8::truncateWithEllipsis(relic.name, 12);
+}
+
+bool relicSlotIsOverflow(
+    const std::size_t index,
+    const std::size_t totalCount
+) {
+    return totalCount > maxVisibleRelicSlots && index + 1 == maxVisibleRelicSlots;
+}
 }
 
 void PlayerView::setModel(PlayerViewModel model) {
@@ -90,6 +113,63 @@ void PlayerView::render(const Font* font, const bool hovered) const {
         return;
     }
 
+
+    if (model_.maxEnergy > 0) {
+        const float energyRadius = 26.f;
+        const int energyCenterX = static_cast<int>(renderPosition.x + size_.x * 0.5f);
+        const int energyCenterY = static_cast<int>(renderPosition.y + size_.y + energyRadius + 8.f);
+        DrawCircle(energyCenterX, energyCenterY, energyRadius, Color{54, 48, 78, 245});
+        DrawCircleLines(energyCenterX, energyCenterY, energyRadius, Color{190, 170, 245, 255});
+
+        const std::string energyText = std::to_string(model_.currentEnergy) + "/" + std::to_string(model_.maxEnergy);
+        const Vector2 textSize = MeasureTextEx(*font, energyText.c_str(), 17.f, 1.f);
+        DrawTextEx(
+            *font,
+            energyText.c_str(),
+            Vector2{static_cast<float>(energyCenterX) - textSize.x * 0.5f, static_cast<float>(energyCenterY) - textSize.y * 0.5f},
+            17.f,
+            1.f,
+            Color{246, 240, 255, 255}
+        );
+    }
+
+    if (!model_.relics.empty()) {
+        const Rectangle firstRelicBounds = relicBounds(0).value_or(Rectangle{renderPosition.x + 14.f, renderPosition.y + size_.y + 64.f, size_.x - 28.f, relicChipHeight});
+        DrawTextEx(
+            *font,
+            model_.relicsLabel.c_str(),
+            Vector2{firstRelicBounds.x, firstRelicBounds.y - 18.f},
+            12.f,
+            1.f,
+            Color{210, 195, 155, 255}
+        );
+
+        const std::size_t visibleCount = visibleRelicSlotCount();
+        for (std::size_t i = 0; i < visibleCount; ++i) {
+            const std::optional<Rectangle> chipBounds = relicBounds(i);
+            if (!chipBounds.has_value()) {
+                continue;
+            }
+
+            const bool overflow = relicSlotIsOverflow(i, model_.relics.size());
+            const Color fill = overflow ? Color{48, 42, 36, 238} : Color{70, 58, 35, 238};
+            const Color border = overflow ? Color{160, 145, 110, 255} : Color{230, 190, 90, 255};
+            DrawRectangleRounded(*chipBounds, 0.28f, 8, fill);
+            DrawRectangleRoundedLinesEx(*chipBounds, 0.28f, 8, 1.4f, border);
+
+            const RelicViewModel& relic = model_.relics[std::min(i, model_.relics.size() - 1)];
+            const std::string text = relicChipText(relic, i, model_.relics.size());
+            DrawTextEx(
+                *font,
+                text.c_str(),
+                Vector2{chipBounds->x + 7.f, chipBounds->y + 4.f},
+                12.f,
+                1.f,
+                Color{236, 224, 184, 255}
+            );
+        }
+    }
+
     DrawTextEx(*font, model_.name.c_str(), Vector2{renderPosition.x + 14.f, renderPosition.y + 12.f}, 20.f, 1.f, WHITE);
 
     if (model_.activeTurn) {
@@ -111,6 +191,17 @@ void PlayerView::render(const Font* font, const bool hovered) const {
     }
 
     float statusY = renderPosition.y + 84.f;
+    if (!model_.stressPowerDescription.empty()) {
+        DrawTextEx(
+            *font,
+            UiUtf8::truncateWithEllipsis(model_.stressPowerDescription, 34).c_str(),
+            Vector2{renderPosition.x + 14.f, statusY},
+            12.f,
+            1.f,
+            Color{238, 198, 156, 255}
+        );
+        statusY += 18.f;
+    }
     if (!model_.activeStanceName.empty()) {
         const Rectangle stanceBounds{renderPosition.x + 12.f, statusY, size_.x - 24.f, 30.f};
         DrawRectangleRounded(stanceBounds, 0.35f, 10, Color{72, 48, 96, 235});
@@ -214,6 +305,46 @@ std::optional<Rectangle> PlayerView::statusBounds(const std::size_t index) const
 std::optional<std::size_t> PlayerView::statusIndexAt(const Vector2 worldPosition) const {
     for (std::size_t i = 0; i < model_.statuses.size(); ++i) {
         const std::optional<Rectangle> bounds = statusBounds(i);
+        if (bounds.has_value() && CheckCollisionPointRec(worldPosition, *bounds)) {
+            return i;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::size_t PlayerView::visibleRelicSlotCount() const {
+    return std::min(model_.relics.size(), maxVisibleRelicSlots);
+}
+
+std::optional<Rectangle> PlayerView::relicBounds(const std::size_t index) const {
+    if (index >= visibleRelicSlotCount()) {
+        return std::nullopt;
+    }
+
+    const Vector2 renderPosition{position_.x + model_.renderOffset.x, position_.y + model_.renderOffset.y};
+    const std::size_t columns = size_.x >= 205.f ? 2u : 1u;
+    const float totalGap = relicChipGap * static_cast<float>(columns - 1u);
+    const float chipWidth = (size_.x - 28.f - totalGap) / static_cast<float>(columns);
+    const std::size_t row = index / columns;
+    const std::size_t column = index % columns;
+
+    return Rectangle{
+        renderPosition.x + 14.f + static_cast<float>(column) * (chipWidth + relicChipGap),
+        renderPosition.y + size_.y + 74.f + static_cast<float>(row) * (relicChipHeight + relicChipGap),
+        chipWidth,
+        relicChipHeight
+    };
+}
+
+std::optional<std::size_t> PlayerView::relicIndexAt(const Vector2 worldPosition) const {
+    const std::size_t visibleCount = visibleRelicSlotCount();
+    for (std::size_t i = 0; i < visibleCount; ++i) {
+        if (relicSlotIsOverflow(i, model_.relics.size())) {
+            continue;
+        }
+
+        const std::optional<Rectangle> bounds = relicBounds(i);
         if (bounds.has_value() && CheckCollisionPointRec(worldPosition, *bounds)) {
             return i;
         }

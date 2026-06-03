@@ -19,6 +19,7 @@
 #include "relics/RelicId.hpp"
 #include "shop/ShopOffer.hpp"
 #include "run/DifficultyDefinition.hpp"
+#include "run/FloorDefinition.hpp"
 #include "run/RunFactory.hpp"
 #include "run/RunMapNode.hpp"
 #include "run/RunMapGenerationConfig.hpp"
@@ -35,6 +36,7 @@ public:
         const DifficultyDefinition& difficulty,
         const PlayerActorDatabase& actors,
         const RunMapGenerationConfig& mapGeneration,
+        const FloorDefinition& floor,
         std::uint32_t seed
     );
 
@@ -47,6 +49,10 @@ public:
 
     bool isActCompleted() const;
     void completeCurrentAct();
+    bool advanceToNextFloor(
+        const FloorDefinition& floor,
+        const RunMapGenerationConfig& mapGeneration
+    );
 
     const RunState& run() const;
     RunState& run();

@@ -7,6 +7,8 @@
 #include "relics/RelicRarity.hpp"
 #include "rewards/RewardPoolRules.hpp"
 #include "run/RunCardEligibility.hpp"
+#include "run/RunMapGenerator.hpp"
+#include "run/RunRelicOwnership.hpp"
 #include "run/StressRules.hpp"
 
 #include <algorithm>
@@ -67,7 +69,7 @@ std::optional<std::string> chooseRandomConsumable(const ConsumableDatabase& cons
 }
 
 bool runAlreadyHasRelic(const RunState& state, const std::string& relicId) {
-    return std::find(state.relicIds.begin(), state.relicIds.end(), relicId) != state.relicIds.end();
+    return RunRelicOwnership::ownsRelic(state, relicId);
 }
 
 bool addSpecificCardToRun(RunState& state, const CardDatabase& cards, const std::string& cardId) {
@@ -85,9 +87,12 @@ bool addSpecificRelicToRun(RunState& state, const RelicDatabase& relics, const s
         return false;
     }
 
-    state.relicIds.push_back(relicId);
-    ++state.stats.relicsGained;
-    return true;
+    if (RunRelicOwnership::assignRelicToActor(state, relicId, RunRelicOwnership::defaultActorDefinitionId(state))) {
+        ++state.stats.relicsGained;
+        return true;
+    }
+
+    return false;
 }
 
 bool addSpecificConsumableToRun(RunState& state, const ConsumableDatabase& consumables, const std::string& consumableId) {
@@ -154,17 +159,86 @@ int combatConsumablesUsed(
     return std::max(0, static_cast<int>(before.size()) - static_cast<int>(after->size()));
 }
 
+void appendUniqueString(std::vector<std::string>& values, const std::string& value) {
+    if (value.empty()) {
+        return;
+    }
+
+    if (std::find(values.begin(), values.end(), value) == values.end()) {
+        values.push_back(value);
+    }
+}
+
+void appendUniqueStrings(std::vector<std::string>& values, const std::vector<std::string>& extraValues) {
+    for (const std::string& value : extraValues) {
+        appendUniqueString(values, value);
+    }
+}
+
+std::optional<std::size_t> findMatchingActorState(
+    const std::vector<RunActorState>& actors,
+    const std::vector<bool>& matched,
+    const RunActorState& actor,
+    const std::size_t fallbackIndex
+) {
+    for (std::size_t index = 0; index < actors.size(); ++index) {
+        if (!matched[index] && actors[index].definitionId == actor.definitionId) {
+            return index;
+        }
+    }
+
+    if (fallbackIndex < actors.size() && !matched[fallbackIndex]) {
+        return fallbackIndex;
+    }
+
+    return std::nullopt;
+}
+
+std::vector<RunActorState> mergeCombatActorStatesWithRunMetadata(
+    const std::vector<RunActorState>& beforeCombat,
+    const std::vector<RunActorState>& afterCombat
+) {
+    std::vector<RunActorState> result = afterCombat;
+    std::vector<bool> matched(beforeCombat.size(), false);
+
+    for (std::size_t index = 0; index < result.size(); ++index) {
+        RunActorState& actor = result[index];
+        const std::optional<std::size_t> beforeIndex = findMatchingActorState(
+            beforeCombat,
+            matched,
+            actor,
+            index
+        );
+
+        if (!beforeIndex.has_value()) {
+            continue;
+        }
+
+        matched[*beforeIndex] = true;
+
+        // CombatResult is built from CombatEntity objects. CombatEntity intentionally
+        // contains HP/stress/traits, but it does not carry run-level metadata such as
+        // per-actor relic ownership. Preserve that metadata when writing combat results
+        // back into the run, otherwise Sadist/Masochist lose their owned relics after
+        // every fight. Yes, this was exactly as charming as it sounds.
+        appendUniqueStrings(actor.relicIds, beforeCombat[*beforeIndex].relicIds);
+    }
+
+    return result;
+}
+
 void recordCombatTelemetry(RunState& state, const CombatResult& combatResult) {
     state.stats.enemiesKilled += combatResult.enemiesKilled;
 
     if (!combatResult.actorStates.empty()) {
         state.stats.damageTaken += combatDamageTaken(state.actorStates, combatResult.actorStates);
-        state.actorStates = combatResult.actorStates;
+        state.actorStates = mergeCombatActorStatesWithRunMetadata(state.actorStates, combatResult.actorStates);
         state.actorDefinitionIds.clear();
         state.actorDefinitionIds.reserve(state.actorStates.size());
         for (const RunActorState& actorState : state.actorStates) {
             state.actorDefinitionIds.push_back(actorState.definitionId);
         }
+        RunRelicOwnership::rebuildLegacyRelicList(state);
     }
 
     if (combatResult.remainingConsumableIds.has_value()) {
@@ -234,9 +308,10 @@ void RunController::startNewRun(
     const DifficultyDefinition& difficulty,
     const PlayerActorDatabase& actors,
     const RunMapGenerationConfig& mapGeneration,
+    const FloorDefinition& floor,
     const std::uint32_t seed
 ) {
-    activeRun_ = runFactory_.createRun(archetype, difficulty, actors, mapGeneration, seed);
+    activeRun_ = runFactory_.createRun(archetype, difficulty, actors, mapGeneration, floor, seed);
     activeRunRandom_.emplace(activeRun_->seed);
     activeRunRandom_->setState(activeRun_->randomState);
 }
@@ -283,6 +358,32 @@ void RunController::completeCurrentAct() {
     state.actCompleted = true;
     state.completedAct = state.act;
     state.pendingRoom.clear();
+}
+
+
+bool RunController::advanceToNextFloor(
+    const FloorDefinition& floor,
+    const RunMapGenerationConfig& mapGeneration
+) {
+    if (!hasActiveRun() || !isActCompleted()) {
+        return false;
+    }
+
+    RunState& state = run();
+    Random& floorRandom = random();
+    RunMapGenerator generator;
+
+    state.act = floor.act;
+    state.currentFloorId = floor.id;
+    state.currentFloorIndex = floor.index;
+    state.nextFloorId = floor.nextFloorId;
+    state.actCompleted = false;
+    state.completedAct = 0;
+    state.defeatedBossEnemyIds.clear();
+    state.pendingRoom.clear();
+    state.map = generator.generateActOneMap(floorRandom, mapGeneration);
+    state.randomState = floorRandom.state();
+    return true;
 }
 
 const RunState& RunController::run() const {
@@ -575,14 +676,7 @@ std::optional<RelicId> RunController::chooseChestRelic(
 
 void RunController::completeChestAndTakeRelic(const int nodeId, const RelicId& relicId) {
     RunState& state = run();
-    const bool alreadyOwned = std::find(
-        state.relicIds.begin(),
-        state.relicIds.end(),
-        relicId.value
-    ) != state.relicIds.end();
-
-    if (!alreadyOwned) {
-        state.relicIds.push_back(relicId.value);
+    if (RunRelicOwnership::assignRelicToActor(state, relicId.value, RunRelicOwnership::defaultActorDefinitionId(state))) {
         ++state.stats.relicsGained;
     }
 
@@ -732,20 +826,15 @@ bool RunController::purchaseShopItem(const ShopPurchase& purchase) {
                 return false;
             }
 
-            const bool alreadyOwned = std::find(
-                state.relicIds.begin(),
-                state.relicIds.end(),
-                purchase.contentId
-            ) != state.relicIds.end();
-
-            if (alreadyOwned) {
+            if (RunRelicOwnership::ownsRelic(state, purchase.contentId)) {
                 return false;
             }
 
             state.gold -= purchase.price;
             state.stats.goldSpent += purchase.price;
-            state.relicIds.push_back(purchase.contentId);
-            ++state.stats.relicsGained;
+            if (RunRelicOwnership::assignRelicToActor(state, purchase.contentId, purchase.actorDefinitionId)) {
+                ++state.stats.relicsGained;
+            }
             return true;
         }
 
@@ -851,13 +940,7 @@ bool RunController::completeEventChoice(
             case RunEventEffectType::GainRandomRelic: {
                 const std::optional<RelicId> relic = chooseChestRelic(relics, random);
                 if (relic.has_value()) {
-                    const bool alreadyOwned = std::find(
-                        state.relicIds.begin(),
-                        state.relicIds.end(),
-                        relic->value
-                    ) != state.relicIds.end();
-                    if (!alreadyOwned) {
-                        state.relicIds.push_back(relic->value);
+                    if (RunRelicOwnership::assignRelicToActor(state, relic->value, RunRelicOwnership::defaultActorDefinitionId(state))) {
                         ++state.stats.relicsGained;
                     }
                 }

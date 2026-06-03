@@ -1,0 +1,32 @@
+{
+  "floors": [
+    {
+      "id": "floor1",
+      "index": 1,
+      "act": 1,
+      "is_implemented": true,
+      "name_text_id": "floor.floor1.name",
+      "theme_id": "graveyard_ruins",
+      "map_config_id": "act1",
+      "map_config_path": "acts/act1.json",
+      "encounter_table_id": "act1",
+      "encounter_table_path": "../encounters/act1_encounters.json",
+      "event_pool_id": "act1",
+      "next_floor_id": "floor2"
+    },
+    {
+      "id": "floor2",
+      "index": 2,
+      "act": 2,
+      "is_implemented": true,
+      "name_text_id": "floor.floor2.name",
+      "theme_id": "flooded_archive",
+      "next_floor_id": "",
+      "map_config_id": "act2",
+      "map_config_path": "acts/act2.json",
+      "encounter_table_id": "act2",
+      "encounter_table_path": "../encounters/act2_encounters.json",
+      "event_pool_id": "act2"
+    }
+  ]
+}

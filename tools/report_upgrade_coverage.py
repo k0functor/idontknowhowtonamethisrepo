@@ -14,6 +14,7 @@ DATA_DIR = ROOT / "data"
 class CardInfo:
     id: str
     owner_actor: str
+    reward_pool: str
     rarity: str
     has_upgrade: bool
     source: str
@@ -36,9 +37,14 @@ def load_cards() -> dict[str, CardInfo]:
             card_id = item.get("id")
             if not isinstance(card_id, str) or not card_id:
                 continue
+            owner_actor = item.get("owner_actor", "") if isinstance(item.get("owner_actor", ""), str) else ""
+            reward_pool = item.get("card_pool", item.get("reward_pool", owner_actor))
+            if not isinstance(reward_pool, str):
+                reward_pool = owner_actor
             cards[card_id] = CardInfo(
                 id=card_id,
-                owner_actor=item.get("owner_actor", "") if isinstance(item.get("owner_actor", ""), str) else "",
+                owner_actor=owner_actor,
+                reward_pool=reward_pool,
                 rarity=item.get("rarity", "") if isinstance(item.get("rarity", ""), str) else "",
                 has_upgrade=isinstance(item.get("upgrade"), dict) and bool(item.get("upgrade")),
                 source=path.relative_to(ROOT).as_posix(),
@@ -66,7 +72,7 @@ def card_has_upgrade(cards: dict[str, CardInfo], card_id: str) -> bool:
 def reward_pool_cards(cards: dict[str, CardInfo], pools: list[str]) -> list[CardInfo]:
     return [
         card for card in cards.values()
-        if card.owner_actor in pools and card.rarity not in {"starter", "status", "curse"}
+        if card.reward_pool in pools and card.rarity not in {"starter", "status", "curse"}
     ]
 
 

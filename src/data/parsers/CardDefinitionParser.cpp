@@ -133,6 +133,7 @@ CardDefinition CardDefinitionParser::parse(
     definition.energyCost = reader.requiredInt("energy_cost");
     definition.goldCost = reader.requiredInt("gold_cost");
     definition.ownerActorId = reader.optionalString("owner_actor", reader.optionalString("energy_pool", ""));
+    definition.rewardPoolId = reader.optionalString("card_pool", reader.optionalString("reward_pool", definition.ownerActorId));
 
     if (definition.energyCost < 0) {
         throw std::runtime_error(

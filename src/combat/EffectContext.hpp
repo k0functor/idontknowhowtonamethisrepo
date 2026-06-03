@@ -10,7 +10,12 @@
 
 struct EffectContext {
     EntityId source;
+
+    // UI and callers still pass one primary target, but mixed cards can need
+    // one enemy target and one ally target in the same effect list.
     std::optional<EntityId> explicitTarget;
+    std::optional<EntityId> explicitEnemyTarget;
+    std::optional<EntityId> explicitAllyTarget;
 
     CardInstanceId cardInstanceId;
     CardId cardDefinitionId;

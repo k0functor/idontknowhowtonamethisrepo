@@ -50,6 +50,7 @@ struct CombatViewModel {
     std::string activeActorLabel;
 
     bool canEndTurn = false;
+    bool showTopRelics = true;
 
     std::vector<PlayerViewModel> players;
     std::vector<CardViewModel> handCards;

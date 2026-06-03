@@ -1,5 +1,6 @@
 #pragma once
 
+#include "actors/PlayerActorDatabase.hpp"
 #include "consumables/ConsumableDatabase.hpp"
 #include "data/CardDatabase.hpp"
 #include "localization/LocalizationManager.hpp"
@@ -7,6 +8,7 @@
 #include "rewards/RewardSelection.hpp"
 #include "rewards/RewardState.hpp"
 #include "relics/RelicDatabase.hpp"
+#include "run/RunState.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
 #include "ui/InspectPanelView.hpp"
@@ -24,6 +26,8 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
+        const PlayerActorDatabase& actors,
+        const RunState& runState,
         RewardState reward,
         std::function<void(RewardSelection)> onContinue
     );
@@ -40,7 +44,23 @@ private:
     Rectangle cancelButtonBounds() const;
     Rectangle confirmButtonBounds() const;
 
+    Rectangle relicOwnerModalBounds() const;
+    Rectangle relicOwnerOptionBounds(std::size_t index) const;
+    Rectangle relicOwnerCancelButtonBounds() const;
+
+    void moveRelicOwnerSelection(int delta);
+
     void takeOption(std::size_t index);
+    void updateRelicOwnerChoice(Vector2 mouse);
+    void renderRelicOwnerChoice() const;
+    void openRelicOwnerChoice(std::size_t index);
+    void closeRelicOwnerChoice();
+    void confirmRelicOwnerChoice(std::size_t actorIndex);
+    bool hasMultipleRelicOwners() const;
+    std::string defaultRelicOwnerId() const;
+    std::string actorName(const std::string& actorDefinitionId) const;
+    std::string actorHealthSummary(const RunActorState& actor) const;
+    std::string actorRelicSummary(const RunActorState& actor) const;
     void updateCardChoice(Vector2 mouse);
     void renderCardChoice() const;
     void renderRelicInspect(const RewardOption& option, Rectangle row) const;
@@ -65,6 +85,8 @@ private:
     const CardDatabase& cards_;
     const RelicDatabase& relics_;
     const ConsumableDatabase& consumables_;
+    const PlayerActorDatabase& actors_;
+    const RunState& runState_;
     RewardState reward_;
     RewardSelection selection_;
     std::function<void(RewardSelection)> onContinue_;
@@ -72,5 +94,8 @@ private:
 
     std::optional<std::size_t> activeOptionIndex_;
     std::optional<std::size_t> selectedCardIndex_;
+    std::optional<std::size_t> activeRelicOwnerOptionIndex_;
+    std::optional<std::size_t> selectedRelicOwnerIndex_;
     bool cardChoiceOpen_ = false;
+    bool relicOwnerChoiceOpen_ = false;
 };

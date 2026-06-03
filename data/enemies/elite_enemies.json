@@ -404,5 +404,178 @@
         ]
       }
     ]
+  },
+  {
+    "id": "rust_tithe_collector",
+    "name": "enemy.rust_tithe_collector.name",
+    "max_hp": 76,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "rust_tithe_collector_audit",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "rust_tithe_collector_stampede",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "rust_tithe_collector_ledger_wall",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "rust_tithe_collector_final_notice",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "waxen_headsman",
+    "name": "enemy.waxen_headsman.name",
+    "max_hp": 86,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "waxen_headsman_half_moon",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          }
+        ]
+      },
+      {
+        "id": "waxen_headsman_candle_oath",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ]
+      },
+      {
+        "id": "waxen_headsman_paraffin_grip",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "waxen_headsman_falling_axe",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 22
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

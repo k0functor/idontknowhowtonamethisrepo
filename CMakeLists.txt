@@ -11,11 +11,37 @@ option(GAME_STATIC_LINK_LIBRARIES "Link libraries and GCC runtime statically whe
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if (Python3_Interpreter_FOUND)
+    add_custom_target(validate_sources
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_cmake_sources.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Validating CMake source list"
+        VERBATIM
+    )
+
     add_custom_target(validate_content
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_localization.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_project.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_floor_definitions.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_core_readiness.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_run_save_files.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_first_floor_vertical_slice.py
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        COMMENT "Validating localization and data content"
+        COMMENT "Validating localization, data content, floor definitions, core gameplay contracts, run save files, and the first-floor vertical slice"
+        VERBATIM
+    )
+
+
+    add_custom_target(validate_floors
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_floor_definitions.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Validating floor definitions"
+        VERBATIM
+    )
+
+    add_custom_target(validate_first_floor
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_first_floor_vertical_slice.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Validating the first-floor vertical slice"
         VERBATIM
     )
 
@@ -380,6 +406,9 @@ add_executable(i_dont_know_how_to_name_this_game
     src/run/DifficultyDefinition.hpp
     src/run/DifficultyDatabase.hpp
     src/run/DifficultyDatabase.cpp
+    src/run/FloorDefinition.hpp
+    src/run/FloorDatabase.hpp
+    src/run/FloorDatabase.cpp
     src/run/RunMapNode.hpp
     src/run/RunMapNode.cpp
     src/run/RunMap.hpp
@@ -394,6 +423,11 @@ add_executable(i_dont_know_how_to_name_this_game
     src/run/RunStats.hpp
     src/run/RunActorState.hpp
     src/run/StressRules.hpp
+    src/run/StressPsychopathRules.hpp
+    src/run/SadistMasochistRules.hpp
+    src/run/SadistMasochistRules.cpp
+    src/run/RunRelicOwnership.hpp
+    src/run/RunRelicOwnership.cpp
     src/run/RunCardEligibility.hpp
     src/run/RunCardEligibility.cpp
     src/run/RunController.hpp
@@ -434,6 +468,8 @@ add_executable(i_dont_know_how_to_name_this_game
     src/scenes/DifficultySelectScene.cpp
     src/scenes/RunMapScene.hpp
     src/scenes/RunMapScene.cpp
+    src/scenes/MerchantRestScene.hpp
+    src/scenes/MerchantRestScene.cpp
     src/scenes/CombatScene.hpp
     src/scenes/CombatScene.cpp
     src/scenes/CombatScenePiles.cpp

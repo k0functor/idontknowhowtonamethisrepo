@@ -47,6 +47,8 @@ FloorCompleteScene::FloorCompleteScene(
     const EnemyDatabase& enemies,
     const RelicDatabase& relics,
     const RunState& run,
+    std::string nextFloorName,
+    const bool canContinueToNextFloor,
     std::function<void()> onContinue,
     std::function<void()> onMainMenu
 )
@@ -55,6 +57,8 @@ FloorCompleteScene::FloorCompleteScene(
       enemies_(enemies),
       relics_(relics),
       run_(run),
+      nextFloorName_(std::move(nextFloorName)),
+      canContinueToNextFloor_(canContinueToNextFloor),
       onContinue_(std::move(onContinue)),
       onMainMenu_(std::move(onMainMenu)) {}
 
@@ -186,19 +190,46 @@ void FloorCompleteScene::render() const {
         y += 22.f;
     }
 
-    y += 14.f;
-    const std::vector<std::string> nextLines = BasicUi::wrapText(
-        font_,
-        localization_.get(TextId("floor_complete.save_cleanup_note")),
-        16.f,
-        panel.width - 96.f
-    );
-    for (const std::string& line : nextLines) {
-        BasicUi::drawText(font_, line, Vector2{panel.x + 48.f, y}, 16.f, Color{190, 166, 112, 255});
-        y += 21.f;
-    }
+    const Rectangle status = contentStatusBounds();
+    DrawRectangleRounded(status, 0.08f, 10, Color{42, 36, 30, 230});
+    DrawRectangleRoundedLinesEx(status, 0.08f, 10, 2.f, Color{190, 132, 70, 230});
 
-    BasicUi::drawButton(font_, continueButtonBounds(), localization_.get(TextId("floor_complete.continue")), mouse);
+    const Rectangle nextFloorText{
+        status.x + 18.f,
+        status.y + 14.f,
+        status.width - 36.f,
+        48.f
+    };
+    drawWrappedTextBlock(
+        canContinueToNextFloor_
+            ? localization_.format(TextId("floor_complete.next_floor_ready"), {{"floor", nextFloorName_}})
+            : localization_.get(TextId("floor_complete.next_floor_placeholder")),
+        nextFloorText,
+        18.f,
+        Color{255, 226, 170, 255}
+    );
+
+    const Rectangle cleanupText{
+        status.x + 18.f,
+        status.y + 66.f,
+        status.width - 36.f,
+        52.f
+    };
+    drawWrappedTextBlock(
+        canContinueToNextFloor_
+            ? localization_.get(TextId("floor_complete.save_continue_note"))
+            : localization_.get(TextId("floor_complete.save_cleanup_note")),
+        cleanupText,
+        16.f,
+        Color{208, 198, 182, 255}
+    );
+
+    BasicUi::drawButton(
+        font_,
+        continueButtonBounds(),
+        localization_.get(TextId(canContinueToNextFloor_ ? "floor_complete.continue_next" : "floor_complete.continue")),
+        mouse
+    );
     BasicUi::drawButton(font_, mainMenuButtonBounds(), localization_.get(TextId("floor_complete.main_menu")), mouse);
 }
 
@@ -225,6 +256,33 @@ Rectangle FloorCompleteScene::mainMenuButtonBounds() const {
     const float spacing = 24.f;
     const float width = std::min(300.f, (panel.width - 112.f - spacing) * 0.5f);
     return Rectangle{panel.x + panel.width * 0.5f + spacing * 0.5f, panel.y + panel.height - 72.f, width, 52.f};
+}
+
+Rectangle FloorCompleteScene::contentStatusBounds() const {
+    const Rectangle panel = panelBounds();
+    return Rectangle{
+        panel.x + 48.f,
+        panel.y + panel.height - 214.f,
+        panel.width - 96.f,
+        126.f
+    };
+}
+
+void FloorCompleteScene::drawWrappedTextBlock(
+    const std::string& text,
+    const Rectangle bounds,
+    const float fontSize,
+    const Color color
+) const {
+    float y = bounds.y;
+    const std::vector<std::string> lines = BasicUi::wrapText(font_, text, fontSize, bounds.width);
+    for (const std::string& line : lines) {
+        if (y + fontSize > bounds.y + bounds.height) {
+            break;
+        }
+        BasicUi::drawText(font_, line, Vector2{bounds.x, y}, fontSize, color);
+        y += fontSize + 5.f;
+    }
 }
 
 std::string FloorCompleteScene::bossSummary() const {

@@ -87,6 +87,26 @@ void StatusSystem::onTurnEndedForSide(
     }
 }
 
+void StatusSystem::onTurnEndedForEntity(
+    CombatState& state,
+    const EntityId owner
+) const {
+    if (!state.hasEntity(owner)) {
+        return;
+    }
+
+    CombatEntity& entity = state.entity(owner);
+    if (!entity.isAlive()) {
+        return;
+    }
+
+    const std::vector<std::pair<std::string, int>> statuses = entity.statuses.all();
+
+    for (const auto& [statusId, amount] : statuses) {
+        processEndTurnStatus(state, owner, statusId, amount);
+    }
+}
+
 void StatusSystem::processEndTurnStatus(
     CombatState& state,
     const EntityId owner,

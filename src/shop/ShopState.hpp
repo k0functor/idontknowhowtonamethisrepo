@@ -17,6 +17,7 @@ struct ShopState {
     bool cardRemovalUsed = false;
     int maxCardPurchases = 0;
     int cardPurchasesMade = 0;
+    bool merchantRestCardShopOpen = false;
 
     bool isMerchantRest() const {
         return mode == ShopStateMode::MerchantRest;

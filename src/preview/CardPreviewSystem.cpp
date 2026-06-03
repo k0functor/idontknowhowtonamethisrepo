@@ -4,6 +4,82 @@
 #include "combat/CardCost.hpp"
 #include "combat/EffectContext.hpp"
 
+#include <optional>
+#include <utility>
+#include <vector>
+
+namespace {
+bool isAliveEnemy(const CombatState& state, const EntityId id) {
+    return state.hasEntity(id) && state.isEnemy(id) && state.entity(id).isAlive();
+}
+
+bool isAlivePlayer(const CombatState& state, const EntityId id) {
+    return state.hasEntity(id) && state.isPlayer(id) && state.entity(id).isAlive();
+}
+
+std::optional<EntityId> firstAliveAllyExceptSource(const CombatState& state, const EntityId source) {
+    for (const EntityId candidate : state.alivePlayerIds()) {
+        if (candidate != source) {
+            return candidate;
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<EntityId> firstAliveEnemy(const CombatState& state) {
+    const std::vector<EntityId> enemies = state.aliveEnemyIds();
+    if (enemies.empty()) {
+        return std::nullopt;
+    }
+    return enemies.front();
+}
+
+std::optional<EntityId> previewTargetForEffect(
+    const CombatState& state,
+    const EffectTarget effectTarget,
+    const EntityId source,
+    const std::optional<EntityId> explicitTarget
+) {
+    switch (effectTarget) {
+        case EffectTarget::Self:
+            return source;
+
+        case EffectTarget::SingleEnemy:
+            if (explicitTarget.has_value() && isAliveEnemy(state, *explicitTarget)) {
+                return explicitTarget;
+            }
+            return firstAliveEnemy(state);
+
+        case EffectTarget::AllEnemies:
+        case EffectTarget::RandomEnemy:
+            if (explicitTarget.has_value() && isAliveEnemy(state, *explicitTarget)) {
+                return explicitTarget;
+            }
+            return firstAliveEnemy(state);
+
+        case EffectTarget::Ally:
+            if (explicitTarget.has_value() && isAlivePlayer(state, *explicitTarget) && *explicitTarget != source) {
+                return explicitTarget;
+            }
+            return firstAliveAllyExceptSource(state, source);
+
+        case EffectTarget::AllAllies:
+            if (explicitTarget.has_value() && isAlivePlayer(state, *explicitTarget)) {
+                return explicitTarget;
+            }
+            return source;
+
+        case EffectTarget::RandomAlly:
+            if (explicitTarget.has_value() && isAlivePlayer(state, *explicitTarget) && *explicitTarget != source) {
+                return explicitTarget;
+            }
+            return firstAliveAllyExceptSource(state, source);
+    }
+
+    return std::nullopt;
+}
+} // namespace
+
 CardPreviewSystem::CardPreviewSystem(
     const CardDatabase& cardDatabase,
     const CardPlayValidator& validator,
@@ -44,6 +120,12 @@ CardPreview CardPreviewSystem::previewCard(
 
     for (const EffectDefinition& effect : definition.effects) {
         const ResolvedEffectValue resolved = effectResolver_.resolveForPreview(effect.value);
+        const std::optional<EntityId> effectTarget = previewTargetForEffect(
+            state,
+            effect.target,
+            source,
+            target
+        );
 
         EffectPreview effectPreview;
         effectPreview.type = effect.type;
@@ -53,11 +135,11 @@ CardPreview CardPreviewSystem::previewCard(
         effectPreview.statusId = effect.statusId;
 
         if (effect.type == EffectType::Damage) {
-            if (target.has_value()) {
+            if (effectTarget.has_value() && state.hasEntity(*effectTarget)) {
                 effectPreview.damage = damageSystem_.previewDamage(
                     state,
                     source,
-                    *target,
+                    *effectTarget,
                     resolved.minimum,
                     resolved.maximum,
                     definition.id,
@@ -76,10 +158,11 @@ CardPreview CardPreviewSystem::previewCard(
         }
 
         if (effect.type == EffectType::Block) {
+            const EntityId blockTarget = effectTarget.value_or(source);
             const ModifiedValueRange blockRange = blockSystem_.previewBlock(
                 state,
                 source,
-                source,
+                blockTarget,
                 resolved.minimum,
                 resolved.maximum,
                 definition.id,

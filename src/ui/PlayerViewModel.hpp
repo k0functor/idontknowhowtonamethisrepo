@@ -1,6 +1,7 @@
 #pragma once
 
 #include "entities/EntityId.hpp"
+#include "ui/RelicViewModel.hpp"
 #include "ui/StatusViewModel.hpp"
 
 #include <raylib.h>
@@ -12,6 +13,7 @@ struct PlayerViewModel {
     EntityId entityId;
 
     std::string name;
+    std::string definitionId;
 
     int currentHp = 1;
     int maxHp = 1;
@@ -28,8 +30,14 @@ struct PlayerViewModel {
     std::string activeStanceName = {};
     std::string activeStanceDescription = {};
     std::string stanceShiftBonusLabel = {};
+    std::string stressPowerLabel = {};
+    std::string stressPowerDescription = {};
+    std::string relicsLabel = {};
+    int stressPowerDamageBonus = 0;
+    int stressPowerNextThreshold = 0;
 
     std::vector<StatusViewModel> statuses;
+    std::vector<RelicViewModel> relics;
     std::vector<std::string> traitIds;
 
     Vector2 renderOffset{0.f, 0.f};

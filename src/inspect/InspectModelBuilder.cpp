@@ -104,6 +104,20 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
         });
     }
 
+    if (player.definitionId == "sadist") {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.player.sadist_engine.name"),
+            rawText("inspect.player.sadist_engine.description"),
+            InspectEntryStyle::Hint
+        });
+    } else if (player.definitionId == "masochist") {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.player.masochist_engine.name"),
+            rawText("inspect.player.masochist_engine.description"),
+            InspectEntryStyle::Hint
+        });
+    }
+
     model.entries.push_back(InspectEntry{
         rawText("inspect.player.stress.name"),
         formatRawText("inspect.player.stress.value",
@@ -111,6 +125,19 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
         ),
         player.stress >= 100 ? InspectEntryStyle::Warning : InspectEntryStyle::Normal
     });
+
+    if (!player.stressPowerDescription.empty()) {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.player.lost_psychopath_stress_power.name"),
+            formatRawText("inspect.player.lost_psychopath_stress_power.value",
+                {
+                    {"bonus", std::to_string(player.stressPowerDamageBonus)},
+                    {"next", player.stressPowerNextThreshold > 0 ? std::to_string(player.stressPowerNextThreshold) : "-"}
+                }
+            ),
+            player.stress >= 100 ? InspectEntryStyle::Warning : InspectEntryStyle::Hint
+        });
+    }
 
     if (player.block > 0) {
         model.entries.push_back(InspectEntry{
@@ -354,6 +381,13 @@ InspectPanelModel InspectModelBuilder::buildCard(
         model.entries.push_back(InspectEntry{
             rawText("inspect.card.owner.name"),
             card.ownerLabel
+        });
+    }
+
+    if (!card.sourceEnergyLabel.empty()) {
+        model.entries.push_back(InspectEntry{
+            rawText("inspect.card.source_energy.name"),
+            card.sourceEnergyLabel
         });
     }
 

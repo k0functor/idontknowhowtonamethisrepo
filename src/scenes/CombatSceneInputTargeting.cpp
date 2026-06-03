@@ -35,6 +35,10 @@ Vector2 arrowTipOnBounds(const Rectangle bounds, const Vector2 from) {
     return Vector2{center.x - dx * scale, center.y - dy * scale};
 }
 
+bool containsEntity(const std::vector<EntityId>& entities, const EntityId id) {
+    return std::find(entities.begin(), entities.end(), id) != entities.end();
+}
+
 void drawTargetArrow(const Vector2 from, const Rectangle targetBounds) {
     const Vector2 tip = arrowTipOnBounds(targetBounds, from);
     const float dx = tip.x - from.x;
@@ -82,6 +86,16 @@ void CombatScene::handleKeyboardCombatInput() {
 
     if (IsKeyPressed(KEY_LEFT)) {
         selectCardByOffset(-1);
+    }
+
+    if (canSelectCardSourceActors()) {
+        if (IsKeyPressed(KEY_E)) {
+            cycleActivePlayerActor(1);
+        }
+
+        if (IsKeyPressed(KEY_Q)) {
+            cycleActivePlayerActor(-1);
+        }
     }
 
     if (selectedCardId_.has_value()) {
@@ -245,7 +259,17 @@ std::vector<EntityId> CombatScene::targetCandidatesForCard(const CardInstanceId 
             }
         }
 
-        if (hasAllyTarget || hasAllAlliesTarget) {
+        if (hasAllyTarget) {
+            std::vector<EntityId> allies;
+            for (const EntityId candidate : state_.alivePlayerIds()) {
+                if (candidate != source) {
+                    allies.push_back(candidate);
+                }
+            }
+            return allies;
+        }
+
+        if (hasAllAlliesTarget) {
             return state_.alivePlayerIds();
         }
 
@@ -278,22 +302,25 @@ std::optional<EntityId> CombatScene::previewTargetForSelectedCard() const {
         return std::nullopt;
     }
 
-    if (view_.hoveredEnemyId().has_value() && selectedCardCanTargetEnemy()) {
+    const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+
+    if (view_.hoveredEnemyId().has_value() && containsEntity(candidates, *view_.hoveredEnemyId())) {
         return view_.hoveredEnemyId();
     }
 
-    if (view_.hoveredPlayerId().has_value() && selectedCardCanTargetPlayer()) {
+    if (view_.hoveredPlayerId().has_value() && containsEntity(candidates, *view_.hoveredPlayerId())) {
         return view_.hoveredPlayerId();
     }
 
-    if (keyboardTargetId_.has_value()) {
-        const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
-        if (std::find(candidates.begin(), candidates.end(), *keyboardTargetId_) != candidates.end()) {
-            return keyboardTargetId_;
-        }
+    if (keyboardTargetId_.has_value() && containsEntity(candidates, *keyboardTargetId_)) {
+        return keyboardTargetId_;
     }
 
-    return preferredTargetForCard(*selectedCardId_);
+    if (!candidates.empty()) {
+        return candidates.front();
+    }
+
+    return std::nullopt;
 }
 
 std::optional<EntityId> CombatScene::arrowTargetForCard(const CardInstanceId cardInstanceId) const {
@@ -305,11 +332,13 @@ std::optional<EntityId> CombatScene::arrowTargetForCard(const CardInstanceId car
         return previewTargetForSelectedCard();
     }
 
-    if (view_.hoveredEnemyId().has_value() && cardCanTargetEnemy(cardInstanceId)) {
+    const std::vector<EntityId> candidates = targetCandidatesForCard(cardInstanceId);
+
+    if (view_.hoveredEnemyId().has_value() && containsEntity(candidates, *view_.hoveredEnemyId())) {
         return view_.hoveredEnemyId();
     }
 
-    if (view_.hoveredPlayerId().has_value() && cardCanTargetPlayer(cardInstanceId)) {
+    if (view_.hoveredPlayerId().has_value() && containsEntity(candidates, *view_.hoveredPlayerId())) {
         return view_.hoveredPlayerId();
     }
 
@@ -375,13 +404,24 @@ void CombatScene::handleMousePressed(const Vector2 mousePosition) {
         return;
     }
 
-    if (selectedCardId_.has_value() && view_.hoveredEnemyId().has_value() && selectedCardCanTargetEnemy()) {
-        playSelectedCardOn(*view_.hoveredEnemyId());
-        return;
+    if (selectedCardId_.has_value() && view_.hoveredEnemyId().has_value()) {
+        const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+        if (containsEntity(candidates, *view_.hoveredEnemyId())) {
+            playSelectedCardOn(*view_.hoveredEnemyId());
+            return;
+        }
     }
 
-    if (selectedCardId_.has_value() && view_.hoveredPlayerId().has_value() && selectedCardCanTargetPlayer()) {
-        playSelectedCardOn(*view_.hoveredPlayerId());
+    if (selectedCardId_.has_value() && view_.hoveredPlayerId().has_value()) {
+        const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+        if (containsEntity(candidates, *view_.hoveredPlayerId())) {
+            playSelectedCardOn(*view_.hoveredPlayerId());
+            return;
+        }
+    }
+
+    if (canSelectCardSourceActors() && view_.hoveredPlayerId().has_value()) {
+        selectActivePlayerActor(*view_.hoveredPlayerId());
         return;
     }
 
@@ -393,14 +433,20 @@ void CombatScene::handleMouseReleased(const Vector2) {
         return;
     }
 
-    if (view_.hoveredEnemyId().has_value() && selectedCardCanTargetEnemy()) {
-        playSelectedCardOn(*view_.hoveredEnemyId());
-        return;
+    if (selectedCardId_.has_value() && view_.hoveredEnemyId().has_value()) {
+        const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+        if (containsEntity(candidates, *view_.hoveredEnemyId())) {
+            playSelectedCardOn(*view_.hoveredEnemyId());
+            return;
+        }
     }
 
-    if (view_.hoveredPlayerId().has_value() && selectedCardCanTargetPlayer()) {
-        playSelectedCardOn(*view_.hoveredPlayerId());
-        return;
+    if (selectedCardId_.has_value() && view_.hoveredPlayerId().has_value()) {
+        const std::vector<EntityId> candidates = targetCandidatesForCard(*selectedCardId_);
+        if (containsEntity(candidates, *view_.hoveredPlayerId())) {
+            playSelectedCardOn(*view_.hoveredPlayerId());
+            return;
+        }
     }
 
     draggedCardId_.reset();

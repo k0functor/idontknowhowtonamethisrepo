@@ -6,6 +6,7 @@
 #include "localization/TextId.hpp"
 
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 
@@ -32,6 +33,10 @@ RelicSystem::RelicSystem(const RelicDatabase& database, const LocalizationManage
 
 void RelicSystem::setRelics(const std::vector<std::string>& relicIds) {
     inventory_.setFromIds(relicIds);
+}
+
+void RelicSystem::setRelics(const RunState& run) {
+    inventory_.setFromRun(run);
 }
 
 void RelicSystem::clear() {
@@ -63,7 +68,13 @@ void RelicSystem::collectModifiers(
         return;
     }
 
+    const CombatEntity& source = state.entity(context.source);
+
     for (const RelicInstance& instance : inventory_.all()) {
+        if (!instance.ownerActorDefinitionId.empty() && source.definitionId != instance.ownerActorDefinitionId) {
+            continue;
+        }
+
         if (!database_.contains(instance.id)) {
             continue;
         }
@@ -134,10 +145,11 @@ void RelicSystem::handleEvent(
             continue;
         }
 
+        const std::optional<EntityId> owner = ownerSource(state, instance);
         const RelicDefinition& relic = database_.get(instance.id);
 
         for (const RelicTriggerDefinition& trigger : relic.triggers) {
-            if (!triggerMatches(state, trigger, event, instance)) {
+            if (!triggerMatches(state, trigger, event, instance, owner)) {
                 continue;
             }
 
@@ -146,7 +158,11 @@ void RelicSystem::handleEvent(
             }
 
             EffectContext context;
-            context.source = event.source.value_or(defaultPlayerSource(state));
+            if (owner.has_value()) {
+                context.source = *owner;
+            } else {
+                context.source = event.source.value_or(defaultPlayerSource(state));
+            }
             context.explicitTarget = event.target;
             context.cardInstanceId = event.cardInstanceId.value_or(CardInstanceId{});
             context.cardDefinitionId = CardId("relic." + instance.id.value);
@@ -169,13 +185,18 @@ bool RelicSystem::triggerMatches(
     const CombatState& state,
     const RelicTriggerDefinition& trigger,
     const GameEvent& event,
-    const RelicInstance& instance
+    const RelicInstance& instance,
+    const std::optional<EntityId> owner
 ) const {
     if (trigger.eventType != event.type) {
         return false;
     }
 
     if (trigger.oncePerCombat && instance.triggersThisCombat > 0) {
+        return false;
+    }
+
+    if (owner.has_value() && event.type != GameEventType::CombatStarted && event.source.has_value() && state.isPlayer(*event.source) && *event.source != *owner) {
         return false;
     }
 
@@ -210,6 +231,20 @@ bool RelicSystem::triggerMatches(
     }
 
     return true;
+}
+
+std::optional<EntityId> RelicSystem::ownerSource(const CombatState& state, const RelicInstance& instance) const {
+    if (instance.ownerActorDefinitionId.empty()) {
+        return std::nullopt;
+    }
+
+    for (const CombatEntity& player : state.players) {
+        if (player.definitionId == instance.ownerActorDefinitionId) {
+            return player.id;
+        }
+    }
+
+    return std::nullopt;
 }
 
 EntityId RelicSystem::defaultPlayerSource(const CombatState& state) const {

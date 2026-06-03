@@ -13,4 +13,5 @@ struct RunActorState {
     bool resolveCheckTriggered = false;
 
     std::vector<std::string> traitIds;
+    std::vector<std::string> relicIds;
 };

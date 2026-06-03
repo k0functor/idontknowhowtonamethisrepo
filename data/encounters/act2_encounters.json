@@ -1,0 +1,142 @@
+{
+  "pools": {
+    "combat": [
+      {
+        "id": "act2_brine_leech",
+        "enemies": [
+          "brine_leech"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 2
+      },
+      {
+        "id": "act2_drowned_cantor",
+        "enemies": [
+          "drowned_cantor"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 4
+      },
+      {
+        "id": "act2_mirror_eel",
+        "enemies": [
+          "mirror_eel"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_tide_apprentice",
+        "enemies": [
+          "tide_apprentice"
+        ],
+        "weight": 3,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_barnacle_guard",
+        "enemies": [
+          "barnacle_guard"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_leech_and_cantor",
+        "enemies": [
+          "brine_leech",
+          "drowned_cantor"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_eel_and_leech",
+        "enemies": [
+          "mirror_eel",
+          "brine_leech"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_guard_and_apprentice",
+        "enemies": [
+          "barnacle_guard",
+          "tide_apprentice"
+        ],
+        "weight": 1,
+        "min_layer": 3,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_cantor_and_eel",
+        "enemies": [
+          "drowned_cantor",
+          "mirror_eel"
+        ],
+        "weight": 1,
+        "min_layer": 3,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_salt_patrol",
+        "enemies": [
+          "barnacle_guard",
+          "brine_leech"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 5
+      }
+    ],
+    "elite": [
+      {
+        "id": "act2_drowned_abbot",
+        "enemies": [
+          "drowned_abbot"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_mirror_executioner",
+        "enemies": [
+          "mirror_executioner"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 5
+      },
+      {
+        "id": "act2_abbot_and_leech",
+        "enemies": [
+          "drowned_abbot",
+          "brine_leech"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 5
+      }
+    ],
+    "boss": [
+      {
+        "id": "act2_saint_of_the_sunken_bell",
+        "enemies": [
+          "saint_of_the_sunken_bell"
+        ],
+        "weight": 1,
+        "min_layer": 7,
+        "max_layer": 7
+      }
+    ]
+  }
+}

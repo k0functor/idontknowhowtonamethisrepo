@@ -43,7 +43,13 @@ std::string sourceOwnerLabel(
     const EntityId source
 ) {
     if (definition.ownerActorId.empty()) {
-        return localizedOrFallback(localization, TextId("ui.card_owner.common"), "Common card");
+        const std::string actor = entityDisplayName(state, localization, source, "actor");
+        return formatOrFallback(
+            localization,
+            TextId("ui.card_owner.shared_source"),
+            {{"actor", actor}},
+            {}
+        );
     }
 
     return formatOrFallback(
@@ -59,6 +65,7 @@ std::string cardFailureReasonText(
     const LocalizationManager& localization,
     const CardPlayFailureReason reason,
     const EntityId source,
+    const int energyCost,
     const std::string& fallback
 ) {
     switch (reason) {
@@ -101,7 +108,16 @@ std::string cardFailureReasonText(
                 {}
             );
         case CardPlayFailureReason::NotEnoughEnergy:
-            return localizedOrFallback(localization, TextId("ui.card_unplayable.not_enough_energy"), "Not enough energy");
+            return formatOrFallback(
+                localization,
+                TextId("ui.card_unplayable.not_enough_energy_actor"),
+                {
+                    {"actor", entityDisplayName(state, localization, source, "actor")},
+                    {"current", std::to_string(state.resources.energyFor(source))},
+                    {"cost", std::to_string(energyCost)}
+                },
+                {}
+            );
         case CardPlayFailureReason::UnplayableKeyword:
             return localizedOrFallback(localization, TextId("ui.card_unplayable.unplayable_keyword"), "Unplayable");
     }
@@ -148,6 +164,23 @@ CardViewModel CardViewModelBuilder::build(
         target
     );
     model.ownerLabel = sourceOwnerLabel(state, localization_, definition, source);
+    model.sourceActorName = entityDisplayName(state, localization_, source, "actor");
+    model.sourceCurrentEnergy = state.resources.energyFor(source);
+    model.sourceMaxEnergy = state.resources.maxEnergyFor(source);
+    model.sharedSource = definition.ownerActorId.empty();
+    model.sourceCanPay = state.resources.canSpendEnergy(source, preview.energyCost);
+    if (state.players.size() > 1u) {
+        model.sourceEnergyLabel = formatOrFallback(
+            localization_,
+            TextId("ui.card_source.energy"),
+            {
+                {"current", std::to_string(model.sourceCurrentEnergy)},
+                {"max", std::to_string(model.sourceMaxEnergy)},
+                {"cost", std::to_string(preview.energyCost)}
+            },
+            {}
+        );
+    }
     model.energyCost = preview.energyCost;
     model.type = definition.type;
     model.rarity = definition.rarity;
@@ -158,6 +191,7 @@ CardViewModel CardViewModelBuilder::build(
         localization_,
         preview.unplayableReasonCode,
         source,
+        preview.energyCost,
         preview.unplayableReason
     );
     return model;

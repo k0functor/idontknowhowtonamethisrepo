@@ -17,6 +17,10 @@
   "status.frail.name": "Хрупкость",
   "status.free_next_card.description": "Следующая сыгранная карта стоимостью больше 0 стоит 0 энергии. После срабатывания уменьшается на 1.",
   "status.free_next_card.name": "Бесплатная карта",
+  "status.sadist_pleasure.description": "До конца хода игрока Садист наносит на 20% больше урона атаками. Обновляется, когда Садист наносит HP-урон Мазохисту.",
+  "status.sadist_pleasure.name": "Наслаждение",
+  "status.masochist_pain.description": "До конца хода игрока Мазохист получает +2 к урону атак и +2 к получаемой защите от карт и эффектов. Обновляется, когда Садист наносит HP-урон Мазохисту.",
+  "status.masochist_pain.name": "Боль",
   "status.poison.description": "В конце своего хода получает урон, равный количеству яда. Затем яд уменьшается на 1.",
   "status.poison.name": "Яд",
   "status.regeneration.description": "Восстанавливает здоровье по правилам эффекта. В текущей версии подготовлено как статус для будущих карт.",
@@ -64,5 +68,7 @@
   "inspect.status.current_rule.name": "Текущий эффект",
   "inspect.status.duration.name": "Длительность",
   "inspect.status.rules.name": "Правила",
-  "inspect.status.type.name": "Тип"
+  "inspect.status.type.name": "Тип",
+  "inspect.player.lost_psychopath_stress_power.name": "Сила стресса",
+  "inspect.player.lost_psychopath_stress_power.value": "Текущий бонус: +{bonus} урона к атакам. Пороги: 50, 100 и 150 стресса. Следующий порог: {next}."
 }

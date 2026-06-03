@@ -36,10 +36,13 @@ struct CardDefinition {
     int energyCost = 0;
     int goldCost = 0;
 
-    // Empty means: use the default/first player actor.
-    // Sadist/Masochist and other multi-actor archetypes use this to route
-    // card source, modifiers and actor-specific energy.
+    // Empty means: playable by the current active player actor.
+    // Non-empty means the card is personal and can only be played by that actor.
     std::string ownerActorId;
+
+    // Empty means: use ownerActorId as the reward-pool key. Shared cards can
+    // use this without becoming personal cards.
+    std::string rewardPoolId;
 
     std::vector<CardKeyword> keywords;
 

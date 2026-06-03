@@ -25,6 +25,8 @@ RewardScene::RewardScene(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
+    const PlayerActorDatabase& actors,
+    const RunState& runState,
     RewardState reward,
     std::function<void(RewardSelection)> onContinue
 )
@@ -33,11 +35,18 @@ RewardScene::RewardScene(
       cards_(cards),
       relics_(relics),
       consumables_(consumables),
+      actors_(actors),
+      runState_(runState),
       reward_(std::move(reward)),
       onContinue_(std::move(onContinue)) {}
 
 void RewardScene::update(float) {
     const Vector2 mouse = GetMousePosition();
+
+    if (relicOwnerChoiceOpen_) {
+        updateRelicOwnerChoice(mouse);
+        return;
+    }
 
     if (cardChoiceOpen_) {
         updateCardChoice(mouse);
@@ -133,6 +142,10 @@ void RewardScene::render() const {
     if (cardChoiceOpen_) {
         renderCardChoice();
     }
+
+    if (relicOwnerChoiceOpen_) {
+        renderRelicOwnerChoice();
+    }
 }
 
 Rectangle RewardScene::rewardOptionBounds(const std::size_t index) const {
@@ -173,6 +186,35 @@ Rectangle RewardScene::confirmButtonBounds() const {
     return Rectangle{panel.x + panel.width * 0.5f + 30.f, panel.y + panel.height - 66.f, 220.f, 48.f};
 }
 
+Rectangle RewardScene::relicOwnerModalBounds() const {
+    const float width = 700.f;
+    const float desiredHeight = 188.f + static_cast<float>(runState_.actorStates.size()) * 92.f + 76.f;
+    const float height = std::min(std::max(420.f, desiredHeight), static_cast<float>(VirtualViewport::height()) - 72.f);
+    return Rectangle{VirtualViewport::width() * 0.5f - width * 0.5f, VirtualViewport::height() * 0.5f - height * 0.5f, width, height};
+}
+
+Rectangle RewardScene::relicOwnerOptionBounds(const std::size_t index) const {
+    const Rectangle panel = relicOwnerModalBounds();
+    return Rectangle{panel.x + 42.f, panel.y + 140.f + static_cast<float>(index) * 92.f, panel.width - 84.f, 76.f};
+}
+
+Rectangle RewardScene::relicOwnerCancelButtonBounds() const {
+    const Rectangle panel = relicOwnerModalBounds();
+    return Rectangle{panel.x + panel.width * 0.5f - 120.f, panel.y + panel.height - 58.f, 240.f, 44.f};
+}
+
+void RewardScene::moveRelicOwnerSelection(const int delta) {
+    if (runState_.actorStates.empty()) {
+        selectedRelicOwnerIndex_.reset();
+        return;
+    }
+
+    const int count = static_cast<int>(runState_.actorStates.size());
+    int index = selectedRelicOwnerIndex_.has_value() ? static_cast<int>(*selectedRelicOwnerIndex_) : 0;
+    index = (index + delta + count) % count;
+    selectedRelicOwnerIndex_ = static_cast<std::size_t>(index);
+}
+
 void RewardScene::takeOption(const std::size_t index) {
     if (index >= reward_.options.size()) {
         return;
@@ -194,12 +236,228 @@ void RewardScene::takeOption(const std::size_t index) {
             reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
             break;
         case RewardOptionType::Relic:
-            if (!option.relicId.empty()) {
-                selection_.selectedRelicIds.push_back(option.relicId);
+            if (option.relicId.empty()) {
+                reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
+                break;
             }
+
+            if (hasMultipleRelicOwners()) {
+                openRelicOwnerChoice(index);
+                break;
+            }
+
+            selection_.selectedRelics.push_back(RelicRewardSelection{option.relicId, defaultRelicOwnerId()});
             reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
             break;
     }
+}
+
+void RewardScene::updateRelicOwnerChoice(const Vector2 mouse) {
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        closeRelicOwnerChoice();
+        return;
+    }
+
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+        moveRelicOwnerSelection(-1);
+        return;
+    }
+
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+        moveRelicOwnerSelection(1);
+        return;
+    }
+
+    if ((IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER)) && selectedRelicOwnerIndex_.has_value()) {
+        confirmRelicOwnerChoice(*selectedRelicOwnerIndex_);
+        return;
+    }
+
+    for (std::size_t i = 0; i < runState_.actorStates.size(); ++i) {
+        if (BasicUi::contains(relicOwnerOptionBounds(i), mouse)) {
+            selectedRelicOwnerIndex_ = i;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                confirmRelicOwnerChoice(i);
+            }
+            return;
+        }
+    }
+
+    if (BasicUi::contains(relicOwnerCancelButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        closeRelicOwnerChoice();
+    }
+}
+
+void RewardScene::renderRelicOwnerChoice() const {
+    if (!relicOwnerChoiceOpen_ || !activeRelicOwnerOptionIndex_.has_value() || *activeRelicOwnerOptionIndex_ >= reward_.options.size()) {
+        return;
+    }
+
+    const RewardOption& option = reward_.options[*activeRelicOwnerOptionIndex_];
+    const Vector2 mouse = GetMousePosition();
+    const Rectangle panel = relicOwnerModalBounds();
+
+    DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 120});
+    DrawRectangleRounded(panel, 0.06f, 14, Color{25, 27, 38, 252});
+    DrawRectangleRoundedLinesEx(panel, 0.06f, 14, 3.f, Color{238, 196, 86, 255});
+
+    BasicUi::drawCenteredText(
+        font_,
+        localization_.get(TextId("reward.relic_owner_title")),
+        Rectangle{panel.x + 24.f, panel.y + 18.f, panel.width - 48.f, 36.f},
+        28.f,
+        Color{255, 235, 175, 255}
+    );
+
+    BasicUi::drawCenteredTextFitted(
+        font_,
+        localization_.format(TextId("reward.relic_owner_hint"), {{"relic", relicName(option.relicId)}}),
+        Rectangle{panel.x + 42.f, panel.y + 62.f, panel.width - 84.f, 44.f},
+        18.f,
+        14.f,
+        Color{195, 202, 225, 255}
+    );
+
+    for (std::size_t i = 0; i < runState_.actorStates.size(); ++i) {
+        const RunActorState& actor = runState_.actorStates[i];
+        const Rectangle row = relicOwnerOptionBounds(i);
+        const bool hovered = BasicUi::contains(row, mouse);
+        const bool selected = selectedRelicOwnerIndex_.has_value() && *selectedRelicOwnerIndex_ == i;
+        DrawRectangleRounded(row, 0.08f, 10, hovered || selected ? Color{55, 61, 80, 255} : Color{40, 43, 56, 255});
+        DrawRectangleRoundedLinesEx(row, 0.08f, 10, selected ? 3.f : 2.f, selected ? Color{255, 218, 96, 255} : (hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255}));
+
+        BasicUi::drawTextFitted(
+            font_,
+            actorName(actor.definitionId),
+            Vector2{row.x + 18.f, row.y + 10.f},
+            row.width * 0.48f,
+            21.f,
+            15.f,
+            Color{245, 245, 250, 255}
+        );
+        BasicUi::drawTextFitted(
+            font_,
+            actorHealthSummary(actor),
+            Vector2{row.x + row.width * 0.52f, row.y + 12.f},
+            row.width * 0.42f,
+            17.f,
+            13.f,
+            Color{210, 218, 238, 255}
+        );
+        BasicUi::drawTextFitted(
+            font_,
+            actorRelicSummary(actor),
+            Vector2{row.x + 18.f, row.y + 44.f},
+            row.width - 36.f,
+            16.f,
+            12.f,
+            Color{176, 184, 208, 255}
+        );
+    }
+
+    BasicUi::drawCenteredTextFitted(
+        font_,
+        localization_.get(TextId("reward.relic_owner_controls")),
+        Rectangle{panel.x + 42.f, panel.y + panel.height - 100.f, panel.width - 84.f, 24.f},
+        15.f,
+        12.f,
+        Color{150, 158, 184, 255}
+    );
+
+    BasicUi::drawButton(font_, relicOwnerCancelButtonBounds(), localization_.get(TextId("reward.cancel")), mouse);
+}
+
+void RewardScene::openRelicOwnerChoice(const std::size_t index) {
+    if (index >= reward_.options.size()) {
+        return;
+    }
+
+    activeRelicOwnerOptionIndex_ = index;
+    selectedRelicOwnerIndex_ = runState_.actorStates.empty() ? std::optional<std::size_t>{} : std::optional<std::size_t>{0u};
+    relicOwnerChoiceOpen_ = true;
+}
+
+void RewardScene::closeRelicOwnerChoice() {
+    activeRelicOwnerOptionIndex_.reset();
+    selectedRelicOwnerIndex_.reset();
+    relicOwnerChoiceOpen_ = false;
+}
+
+void RewardScene::confirmRelicOwnerChoice(const std::size_t actorIndex) {
+    if (!activeRelicOwnerOptionIndex_.has_value() || *activeRelicOwnerOptionIndex_ >= reward_.options.size()) {
+        closeRelicOwnerChoice();
+        return;
+    }
+    if (actorIndex >= runState_.actorStates.size()) {
+        closeRelicOwnerChoice();
+        return;
+    }
+
+    const std::size_t optionIndex = *activeRelicOwnerOptionIndex_;
+    const RewardOption& option = reward_.options[optionIndex];
+    if (!option.relicId.empty()) {
+        selection_.selectedRelics.push_back(RelicRewardSelection{option.relicId, runState_.actorStates[actorIndex].definitionId});
+    }
+
+    reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
+    closeRelicOwnerChoice();
+}
+
+bool RewardScene::hasMultipleRelicOwners() const {
+    return runState_.actorStates.size() > 1;
+}
+
+std::string RewardScene::defaultRelicOwnerId() const {
+    if (!runState_.actorStates.empty()) {
+        return runState_.actorStates.front().definitionId;
+    }
+    if (!runState_.actorDefinitionIds.empty()) {
+        return runState_.actorDefinitionIds.front();
+    }
+    return {};
+}
+
+std::string RewardScene::actorName(const std::string& actorDefinitionId) const {
+    if (actorDefinitionId.empty()) {
+        return localization_.get(TextId("debug.player.name"));
+    }
+
+    const PlayerActorId id(actorDefinitionId);
+    if (!actors_.contains(id)) {
+        return actorDefinitionId;
+    }
+
+    return localization_.get(actors_.get(id).nameTextId);
+}
+
+std::string RewardScene::actorHealthSummary(const RunActorState& actor) const {
+    return localization_.format(
+        TextId("reward.relic_owner_hp"),
+        {{"current", std::to_string(std::max(0, actor.currentHp))}, {"maximum", std::to_string(std::max(1, actor.maxHp))}}
+    );
+}
+
+std::string RewardScene::actorRelicSummary(const RunActorState& actor) const {
+    if (actor.relicIds.empty()) {
+        return localization_.get(TextId("reward.relic_owner_no_relics"));
+    }
+
+    std::string names;
+    const std::size_t visible = std::min<std::size_t>(2u, actor.relicIds.size());
+    for (std::size_t i = 0; i < visible; ++i) {
+        if (!names.empty()) {
+            names += ", ";
+        }
+        names += relicName(actor.relicIds[i]);
+    }
+    if (actor.relicIds.size() > visible) {
+        names += localization_.format(TextId("reward.relic_owner_more_relics"), {{"count", std::to_string(actor.relicIds.size() - visible)}});
+    }
+
+    return localization_.format(
+        TextId("reward.relic_owner_relics"),
+        {{"count", std::to_string(actor.relicIds.size())}, {"relics", names}}
+    );
 }
 
 void RewardScene::updateCardChoice(const Vector2 mouse) {

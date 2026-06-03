@@ -204,6 +204,10 @@ void CombatScene::updatePileOverlay(const Vector2 mousePosition) {
 }
 
 void CombatScene::renderEnergyBubble() const {
+    if (state_.resources.hasAnyActorEnergyPool()) {
+        return;
+    }
+
     const Rectangle bounds = energyBubbleBounds();
     const int centerX = static_cast<int>(bounds.x + bounds.width * 0.5f);
     const int centerY = static_cast<int>(bounds.y + bounds.height * 0.5f);

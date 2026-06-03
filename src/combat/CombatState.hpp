@@ -52,8 +52,10 @@ public:
     CombatPhase phase = CombatPhase::NotStarted;
     int turn = 0;
 
-    // Normal single-actor archetypes use one player turn per round.
-    // Sadist/Masochist uses sequential subturns: Sadist -> Masochist -> enemies.
+    // Most archetypes use one player turn per round. This flag is reserved for
+    // mechanics that explicitly need forced actor subturns. Sadist/Masochist
+    // uses it to play one shared hand in a fixed order: Sadist, then
+    // Masochist, then the enemies.
     bool useSequentialPlayerTurns = false;
     std::size_t activePlayerIndex = 0;
 

@@ -20,6 +20,7 @@ public:
     void clearActorEnergyPools();
     void setMaxEnergyFor(EntityId owner, int value);
     bool hasActorEnergyPool(EntityId owner) const;
+    bool hasAnyActorEnergyPool() const;
     int energyFor(EntityId owner) const;
     int maxEnergyFor(EntityId owner) const;
 

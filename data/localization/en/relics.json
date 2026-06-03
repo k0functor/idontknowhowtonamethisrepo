@@ -57,7 +57,7 @@
   "relic.old_bell.name": "Old Bell",
   "relic.quiet_boots.description": "At combat start, draw 1 card.",
   "relic.quiet_boots.name": "Quiet Boots",
-  "relic.razor_contract.description": "Attacks deal +1 damage.",
+  "relic.razor_contract.description": "At the start of each combat, gain 1 Strength.",
   "relic.razor_contract.name": "Razor Contract",
   "relic.red_candle.description": "Every second turn, apply 1 Burn to a random enemy.",
   "relic.red_candle.name": "Red Candle",
@@ -85,6 +85,6 @@
   "relic.thorn_buckle.name": "Thorn Buckle",
   "relic.war_drum.description": "At combat start, gain 2 Strength.",
   "relic.war_drum.name": "War Drum",
-  "relic.whetstone.description": "Attacks deal +1 damage. The first Attack you play each combat draws 1 card.",
+  "relic.whetstone.description": "At the start of each combat, gain 1 Strength. The first Attack you play each combat draws 1 card.",
   "relic.whetstone.name": "Whetstone"
 }

@@ -114,6 +114,7 @@ private:
     std::string cardInspectKeywordName(CardKeyword keyword) const;
     std::string cardInspectKeywordDescription(CardKeyword keyword) const;
     std::string cardInspectValueText(const EffectValue& value) const;
+    std::string relicOwnerLabel(const std::string& relicId) const;
     std::string localizedOrFallback(const TextId& textId, const std::string& fallback) const;
     void renderDeckOverlay(Rectangle modal) const;
     void renderUpgradeOverlay(Rectangle modal) const;

@@ -85,8 +85,12 @@ private:
     EntityId sourceForCard(const CardInstance& card) const;
     EntityId sourceForCard(CardInstanceId cardInstanceId) const;
     bool isSadistMasochistParty() const;
-    bool isDroneCyborgParty() const;
+    bool canSelectCardSourceActors() const;
+    void selectActivePlayerActor(EntityId actorId);
+    void cycleActivePlayerActor(int offset);
+    bool isReplicantParty() const;
     std::vector<RelicViewModel> buildRelicViewModels() const;
+    void attachActorRelicsToPlayers(CombatViewModel& model) const;
     std::vector<DroneSlotViewModel> buildDroneSlotViewModels() const;
 
     void updateInspectInput(Vector2 mousePosition);
@@ -149,6 +153,9 @@ private:
         CardFlightAnimationKind kind = CardFlightAnimationKind::PlayedToDiscard;
         bool waitedInQueue = false;
         float elapsedSeconds = 0.f;
+        float durationSeconds = 0.f;
+        float discardArcHeight = 0.f;
+        float discardArcBend = 0.f;
     };
 
     struct EnemyDeathAnimation {

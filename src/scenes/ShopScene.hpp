@@ -1,5 +1,6 @@
 #pragma once
 
+#include "actors/PlayerActorDatabase.hpp"
 #include "cards/CardId.hpp"
 #include "cards/CardInstanceId.hpp"
 #include "data/CardDatabase.hpp"
@@ -27,6 +28,7 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
+        const PlayerActorDatabase& actors,
         const RunState& runState,
         ShopState shopState,
         std::function<bool(const ShopPurchase&)> onPurchase,
@@ -45,6 +47,8 @@ private:
     Rectangle cardOfferVisualBounds(Rectangle cell) const;
     std::size_t cardOfferColumnCount() const;
     float cardOfferCellHeight() const;
+    float merchantRestCardScale() const;
+    float merchantRestCardGap(float cellWidth, std::size_t cardCount) const;
     Rectangle leaveButtonBounds() const;
     Rectangle removeModeBounds() const;
     Rectangle removeCardBounds(std::size_t visibleIndex) const;
@@ -52,10 +56,16 @@ private:
     Rectangle purchaseConfirmationBounds() const;
     Rectangle purchaseConfirmButtonBounds(Rectangle modal) const;
     Rectangle purchaseCancelButtonBounds(Rectangle modal) const;
+    Rectangle relicOwnerModalBounds() const;
+    Rectangle relicOwnerOptionBounds(std::size_t index) const;
+    Rectangle relicOwnerCancelButtonBounds() const;
+
+    void moveRelicOwnerSelection(int delta);
     Rectangle hoverDescriptionBounds(Vector2 mouse, float height) const;
 
     void updateShop(Vector2 mouse);
     void updatePurchaseConfirmation(Vector2 mouse);
+    void updateRelicOwnerChoice(Vector2 mouse);
     void updateRemoveMode(Vector2 mouse);
     void clampRemoveScrollOffset();
 
@@ -64,10 +74,16 @@ private:
     void renderTextOffer(const ShopOffer& offer, std::size_t offerIndex) const;
     void renderHoverDescription() const;
     void renderPurchaseConfirmation() const;
+    void renderRelicOwnerChoice() const;
     void renderRemoveMode() const;
 
     bool canBuy(const ShopOffer& offer) const;
     void purchaseOfferAtIndex(std::size_t offerIndex);
+    void purchaseOfferAtIndex(std::size_t offerIndex, const std::string& actorDefinitionId);
+    bool hasMultipleRelicOwners() const;
+    std::string actorName(const std::string& actorDefinitionId) const;
+    std::string actorHealthSummary(const RunActorState& actor) const;
+    std::string actorRelicSummary(const RunActorState& actor) const;
     std::string offerName(const ShopOffer& offer) const;
     std::string offerDescription(const ShopOffer& offer) const;
     std::string offerKind(const ShopOffer& offer) const;
@@ -92,12 +108,16 @@ private:
     const CardDatabase& cards_;
     const RelicDatabase& relics_;
     const ConsumableDatabase& consumables_;
+    const PlayerActorDatabase& actors_;
     const RunState& runState_;
     ShopState shopState_;
     std::function<bool(const ShopPurchase&)> onPurchase_;
     std::function<void(const ShopState&)> onShopStateChanged_;
     std::function<void()> onLeave_;
     bool removeMode_ = false;
+    bool relicOwnerChoiceOpen_ = false;
     std::optional<std::size_t> pendingPurchaseIndex_;
+    std::optional<std::size_t> pendingRelicOwnerPurchaseIndex_;
+    std::optional<std::size_t> selectedRelicOwnerIndex_;
     std::size_t removeScrollOffset_ = 0;
 };

@@ -4,14 +4,22 @@
     "name": "relic.whetstone.name",
     "description": "relic.whetstone.description",
     "rarity": "common",
-    "modifiers": [
-      {
-        "type": "outgoing_damage_add",
-        "amount": 1,
-        "priority": 450
-      }
-    ],
     "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ]
+      },
       {
         "event": "card_played",
         "card_type": "attack",
@@ -103,11 +111,21 @@
     "name": "relic.razor_contract.name",
     "description": "relic.razor_contract.description",
     "rarity": "starter",
-    "modifiers": [
+    "triggers": [
       {
-        "type": "outgoing_damage_add",
-        "amount": 1,
-        "priority": 450
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ]
       }
     ]
   },

@@ -386,6 +386,9 @@ class ProjectValidator:
             self.expect_int(owner, "gold_cost", card.get("gold_cost"), minimum=0)
             if "owner_actor" in card and card["owner_actor"] not in self.content.actors:
                 self.error(owner, f"references unknown owner_actor '{card['owner_actor']}'")
+            for pool_field in ("card_pool", "reward_pool"):
+                if pool_field in card and (not isinstance(card[pool_field], str) or not card[pool_field]):
+                    self.error(owner, f"{pool_field} must be a non-empty string when present")
             for keyword in card.get("keywords", []):
                 self.expect_enum(owner, "keyword", keyword, CARD_KEYWORDS)
             if "dice_corruption" in card:
@@ -433,8 +436,13 @@ class ProjectValidator:
             if not isinstance(reward_pools, list) or not reward_pools:
                 self.error(owner, "reward_card_pools must be a non-empty array")
             else:
+                known_card_pools = {
+                    card.get("card_pool") or card.get("reward_pool") or card.get("owner_actor")
+                    for card in self.content.cards.items.values()
+                    if isinstance(card.get("card_pool") or card.get("reward_pool") or card.get("owner_actor"), str)
+                }
                 for pool_id in reward_pools:
-                    if pool_id not in self.content.actors:
+                    if pool_id not in self.content.actors and pool_id not in known_card_pools:
                         self.error(owner, f"references unknown reward card pool '{pool_id}'")
 
             for card_id in archetype.get("starting_deck", []):
@@ -451,7 +459,7 @@ class ProjectValidator:
                 reward_candidates = [
                     card
                     for card in self.content.cards.items.values()
-                    if card.get("owner_actor") in reward_pools
+                    if (card.get("card_pool") or card.get("reward_pool") or card.get("owner_actor")) in reward_pools
                     and self.card_can_appear_as_reward(card)
                 ]
                 if not reward_candidates:
@@ -850,6 +858,30 @@ class ProjectValidator:
         if sum(special_counts.values()) > middle_capacity:
             self.error(relative_path, f"special node requests cannot fit into middle layers with capacity {middle_capacity}")
 
+
+    def validate_no_legacy_character_names(self) -> None:
+        legacy_fragments = (
+            "wanderer_",
+            "cyborg_",
+            "drone_cyborg",
+            "ash_monk_cards",
+        )
+        for path in sorted(DATA_DIR.rglob("*.json")):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(ROOT).as_posix()
+            if any(fragment in relative for fragment in legacy_fragments):
+                self.error(relative, "uses a legacy character/card file name")
+                continue
+            try:
+                text = path.read_text(encoding="utf-8-sig")
+            except OSError as exc:
+                self.error(relative, f"cannot read file: {exc}")
+                continue
+            for fragment in legacy_fragments:
+                if fragment in text:
+                    self.error(relative, f"contains legacy character/card token '{fragment}'")
+
     def validate_difficulties(self) -> None:
         for difficulty_id, difficulty in self.content.difficulties.items.items():
             owner = self.content.difficulties.paths[difficulty_id]
@@ -875,6 +907,7 @@ class ProjectValidator:
         self.validate_reward_and_shop_tables()
         self.validate_map_config()
         self.validate_difficulties()
+        self.validate_no_legacy_character_names()
         self.print_result()
         return 1 if self.errors else 0
 

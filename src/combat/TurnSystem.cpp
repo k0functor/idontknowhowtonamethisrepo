@@ -64,8 +64,18 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
 
     bool turnEndedEventEmitted = false;
     if (state.useSequentialPlayerTurns) {
+        const std::optional<EntityId> endingPlayer = state.activePlayerId();
         emitTurnEvent(eventBus_, GameEventType::TurnEnded, state);
         turnEndedEventEmitted = true;
+
+        if (endingPlayer.has_value()) {
+            statusSystem_.onTurnEndedForEntity(state, *endingPlayer);
+
+            if (updateCombatResult(state)) {
+                return;
+            }
+        }
+
         if (advanceToNextPlayerSubturn(state)) {
             emitTurnEvent(eventBus_, GameEventType::TurnStarted, state);
             updateCombatResult(state);
@@ -78,7 +88,15 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
     if (!turnEndedEventEmitted) {
         emitTurnEvent(eventBus_, GameEventType::TurnEnded, state);
     }
-    statusSystem_.onTurnEndedForSide(state, EntityType::Player);
+    if (state.useSequentialPlayerTurns) {
+        if (!turnEndedEventEmitted) {
+            if (const std::optional<EntityId> endingPlayer = state.activePlayerId()) {
+                statusSystem_.onTurnEndedForEntity(state, *endingPlayer);
+            }
+        }
+    } else {
+        statusSystem_.onTurnEndedForSide(state, EntityType::Player);
+    }
 
     if (updateCombatResult(state)) {
         return;

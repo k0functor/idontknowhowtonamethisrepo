@@ -1,5 +1,7 @@
 #include "RewardSystem.hpp"
 
+#include "run/RunRelicOwnership.hpp"
+
 #include <algorithm>
 
 namespace {
@@ -11,6 +13,12 @@ int offeredCardCount(const RewardState& reward) {
         }
     }
     return count;
+}
+
+void addRelicToRun(RunState& run, const std::string& relicId, const std::string& actorDefinitionId) {
+    if (RunRelicOwnership::assignRelicToActor(run, relicId, actorDefinitionId)) {
+        ++run.stats.relicsGained;
+    }
 }
 }
 
@@ -46,17 +54,10 @@ void RewardSystem::applyReward(
     }
 
     for (const std::string& relicId : selection.selectedRelicIds) {
-        bool alreadyOwned = false;
-        for (const std::string& ownedRelicId : run.relicIds) {
-            if (ownedRelicId == relicId) {
-                alreadyOwned = true;
-                break;
-            }
-        }
+        addRelicToRun(run, relicId, RunRelicOwnership::defaultActorDefinitionId(run));
+    }
 
-        if (!alreadyOwned) {
-            run.relicIds.push_back(relicId);
-            ++run.stats.relicsGained;
-        }
+    for (const RelicRewardSelection& relic : selection.selectedRelics) {
+        addRelicToRun(run, relic.relicId, relic.actorDefinitionId);
     }
 }

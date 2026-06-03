@@ -2,6 +2,7 @@
 
 #include "drones/DroneDefinition.hpp"
 #include "drones/DroneId.hpp"
+#include "run/StressPsychopathRules.hpp"
 #include "statuses/StatusType.hpp"
 
 #include <algorithm>
@@ -608,6 +609,13 @@ CombatViewModel CombatViewModelBuilder::build(
     model.discardPileLabel = localized(localization_, "ui.discard_pile");
     model.exhaustPileLabel = localized(localization_, "ui.exhaust_pile");
     model.endTurnLabel = localized(localization_, "ui.end_turn");
+    if (state.useSequentialPlayerTurns) {
+        if (const CombatEntity* active = state.activePlayer()) {
+            model.endTurnLabel = localizedFormat(localization_, "ui.end_actor_turn", {
+                {"actor", localizedOrRaw(localization_, active->nameTextId.value, active->definitionId)}
+            });
+        }
+    }
     model.emptyLabel = localized(localization_, "ui.empty");
     model.droneSlotsLabel = localized(localization_, "ui.drone_slots");
     model.keyboardHintLabel = localized(localization_, "ui.combat_keyboard_hint");
@@ -616,6 +624,7 @@ CombatViewModel CombatViewModelBuilder::build(
     for (const CombatEntity& player : state.players) {
         PlayerViewModel playerModel;
         playerModel.entityId = player.id;
+        playerModel.definitionId = player.definitionId;
         playerModel.name = localization_.get(player.nameTextId);
         playerModel.currentHp = player.health.current();
         playerModel.maxHp = player.health.maximum();
@@ -626,7 +635,19 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.maxStress = player.maxStress;
         playerModel.blockLabel = localized(localization_, "ui.block");
         playerModel.stressLabel = localized(localization_, "ui.stress");
-        playerModel.activeTurnLabel = localized(localization_, "ui.active_turn");
+        playerModel.relicsLabel = localized(localization_, "ui.actor_relics");
+        if (StressPsychopathRules::appliesTo(player.definitionId)) {
+            playerModel.stressPowerDamageBonus = StressPsychopathRules::damageBonusForStress(player.stress);
+            playerModel.stressPowerNextThreshold = StressPsychopathRules::nextDamageBonusThreshold(player.stress);
+            playerModel.stressPowerLabel = localized(localization_, "ui.lost_psychopath_stress_power");
+            playerModel.stressPowerDescription = localizedFormat(localization_, "ui.lost_psychopath_stress_power.value", {
+                {"bonus", std::to_string(playerModel.stressPowerDamageBonus)},
+                {"next", playerModel.stressPowerNextThreshold > 0 ? std::to_string(playerModel.stressPowerNextThreshold) : "-"}
+            });
+        }
+        playerModel.activeTurnLabel = state.useSequentialPlayerTurns
+            ? localized(localization_, "ui.active_turn")
+            : localized(localization_, "ui.card_source_marker");
         playerModel.activeStanceLabel = localized(localization_, "ui.active_stance");
         playerModel.stanceShiftBonusLabel = localized(localization_, "ui.stance_shift_bonus");
         fillActiveStance(playerModel, player.statuses);

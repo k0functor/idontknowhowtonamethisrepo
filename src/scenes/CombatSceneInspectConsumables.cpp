@@ -484,6 +484,13 @@ void CombatScene::renderCombatItemInspectModal() const {
             panel.header = relicModel.name;
             panel.subheader = relicModel.description;
         }
+
+        if (!relicModel.ownerName.empty()) {
+            panel.entries.insert(panel.entries.begin(), InspectEntry{
+                localizedOrFallback(TextId("inspect.relic.owner.name"), "Owner"),
+                relicModel.ownerName
+            });
+        }
     } else if (inspectedConsumableIndex_.has_value()) {
         itemIndex = *inspectedConsumableIndex_;
         itemCount = view_.model().consumables.size();

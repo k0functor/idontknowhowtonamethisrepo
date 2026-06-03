@@ -3,6 +3,8 @@
 #include "combat/CombatState.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "localization/TextId.hpp"
+#include "run/SadistMasochistRules.hpp"
+#include "run/StressPsychopathRules.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -138,6 +140,31 @@ void ModifierSystem::collectBuiltInStatusModifiers(
             });
         }
 
+        if (source.statuses.has(SadistMasochistRules::PainStatusId)) {
+            output.push_back({
+                SadistMasochistRules::PainStatusId,
+                text(localization_, "modifier.status.masochist_pain.outgoing_damage_add"),
+                ModifierOperation::Add,
+                2,
+                1.0,
+                110
+            });
+        }
+
+        if (StressPsychopathRules::appliesTo(source.definitionId)) {
+            const int stressDamageBonus = StressPsychopathRules::damageBonusForStress(source.stress);
+            if (stressDamageBonus > 0) {
+                output.push_back({
+                    "lost_psychopath_stress",
+                    text(localization_, "modifier.mechanic.lost_psychopath.stress_damage_add"),
+                    ModifierOperation::Add,
+                    stressDamageBonus,
+                    1.0,
+                    125
+                });
+            }
+        }
+
         if (source.statuses.has(stanceFlameStatusId)) {
             output.push_back({
                 stanceFlameStatusId,
@@ -146,6 +173,17 @@ void ModifierSystem::collectBuiltInStatusModifiers(
                 0,
                 1.25,
                 150
+            });
+        }
+
+        if (source.statuses.has(SadistMasochistRules::PleasureStatusId)) {
+            output.push_back({
+                SadistMasochistRules::PleasureStatusId,
+                text(localization_, "modifier.status.sadist_pleasure.outgoing_damage_increase"),
+                ModifierOperation::Multiply,
+                0,
+                1.20,
+                155
             });
         }
 
@@ -207,6 +245,18 @@ void ModifierSystem::collectBuiltInStatusModifiers(
 
     if (context.effectType == EffectType::Block) {
         const int dexterity = source.statuses.stacks(dexterityStatusId);
+
+        if (target != nullptr && target->statuses.has(SadistMasochistRules::PainStatusId)) {
+            output.push_back({
+                SadistMasochistRules::PainStatusId,
+                text(localization_, "modifier.status.masochist_pain.block_received_add"),
+                ModifierOperation::Add,
+                2,
+                1.0,
+                85
+            });
+        }
+
         if (source.statuses.has(stanceAshStatusId)) {
             output.push_back({
                 stanceAshStatusId,

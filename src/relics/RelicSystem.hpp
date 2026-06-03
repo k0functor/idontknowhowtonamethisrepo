@@ -6,6 +6,9 @@
 #include "game/GameEvent.hpp"
 #include "relics/RelicDatabase.hpp"
 #include "relics/RelicInventory.hpp"
+#include "run/RunState.hpp"
+
+#include <optional>
 
 class LocalizationManager;
 
@@ -14,6 +17,7 @@ public:
     RelicSystem(const RelicDatabase& database, const LocalizationManager& localization);
 
     void setRelics(const std::vector<std::string>& relicIds);
+    void setRelics(const RunState& run);
     void clear();
 
     const RelicInventory& inventory() const;
@@ -39,9 +43,11 @@ private:
         const CombatState& state,
         const RelicTriggerDefinition& trigger,
         const GameEvent& event,
-        const RelicInstance& instance
+        const RelicInstance& instance,
+        std::optional<EntityId> ownerSource
     ) const;
 
+    std::optional<EntityId> ownerSource(const CombatState& state, const RelicInstance& instance) const;
     EntityId defaultPlayerSource(const CombatState& state) const;
 
 private:

@@ -1,5 +1,7 @@
 #include "ContentRegistry.hpp"
 
+#include <stdexcept>
+
 void ContentRegistry::clear() {
     cards_.clear();
     enemies_.clear();
@@ -14,7 +16,10 @@ void ContentRegistry::clear() {
     encounters_.clear();
     rewardTuning_ = RewardTuning{};
     shopTuning_ = ShopTuning{};
+    floors_.clear();
     actOneMapGeneration_ = RunMapGenerationConfig{};
+    floorMapGeneration_.clear();
+    floorEncounters_.clear();
 }
 
 void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDirectory) {
@@ -26,14 +31,36 @@ void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDir
     enemies_.loadFromDirectory(dataDirectory / "enemies");
     actors_.loadFromDirectory(dataDirectory / "actors");
     archetypes_.loadFromDirectory(dataDirectory / "archetypes");
-    difficulties_.loadFromDirectory(dataDirectory / "run");
+    difficulties_.loadFromFile(dataDirectory / "run" / "difficulties.json");
     consumables_.loadFromDirectory(dataDirectory / "consumables");
     drones_.loadFromDirectory(dataDirectory / "drones");
     events_.loadFromDirectory(dataDirectory / "events");
-    encounters_.loadFromFile(dataDirectory / "encounters" / "act1_encounters.json");
+    floors_.loadFromFile(dataDirectory / "run" / "floors.json");
+
+    for (const FloorDefinition* floor : floors_.all()) {
+        if (floor == nullptr) {
+            continue;
+        }
+
+        if (!floor->mapConfigPath.empty()) {
+            RunMapGenerationConfig mapGeneration;
+            mapGeneration.loadFromFile(dataDirectory / "run" / floor->mapConfigPath);
+            floorMapGeneration_.emplace(floor->id, std::move(mapGeneration));
+        }
+
+        if (!floor->encounterTablePath.empty()) {
+            EncounterDatabase encounterTable;
+            encounterTable.loadFromFile(dataDirectory / "run" / floor->encounterTablePath);
+            floorEncounters_.emplace(floor->id, std::move(encounterTable));
+        }
+    }
+
+    const FloorDefinition& startingFloor = floors_.startingFloor();
+    actOneMapGeneration_ = mapGenerationForFloor(startingFloor.id);
+    encounters_ = encountersForFloor(startingFloor.id);
+
     rewardTuning_.loadFromFile(dataDirectory / "rewards" / "reward_tables.json");
     shopTuning_.loadFromFile(dataDirectory / "shop" / "shop_tables.json");
-    actOneMapGeneration_.loadFromFile(dataDirectory / "run" / "acts" / "act1.json");
 }
 
 const CardDatabase& ContentRegistry::cards() const {
@@ -141,10 +168,38 @@ ShopTuning& ContentRegistry::shopTuning() {
     return shopTuning_;
 }
 
+
+const FloorDatabase& ContentRegistry::floors() const {
+    return floors_;
+}
+
+FloorDatabase& ContentRegistry::floors() {
+    return floors_;
+}
+
 const RunMapGenerationConfig& ContentRegistry::actOneMapGeneration() const {
     return actOneMapGeneration_;
 }
 
 RunMapGenerationConfig& ContentRegistry::actOneMapGeneration() {
     return actOneMapGeneration_;
+}
+
+
+const EncounterDatabase& ContentRegistry::encountersForFloor(const std::string& floorId) const {
+    const auto iterator = floorEncounters_.find(floorId);
+    if (iterator != floorEncounters_.end()) {
+        return iterator->second;
+    }
+
+    throw std::runtime_error("No encounter table loaded for floor: " + floorId);
+}
+
+const RunMapGenerationConfig& ContentRegistry::mapGenerationForFloor(const std::string& floorId) const {
+    const auto iterator = floorMapGeneration_.find(floorId);
+    if (iterator != floorMapGeneration_.end()) {
+        return iterator->second;
+    }
+
+    throw std::runtime_error("No run map generation config loaded for floor: " + floorId);
 }

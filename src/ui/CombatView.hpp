@@ -56,6 +56,7 @@ private:
     Rectangle relicBounds(std::size_t index) const;
     Rectangle consumableBounds(std::size_t index) const;
     Rectangle droneSlotBounds(std::size_t index) const;
+    std::optional<std::size_t> globalRelicIndexFor(const RelicViewModel& relic) const;
 
 private:
     CombatViewModel model_;

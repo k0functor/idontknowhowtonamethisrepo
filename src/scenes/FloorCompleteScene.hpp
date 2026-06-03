@@ -19,6 +19,8 @@ public:
         const EnemyDatabase& enemies,
         const RelicDatabase& relics,
         const RunState& run,
+        std::string nextFloorName,
+        bool canContinueToNextFloor,
         std::function<void()> onContinue,
         std::function<void()> onMainMenu
     );
@@ -30,6 +32,8 @@ private:
     Rectangle panelBounds() const;
     Rectangle continueButtonBounds() const;
     Rectangle mainMenuButtonBounds() const;
+    Rectangle contentStatusBounds() const;
+    void drawWrappedTextBlock(const std::string& text, Rectangle bounds, float fontSize, Color color) const;
     std::string bossSummary() const;
     std::string hpSummary() const;
     std::string relicSummary() const;
@@ -42,6 +46,8 @@ private:
     const EnemyDatabase& enemies_;
     const RelicDatabase& relics_;
     const RunState& run_;
+    std::string nextFloorName_;
+    bool canContinueToNextFloor_ = false;
     std::function<void()> onContinue_;
     std::function<void()> onMainMenu_;
 };

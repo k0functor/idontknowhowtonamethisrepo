@@ -27,6 +27,11 @@ public:
         EntityType ownerType
     ) const;
 
+    void onTurnEndedForEntity(
+        CombatState& state,
+        EntityId owner
+    ) const;
+
 private:
     void processEndTurnStatus(
         CombatState& state,

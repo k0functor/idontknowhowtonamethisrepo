@@ -13,6 +13,7 @@
 #include "scenes/EventScene.hpp"
 #include "scenes/FloorCompleteScene.hpp"
 #include "scenes/MainMenuScene.hpp"
+#include "scenes/MerchantRestScene.hpp"
 #include "scenes/ProfileHubScene.hpp"
 #include "scenes/RewardScene.hpp"
 #include "scenes/RunMapScene.hpp"
@@ -165,10 +166,10 @@ ShopState createMerchantRestState(
     return state;
 }
 
-const RunEventDefinition& chooseRunEvent(const EventDatabase& events, Random& random) {
-    const std::vector<const RunEventDefinition*> all = events.all();
+const RunEventDefinition& chooseRunEvent(const EventDatabase& events, const std::string& eventPoolId, Random& random) {
+    const std::vector<const RunEventDefinition*> all = events.allForPool(eventPoolId);
     if (all.empty()) {
-        throw std::runtime_error("Cannot open event node: no run events loaded");
+        throw std::runtime_error("Cannot open event node: no run events loaded for event pool: " + eventPoolId);
     }
 
     const int index = random.rangeInclusive(0, static_cast<int>(all.size()) - 1);
@@ -1050,6 +1051,14 @@ void GameFlowController::setFloorCompleteScene() {
             content_.enemies(),
             content_.relics(),
             runController_.run(),
+            runController_.run().nextFloorId.empty()
+                ? std::string{}
+                : (content_.floors().contains(runController_.run().nextFloorId)
+                    ? localization_.get(TextId(content_.floors().get(runController_.run().nextFloorId).nameTextId))
+                    : runController_.run().nextFloorId),
+            !runController_.run().nextFloorId.empty() &&
+                content_.floors().contains(runController_.run().nextFloorId) &&
+                content_.floors().get(runController_.run().nextFloorId).isImplemented,
             [this]() { finishFloorCompleteContinue(); },
             [this]() { finishFloorCompleteMainMenu(); }
         )
@@ -1102,6 +1111,8 @@ bool GameFlowController::setPendingRoomSceneIfNeeded() {
                     content_.cards(),
                     content_.relics(),
                     content_.consumables(),
+                    content_.actors(),
+                    runController_.run(),
                     pending.reward,
                     [this](RewardSelection selection) {
                         finishReward(runController_.pendingRoom().reward, std::move(selection));
@@ -1203,6 +1214,8 @@ void GameFlowController::setCombatRewardScene(const int nodeId, RewardState rewa
             content_.cards(),
             content_.relics(),
             content_.consumables(),
+            content_.actors(),
+            runController_.run(),
             std::move(reward),
             [this, nodeId](RewardSelection selection) {
                 if (!runController_.hasPendingRoom() ||
@@ -1226,6 +1239,8 @@ void GameFlowController::setChestRewardScene(const int nodeId, RewardState rewar
             content_.cards(),
             content_.relics(),
             content_.consumables(),
+            content_.actors(),
+            runController_.run(),
             std::move(reward),
             [this, nodeId](RewardSelection selection) {
                 finishChestReward(nodeId, std::move(selection));
@@ -1243,6 +1258,7 @@ void GameFlowController::setShopScene(const int nodeId, ShopState shopState) {
             content_.cards(),
             content_.relics(),
             content_.consumables(),
+            content_.actors(),
             runController_.run(),
             std::move(shopState),
             [this](const ShopPurchase& purchase) { return purchaseShopItem(purchase); },
@@ -1254,18 +1270,44 @@ void GameFlowController::setShopScene(const int nodeId, ShopState shopState) {
 
 void GameFlowController::setMerchantRestScene(const int nodeId, ShopState shopState) {
     shopState.mode = ShopStateMode::MerchantRest;
+
+    if (shopState.merchantRestCardShopOpen) {
+        sceneManager_.setScene(
+            std::make_unique<ShopScene>(
+                uiFont_,
+                localization_,
+                content_.cards(),
+                content_.relics(),
+                content_.consumables(),
+                content_.actors(),
+                runController_.run(),
+                std::move(shopState),
+                [this](const ShopPurchase& purchase) { return purchaseShopItem(purchase); },
+                [this, nodeId](const ShopState& changedShopState) { updatePendingShopState(nodeId, changedShopState); },
+                [this, nodeId]() { finishShop(nodeId); }
+            )
+        );
+        return;
+    }
+
     sceneManager_.setScene(
-        std::make_unique<ShopScene>(
+        std::make_unique<MerchantRestScene>(
             uiFont_,
             localization_,
             content_.cards(),
-            content_.relics(),
-            content_.consumables(),
             runController_.run(),
             std::move(shopState),
-            [this](const ShopPurchase& purchase) { return purchaseShopItem(purchase); },
-            [this, nodeId](const ShopState& changedShopState) { updatePendingShopState(nodeId, changedShopState); },
-            [this, nodeId]() { finishShop(nodeId); }
+            [this, nodeId](ShopState changedShopState) {
+                changedShopState.mode = ShopStateMode::MerchantRest;
+                changedShopState.merchantRestCardShopOpen = true;
+                updatePendingShopState(nodeId, changedShopState);
+                queueTransition([this, nodeId, changedShopState = std::move(changedShopState)]() mutable {
+                    setMerchantRestScene(nodeId, std::move(changedShopState));
+                });
+            },
+            [this, nodeId]() { restHeal(nodeId); },
+            [this, nodeId](const std::size_t deckIndex) { restUpgrade(nodeId, deckIndex); },
+            [this, nodeId]() { restSkip(nodeId); }
         )
     );
 }
@@ -1399,11 +1441,13 @@ void GameFlowController::selectDifficulty(DifficultyId difficultyId) {
             (static_cast<std::uint32_t>(random_.rangeInclusive(0, 65535)) << 16) |
             static_cast<std::uint32_t>(random_.rangeInclusive(0, 65535));
 
+        const FloorDefinition& startingFloor = content_.floors().startingFloor();
         runController_.startNewRun(
             archetype,
             difficulty,
             content_.actors(),
-            content_.actOneMapGeneration(),
+            content_.mapGenerationForFloor(startingFloor.id),
+            startingFloor,
             runSeed
         );
         saveActiveRun();
@@ -1454,7 +1498,7 @@ void GameFlowController::startMapNode(const int nodeId) {
             }
 
             case RunMapNodeType::Event: {
-                const int combatChance = content_.actOneMapGeneration().questionMarkCombatChance();
+                const int combatChance = content_.mapGenerationForFloor(runController_.run().currentFloorId).questionMarkCombatChance();
                 if (runController_.random().chance(static_cast<double>(combatChance) / 100.0)) {
                     runController_.revealNodeType(nodeId, RunMapNodeType::Combat);
                     saveActiveRun();
@@ -1462,7 +1506,8 @@ void GameFlowController::startMapNode(const int nodeId) {
                     return;
                 }
 
-                const RunEventDefinition& event = chooseRunEvent(content_.events(), runController_.random());
+                const FloorDefinition& floor = content_.floors().get(runController_.run().currentFloorId);
+                const RunEventDefinition& event = chooseRunEvent(content_.events(), floor.eventPoolId, runController_.random());
                 runController_.setPendingEvent(nodeId, event.id);
                 saveActiveRun();
                 setEventScene(nodeId, event);
@@ -1672,6 +1717,22 @@ void GameFlowController::finishChestReward(
 
 void GameFlowController::finishFloorCompleteContinue() {
     queueTransition([this]() {
+        if (!runController_.hasActiveRun() || !runController_.isActCompleted()) {
+            setProfileHubScene();
+            return;
+        }
+
+        const RunState& run = runController_.run();
+        if (!run.nextFloorId.empty() && content_.floors().contains(run.nextFloorId)) {
+            const FloorDefinition& nextFloor = content_.floors().get(run.nextFloorId);
+            if (nextFloor.isImplemented &&
+                runController_.advanceToNextFloor(nextFloor, content_.mapGenerationForFloor(nextFloor.id))) {
+                saveActiveRun();
+                setRunMapScene();
+                return;
+            }
+        }
+
         finishCompletedRunAndDeleteSave();
         setProfileHubScene();
     });

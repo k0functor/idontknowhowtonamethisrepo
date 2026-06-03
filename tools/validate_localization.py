@@ -86,6 +86,34 @@ def collect_text_refs(value, refs: set[str]) -> None:
             collect_text_refs(child, refs)
 
 
+def collect_enemy_action_name_refs() -> set[str]:
+    refs: set[str] = set()
+    enemy_dir = DATA_DIR / "enemies"
+    if not enemy_dir.is_dir():
+        return refs
+
+    for path in sorted(enemy_dir.glob("*.json")):
+        try:
+            root = load_json(path)
+        except Exception:
+            continue
+        if not isinstance(root, list):
+            continue
+        for enemy in root:
+            if not isinstance(enemy, dict):
+                continue
+            actions = enemy.get("actions", [])
+            if not isinstance(actions, list):
+                continue
+            for action in actions:
+                if not isinstance(action, dict):
+                    continue
+                action_id = action.get("id")
+                if isinstance(action_id, str) and action_id:
+                    refs.add(f"enemy.action.{action_id}.name")
+    return refs
+
+
 def collect_data_text_refs() -> set[str]:
     refs: set[str] = set()
     for path in DATA_DIR.rglob("*.json"):
@@ -95,6 +123,7 @@ def collect_data_text_refs() -> set[str]:
             collect_text_refs(load_json(path), refs)
         except Exception:
             continue
+    refs.update(collect_enemy_action_name_refs())
     return {ref for ref in refs if TEXT_ID_VALUE_RE.match(ref)}
 
 

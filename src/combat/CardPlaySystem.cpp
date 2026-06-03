@@ -50,6 +50,13 @@ PlayCardResult CardPlaySystem::playCard(
     EffectContext context;
     context.source = request.source;
     context.explicitTarget = request.target;
+    if (request.target.has_value() && state.hasEntity(*request.target)) {
+        if (state.isEnemy(*request.target)) {
+            context.explicitEnemyTarget = request.target;
+        } else if (state.isPlayer(*request.target) && *request.target != request.source) {
+            context.explicitAllyTarget = request.target;
+        }
+    }
     context.cardInstanceId = request.cardInstanceId;
     context.cardDefinitionId = definition.id;
     context.diceCorruption = definition.diceCorruption;

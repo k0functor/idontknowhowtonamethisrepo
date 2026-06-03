@@ -55,6 +55,14 @@ bool meetsMinimumCardRarity(const CardDefinition& card, const std::optional<Card
     return rarityRank(card.rarity) >= rarityRank(*minimumRarity);
 }
 
+std::string rewardPoolKey(const CardDefinition& card) {
+    if (!card.rewardPoolId.empty()) {
+        return card.rewardPoolId;
+    }
+
+    return card.ownerActorId;
+}
+
 void validateTextReference(
     std::vector<std::string>& errors,
     const LocalizationManager* localization,
@@ -196,11 +204,12 @@ bool hasArchetypeCardRewardCandidates(
             continue;
         }
 
-        if (card->ownerActorId.empty()) {
+        const std::string pool = rewardPoolKey(*card);
+        if (pool.empty()) {
             continue;
         }
 
-        if (std::find(rewardCardPoolIds.begin(), rewardCardPoolIds.end(), card->ownerActorId) != rewardCardPoolIds.end()) {
+        if (std::find(rewardCardPoolIds.begin(), rewardCardPoolIds.end(), pool) != rewardCardPoolIds.end()) {
             return true;
         }
     }
@@ -398,11 +407,16 @@ bool hasUpgradableCardForAvailableArchetype(const ContentRegistry& content) {
     }
 
     for (const CardDefinition* card : content.cards().all()) {
-        if (card == nullptr || card->ownerActorId.empty()) {
+        if (card == nullptr) {
             continue;
         }
 
-        if (relevantActorIds.contains(card->ownerActorId) &&
+        const std::string pool = rewardPoolKey(*card);
+        if (pool.empty()) {
+            continue;
+        }
+
+        if (relevantActorIds.contains(pool) &&
             RewardPoolRules::canAppearAsCardReward(*card) &&
             CardUpgrade::isUpgradable(*card)) {
             return true;
@@ -853,7 +867,16 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
         }
 
         for (const std::string& poolId : archetype->rewardCardPoolIds) {
-            if (!content.actors().contains(PlayerActorId(poolId))) {
+            const bool knownActorPool = content.actors().contains(PlayerActorId(poolId));
+            bool knownSharedCardPool = false;
+            for (const CardDefinition* card : content.cards().all()) {
+                if (card != nullptr && rewardPoolKey(*card) == poolId) {
+                    knownSharedCardPool = true;
+                    break;
+                }
+            }
+
+            if (!knownActorPool && !knownSharedCardPool) {
                 addError(errors, owner + " references unknown reward card pool '" + poolId + "'");
             }
         }

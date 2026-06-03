@@ -1,0 +1,582 @@
+[
+  {
+    "id": "brine_leech",
+    "name": "enemy.brine_leech.name",
+    "max_hp": 30,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "brine_leech_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          },
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "brine_leech_sour_blood",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "poison"
+          }
+        ]
+      },
+      {
+        "id": "brine_leech_submerge",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "drowned_cantor",
+    "name": "enemy.drowned_cantor.name",
+    "max_hp": 34,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "drowned_cantor_water_hymn",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ]
+      },
+      {
+        "id": "drowned_cantor_cracked_note",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ]
+      },
+      {
+        "id": "drowned_cantor_breathless_prayer",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "barnacle_guard",
+    "name": "enemy.barnacle_guard.name",
+    "max_hp": 42,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "barnacle_guard_shell_wall",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ]
+      },
+      {
+        "id": "barnacle_guard_anchor_hook",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ]
+      },
+      {
+        "id": "barnacle_guard_salt_shield",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mirror_eel",
+    "name": "enemy.mirror_eel.name",
+    "max_hp": 28,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "mirror_eel_flash_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "repeat_count": 2
+          }
+        ]
+      },
+      {
+        "id": "mirror_eel_split_reflection",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ]
+      },
+      {
+        "id": "mirror_eel_blinding_scale",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tide_apprentice",
+    "name": "enemy.tide_apprentice.name",
+    "max_hp": 36,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "tide_apprentice_salt_bolt",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ]
+      },
+      {
+        "id": "tide_apprentice_draining_glyph",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "tide_apprentice_tide_ward",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "drowned_abbot",
+    "name": "enemy.drowned_abbot.name",
+    "max_hp": 92,
+    "starting_block": 6,
+    "actions": [
+      {
+        "id": "drowned_abbot_toll_the_bell",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ]
+      },
+      {
+        "id": "drowned_abbot_collect_tithes",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ]
+      },
+      {
+        "id": "drowned_abbot_baptism_of_salt",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ]
+      },
+      {
+        "id": "drowned_abbot_sunken_crozier",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mirror_executioner",
+    "name": "enemy.mirror_executioner.name",
+    "max_hp": 86,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "mirror_executioner_reflected_sentence",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            },
+            "repeat_count": 3
+          }
+        ]
+      },
+      {
+        "id": "mirror_executioner_polished_mask",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ]
+      },
+      {
+        "id": "mirror_executioner_cruel_angle",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ]
+      },
+      {
+        "id": "mirror_executioner_final_glint",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "saint_of_the_sunken_bell",
+    "name": "enemy.saint_of_the_sunken_bell.name",
+    "max_hp": 168,
+    "starting_block": 10,
+    "actions": [
+      {
+        "id": "sunken_bell_saint_low_toll",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ]
+      },
+      {
+        "id": "sunken_bell_saint_salt_benediction",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ]
+      },
+      {
+        "id": "sunken_bell_saint_drown_the_flame",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "sunken_bell_saint_bell_collapse",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            },
+            "repeat_count": 2
+          }
+        ]
+      },
+      {
+        "id": "sunken_bell_saint_last_resonance",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

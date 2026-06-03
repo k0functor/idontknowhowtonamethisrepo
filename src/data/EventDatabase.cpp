@@ -78,6 +78,29 @@ std::vector<const RunEventDefinition*> EventDatabase::all() const {
     return result;
 }
 
+
+std::vector<const RunEventDefinition*> EventDatabase::allForPool(const std::string& poolId) const {
+    std::vector<const RunEventDefinition*> result;
+    result.reserve(events_.size());
+
+    for (const auto& [id, definition] : events_) {
+        (void)id;
+
+        if (definition.eventPoolIds.empty()) {
+            if (poolId == "act1") {
+                result.push_back(&definition);
+            }
+            continue;
+        }
+
+        if (std::find(definition.eventPoolIds.begin(), definition.eventPoolIds.end(), poolId) != definition.eventPoolIds.end()) {
+            result.push_back(&definition);
+        }
+    }
+
+    return result;
+}
+
 std::size_t EventDatabase::size() const {
     return events_.size();
 }

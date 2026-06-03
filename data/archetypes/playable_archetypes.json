@@ -110,10 +110,10 @@
       "replicant_basic_strike",
       "replicant_basic_defend",
       "replicant_basic_defend",
-      "cyborg_striker_drone",
-      "cyborg_guardian_drone",
-      "cyborg_trigger_drone",
-      "cyborg_wrench_hit"
+      "replicant_striker_drone",
+      "replicant_guardian_drone",
+      "replicant_trigger_drone",
+      "replicant_wrench_hit"
     ],
     "starting_relics": [
       "empty_dock"
@@ -252,9 +252,9 @@
       "lost_psychopath_basic_strike",
       "lost_psychopath_basic_defend",
       "lost_psychopath_basic_defend",
-      "wanderer_clean_cut",
-      "wanderer_breathe",
-      "wanderer_risky_stab"
+      "lost_psychopath_clean_cut",
+      "lost_psychopath_breathe",
+      "lost_psychopath_risky_stab"
     ],
     "starting_relics": [
       "whetstone",
@@ -279,7 +279,7 @@
     },
     "visual_identity": "archetype.lost_psychopath.visual_identity",
     "selection_order": 60,
-    "is_available": false
+    "is_available": true
   },
   {
     "id": "sadist_masochist",
@@ -292,8 +292,7 @@
       "masochist"
     ],
     "reward_card_pools": [
-      "sadist",
-      "masochist"
+      "sadist_masochist"
     ],
     "starting_deck": [
       "sadist_clean_cut",
@@ -328,6 +327,6 @@
     },
     "visual_identity": "archetype.sadist_masochist.visual_identity",
     "selection_order": 70,
-    "is_available": false
+    "is_available": true
   }
 ]

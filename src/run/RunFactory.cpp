@@ -2,8 +2,11 @@
 
 #include "core/Random.hpp"
 #include "run/RunMapGenerator.hpp"
+#include "run/RunRelicOwnership.hpp"
 #include "run/StressRules.hpp"
 
+#include <cstddef>
+#include <string>
 #include <utility>
 
 RunState RunFactory::createRun(
@@ -11,6 +14,7 @@ RunState RunFactory::createRun(
     const DifficultyDefinition& difficulty,
     const PlayerActorDatabase& actors,
     const RunMapGenerationConfig& mapGeneration,
+    const FloorDefinition& floor,
     const std::uint32_t seed
 ) const {
     RunMapGenerator generator;
@@ -22,7 +26,10 @@ RunState RunFactory::createRun(
     run.archetypeMechanicId = archetype.mechanicId;
     run.seed = seed;
     run.gold = archetype.startingGold;
-    run.act = 1;
+    run.act = floor.act;
+    run.currentFloorId = floor.id;
+    run.currentFloorIndex = floor.index;
+    run.nextFloorId = floor.nextFloorId;
     run.enemyHpMultiplier = difficulty.enemyHpMultiplier;
     run.enemyDamageMultiplier = difficulty.enemyDamageMultiplier;
     run.goldRewardMultiplier = difficulty.goldMultiplier;
@@ -44,7 +51,16 @@ RunState RunFactory::createRun(
         actorState.traitIds = actor.startingTraitIds;
         run.actorStates.push_back(std::move(actorState));
     }
-    run.relicIds = archetype.startingRelicIds;
+
+    for (std::size_t index = 0; index < archetype.startingRelicIds.size(); ++index) {
+        if (run.actorStates.empty()) {
+            run.relicIds.push_back(archetype.startingRelicIds[index]);
+            continue;
+        }
+
+        const std::string& ownerActor = run.actorStates[index % run.actorStates.size()].definitionId;
+        RunRelicOwnership::assignRelicToActor(run, archetype.startingRelicIds[index], ownerActor);
+    }
 
     run.deckCardIds.reserve(archetype.startingDeckCardIds.size());
     for (const std::string& cardId : archetype.startingDeckCardIds) {

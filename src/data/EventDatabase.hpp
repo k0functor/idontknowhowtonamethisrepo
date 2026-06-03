@@ -20,6 +20,7 @@ public:
     const RunEventDefinition& get(const std::string& id) const;
 
     std::vector<const RunEventDefinition*> all() const;
+    std::vector<const RunEventDefinition*> allForPool(const std::string& poolId) const;
     std::size_t size() const;
 
 private:

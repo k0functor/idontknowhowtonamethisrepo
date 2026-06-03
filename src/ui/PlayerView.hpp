@@ -21,9 +21,12 @@ public:
     Rectangle bounds() const;
     std::optional<std::size_t> statusIndexAt(Vector2 worldPosition) const;
     std::optional<Rectangle> statusBounds(std::size_t index) const;
+    std::optional<std::size_t> relicIndexAt(Vector2 worldPosition) const;
+    std::optional<Rectangle> relicBounds(std::size_t index) const;
 
 private:
     Rectangle statusAreaBounds() const;
+    std::size_t visibleRelicSlotCount() const;
 
 private:
     PlayerViewModel model_;

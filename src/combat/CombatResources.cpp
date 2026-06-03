@@ -106,6 +106,10 @@ bool CombatResources::hasActorEnergyPool(const EntityId owner) const {
     return actorMaxEnergy_.contains(owner.value);
 }
 
+bool CombatResources::hasAnyActorEnergyPool() const {
+    return !actorMaxEnergy_.empty();
+}
+
 int CombatResources::energyFor(const EntityId owner) const {
     const auto iterator = actorEnergy_.find(owner.value);
 

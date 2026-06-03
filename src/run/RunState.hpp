@@ -22,6 +22,9 @@ struct RunState {
     std::string randomState;
     int gold = 0;
     int act = 1;
+    std::string currentFloorId = "floor1";
+    int currentFloorIndex = 1;
+    std::string nextFloorId = "floor2";
     bool actCompleted = false;
     int completedAct = 0;
     std::vector<std::string> defeatedBossEnemyIds;

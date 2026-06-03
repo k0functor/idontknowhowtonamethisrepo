@@ -7,7 +7,6 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -17,7 +16,20 @@
           "amount": 6
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_basic_defend",
@@ -27,7 +39,6 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "block",
@@ -37,7 +48,20 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_basic_strike",
@@ -47,7 +71,6 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "attack",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "damage",
@@ -57,7 +80,20 @@
           "amount": 6
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_basic_defend",
@@ -67,7 +103,6 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "block",
@@ -77,7 +112,20 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_clean_cut",
@@ -87,7 +135,6 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -97,7 +144,20 @@
           "amount": 8
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_teasing_blade",
@@ -107,7 +167,6 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -126,7 +185,29 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "vulnerable"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_order_to_bleed",
@@ -136,7 +217,6 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -155,7 +235,29 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "ally",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "strength"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_hook_pull",
@@ -165,7 +267,6 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -184,7 +285,29 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "weak"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_cruel_rhythm",
@@ -194,7 +317,6 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "skill",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -213,7 +335,29 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "strength"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_needled_mercy",
@@ -223,7 +367,6 @@
     "energy_cost": 0,
     "gold_cost": 55,
     "type": "skill",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -245,7 +388,29 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "poison"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_red_lesson",
@@ -255,7 +420,6 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -275,7 +439,30 @@
           "amount": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "ally",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d8"
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "strength"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_open_wound",
@@ -285,7 +472,6 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -304,7 +490,29 @@
           "amount": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "poison"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_pain_tax",
@@ -314,7 +522,6 @@
     "energy_cost": 1,
     "gold_cost": 90,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -332,7 +539,28 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "ally",
+          "value": {
+            "type": "fixed",
+            "amount": 4
+          }
+        },
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_laughter",
@@ -342,7 +570,6 @@
     "energy_cost": 1,
     "gold_cost": 90,
     "type": "skill",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -362,7 +589,30 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "vulnerable"
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "weak"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_carving_arc",
@@ -372,7 +622,6 @@
     "energy_cost": 2,
     "gold_cost": 125,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -383,7 +632,22 @@
           "die": "d6"
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "dice",
+            "count": 2,
+            "die": "d6",
+            "bonus": 2
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_symphony_of_knives",
@@ -393,7 +657,6 @@
     "energy_cost": 2,
     "gold_cost": 135,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -420,7 +683,37 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "vulnerable"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_commanding_smile",
@@ -430,7 +723,6 @@
     "energy_cost": 1,
     "gold_cost": 120,
     "type": "skill",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "apply_status",
@@ -453,7 +745,30 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "strength"
+        },
+        {
+          "type": "apply_status",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "weak"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_wicked_bargain",
@@ -463,7 +778,6 @@
     "energy_cost": 0,
     "gold_cost": 130,
     "type": "skill",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -493,7 +807,37 @@
     ],
     "keywords": [
       "exhaust"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "ally",
+          "value": {
+            "type": "fixed",
+            "amount": 5
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "free_next_card"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_final_instruction",
@@ -503,7 +847,6 @@
     "energy_cost": 2,
     "gold_cost": 140,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -523,7 +866,31 @@
           "amount": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 2,
+            "die": "d8",
+            "bonus": 2
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 3
+          },
+          "status": "vulnerable"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_endure",
@@ -533,7 +900,6 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "block",
@@ -543,7 +909,20 @@
           "amount": 10
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 14
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_invitation",
@@ -553,7 +932,6 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "block",
@@ -572,7 +950,29 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 9
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "vulnerable"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_sweet_agony",
@@ -582,7 +982,6 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "damage",
@@ -600,7 +999,28 @@
           "amount": 5
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_breathe_through",
@@ -610,7 +1030,6 @@
     "energy_cost": 1,
     "gold_cost": 85,
     "type": "skill",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "heal",
@@ -629,7 +1048,29 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "heal",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 7
+          }
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "dexterity"
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_blood_smile",
@@ -639,7 +1080,6 @@
     "energy_cost": 1,
     "gold_cost": 120,
     "type": "skill",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "apply_status",
@@ -670,7 +1110,38 @@
     ],
     "keywords": [
       "retain"
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "strength"
+        },
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "dexterity"
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_blood_lesson",
@@ -680,7 +1151,6 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -698,7 +1168,28 @@
           "amount": 8
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "ally",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 11
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "sadist_twist_blade",
@@ -708,7 +1199,6 @@
     "energy_cost": 1,
     "gold_cost": 65,
     "type": "attack",
-    "owner_actor": "sadist",
     "effects": [
       {
         "type": "damage",
@@ -720,7 +1210,22 @@
           "bonus": 2
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "dice",
+            "count": 1,
+            "die": "d8",
+            "bonus": 2
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_grin",
@@ -730,7 +1235,6 @@
     "energy_cost": 1,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "lose_hp",
@@ -756,7 +1260,36 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "lose_hp",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 14
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "masochist_invite_pain",
@@ -766,7 +1299,6 @@
     "energy_cost": 1,
     "gold_cost": 60,
     "type": "skill",
-    "owner_actor": "masochist",
     "effects": [
       {
         "type": "apply_status",
@@ -785,7 +1317,29 @@
           "amount": 12
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          },
+          "status": "vulnerable"
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 16
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   },
   {
     "id": "shared_violent_rhythm",
@@ -795,7 +1349,6 @@
     "energy_cost": 0,
     "gold_cost": 0,
     "type": "skill",
-    "owner_actor": "sadist",
     "keywords": [
       "exhaust"
     ],
@@ -816,6 +1369,27 @@
           "amount": 1
         }
       }
-    ]
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "gain_energy",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        }
+      ]
+    },
+    "card_pool": "sadist_masochist"
   }
 ]

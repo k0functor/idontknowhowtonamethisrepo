@@ -25,6 +25,7 @@ struct ShopPurchase {
     ShopOfferType type = ShopOfferType::Card;
     std::string contentId;
     CardId cardId;
+    std::string actorDefinitionId;
     std::size_t deckIndex = 0;
     bool hasDeckIndex = false;
     int price = 0;

@@ -17,6 +17,10 @@
   "status.frail.name": "Frail",
   "status.free_next_card.description": "The next played card with cost greater than 0 costs 0 energy. Decreases by 1 after triggering.",
   "status.free_next_card.name": "Free Next Card",
+  "status.sadist_pleasure.description": "Until the end of the player turn, the Sadist deals 20% more attack damage. Refreshed when the Sadist deals HP damage to the Masochist.",
+  "status.sadist_pleasure.name": "Pleasure",
+  "status.masochist_pain.description": "Until the end of the player turn, the Masochist gains +2 attack damage and +2 block received from cards and effects. Refreshed when the Sadist deals HP damage to the Masochist.",
+  "status.masochist_pain.name": "Pain",
   "status.poison.description": "At the end of its turn, this creature takes damage equal to its Poison. Then Poison decreases by 1.",
   "status.poison.name": "Poison",
   "status.regeneration.description": "Restores health according to its effect rules. Prepared for future cards in this build.",
@@ -64,5 +68,7 @@
   "inspect.status.current_rule.name": "Current effect",
   "inspect.status.duration.name": "Duration",
   "inspect.status.rules.name": "Rules",
-  "inspect.status.type.name": "Type"
+  "inspect.status.type.name": "Type",
+  "inspect.player.lost_psychopath_stress_power.name": "Stress Power",
+  "inspect.player.lost_psychopath_stress_power.value": "Current bonus: +{bonus} attack damage. Thresholds: 50, 100 and 150 stress. Next threshold: {next}."
 }

@@ -55,10 +55,12 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
     hoveredEndTurnButton_ = endTurnButtonContains(mousePosition);
 
     hoveredRelicIndex_.reset();
-    for (std::size_t i = 0; i < model_.relics.size(); ++i) {
-        if (CheckCollisionPointRec(mousePosition, relicBounds(i))) {
-            hoveredRelicIndex_ = i;
-            break;
+    if (model_.showTopRelics) {
+        for (std::size_t i = 0; i < model_.relics.size(); ++i) {
+            if (CheckCollisionPointRec(mousePosition, relicBounds(i))) {
+                hoveredRelicIndex_ = i;
+                break;
+            }
         }
     }
 
@@ -84,12 +86,17 @@ void CombatView::update(const float deltaSeconds, const Vector2 mousePosition) {
     hoveredPlayerId_.reset();
     for (const PlayerView& playerView : playerViews_) {
         const std::optional<std::size_t> statusIndex = playerView.statusIndexAt(mousePosition);
-        if (playerView.contains(mousePosition) || statusIndex.has_value()) {
+        const std::optional<std::size_t> relicIndex = playerView.relicIndexAt(mousePosition);
+        if (playerView.contains(mousePosition) || statusIndex.has_value() || relicIndex.has_value()) {
             hoveredPlayerId_ = playerView.model().entityId;
 
             if (statusIndex.has_value() && *statusIndex < playerView.model().statuses.size()) {
                 hoveredStatus_ = playerView.model().statuses[*statusIndex];
                 hoveredStatusBounds_ = playerView.statusBounds(*statusIndex);
+            }
+
+            if (relicIndex.has_value() && *relicIndex < playerView.model().relics.size()) {
+                hoveredRelicIndex_ = globalRelicIndexFor(playerView.model().relics[*relicIndex]);
             }
             break;
         }
@@ -152,16 +159,21 @@ void CombatView::render(const Font* font) const {
             DrawTextEx(*font, model_.activeActorLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 120.f, battlefield.y + 32.f}, 16.f, 1.f, Color{180, 230, 255, 255});
         }
 
-        for (std::size_t i = 0; i < model_.relics.size(); ++i) {
-            const RelicViewModel& relic = model_.relics[i];
-            const Rectangle bounds = relicBounds(i);
-            const bool hovered = hoveredRelicIndex_.has_value() && *hoveredRelicIndex_ == i;
-            const Color fill = hovered ? Color{95, 72, 38, 255} : Color{70, 58, 35, 255};
-            const Color border = hovered ? Color{255, 225, 120, 255} : Color{230, 190, 90, 255};
+        if (model_.showTopRelics) {
+            for (std::size_t i = 0; i < model_.relics.size(); ++i) {
+                const RelicViewModel& relic = model_.relics[i];
+                const Rectangle bounds = relicBounds(i);
+                const bool hovered = hoveredRelicIndex_.has_value() && *hoveredRelicIndex_ == i;
+                const Color fill = hovered ? Color{95, 72, 38, 255} : Color{70, 58, 35, 255};
+                const Color border = hovered ? Color{255, 225, 120, 255} : Color{230, 190, 90, 255};
 
-            DrawRectangleRounded(bounds, 0.22f, 6, fill);
-            DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
-            DrawTextEx(*font, UiUtf8::truncateWithEllipsis(relic.name, 15).c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
+                DrawRectangleRounded(bounds, 0.22f, 6, fill);
+                DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
+                const std::string relicText = relic.ownerName.empty()
+                    ? relic.name
+                    : relic.ownerName + ": " + relic.name;
+                DrawTextEx(*font, UiUtf8::truncateWithEllipsis(relicText, 18).c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
+            }
         }
 
         for (std::size_t i = 0; i < model_.consumables.size(); ++i) {
@@ -486,8 +498,8 @@ Rectangle CombatView::endTurnButtonBounds() const {
 
 Rectangle CombatView::relicBounds(const std::size_t index) const {
     const Rectangle content = contentBounds();
-    const float x = content.x + 24.f + static_cast<float>(index) * 148.f;
-    return Rectangle{x, 44.f, 136.f, 24.f};
+    const float x = content.x + 24.f + static_cast<float>(index) * 174.f;
+    return Rectangle{x, 44.f, 162.f, 24.f};
 }
 
 Rectangle CombatView::consumableBounds(const std::size_t index) const {
@@ -506,4 +518,15 @@ Rectangle CombatView::droneSlotBounds(const std::size_t index) const {
     const float totalWidth = slotWidth * static_cast<float>(model_.droneSlots.size()) + gap * static_cast<float>(model_.droneSlots.size() - 1);
     const float x = content.x + content.width * 0.5f - totalWidth * 0.5f + static_cast<float>(index) * (slotWidth + gap);
     return Rectangle{x, 82.f, slotWidth, slotHeight};
+}
+
+std::optional<std::size_t> CombatView::globalRelicIndexFor(const RelicViewModel& relic) const {
+    for (std::size_t i = 0; i < model_.relics.size(); ++i) {
+        const RelicViewModel& candidate = model_.relics[i];
+        if (candidate.id == relic.id && candidate.ownerActorDefinitionId == relic.ownerActorDefinitionId) {
+            return i;
+        }
+    }
+
+    return std::nullopt;
 }

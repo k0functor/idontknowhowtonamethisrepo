@@ -23,6 +23,14 @@ constexpr float textOfferSpacing = 16.f;
 constexpr float removeCardCellHeight = 310.f;
 constexpr float removeCardCellSpacing = 16.f;
 constexpr std::size_t removeCardColumns = 4u;
+constexpr float merchantRestDesiredCardScale = 1.36f;
+constexpr float merchantRestMinimumCardScale = 0.92f;
+constexpr float merchantRestCellHorizontalPadding = 12.f;
+constexpr float merchantRestPriceGap = 10.f;
+constexpr float merchantRestPriceHeight = 32.f;
+constexpr float merchantRestStatusHeight = 24.f;
+constexpr float merchantRestMaximumCardGap = 52.f;
+constexpr float merchantRestMinimumCardGap = 18.f;
 }
 
 ShopScene::ShopScene(
@@ -31,6 +39,7 @@ ShopScene::ShopScene(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
+    const PlayerActorDatabase& actors,
     const RunState& runState,
     ShopState shopState,
     std::function<bool(const ShopPurchase&)> onPurchase,
@@ -42,6 +51,7 @@ ShopScene::ShopScene(
       cards_(cards),
       relics_(relics),
       consumables_(consumables),
+      actors_(actors),
       runState_(runState),
       shopState_(std::move(shopState)),
       onPurchase_(std::move(onPurchase)),
@@ -53,6 +63,11 @@ void ShopScene::update(float) {
 
     if (removeMode_) {
         updateRemoveMode(mouse);
+        return;
+    }
+
+    if (relicOwnerChoiceOpen_) {
+        updateRelicOwnerChoice(mouse);
         return;
     }
 
@@ -102,12 +117,16 @@ void ShopScene::render() const {
 
     BasicUi::drawButton(font_, leaveButtonBounds(), leaveButtonText(), mouse);
 
-    if (!removeMode_ && !pendingPurchaseIndex_.has_value()) {
+    if (!removeMode_ && !pendingPurchaseIndex_.has_value() && !relicOwnerChoiceOpen_) {
         renderHoverDescription();
     }
 
     if (pendingPurchaseIndex_.has_value()) {
         renderPurchaseConfirmation();
+    }
+
+    if (relicOwnerChoiceOpen_) {
+        renderRelicOwnerChoice();
     }
 
     if (removeMode_) {
@@ -156,10 +175,30 @@ Rectangle ShopScene::offerBounds(const std::size_t index) const {
     if (offer.type == ShopOfferType::Card) {
         const Rectangle area = cardOffersAreaBounds();
         const std::size_t columns = cardOfferColumnCount();
+        const std::size_t ordinal = cardOfferOrdinal(index);
+
+        if (shopState_.isMerchantRest()) {
+            const Vector2 cardSize = CardVisualInstance::size();
+            const float scale = merchantRestCardScale();
+            const float cellWidth = cardSize.x * scale + merchantRestCellHorizontalPadding;
+            const float cellHeight = cardSize.y * scale + merchantRestPriceGap + merchantRestPriceHeight + merchantRestStatusHeight;
+            const float gap = merchantRestCardGap(cellWidth, columns);
+            const float totalWidth = static_cast<float>(columns) * cellWidth +
+                static_cast<float>(columns - 1u) * gap;
+            const float startX = area.x + (area.width - totalWidth) * 0.5f;
+            const float startY = area.y + (area.height - cellHeight) * 0.5f;
+
+            return Rectangle{
+                startX + static_cast<float>(ordinal) * (cellWidth + gap),
+                startY,
+                cellWidth,
+                cellHeight
+            };
+        }
+
         const float columnCount = static_cast<float>(std::max<std::size_t>(1u, columns));
         const float cellWidth = (area.width - offerSpacing * (columnCount - 1.f)) / columnCount;
         const float cellHeight = cardOfferCellHeight();
-        const std::size_t ordinal = cardOfferOrdinal(index);
         const std::size_t column = ordinal % columns;
         const std::size_t row = ordinal / columns;
         return Rectangle{
@@ -181,6 +220,19 @@ Rectangle ShopScene::offerBounds(const std::size_t index) const {
 }
 
 Rectangle ShopScene::cardOfferVisualBounds(const Rectangle cell) const {
+    if (shopState_.isMerchantRest()) {
+        const Vector2 cardSize = CardVisualInstance::size();
+        const float scale = merchantRestCardScale();
+        const float visualWidth = cardSize.x * scale;
+        const float visualHeight = cardSize.y * scale;
+        return Rectangle{
+            cell.x + (cell.width - visualWidth) * 0.5f,
+            cell.y,
+            visualWidth,
+            visualHeight
+        };
+    }
+
     return Rectangle{cell.x + 8.f, cell.y + 10.f, cell.width - 16.f, cell.height - 92.f};
 }
 
@@ -189,14 +241,13 @@ std::size_t ShopScene::cardOfferColumnCount() const {
     const std::size_t cardCount = std::max<std::size_t>(1u, std::count_if(
         shopState_.offers.begin(),
         shopState_.offers.end(),
-        [](const ShopOffer& offer) { return offer.type == ShopOfferType::Card && !offer.purchased; }
+        [this](const ShopOffer& offer) {
+            return offer.type == ShopOfferType::Card && (shopState_.isMerchantRest() || !offer.purchased);
+        }
     ));
 
     if (shopState_.isMerchantRest()) {
-        if (area.width >= 720.f || cardCount >= 5u) {
-            return 3u;
-        }
-        return 2u;
+        return cardCount;
     }
 
     return area.width < 760.f ? 2u : 3u;
@@ -208,13 +259,46 @@ float ShopScene::cardOfferCellHeight() const {
     const std::size_t cardCount = std::max<std::size_t>(1u, std::count_if(
         shopState_.offers.begin(),
         shopState_.offers.end(),
-        [](const ShopOffer& offer) { return offer.type == ShopOfferType::Card && !offer.purchased; }
+        [this](const ShopOffer& offer) {
+            return offer.type == ShopOfferType::Card && (shopState_.isMerchantRest() || !offer.purchased);
+        }
     ));
     const std::size_t rows = std::max<std::size_t>(1u, (cardCount + columns - 1u) / columns);
     const float availableHeight = area.height - offerSpacing * static_cast<float>(rows - 1u);
     const float fittedHeight = availableHeight / static_cast<float>(rows);
-    const float maximumHeight = shopState_.isMerchantRest() ? 330.f : 376.f;
-    return std::clamp(fittedHeight, 260.f, maximumHeight);
+
+    if (shopState_.isMerchantRest()) {
+        const Vector2 cardSize = CardVisualInstance::size();
+        const float scale = merchantRestCardScale();
+        return cardSize.y * scale + merchantRestPriceGap + merchantRestPriceHeight + merchantRestStatusHeight;
+    }
+
+    return std::clamp(fittedHeight, 260.f, 376.f);
+}
+
+float ShopScene::merchantRestCardScale() const {
+    const Rectangle area = cardOffersAreaBounds();
+    const std::size_t cardCount = std::max<std::size_t>(1u, cardOfferColumnCount());
+    const Vector2 cardSize = CardVisualInstance::size();
+    const float horizontalGaps = merchantRestMaximumCardGap * static_cast<float>(cardCount - 1u);
+    const float horizontalPadding = merchantRestCellHorizontalPadding * static_cast<float>(cardCount);
+    const float widthScale = (area.width - horizontalGaps - horizontalPadding) /
+        (cardSize.x * static_cast<float>(cardCount));
+    const float heightScale = (area.height - merchantRestPriceGap - merchantRestPriceHeight - merchantRestStatusHeight) /
+        cardSize.y;
+    const float fittedScale = std::min({merchantRestDesiredCardScale, widthScale, heightScale});
+    return std::clamp(fittedScale, merchantRestMinimumCardScale, merchantRestDesiredCardScale);
+}
+
+float ShopScene::merchantRestCardGap(const float cellWidth, const std::size_t cardCount) const {
+    if (cardCount <= 1u) {
+        return 0.f;
+    }
+
+    const Rectangle area = cardOffersAreaBounds();
+    const float remainingWidth = area.width - cellWidth * static_cast<float>(cardCount);
+    const float fittedGap = remainingWidth / static_cast<float>(cardCount - 1u);
+    return std::clamp(fittedGap, merchantRestMinimumCardGap, merchantRestMaximumCardGap);
 }
 
 Rectangle ShopScene::leaveButtonBounds() const {
@@ -278,6 +362,35 @@ Rectangle ShopScene::purchaseCancelButtonBounds(const Rectangle modal) const {
     return Rectangle{modal.x + modal.width - 284.f, modal.y + modal.height - 76.f, 220.f, 50.f};
 }
 
+Rectangle ShopScene::relicOwnerModalBounds() const {
+    const float width = 700.f;
+    const float desiredHeight = 188.f + static_cast<float>(runState_.actorStates.size()) * 92.f + 76.f;
+    const float height = std::min(std::max(420.f, desiredHeight), static_cast<float>(VirtualViewport::height()) - 72.f);
+    return Rectangle{VirtualViewport::width() * 0.5f - width * 0.5f, VirtualViewport::height() * 0.5f - height * 0.5f, width, height};
+}
+
+Rectangle ShopScene::relicOwnerOptionBounds(const std::size_t index) const {
+    const Rectangle modal = relicOwnerModalBounds();
+    return Rectangle{modal.x + 42.f, modal.y + 140.f + static_cast<float>(index) * 92.f, modal.width - 84.f, 76.f};
+}
+
+Rectangle ShopScene::relicOwnerCancelButtonBounds() const {
+    const Rectangle modal = relicOwnerModalBounds();
+    return Rectangle{modal.x + modal.width * 0.5f - 120.f, modal.y + modal.height - 58.f, 240.f, 44.f};
+}
+
+void ShopScene::moveRelicOwnerSelection(const int delta) {
+    if (runState_.actorStates.empty()) {
+        selectedRelicOwnerIndex_.reset();
+        return;
+    }
+
+    const int count = static_cast<int>(runState_.actorStates.size());
+    int index = selectedRelicOwnerIndex_.has_value() ? static_cast<int>(*selectedRelicOwnerIndex_) : 0;
+    index = (index + delta + count) % count;
+    selectedRelicOwnerIndex_ = static_cast<std::size_t>(index);
+}
+
 Rectangle ShopScene::hoverDescriptionBounds(const Vector2 mouse, const float height) const {
     constexpr float width = 520.f;
     const float x = std::clamp(mouse.x + 28.f, 28.f, static_cast<float>(VirtualViewport::width()) - width - 28.f);
@@ -332,8 +445,69 @@ void ShopScene::updatePurchaseConfirmation(const Vector2 mouse) {
     }
 
     if (BasicUi::contains(purchaseConfirmButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (offer.type == ShopOfferType::Relic && hasMultipleRelicOwners()) {
+            pendingRelicOwnerPurchaseIndex_ = *pendingPurchaseIndex_;
+            selectedRelicOwnerIndex_ = runState_.actorStates.empty() ? std::optional<std::size_t>{} : std::optional<std::size_t>{0u};
+            pendingPurchaseIndex_.reset();
+            relicOwnerChoiceOpen_ = true;
+            return;
+        }
+
         purchaseOfferAtIndex(*pendingPurchaseIndex_);
         pendingPurchaseIndex_.reset();
+    }
+}
+
+void ShopScene::updateRelicOwnerChoice(const Vector2 mouse) {
+    if (!pendingRelicOwnerPurchaseIndex_.has_value() || *pendingRelicOwnerPurchaseIndex_ >= shopState_.offers.size()) {
+        pendingRelicOwnerPurchaseIndex_.reset();
+        selectedRelicOwnerIndex_.reset();
+        relicOwnerChoiceOpen_ = false;
+        return;
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        pendingRelicOwnerPurchaseIndex_.reset();
+        selectedRelicOwnerIndex_.reset();
+        relicOwnerChoiceOpen_ = false;
+        return;
+    }
+
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+        moveRelicOwnerSelection(-1);
+        return;
+    }
+
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S) || IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+        moveRelicOwnerSelection(1);
+        return;
+    }
+
+    if ((IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER)) && selectedRelicOwnerIndex_.has_value()) {
+        purchaseOfferAtIndex(*pendingRelicOwnerPurchaseIndex_, runState_.actorStates[*selectedRelicOwnerIndex_].definitionId);
+        pendingRelicOwnerPurchaseIndex_.reset();
+        selectedRelicOwnerIndex_.reset();
+        relicOwnerChoiceOpen_ = false;
+        return;
+    }
+
+    for (std::size_t i = 0; i < runState_.actorStates.size(); ++i) {
+        if (BasicUi::contains(relicOwnerOptionBounds(i), mouse)) {
+            selectedRelicOwnerIndex_ = i;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                purchaseOfferAtIndex(*pendingRelicOwnerPurchaseIndex_, runState_.actorStates[i].definitionId);
+                pendingRelicOwnerPurchaseIndex_.reset();
+                selectedRelicOwnerIndex_.reset();
+                relicOwnerChoiceOpen_ = false;
+            }
+            return;
+        }
+    }
+
+    if (BasicUi::contains(relicOwnerCancelButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        pendingRelicOwnerPurchaseIndex_.reset();
+        selectedRelicOwnerIndex_.reset();
+        relicOwnerChoiceOpen_ = false;
     }
 }
 
@@ -430,11 +604,14 @@ void ShopScene::renderCardOffer(const ShopOffer& offer, const std::size_t offerI
     const Rectangle bounds = offerBounds(offerIndex);
     const bool enabled = canBuy(offer);
     const bool hovered = enabled && BasicUi::contains(bounds, mouse);
-    const Color fill = !enabled ? Color{33, 35, 43, 255} : (hovered ? Color{53, 58, 76, 255} : Color{39, 42, 55, 255});
 
-    DrawRectangleRounded(bounds, 0.06f, 10, fill);
-    DrawRectangleRoundedLinesEx(bounds, 0.06f, 10, 2.f, hovered ? Color{238, 196, 86, 255} : Color{108, 118, 145, 255});
+    if (!shopState_.isMerchantRest()) {
+        const Color fill = !enabled ? Color{33, 35, 43, 255} : (hovered ? Color{53, 58, 76, 255} : Color{39, 42, 55, 255});
+        DrawRectangleRounded(bounds, 0.06f, 10, fill);
+        DrawRectangleRoundedLinesEx(bounds, 0.06f, 10, 2.f, hovered ? Color{238, 196, 86, 255} : Color{108, 118, 145, 255});
+    }
 
+    const Rectangle visualBounds = cardOfferVisualBounds(bounds);
     const CardId cardId(offer.contentId);
     if (cards_.contains(cardId)) {
         CardViewModel model = cardViewModel(
@@ -444,31 +621,61 @@ void ShopScene::renderCardOffer(const ShopOffer& offer, const std::size_t offerI
             enabled,
             hovered
         );
-        const Rectangle visualBounds = cardOfferVisualBounds(bounds);
-        const CardTransform transform = CardVisualInstance::transformForStandardSlot(visualBounds, static_cast<int>(offerIndex));
+        const CardTransform transform = shopState_.isMerchantRest()
+            ? CardVisualInstance::transformForBounds(visualBounds, static_cast<int>(offerIndex), 1.0f)
+            : CardVisualInstance::transformForStandardSlot(visualBounds, static_cast<int>(offerIndex));
         CardVisualInstance::renderStatic(model, font_.available() ? &font_.font() : nullptr, transform);
     } else {
-        BasicUi::drawCenteredText(font_, offer.contentId, cardOfferVisualBounds(bounds), 18.f, Color{230, 230, 235, 255});
+        BasicUi::drawCenteredText(font_, offer.contentId, visualBounds, 18.f, Color{230, 230, 235, 255});
     }
 
-    BasicUi::drawText(
-        font_,
-        priceText(offer.price),
-        Vector2{bounds.x + 16.f, bounds.y + bounds.height - 56.f},
-        20.f,
-        enabled ? Color{236, 214, 126, 255} : Color{130, 125, 96, 255}
-    );
+    const Rectangle priceBounds = shopState_.isMerchantRest()
+        ? Rectangle{bounds.x, visualBounds.y + visualBounds.height + 8.f, bounds.width, 28.f}
+        : Rectangle{bounds.x + 16.f, bounds.y + bounds.height - 56.f, bounds.width - 32.f, 28.f};
+
+    if (shopState_.isMerchantRest()) {
+        BasicUi::drawCenteredTextFitted(
+            font_,
+            priceText(offer.price),
+            priceBounds,
+            20.f,
+            14.f,
+            enabled ? Color{236, 214, 126, 255} : Color{130, 125, 96, 255}
+        );
+    } else {
+        BasicUi::drawText(
+            font_,
+            priceText(offer.price),
+            Vector2{priceBounds.x, priceBounds.y},
+            20.f,
+            enabled ? Color{236, 214, 126, 255} : Color{130, 125, 96, 255}
+        );
+    }
 
     if (!enabled) {
-        BasicUi::drawTextFitted(
-            font_,
-            offerStatus(offer),
-            Vector2{bounds.x + 16.f, bounds.y + bounds.height - 28.f},
-            bounds.width - 32.f,
-            15.f,
-            12.f,
-            offerStatusColor(offer)
-        );
+        const Rectangle statusBounds = shopState_.isMerchantRest()
+            ? Rectangle{bounds.x, priceBounds.y + 28.f, bounds.width, 24.f}
+            : Rectangle{bounds.x + 16.f, bounds.y + bounds.height - 28.f, bounds.width - 32.f, 20.f};
+        if (shopState_.isMerchantRest()) {
+            BasicUi::drawCenteredTextFitted(
+                font_,
+                offerStatus(offer),
+                statusBounds,
+                14.f,
+                11.f,
+                offerStatusColor(offer)
+            );
+        } else {
+            BasicUi::drawTextFitted(
+                font_,
+                offerStatus(offer),
+                Vector2{statusBounds.x, statusBounds.y},
+                statusBounds.width,
+                15.f,
+                12.f,
+                offerStatusColor(offer)
+            );
+        }
     }
 }
 
@@ -589,6 +796,85 @@ void ShopScene::renderPurchaseConfirmation() const {
     BasicUi::drawButton(font_, purchaseCancelButtonBounds(modal), localization_.get(TextId("reward.cancel")), mouse);
 }
 
+void ShopScene::renderRelicOwnerChoice() const {
+    if (!pendingRelicOwnerPurchaseIndex_.has_value() || *pendingRelicOwnerPurchaseIndex_ >= shopState_.offers.size()) {
+        return;
+    }
+
+    const ShopOffer& offer = shopState_.offers[*pendingRelicOwnerPurchaseIndex_];
+    const Vector2 mouse = GetMousePosition();
+    const Rectangle modal = relicOwnerModalBounds();
+
+    DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 140});
+    DrawRectangleRounded(modal, 0.06f, 14, Color{25, 27, 38, 252});
+    DrawRectangleRoundedLinesEx(modal, 0.06f, 14, 3.f, Color{238, 196, 86, 255});
+
+    BasicUi::drawCenteredText(
+        font_,
+        localization_.get(TextId("reward.relic_owner_title")),
+        Rectangle{modal.x + 24.f, modal.y + 18.f, modal.width - 48.f, 36.f},
+        28.f,
+        Color{255, 235, 175, 255}
+    );
+
+    BasicUi::drawCenteredTextFitted(
+        font_,
+        localization_.format(TextId("reward.relic_owner_hint"), {{"relic", offerName(offer)}}),
+        Rectangle{modal.x + 42.f, modal.y + 62.f, modal.width - 84.f, 44.f},
+        18.f,
+        14.f,
+        Color{195, 202, 225, 255}
+    );
+
+    for (std::size_t i = 0; i < runState_.actorStates.size(); ++i) {
+        const RunActorState& actor = runState_.actorStates[i];
+        const Rectangle row = relicOwnerOptionBounds(i);
+        const bool hovered = BasicUi::contains(row, mouse);
+        const bool selected = selectedRelicOwnerIndex_.has_value() && *selectedRelicOwnerIndex_ == i;
+        DrawRectangleRounded(row, 0.08f, 10, hovered || selected ? Color{55, 61, 80, 255} : Color{40, 43, 56, 255});
+        DrawRectangleRoundedLinesEx(row, 0.08f, 10, selected ? 3.f : 2.f, selected ? Color{255, 218, 96, 255} : (hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255}));
+
+        BasicUi::drawTextFitted(
+            font_,
+            actorName(actor.definitionId),
+            Vector2{row.x + 18.f, row.y + 10.f},
+            row.width * 0.48f,
+            21.f,
+            15.f,
+            Color{245, 245, 250, 255}
+        );
+        BasicUi::drawTextFitted(
+            font_,
+            actorHealthSummary(actor),
+            Vector2{row.x + row.width * 0.52f, row.y + 12.f},
+            row.width * 0.42f,
+            17.f,
+            13.f,
+            Color{210, 218, 238, 255}
+        );
+        BasicUi::drawTextFitted(
+            font_,
+            actorRelicSummary(actor),
+            Vector2{row.x + 18.f, row.y + 44.f},
+            row.width - 36.f,
+            16.f,
+            12.f,
+            Color{176, 184, 208, 255}
+        );
+    }
+
+    BasicUi::drawCenteredTextFitted(
+        font_,
+        localization_.get(TextId("reward.relic_owner_controls")),
+        Rectangle{modal.x + 42.f, modal.y + modal.height - 100.f, modal.width - 84.f, 24.f},
+        15.f,
+        12.f,
+        Color{150, 158, 184, 255}
+    );
+
+    BasicUi::drawButton(font_, relicOwnerCancelButtonBounds(), localization_.get(TextId("reward.cancel")), mouse);
+}
+
 void ShopScene::renderRemoveMode() const {
     const Vector2 mouse = GetMousePosition();
     const Rectangle modal = removeModeBounds();
@@ -658,6 +944,10 @@ void ShopScene::renderRemoveMode() const {
 }
 
 void ShopScene::purchaseOfferAtIndex(const std::size_t offerIndex) {
+    purchaseOfferAtIndex(offerIndex, {});
+}
+
+void ShopScene::purchaseOfferAtIndex(const std::size_t offerIndex, const std::string& actorDefinitionId) {
     if (offerIndex >= shopState_.offers.size()) {
         return;
     }
@@ -671,6 +961,7 @@ void ShopScene::purchaseOfferAtIndex(const std::size_t offerIndex) {
     purchase.type = offer.type;
     purchase.contentId = offer.contentId;
     purchase.price = offer.price;
+    purchase.actorDefinitionId = actorDefinitionId;
 
     if (!onPurchase_(purchase)) {
         return;
@@ -684,6 +975,53 @@ void ShopScene::purchaseOfferAtIndex(const std::size_t offerIndex) {
     if (onShopStateChanged_) {
         onShopStateChanged_(shopState_);
     }
+}
+
+bool ShopScene::hasMultipleRelicOwners() const {
+    return runState_.actorStates.size() > 1;
+}
+
+std::string ShopScene::actorName(const std::string& actorDefinitionId) const {
+    if (actorDefinitionId.empty()) {
+        return localization_.get(TextId("debug.player.name"));
+    }
+
+    const PlayerActorId id(actorDefinitionId);
+    if (!actors_.contains(id)) {
+        return actorDefinitionId;
+    }
+
+    return localization_.get(actors_.get(id).nameTextId);
+}
+
+std::string ShopScene::actorHealthSummary(const RunActorState& actor) const {
+    return localization_.format(
+        TextId("reward.relic_owner_hp"),
+        {{"current", std::to_string(std::max(0, actor.currentHp))}, {"maximum", std::to_string(std::max(1, actor.maxHp))}}
+    );
+}
+
+std::string ShopScene::actorRelicSummary(const RunActorState& actor) const {
+    if (actor.relicIds.empty()) {
+        return localization_.get(TextId("reward.relic_owner_no_relics"));
+    }
+
+    std::string names;
+    const std::size_t visible = std::min<std::size_t>(2u, actor.relicIds.size());
+    for (std::size_t i = 0; i < visible; ++i) {
+        if (!names.empty()) {
+            names += ", ";
+        }
+        names += offerName(ShopOffer{ShopOfferType::Relic, actor.relicIds[i], 0, false});
+    }
+    if (actor.relicIds.size() > visible) {
+        names += localization_.format(TextId("reward.relic_owner_more_relics"), {{"count", std::to_string(actor.relicIds.size() - visible)}});
+    }
+
+    return localization_.format(
+        TextId("reward.relic_owner_relics"),
+        {{"count", std::to_string(actor.relicIds.size())}, {"relics", names}}
+    );
 }
 
 bool ShopScene::canBuy(const ShopOffer& offer) const {
@@ -811,7 +1149,8 @@ Color ShopScene::offerStatusColor(const ShopOffer& offer) const {
 std::size_t ShopScene::cardOfferOrdinal(const std::size_t offerIndex) const {
     std::size_t ordinal = 0u;
     for (std::size_t i = 0u; i < offerIndex && i < shopState_.offers.size(); ++i) {
-        if (!shopState_.offers[i].purchased && shopState_.offers[i].type == ShopOfferType::Card) {
+        if (shopState_.offers[i].type == ShopOfferType::Card &&
+            (shopState_.isMerchantRest() || !shopState_.offers[i].purchased)) {
             ++ordinal;
         }
     }

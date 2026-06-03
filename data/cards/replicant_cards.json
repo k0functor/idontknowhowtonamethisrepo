@@ -64,9 +64,9 @@
     }
   },
   {
-    "id": "cyborg_striker_drone",
-    "name": "card.cyborg_striker_drone.name",
-    "description": "card.cyborg_striker_drone.description",
+    "id": "replicant_striker_drone",
+    "name": "card.replicant_striker_drone.name",
+    "description": "card.replicant_striker_drone.description",
     "rarity": "starter",
     "energy_cost": 1,
     "gold_cost": 0,
@@ -88,9 +88,9 @@
     }
   },
   {
-    "id": "cyborg_guardian_drone",
-    "name": "card.cyborg_guardian_drone.name",
-    "description": "card.cyborg_guardian_drone.description",
+    "id": "replicant_guardian_drone",
+    "name": "card.replicant_guardian_drone.name",
+    "description": "card.replicant_guardian_drone.description",
     "rarity": "starter",
     "energy_cost": 1,
     "gold_cost": 0,
@@ -112,9 +112,9 @@
     }
   },
   {
-    "id": "cyborg_trigger_drone",
-    "name": "card.cyborg_trigger_drone.name",
-    "description": "card.cyborg_trigger_drone.description",
+    "id": "replicant_trigger_drone",
+    "name": "card.replicant_trigger_drone.name",
+    "description": "card.replicant_trigger_drone.description",
     "rarity": "starter",
     "energy_cost": 0,
     "gold_cost": 0,
@@ -142,13 +142,13 @@
           "repeat_count": 2
         }
       ],
-      "description": "card.cyborg_trigger_drone.upgrade.description"
+      "description": "card.replicant_trigger_drone.upgrade.description"
     }
   },
   {
-    "id": "cyborg_wrench_hit",
-    "name": "card.cyborg_wrench_hit.name",
-    "description": "card.cyborg_wrench_hit.description",
+    "id": "replicant_wrench_hit",
+    "name": "card.replicant_wrench_hit.name",
+    "description": "card.replicant_wrench_hit.description",
     "rarity": "starter",
     "energy_cost": 1,
     "gold_cost": 0,
@@ -182,9 +182,9 @@
     }
   },
   {
-    "id": "cyborg_patch_guard",
-    "name": "card.cyborg_patch_guard.name",
-    "description": "card.cyborg_patch_guard.description",
+    "id": "replicant_patch_guard",
+    "name": "card.replicant_patch_guard.name",
+    "description": "card.replicant_patch_guard.description",
     "rarity": "starter",
     "energy_cost": 1,
     "gold_cost": 0,
@@ -214,9 +214,9 @@
     }
   },
   {
-    "id": "cyborg_marker_drone",
-    "name": "card.cyborg_marker_drone.name",
-    "description": "card.cyborg_marker_drone.description",
+    "id": "replicant_marker_drone",
+    "name": "card.replicant_marker_drone.name",
+    "description": "card.replicant_marker_drone.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 70,
@@ -238,9 +238,9 @@
     }
   },
   {
-    "id": "cyborg_surgeon_drone",
-    "name": "card.cyborg_surgeon_drone.name",
-    "description": "card.cyborg_surgeon_drone.description",
+    "id": "replicant_surgeon_drone",
+    "name": "card.replicant_surgeon_drone.name",
+    "description": "card.replicant_surgeon_drone.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 75,
@@ -262,9 +262,9 @@
     }
   },
   {
-    "id": "cyborg_bomber_drone",
-    "name": "card.cyborg_bomber_drone.name",
-    "description": "card.cyborg_bomber_drone.description",
+    "id": "replicant_bomber_drone",
+    "name": "card.replicant_bomber_drone.name",
+    "description": "card.replicant_bomber_drone.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 80,
@@ -286,9 +286,9 @@
     }
   },
   {
-    "id": "cyborg_marking_beam",
-    "name": "card.cyborg_marking_beam.name",
-    "description": "card.cyborg_marking_beam.description",
+    "id": "replicant_marking_beam",
+    "name": "card.replicant_marking_beam.name",
+    "description": "card.replicant_marking_beam.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 65,
@@ -320,9 +320,9 @@
     }
   },
   {
-    "id": "cyborg_spare_battery",
-    "name": "card.cyborg_spare_battery.name",
-    "description": "card.cyborg_spare_battery.description",
+    "id": "replicant_spare_battery",
+    "name": "card.replicant_spare_battery.name",
+    "description": "card.replicant_spare_battery.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 70,
@@ -368,9 +368,9 @@
     }
   },
   {
-    "id": "cyborg_overclock",
-    "name": "card.cyborg_overclock.name",
-    "description": "card.cyborg_overclock.description",
+    "id": "replicant_overclock",
+    "name": "card.replicant_overclock.name",
+    "description": "card.replicant_overclock.description",
     "rarity": "common",
     "energy_cost": 0,
     "gold_cost": 70,
@@ -419,9 +419,9 @@
     }
   },
   {
-    "id": "cyborg_live_wire",
-    "name": "card.cyborg_live_wire.name",
-    "description": "card.cyborg_live_wire.description",
+    "id": "replicant_live_wire",
+    "name": "card.replicant_live_wire.name",
+    "description": "card.replicant_live_wire.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 70,
@@ -471,9 +471,9 @@
     }
   },
   {
-    "id": "cyborg_servo_guard",
-    "name": "card.cyborg_servo_guard.name",
-    "description": "card.cyborg_servo_guard.description",
+    "id": "replicant_servo_guard",
+    "name": "card.replicant_servo_guard.name",
+    "description": "card.replicant_servo_guard.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 65,
@@ -503,9 +503,9 @@
     }
   },
   {
-    "id": "cyborg_precision_ping",
-    "name": "card.cyborg_precision_ping.name",
-    "description": "card.cyborg_precision_ping.description",
+    "id": "replicant_precision_ping",
+    "name": "card.replicant_precision_ping.name",
+    "description": "card.replicant_precision_ping.description",
     "rarity": "common",
     "energy_cost": 1,
     "gold_cost": 65,
@@ -553,9 +553,9 @@
     }
   },
   {
-    "id": "cyborg_sync_pulse",
-    "name": "card.cyborg_sync_pulse.name",
-    "description": "card.cyborg_sync_pulse.description",
+    "id": "replicant_sync_pulse",
+    "name": "card.replicant_sync_pulse.name",
+    "description": "card.replicant_sync_pulse.description",
     "rarity": "uncommon",
     "energy_cost": 1,
     "gold_cost": 95,
@@ -601,9 +601,9 @@
     }
   },
   {
-    "id": "cyborg_parallel_trigger",
-    "name": "card.cyborg_parallel_trigger.name",
-    "description": "card.cyborg_parallel_trigger.description",
+    "id": "replicant_parallel_trigger",
+    "name": "card.replicant_parallel_trigger.name",
+    "description": "card.replicant_parallel_trigger.description",
     "rarity": "uncommon",
     "energy_cost": 1,
     "gold_cost": 110,
@@ -635,9 +635,9 @@
     }
   },
   {
-    "id": "cyborg_redeploy",
-    "name": "card.cyborg_redeploy.name",
-    "description": "card.cyborg_redeploy.description",
+    "id": "replicant_redeploy",
+    "name": "card.replicant_redeploy.name",
+    "description": "card.replicant_redeploy.description",
     "rarity": "uncommon",
     "energy_cost": 2,
     "gold_cost": 115,
@@ -668,9 +668,9 @@
     }
   },
   {
-    "id": "cyborg_hard_reset",
-    "name": "card.cyborg_hard_reset.name",
-    "description": "card.cyborg_hard_reset.description",
+    "id": "replicant_hard_reset",
+    "name": "card.replicant_hard_reset.name",
+    "description": "card.replicant_hard_reset.description",
     "rarity": "uncommon",
     "energy_cost": 1,
     "gold_cost": 100,
@@ -716,9 +716,9 @@
     }
   },
   {
-    "id": "cyborg_target_lock",
-    "name": "card.cyborg_target_lock.name",
-    "description": "card.cyborg_target_lock.description",
+    "id": "replicant_target_lock",
+    "name": "card.replicant_target_lock.name",
+    "description": "card.replicant_target_lock.description",
     "rarity": "uncommon",
     "energy_cost": 1,
     "gold_cost": 100,
@@ -766,9 +766,9 @@
     }
   },
   {
-    "id": "cyborg_field_medic",
-    "name": "card.cyborg_field_medic.name",
-    "description": "card.cyborg_field_medic.description",
+    "id": "replicant_field_medic",
+    "name": "card.replicant_field_medic.name",
+    "description": "card.replicant_field_medic.description",
     "rarity": "uncommon",
     "energy_cost": 1,
     "gold_cost": 105,
@@ -816,9 +816,9 @@
     }
   },
   {
-    "id": "cyborg_bulwark_protocol",
-    "name": "card.cyborg_bulwark_protocol.name",
-    "description": "card.cyborg_bulwark_protocol.description",
+    "id": "replicant_bulwark_protocol",
+    "name": "card.replicant_bulwark_protocol.name",
+    "description": "card.replicant_bulwark_protocol.description",
     "rarity": "uncommon",
     "energy_cost": 2,
     "gold_cost": 115,
@@ -866,9 +866,9 @@
     }
   },
   {
-    "id": "cyborg_volatile_core",
-    "name": "card.cyborg_volatile_core.name",
-    "description": "card.cyborg_volatile_core.description",
+    "id": "replicant_volatile_core",
+    "name": "card.replicant_volatile_core.name",
+    "description": "card.replicant_volatile_core.description",
     "rarity": "uncommon",
     "energy_cost": 1,
     "gold_cost": 120,
@@ -917,13 +917,13 @@
           "repeat_count": 2
         }
       ],
-      "description": "card.cyborg_volatile_core.upgrade.description"
+      "description": "card.replicant_volatile_core.upgrade.description"
     }
   },
   {
-    "id": "cyborg_drone_swarm",
-    "name": "card.cyborg_drone_swarm.name",
-    "description": "card.cyborg_drone_swarm.description",
+    "id": "replicant_drone_swarm",
+    "name": "card.replicant_drone_swarm.name",
+    "description": "card.replicant_drone_swarm.description",
     "rarity": "rare",
     "energy_cost": 2,
     "gold_cost": 160,
@@ -962,9 +962,9 @@
     }
   },
   {
-    "id": "cyborg_targeting_matrix",
-    "name": "card.cyborg_targeting_matrix.name",
-    "description": "card.cyborg_targeting_matrix.description",
+    "id": "replicant_targeting_matrix",
+    "name": "card.replicant_targeting_matrix.name",
+    "description": "card.replicant_targeting_matrix.description",
     "rarity": "rare",
     "energy_cost": 1,
     "gold_cost": 150,
@@ -1012,9 +1012,9 @@
     }
   },
   {
-    "id": "cyborg_full_activation",
-    "name": "card.cyborg_full_activation.name",
-    "description": "card.cyborg_full_activation.description",
+    "id": "replicant_full_activation",
+    "name": "card.replicant_full_activation.name",
+    "description": "card.replicant_full_activation.description",
     "rarity": "rare",
     "energy_cost": 2,
     "gold_cost": 170,
@@ -1046,9 +1046,9 @@
     }
   },
   {
-    "id": "cyborg_feedback_loop",
-    "name": "card.cyborg_feedback_loop.name",
-    "description": "card.cyborg_feedback_loop.description",
+    "id": "replicant_feedback_loop",
+    "name": "card.replicant_feedback_loop.name",
+    "description": "card.replicant_feedback_loop.description",
     "rarity": "rare",
     "energy_cost": 1,
     "gold_cost": 165,

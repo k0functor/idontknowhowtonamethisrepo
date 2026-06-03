@@ -685,5 +685,337 @@
         ]
       }
     ]
+  },
+  {
+    "id": "censer_imp",
+    "name": "enemy.censer_imp.name",
+    "max_hp": 19,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "censer_imp_smoke_prick",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "censer_imp_bitter_cloud",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "censer_imp_hide_in_smoke",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bone_debtor",
+    "name": "enemy.bone_debtor.name",
+    "max_hp": 26,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "bone_debtor_billhook",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "bone_debtor_collect_interest",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ]
+      },
+      {
+        "id": "bone_debtor_rattle_ledger",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wax_undertaker",
+    "name": "enemy.wax_undertaker.name",
+    "max_hp": 38,
+    "starting_block": 4,
+    "actions": [
+      {
+        "id": "wax_undertaker_shovel_swing",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ]
+      },
+      {
+        "id": "wax_undertaker_embalm",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ]
+      },
+      {
+        "id": "wax_undertaker_grave_wax",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "chain_novice",
+    "name": "enemy.chain_novice.name",
+    "max_hp": 31,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "chain_novice_flail",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "repeat_count": 3
+          }
+        ]
+      },
+      {
+        "id": "chain_novice_drag",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "chain_novice_brace",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grave_scribe",
+    "name": "enemy.grave_scribe.name",
+    "max_hp": 24,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "grave_scribe_ink_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "grave_scribe_bad_record",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "status": "weak",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "gain_stress",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      },
+      {
+        "id": "grave_scribe_rewrite",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      }
+    ]
   }
 ]

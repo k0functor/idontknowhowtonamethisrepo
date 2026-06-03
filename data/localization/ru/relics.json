@@ -57,7 +57,7 @@
   "relic.old_bell.name": "Старый колокол",
   "relic.quiet_boots.description": "В начале боя доберите 1 карту.",
   "relic.quiet_boots.name": "Тихие сапоги",
-  "relic.razor_contract.description": "Атаки наносят +1 урон.",
+  "relic.razor_contract.description": "В начале каждого боя получите 1 силы.",
   "relic.razor_contract.name": "Бритвенный контракт",
   "relic.red_candle.description": "Каждый второй ход накладывает 1 ожог случайному врагу.",
   "relic.red_candle.name": "Красная свеча",
@@ -85,6 +85,6 @@
   "relic.thorn_buckle.name": "Шипастая пряжка",
   "relic.war_drum.description": "В начале боя получите 2 силы.",
   "relic.war_drum.name": "Военный барабан",
-  "relic.whetstone.description": "Атаки наносят +1 урон. Первая сыгранная атака в каждом бою добирает 1 карту.",
+  "relic.whetstone.description": "В начале каждого боя получите 1 силы. Первая сыгранная атака в каждом бою добирает 1 карту.",
   "relic.whetstone.name": "Точильный камень"
 }
