@@ -14,7 +14,8 @@ BlockResult BlockSystem::gainBlock(
     const EntityId target,
     const int rawBlock,
     const CardId& cardId,
-    const DiceCorruption diceCorruption
+    const DiceCorruption diceCorruption,
+    const bool usesActorStats
 ) const {
     ModifierContext modifierContext;
     modifierContext.effectType = EffectType::Block;
@@ -22,6 +23,7 @@ BlockResult BlockSystem::gainBlock(
     modifierContext.target = target;
     modifierContext.cardId = cardId;
     modifierContext.diceCorruption = diceCorruption;
+    modifierContext.usesActorStats = usesActorStats;
 
     const ModifiedValue modified = modifierSystem_.modifyValue(
         state,
@@ -31,6 +33,9 @@ BlockResult BlockSystem::gainBlock(
 
     CombatEntity& targetEntity = state.entity(target);
     targetEntity.block += modified.modified;
+    if (state.isPlayer(target)) {
+        state.telemetry.blockGainedByPlayers += modified.modified;
+    }
 
     state.log.add(
         CombatLogEntryType::BlockGained,
@@ -62,7 +67,8 @@ ModifiedValueRange BlockSystem::previewBlock(
     const int rawMin,
     const int rawMax,
     const CardId& cardId,
-    const DiceCorruption diceCorruption
+    const DiceCorruption diceCorruption,
+    const bool usesActorStats
 ) const {
     ModifierContext modifierContext;
     modifierContext.effectType = EffectType::Block;
@@ -70,6 +76,7 @@ ModifiedValueRange BlockSystem::previewBlock(
     modifierContext.target = target;
     modifierContext.cardId = cardId;
     modifierContext.diceCorruption = diceCorruption;
+    modifierContext.usesActorStats = usesActorStats;
     modifierContext.preview = true;
 
     return modifierSystem_.modifyRange(state, rawMin, rawMax, modifierContext);

@@ -1,5 +1,7 @@
 #include "RunController.hpp"
 
+#include "active_items/ActiveItemAcquisitionSystem.hpp"
+#include "active_items/ActiveItemSystem.hpp"
 #include "cards/CardRarity.hpp"
 #include "cards/CardType.hpp"
 #include "consumables/ConsumableDefinition.hpp"
@@ -9,6 +11,7 @@
 #include "run/RunCardEligibility.hpp"
 #include "run/RunMapGenerator.hpp"
 #include "run/RunRelicOwnership.hpp"
+#include "run/StressEconomyRules.hpp"
 #include "run/StressRules.hpp"
 
 #include <algorithm>
@@ -229,6 +232,21 @@ std::vector<RunActorState> mergeCombatActorStatesWithRunMetadata(
 
 void recordCombatTelemetry(RunState& state, const CombatResult& combatResult) {
     state.stats.enemiesKilled += combatResult.enemiesKilled;
+    state.stats.damageDealt += std::max(0, combatResult.telemetry.damageDealtToEnemies);
+    state.stats.damageBlocked += std::max(0, combatResult.telemetry.damageBlockedByPlayers);
+    state.stats.blockGained += std::max(0, combatResult.telemetry.blockGainedByPlayers);
+    state.stats.combatTurns += std::max(0, combatResult.turnsTaken);
+    state.stats.cardsPlayedInCombat += std::max(0, combatResult.telemetry.cardsPlayed);
+    state.stats.energySpentOnCards += std::max(0, combatResult.telemetry.energySpentOnCards);
+    state.stats.maximumSingleHit = std::max(
+        state.stats.maximumSingleHit,
+        std::max(0, combatResult.telemetry.maximumSingleHit)
+    );
+    state.stats.longestCombatTurns = std::max(state.stats.longestCombatTurns, std::max(0, combatResult.turnsTaken));
+    state.stats.mostCardsPlayedInCombat = std::max(
+        state.stats.mostCardsPlayedInCombat,
+        std::max(0, combatResult.telemetry.cardsPlayed)
+    );
 
     if (!combatResult.actorStates.empty()) {
         state.stats.damageTaken += combatDamageTaken(state.actorStates, combatResult.actorStates);
@@ -312,6 +330,7 @@ void RunController::startNewRun(
     const std::uint32_t seed
 ) {
     activeRun_ = runFactory_.createRun(archetype, difficulty, actors, mapGeneration, floor, seed);
+    activeRun_->phase = RunPhase::Map;
     activeRunRandom_.emplace(activeRun_->seed);
     activeRunRandom_->setState(activeRun_->randomState);
 }
@@ -357,6 +376,10 @@ void RunController::completeCurrentAct() {
     RunState& state = run();
     state.actCompleted = true;
     state.completedAct = state.act;
+    state.completionType = state.nextFloorId.empty()
+        ? RunCompletionType::Victory
+        : RunCompletionType::FloorCleared;
+    state.phase = RunPhase::FloorComplete;
     state.pendingRoom.clear();
 }
 
@@ -379,6 +402,8 @@ bool RunController::advanceToNextFloor(
     state.nextFloorId = floor.nextFloorId;
     state.actCompleted = false;
     state.completedAct = 0;
+    state.completionType = RunCompletionType::InProgress;
+    state.phase = RunPhase::Map;
     state.defeatedBossEnemyIds.clear();
     state.pendingRoom.clear();
     state.map = generator.generateActOneMap(floorRandom, mapGeneration);
@@ -459,6 +484,9 @@ const RunPendingRoomState& RunController::pendingRoom() const {
 
 void RunController::clearPendingRoom() {
     run().pendingRoom.clear();
+    if (!run().actCompleted) {
+        run().phase = RunPhase::Map;
+    }
 }
 
 void RunController::setPendingCombatReward(const int nodeId, RewardState reward) {
@@ -467,6 +495,7 @@ void RunController::setPendingCombatReward(const int nodeId, RewardState reward)
     pending.nodeId = nodeId;
     pending.reward = std::move(reward);
     run().pendingRoom = std::move(pending);
+    run().phase = RunPhase::Reward;
 }
 
 void RunController::setPendingChestReward(const int nodeId, RewardState reward) {
@@ -475,6 +504,7 @@ void RunController::setPendingChestReward(const int nodeId, RewardState reward) 
     pending.nodeId = nodeId;
     pending.reward = std::move(reward);
     run().pendingRoom = std::move(pending);
+    run().phase = RunPhase::Chest;
 }
 
 void RunController::setPendingShop(const int nodeId, ShopState shop) {
@@ -483,6 +513,7 @@ void RunController::setPendingShop(const int nodeId, ShopState shop) {
     pending.nodeId = nodeId;
     pending.shop = std::move(shop);
     run().pendingRoom = std::move(pending);
+    run().phase = RunPhase::Shop;
 }
 
 void RunController::setPendingMerchantRest(const int nodeId, ShopState shop) {
@@ -491,6 +522,7 @@ void RunController::setPendingMerchantRest(const int nodeId, ShopState shop) {
     pending.nodeId = nodeId;
     pending.shop = std::move(shop);
     run().pendingRoom = std::move(pending);
+    run().phase = RunPhase::Rest;
 }
 
 void RunController::setPendingEvent(const int nodeId, std::string eventId) {
@@ -499,6 +531,7 @@ void RunController::setPendingEvent(const int nodeId, std::string eventId) {
     pending.nodeId = nodeId;
     pending.eventId = std::move(eventId);
     run().pendingRoom = std::move(pending);
+    run().phase = RunPhase::Event;
 }
 
 const RunMapNode& RunController::node(const int nodeId) const {
@@ -562,6 +595,18 @@ void RunController::startNode(const int nodeId) {
 
     map.currentNodeId = nodeId;
     selectedNode.state = RunMapNodeState::Current;
+
+    switch (selectedNode.type) {
+        case RunMapNodeType::Combat:
+        case RunMapNodeType::Elite:
+        case RunMapNodeType::Boss:
+            run().phase = RunPhase::Combat;
+            break;
+        case RunMapNodeType::Event: run().phase = RunPhase::Event; break;
+        case RunMapNodeType::Shop: run().phase = RunPhase::Shop; break;
+        case RunMapNodeType::Chest: run().phase = RunPhase::Chest; break;
+        case RunMapNodeType::Rest: run().phase = RunPhase::Rest; break;
+    }
 }
 
 void RunController::completeCombat(
@@ -589,6 +634,7 @@ void RunController::recordCombatDefeat(const CombatResult& combatResult) {
     RunState& state = run();
     recordCombatTelemetry(state, combatResult);
     ++state.stats.combatsLost;
+    state.phase = RunPhase::RunComplete;
 }
 
 RewardState RunController::completeCombatAndCreateReward(
@@ -597,17 +643,31 @@ RewardState RunController::completeCombatAndCreateReward(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
+    const ActiveItemDatabase& activeItems,
     const RewardTuning& rewardTuning,
     Random& random
 ) {
     const RunMapNodeType completedNodeType = node(nodeId).type;
+    const int encounteredEnemyCount = std::max(
+        1,
+        static_cast<int>(combatResult.encounteredEnemyIds.size())
+    );
     completeCombat(nodeId, combatResult);
 
+    if (!run().activeItem.empty() && activeItems.contains(ActiveItemId(run().activeItem.itemId))) {
+        ActiveItemSystem::addCombatRoomCharge(
+            run(),
+            activeItems.get(ActiveItemId(run().activeItem.itemId)),
+            completedNodeType
+        );
+    }
+
     return rewardGenerator_.generateCombatReward(
-        RewardContext{run(), completedNodeType},
+        RewardContext{run(), completedNodeType, encounteredEnemyCount},
         cards,
         relics,
         consumables,
+        activeItems,
         rewardTuning,
         random
     );
@@ -618,6 +678,7 @@ RewardState RunController::completeCombatAndCreateReward(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
+    const ActiveItemDatabase& activeItems,
     const RewardTuning& rewardTuning,
     Random& random
 ) {
@@ -627,6 +688,7 @@ RewardState RunController::completeCombatAndCreateReward(
         cards,
         relics,
         consumables,
+        activeItems,
         rewardTuning,
         random
     );
@@ -637,6 +699,13 @@ void RunController::applyReward(
     const RewardSelection& selection
 ) {
     rewardSystem_.applyReward(run(), reward, selection);
+}
+
+std::optional<ActiveItemId> RunController::chooseActiveItemReward(
+    const ActiveItemDatabase& activeItems,
+    Random& random
+) const {
+    return ActiveItemAcquisitionSystem::chooseReward(activeItems, run().activeItem.itemId, random);
 }
 
 std::optional<RelicId> RunController::chooseChestRelic(
@@ -688,7 +757,6 @@ void RunController::completeChestNode(const int nodeId) {
 }
 
 void RunController::completeEventNode(const int nodeId) {
-    // Event rooms are a placeholder for now. They still consume the route choice.
     markNodeCompletedAndUnlockNext(nodeId);
 }
 
@@ -698,8 +766,17 @@ void RunController::completeRestHeal(const int nodeId) {
     }
 
     healAllActorsByPercent(0.30f);
-    reduceAllActorsStress(30);
     ++run().stats.restHealsUsed;
+    markNodeCompletedAndUnlockNext(nodeId);
+}
+
+void RunController::completeRestCalm(const int nodeId) {
+    if (node(nodeId).type != RunMapNodeType::Rest) {
+        throw std::runtime_error("Cannot calm down at a non-rest map node: " + std::to_string(nodeId));
+    }
+
+    reduceAllActorsStress(StressEconomyRules::RestCalmAmount);
+    ++run().stats.restCalmsUsed;
     markNodeCompletedAndUnlockNext(nodeId);
 }
 
@@ -848,6 +925,20 @@ bool RunController::purchaseShopItem(const ShopPurchase& purchase) {
             ++state.stats.consumablesGained;
             return true;
 
+        case ShopOfferType::ActiveItem:
+            if (purchase.contentId.empty() || purchase.contentId == state.activeItem.itemId) {
+                return false;
+            }
+            state.gold -= purchase.price;
+            state.stats.goldSpent += purchase.price;
+            if (!state.activeItem.empty()) {
+                ++state.stats.activeItemsReplaced;
+            }
+            state.activeItem.itemId = purchase.contentId;
+            state.activeItem.charge = 0;
+            ++state.stats.activeItemsGained;
+            return true;
+
         case ShopOfferType::CardRemoval: {
             std::size_t removedIndex = 0;
 
@@ -890,7 +981,7 @@ void RunController::completeMerchantRestNode(const int nodeId) {
     markNodeCompletedAndUnlockNext(nodeId);
 }
 
-bool RunController::completeEventChoice(
+RunEventChoiceResult RunController::completeEventChoice(
     const int nodeId,
     const RunEventChoiceDefinition& choice,
     const CardDatabase& cards,
@@ -899,10 +990,11 @@ bool RunController::completeEventChoice(
     Random& random
 ) {
     RunState& state = run();
+    RunEventChoiceResult result;
 
     const RunEventChoiceAvailability availability = evaluateRunEventChoiceRequirements(choice.requirements, state);
     if (!availability.available) {
-        return false;
+        return result;
     }
 
     for (const RunEventEffect& effect : choice.effects) {
@@ -911,17 +1003,24 @@ bool RunController::completeEventChoice(
                 if (effect.amount > 0) {
                     state.gold += effect.amount;
                     state.stats.goldGained += effect.amount;
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::GoldGained, effect.amount, {}});
                 }
                 break;
 
             case RunEventEffectType::LoseGold:
                 if (effect.amount > 0) {
-                    state.gold = std::max(0, state.gold - effect.amount);
+                    const int lostGold = std::min(state.gold, effect.amount);
+                    state.gold -= lostGold;
+                    if (lostGold > 0) {
+                        result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::GoldLost, lostGold, {}});
+                    }
                 }
                 break;
 
             case RunEventEffectType::GainCard:
-                addSpecificCardToRun(state, cards, effect.contentId);
+                if (addSpecificCardToRun(state, cards, effect.contentId)) {
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::CardGained, 0, effect.contentId});
+                }
                 break;
 
             case RunEventEffectType::GainRandomCard: {
@@ -929,12 +1028,15 @@ bool RunController::completeEventChoice(
                 if (card.has_value()) {
                     state.deckCardIds.push_back(*card);
                     ++state.stats.cardsAdded;
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::CardGained, 0, card->value});
                 }
                 break;
             }
 
             case RunEventEffectType::GainRelic:
-                addSpecificRelicToRun(state, relics, effect.contentId);
+                if (addSpecificRelicToRun(state, relics, effect.contentId)) {
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::RelicGained, 0, effect.contentId});
+                }
                 break;
 
             case RunEventEffectType::GainRandomRelic: {
@@ -942,13 +1044,16 @@ bool RunController::completeEventChoice(
                 if (relic.has_value()) {
                     if (RunRelicOwnership::assignRelicToActor(state, relic->value, RunRelicOwnership::defaultActorDefinitionId(state))) {
                         ++state.stats.relicsGained;
+                        result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::RelicGained, 0, relic->value});
                     }
                 }
                 break;
             }
 
             case RunEventEffectType::GainConsumable:
-                addSpecificConsumableToRun(state, consumables, effect.contentId);
+                if (addSpecificConsumableToRun(state, consumables, effect.contentId)) {
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::ConsumableGained, 0, effect.contentId});
+                }
                 break;
 
             case RunEventEffectType::GainRandomConsumable: {
@@ -957,6 +1062,7 @@ bool RunController::completeEventChoice(
                     if (consumable.has_value()) {
                         state.consumableIds.push_back(*consumable);
                         ++state.stats.consumablesGained;
+                        result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::ConsumableGained, 0, *consumable});
                     }
                 }
                 break;
@@ -970,6 +1076,7 @@ bool RunController::completeEventChoice(
                         static_cast<std::size_t>(std::distance(state.deckCardIds.begin(), iterator))
                     )) {
                         ++state.stats.cardsRemoved;
+                        result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::CardRemoved, 0, effect.contentId});
                     }
                 }
                 break;
@@ -978,26 +1085,59 @@ bool RunController::completeEventChoice(
             case RunEventEffectType::RemoveRandomCard:
                 if (!state.deckCardIds.empty()) {
                     const int index = random.rangeInclusive(0, static_cast<int>(state.deckCardIds.size()) - 1);
+                    const CardId removedCard = state.deckCardIds[static_cast<std::size_t>(index)];
                     if (eraseDeckIndexAndShiftUpgrades(state, static_cast<std::size_t>(index))) {
                         ++state.stats.cardsRemoved;
+                        result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::CardRemoved, 0, removedCard.value});
                     }
                 }
                 break;
 
-            case RunEventEffectType::GainStress:
-                adjustAllActorsStress(std::max(0, effect.amount), &random);
+            case RunEventEffectType::GainStress: {
+                const int gainedStress = std::max(0, effect.amount);
+                if (gainedStress > 0) {
+                    adjustAllActorsStress(gainedStress, &random);
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::StressGained, gainedStress, {}});
+                }
+                break;
+            }
+
+            case RunEventEffectType::LoseStress: {
+                const int lostStress = std::max(0, effect.amount);
+                if (lostStress > 0) {
+                    reduceAllActorsStress(lostStress);
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::StressLost, lostStress, {}});
+                }
+                break;
+            }
+
+            case RunEventEffectType::LoseHp: {
+                const int lostHp = std::max(0, effect.amount);
+                if (lostHp > 0) {
+                    damageAllActorsNonlethal(lostHp);
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::HpLost, lostHp, {}});
+                }
+                break;
+            }
+
+            case RunEventEffectType::HealAll: {
+                const int healedHp = std::max(0, effect.amount);
+                if (healedHp > 0) {
+                    healAllActorsFlat(healedHp);
+                    result.outcomes.push_back(RunEventOutcomeEntry{RunEventOutcomeType::HpHealed, healedHp, {}});
+                }
+                break;
+            }
+
+            case RunEventEffectType::SetFlag:
+                if (!effect.contentId.empty() &&
+                    std::find(state.eventFlags.begin(), state.eventFlags.end(), effect.contentId) == state.eventFlags.end()) {
+                    state.eventFlags.push_back(effect.contentId);
+                }
                 break;
 
-            case RunEventEffectType::LoseStress:
-                reduceAllActorsStress(std::max(0, effect.amount));
-                break;
-
-            case RunEventEffectType::LoseHp:
-                damageAllActorsNonlethal(std::max(0, effect.amount));
-                break;
-
-            case RunEventEffectType::HealAll:
-                healAllActorsFlat(std::max(0, effect.amount));
+            case RunEventEffectType::ClearFlag:
+                std::erase(state.eventFlags, effect.contentId);
                 break;
 
             case RunEventEffectType::Skip:
@@ -1006,7 +1146,8 @@ bool RunController::completeEventChoice(
     }
 
     markNodeCompletedAndUnlockNext(nodeId);
-    return true;
+    result.completed = true;
+    return result;
 }
 
 void RunController::markNodeCompletedAndUnlockNext(const int nodeId) {
@@ -1020,6 +1161,7 @@ void RunController::markNodeCompletedAndUnlockNext(const int nodeId) {
         if (current.state == RunMapNodeState::Completed) {
             map.currentNodeId = nodeId;
             run().pendingRoom.clear();
+            run().phase = RunPhase::Map;
             return;
         }
 
@@ -1066,6 +1208,7 @@ void RunController::markNodeCompletedAndUnlockNext(const int nodeId) {
         }
 
         run().pendingRoom.clear();
+        run().phase = RunPhase::Map;
         return;
     }
 

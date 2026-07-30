@@ -14,8 +14,6 @@
 #include <utility>
 #include <vector>
 
-#include <raylib.h>
-
 namespace {
 [[noreturn]] void throwSaveError(const std::filesystem::path& sourcePath, const std::string& message) {
     throw std::runtime_error("Run save error in '" + sourcePath.string() + "': " + message);
@@ -241,6 +239,73 @@ Json cardIdArray(const std::vector<CardId>& values) {
     return array;
 }
 
+std::string runPhaseToString(const RunPhase phase) {
+    switch (phase) {
+        case RunPhase::Map: return "map";
+        case RunPhase::Combat: return "combat";
+        case RunPhase::Reward: return "reward";
+        case RunPhase::Event: return "event";
+        case RunPhase::Shop: return "shop";
+        case RunPhase::Rest: return "rest";
+        case RunPhase::Chest: return "chest";
+        case RunPhase::FloorComplete: return "floor_complete";
+        case RunPhase::RunComplete: return "run_complete";
+    }
+    return "map";
+}
+
+RunPhase runPhaseFromString(const std::string& value, const std::filesystem::path& sourcePath) {
+    if (value == "map") return RunPhase::Map;
+    if (value == "combat") return RunPhase::Combat;
+    if (value == "reward") return RunPhase::Reward;
+    if (value == "event") return RunPhase::Event;
+    if (value == "shop") return RunPhase::Shop;
+    if (value == "rest") return RunPhase::Rest;
+    if (value == "chest") return RunPhase::Chest;
+    if (value == "floor_complete") return RunPhase::FloorComplete;
+    if (value == "run_complete") return RunPhase::RunComplete;
+    throwSaveError(sourcePath, "Unknown run phase '" + value + "'");
+}
+
+RunPhase phaseForPendingRoom(const RunPendingRoomType type) {
+    switch (type) {
+        case RunPendingRoomType::CombatReward: return RunPhase::Reward;
+        case RunPendingRoomType::ChestReward: return RunPhase::Chest;
+        case RunPendingRoomType::Shop: return RunPhase::Shop;
+        case RunPendingRoomType::MerchantRest: return RunPhase::Rest;
+        case RunPendingRoomType::Event: return RunPhase::Event;
+        case RunPendingRoomType::None: return RunPhase::Map;
+    }
+    return RunPhase::Map;
+}
+
+RunPhase inferredRunPhase(const RunState& run) {
+    if (run.actCompleted) {
+        return RunPhase::FloorComplete;
+    }
+    if (run.pendingRoom.active()) {
+        return phaseForPendingRoom(run.pendingRoom.type);
+    }
+
+    for (const RunMapNode& node : run.map.nodes) {
+        if (node.id != run.map.currentNodeId || node.state != RunMapNodeState::Current) {
+            continue;
+        }
+        switch (node.type) {
+            case RunMapNodeType::Combat:
+            case RunMapNodeType::Elite:
+            case RunMapNodeType::Boss:
+                return RunPhase::Combat;
+            case RunMapNodeType::Event: return RunPhase::Event;
+            case RunMapNodeType::Shop: return RunPhase::Shop;
+            case RunMapNodeType::Chest: return RunPhase::Chest;
+            case RunMapNodeType::Rest: return RunPhase::Rest;
+        }
+    }
+
+    return RunPhase::Map;
+}
+
 std::string nodeTypeToString(const RunMapNodeType type) {
     switch (type) {
         case RunMapNodeType::Combat:
@@ -345,7 +410,7 @@ RunMapNode nodeFromJson(const Json& json, const std::filesystem::path& sourcePat
     if (!position.is_object()) {
         throwSaveError(sourcePath, "'position' must be an object");
     }
-    node.position = Vector2{
+    node.position = Vec2{
         requiredFloat(position, "x", sourcePath),
         requiredFloat(position, "y", sourcePath)
     };
@@ -515,6 +580,8 @@ std::string rewardOptionTypeToString(const RewardOptionType type) {
             return "consumable";
         case RewardOptionType::Relic:
             return "relic";
+        case RewardOptionType::ActiveItem:
+            return "active_item";
     }
 
     return "gold";
@@ -533,6 +600,9 @@ RewardOptionType rewardOptionTypeFromString(const std::string& value, const std:
     if (value == "relic") {
         return RewardOptionType::Relic;
     }
+    if (value == "active_item") {
+        return RewardOptionType::ActiveItem;
+    }
 
     throwSaveError(sourcePath, "Unknown reward option type '" + value + "'");
 }
@@ -548,7 +618,8 @@ Json rewardOptionToJson(const RewardOption& option) {
         {"gold", option.gold},
         {"card_options", cardOptions},
         {"consumable_id", option.consumableId},
-        {"relic_id", option.relicId}
+        {"relic_id", option.relicId},
+        {"active_item_id", option.activeItemId}
     };
 }
 
@@ -558,6 +629,7 @@ RewardOption rewardOptionFromJson(const Json& json, const std::filesystem::path&
     option.gold = requiredInt(json, "gold", sourcePath);
     option.consumableId = requiredString(json, "consumable_id", sourcePath);
     option.relicId = requiredString(json, "relic_id", sourcePath);
+    option.activeItemId = optionalString(json, "active_item_id", sourcePath, "");
 
     const Json cardOptions = requiredField(json, "card_options", sourcePath);
     if (!cardOptions.is_array()) {
@@ -635,6 +707,8 @@ std::string shopOfferTypeToString(const ShopOfferType type) {
             return "relic";
         case ShopOfferType::Consumable:
             return "consumable";
+        case ShopOfferType::ActiveItem:
+            return "active_item";
         case ShopOfferType::CardRemoval:
             return "card_removal";
     }
@@ -651,6 +725,9 @@ ShopOfferType shopOfferTypeFromString(const std::string& value, const std::files
     }
     if (value == "consumable") {
         return ShopOfferType::Consumable;
+    }
+    if (value == "active_item") {
+        return ShopOfferType::ActiveItem;
     }
     if (value == "card_removal") {
         return ShopOfferType::CardRemoval;
@@ -935,10 +1012,16 @@ void normalizeRunAfterLoad(RunState& run, const std::filesystem::path& sourcePat
     if (static_cast<int>(run.consumableIds.size()) > run.maxConsumables) {
         run.consumableIds.resize(static_cast<std::size_t>(run.maxConsumables));
     }
+    if (run.activeItem.itemId.empty()) {
+        run.activeItem.clear();
+    } else if (run.activeItem.charge < 0) {
+        throwSaveError(sourcePath, "active_item.charge must not be negative");
+    }
 
     normalizeUpgradedDeckIndices(run);
     normalizeStringVector(run.rewardCardPoolIds);
     normalizeStringVector(run.defeatedBossEnemyIds);
+    normalizeStringVector(run.eventFlags);
     if (run.currentFloorId.empty()) {
         run.currentFloorId = run.act <= 1 ? "floor1" : std::string("floor") + std::to_string(run.act);
     }
@@ -1034,11 +1117,14 @@ void normalizePendingRoomAfterLoad(RunState& run, const std::filesystem::path& s
     }
 }
 
+RunCompletionType inferredCompletionType(const RunState& run);
+
 RunState normalizedRunForSave(const RunState& run) {
     RunState normalized = run;
     normalizeUpgradedDeckIndices(normalized);
     normalizeStringVector(normalized.rewardCardPoolIds);
     normalizeStringVector(normalized.defeatedBossEnemyIds);
+    normalizeStringVector(normalized.eventFlags);
     if (normalized.currentFloorId.empty()) {
         normalized.currentFloorId = normalized.act <= 1 ? "floor1" : std::string("floor") + std::to_string(normalized.act);
     }
@@ -1050,10 +1136,62 @@ RunState normalizedRunForSave(const RunState& run) {
         normalizeStringVector(actor.relicIds);
     }
     RunRelicOwnership::rebuildLegacyRelicList(normalized);
+    if (normalized.activeItem.itemId.empty()) {
+        normalized.activeItem.clear();
+    } else {
+        normalized.activeItem.charge = std::max(0, normalized.activeItem.charge);
+    }
+    normalized.completionType = inferredCompletionType(normalized);
     if (normalized.pendingRoom.type == RunPendingRoomType::None) {
         normalized.pendingRoom.clear();
     }
+    normalized.phase = inferredRunPhase(normalized);
     return normalized;
+}
+
+
+std::string runCompletionTypeToString(const RunCompletionType type) {
+    switch (type) {
+        case RunCompletionType::InProgress:
+            return "in_progress";
+        case RunCompletionType::FloorCleared:
+            return "floor_cleared";
+        case RunCompletionType::PlayableContentComplete:
+            return "playable_content_complete";
+        case RunCompletionType::Victory:
+            return "victory";
+    }
+
+    return "in_progress";
+}
+
+RunCompletionType runCompletionTypeFromString(const std::string& value, const std::filesystem::path& sourcePath) {
+    if (value == "in_progress") {
+        return RunCompletionType::InProgress;
+    }
+    if (value == "floor_cleared") {
+        return RunCompletionType::FloorCleared;
+    }
+    if (value == "playable_content_complete") {
+        return RunCompletionType::PlayableContentComplete;
+    }
+    if (value == "victory") {
+        return RunCompletionType::Victory;
+    }
+
+    throwSaveError(sourcePath, "Unknown run completion type '" + value + "'");
+}
+
+RunCompletionType inferredCompletionType(const RunState& run) {
+    if (!run.actCompleted) {
+        return RunCompletionType::InProgress;
+    }
+
+    if (run.completionType != RunCompletionType::InProgress) {
+        return run.completionType;
+    }
+
+    return run.nextFloorId.empty() ? RunCompletionType::Victory : RunCompletionType::FloorCleared;
 }
 
 Json statsToJson(const RunStats& stats) {
@@ -1068,10 +1206,24 @@ Json statsToJson(const RunStats& stats) {
         {"chests_opened", stats.chestsOpened},
         {"rests_used", stats.restsUsed},
         {"rest_heals_used", stats.restHealsUsed},
+        {"rest_calms_used", stats.restCalmsUsed},
         {"rest_upgrades_used", stats.restUpgradesUsed},
         {"rest_skips", stats.restSkips},
         {"damage_taken", stats.damageTaken},
+        {"damage_dealt", stats.damageDealt},
+        {"damage_blocked", stats.damageBlocked},
+        {"block_gained", stats.blockGained},
+        {"combat_turns", stats.combatTurns},
+        {"cards_played_in_combat", stats.cardsPlayedInCombat},
+        {"energy_spent_on_cards", stats.energySpentOnCards},
+        {"maximum_single_hit", stats.maximumSingleHit},
+        {"longest_combat_turns", stats.longestCombatTurns},
+        {"most_cards_played_in_combat", stats.mostCardsPlayedInCombat},
         {"consumables_used", stats.consumablesUsed},
+        {"active_items_used", stats.activeItemsUsed},
+        {"active_item_charge_gained", stats.activeItemChargeGained},
+        {"active_items_gained", stats.activeItemsGained},
+        {"active_items_replaced", stats.activeItemsReplaced},
         {"gold_gained", stats.goldGained},
         {"gold_spent", stats.goldSpent},
         {"cards_added", stats.cardsAdded},
@@ -1097,10 +1249,24 @@ RunStats statsFromJson(const Json& json, const std::filesystem::path& sourcePath
     stats.chestsOpened = optionalInt(json, "chests_opened", sourcePath, 0);
     stats.restsUsed = optionalInt(json, "rests_used", sourcePath, 0);
     stats.restHealsUsed = optionalInt(json, "rest_heals_used", sourcePath, 0);
+    stats.restCalmsUsed = optionalInt(json, "rest_calms_used", sourcePath, 0);
     stats.restUpgradesUsed = optionalInt(json, "rest_upgrades_used", sourcePath, 0);
     stats.restSkips = optionalInt(json, "rest_skips", sourcePath, 0);
     stats.damageTaken = optionalInt(json, "damage_taken", sourcePath, 0);
+    stats.damageDealt = optionalInt(json, "damage_dealt", sourcePath, 0);
+    stats.damageBlocked = optionalInt(json, "damage_blocked", sourcePath, 0);
+    stats.blockGained = optionalInt(json, "block_gained", sourcePath, 0);
+    stats.combatTurns = optionalInt(json, "combat_turns", sourcePath, 0);
+    stats.cardsPlayedInCombat = optionalInt(json, "cards_played_in_combat", sourcePath, 0);
+    stats.energySpentOnCards = optionalInt(json, "energy_spent_on_cards", sourcePath, 0);
+    stats.maximumSingleHit = optionalInt(json, "maximum_single_hit", sourcePath, 0);
+    stats.longestCombatTurns = optionalInt(json, "longest_combat_turns", sourcePath, 0);
+    stats.mostCardsPlayedInCombat = optionalInt(json, "most_cards_played_in_combat", sourcePath, 0);
     stats.consumablesUsed = optionalInt(json, "consumables_used", sourcePath, 0);
+    stats.activeItemsUsed = optionalInt(json, "active_items_used", sourcePath, 0);
+    stats.activeItemChargeGained = optionalInt(json, "active_item_charge_gained", sourcePath, 0);
+    stats.activeItemsGained = optionalInt(json, "active_items_gained", sourcePath, 0);
+    stats.activeItemsReplaced = optionalInt(json, "active_items_replaced", sourcePath, 0);
     stats.goldGained = optionalInt(json, "gold_gained", sourcePath, 0);
     stats.goldSpent = optionalInt(json, "gold_spent", sourcePath, 0);
     stats.cardsAdded = optionalInt(json, "cards_added", sourcePath, 0);
@@ -1118,10 +1284,12 @@ RunStats statsFromJson(const Json& json, const std::filesystem::path& sourcePath
 Json RunStateSerializer::toJson(const RunState& run) {
     const RunState normalized = normalizedRunForSave(run);
     return Json{
-        {"version", 1},
+        {"version", 4},
         {"archetype_id", normalized.archetypeId.value},
         {"difficulty_id", normalized.difficultyId.value},
         {"archetype_mechanic_id", normalized.archetypeMechanicId},
+        {"challenge_id", normalized.challengeId},
+        {"phase", runPhaseToString(normalized.phase)},
         {"seed", normalized.seed},
         {"random_state", normalized.randomState},
         {"gold", normalized.gold},
@@ -1131,13 +1299,16 @@ Json RunStateSerializer::toJson(const RunState& run) {
         {"next_floor_id", normalized.nextFloorId},
         {"act_completed", normalized.actCompleted},
         {"completed_act", normalized.completedAct},
+        {"run_completion_type", runCompletionTypeToString(inferredCompletionType(normalized))},
         {"defeated_boss_enemy_ids", stringArray(normalized.defeatedBossEnemyIds)},
+        {"event_flags", stringArray(normalized.eventFlags)},
         {"enemy_hp_multiplier", normalized.enemyHpMultiplier},
         {"enemy_damage_multiplier", normalized.enemyDamageMultiplier},
         {"gold_reward_multiplier", normalized.goldRewardMultiplier},
         {"deck_card_ids", cardIdArray(normalized.deckCardIds)},
         {"upgraded_deck_indices", intArray(normalized.upgradedDeckIndices)},
         {"relic_ids", stringArray(normalized.relicIds)},
+        {"active_item", Json{{"item_id", normalized.activeItem.itemId}, {"charge", normalized.activeItem.charge}}},
         {"consumable_ids", stringArray(normalized.consumableIds)},
         {"max_consumables", normalized.maxConsumables},
         {"actor_definition_ids", stringArray(normalized.actorDefinitionIds)},
@@ -1151,7 +1322,7 @@ Json RunStateSerializer::toJson(const RunState& run) {
 
 RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::path& sourcePath) {
     const int version = requiredInt(json, "version", sourcePath);
-    if (version != 1) {
+    if (version != 1 && version != 2 && version != 3 && version != 4) {
         throwSaveError(sourcePath, "Unsupported run save version " + std::to_string(version));
     }
 
@@ -1159,6 +1330,10 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
     run.archetypeId = PlayableArchetypeId(requiredString(json, "archetype_id", sourcePath));
     run.difficultyId = DifficultyId(requiredString(json, "difficulty_id", sourcePath));
     run.archetypeMechanicId = optionalString(json, "archetype_mechanic_id", sourcePath, "default");
+    run.challengeId = optionalString(json, "challenge_id", sourcePath, "");
+    if (version >= 2) {
+        run.phase = runPhaseFromString(optionalString(json, "phase", sourcePath, "map"), sourcePath);
+    }
     run.seed = requiredUnsigned(json, "seed", sourcePath);
     if (const Json* randomState = optionalField(json, "random_state", sourcePath)) {
         if (!randomState->is_string()) {
@@ -1189,8 +1364,20 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
         }
         run.completedAct = completedAct->get<int>();
     }
+    run.completionType = runCompletionTypeFromString(
+        optionalString(
+            json,
+            "run_completion_type",
+            sourcePath,
+            run.actCompleted ? (run.nextFloorId.empty() ? "victory" : "floor_cleared") : "in_progress"
+        ),
+        sourcePath
+    );
     if (optionalField(json, "defeated_boss_enemy_ids", sourcePath) != nullptr) {
         run.defeatedBossEnemyIds = requiredStringArray(json, "defeated_boss_enemy_ids", sourcePath);
+    }
+    if (optionalField(json, "event_flags", sourcePath) != nullptr) {
+        run.eventFlags = requiredStringArray(json, "event_flags", sourcePath);
     }
     run.enemyHpMultiplier = optionalFloat(json, "enemy_hp_multiplier", sourcePath, 1.f);
     run.enemyDamageMultiplier = optionalFloat(json, "enemy_damage_multiplier", sourcePath, 1.f);
@@ -1208,6 +1395,13 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
 
     if (optionalField(json, "relic_ids", sourcePath) != nullptr) {
         run.relicIds = requiredStringArray(json, "relic_ids", sourcePath);
+    }
+    if (const Json* activeItem = optionalField(json, "active_item", sourcePath)) {
+        if (!activeItem->is_object()) {
+            throwSaveError(sourcePath, "active_item must be an object");
+        }
+        run.activeItem.itemId = optionalString(*activeItem, "item_id", sourcePath, "");
+        run.activeItem.charge = optionalInt(*activeItem, "charge", sourcePath, 0);
     }
     if (optionalField(json, "consumable_ids", sourcePath) != nullptr) {
         run.consumableIds = requiredStringArray(json, "consumable_ids", sourcePath);
@@ -1235,5 +1429,14 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
     validateRunMapAfterLoad(run, sourcePath);
     normalizePendingRoomAfterLoad(run, sourcePath);
 
+    const RunPhase expectedPhase = inferredRunPhase(run);
+    if (version >= 2 && run.phase != expectedPhase) {
+        throwSaveError(
+            sourcePath,
+            "phase '" + runPhaseToString(run.phase) + "' does not match run state; expected '" +
+                runPhaseToString(expectedPhase) + "'"
+        );
+    }
+    run.phase = expectedPhase;
     return run;
 }

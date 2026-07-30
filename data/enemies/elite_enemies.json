@@ -26,7 +26,10 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "grave_knight_cleave",
@@ -40,7 +43,10 @@
               "amount": 8
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "grave_knight_shield_breaker",
@@ -63,7 +69,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "grave_knight_execution",
@@ -77,9 +91,18 @@
               "amount": 18
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "defender"
   },
   {
     "id": "choir_executioner",
@@ -99,8 +122,29 @@
               "type": "fixed",
               "amount": 2
             }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "cost"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "choir_executioner_hook",
@@ -123,7 +167,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "choir_executioner_absolution",
@@ -146,7 +198,10 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       },
       {
         "id": "choir_executioner_sentence",
@@ -160,9 +215,18 @@
               "amount": 20
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "glass_collector",
@@ -183,7 +247,15 @@
             },
             "repeat_count": 3
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "glass_collector_splinter_jar",
@@ -198,7 +270,10 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "glass_collector_reflect",
@@ -220,8 +295,24 @@
               "type": "fixed",
               "amount": 1
             }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "frenzy"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "glass_collector_prism_rain",
@@ -244,9 +335,18 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "reliquary_guard",
@@ -275,7 +375,10 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       },
       {
         "id": "reliquary_guard_key_smite",
@@ -298,7 +401,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "reliquary_guard_shattering_swing",
@@ -312,7 +423,10 @@
               "amount": 9
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "reliquary_guard_denial",
@@ -327,9 +441,18 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "defender"
   },
   {
     "id": "carrion_matron",
@@ -350,7 +473,10 @@
               "amount": 3
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "carrion_matron_hooked_beak",
@@ -373,7 +499,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "carrion_matron_rotten_cover",
@@ -387,7 +521,10 @@
               "amount": 13
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "carrion_matron_wingstorm",
@@ -401,9 +538,13 @@
               "amount": 6
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "rust_tithe_collector",
@@ -432,7 +573,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "rust_tithe_collector_stampede",
@@ -446,7 +595,10 @@
               "amount": 6
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "rust_tithe_collector_ledger_wall",
@@ -469,7 +621,10 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "rust_tithe_collector_final_notice",
@@ -492,9 +647,21 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ],
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "waxen_headsman",
@@ -514,7 +681,10 @@
               "amount": 7
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "waxen_headsman_candle_oath",
@@ -537,7 +707,10 @@
               "amount": 8
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       },
       {
         "id": "waxen_headsman_paraffin_grip",
@@ -560,7 +733,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "waxen_headsman_falling_axe",
@@ -574,8 +755,17 @@
               "amount": 22
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "bruiser"
   }
 ]

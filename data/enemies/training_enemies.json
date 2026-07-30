@@ -17,7 +17,10 @@
               "amount": 6
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
       },
       {
         "id": "dummy_guard",
@@ -31,8 +34,12 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "striker"
   }
 ]

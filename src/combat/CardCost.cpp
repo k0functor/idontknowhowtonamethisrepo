@@ -1,5 +1,7 @@
 #include "CardCost.hpp"
 
+#include <algorithm>
+
 namespace {
 constexpr const char* freeNextCardStatusId = "free_next_card";
 }
@@ -31,7 +33,7 @@ int effectiveEnergyCost(
         return 0;
     }
 
-    return definition.energyCost;
+    return std::max(0, definition.energyCost + state.cardCostModifier(source));
 }
 
 void consumeFreeNextCard(

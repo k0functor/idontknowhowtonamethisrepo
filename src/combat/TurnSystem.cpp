@@ -10,8 +10,10 @@ TurnSystem::TurnSystem(
     const PlayerTurnSystem& playerTurnSystem,
     const EnemyTurnSystem& enemyTurnSystem,
     const EnemyMoveSelector& enemyMoveSelector,
+    const BossPhaseSystem& bossPhaseSystem,
     const StatusSystem& statusSystem,
     const DroneSystem& droneSystem,
+    const CombatController& combatController,
     const std::size_t handSize,
     const GameEventBus* eventBus
 )
@@ -19,8 +21,10 @@ TurnSystem::TurnSystem(
       playerTurnSystem_(playerTurnSystem),
       enemyTurnSystem_(enemyTurnSystem),
       enemyMoveSelector_(enemyMoveSelector),
+      bossPhaseSystem_(bossPhaseSystem),
       statusSystem_(statusSystem),
       droneSystem_(droneSystem),
+      combatController_(combatController),
       handSize_(handSize),
       eventBus_(eventBus) {}
 
@@ -57,7 +61,7 @@ void TurnSystem::startCombat(CombatState& state, Random& random) const {
     updateCombatResult(state);
 }
 
-void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
+void TurnSystem::endPlayerTurn(CombatState& state, Random& random, const bool skipEnemyActions) const {
     if (state.phase != CombatPhase::PlayerTurn) {
         return;
     }
@@ -83,7 +87,7 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
         }
     }
 
-    playerTurnSystem_.endTurn(state);
+    playerTurnSystem_.endTurn(state, random);
     droneSystem_.processEndOfPlayerTurn(state, random);
     if (!turnEndedEventEmitted) {
         emitTurnEvent(eventBus_, GameEventType::TurnEnded, state);
@@ -102,10 +106,12 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
         return;
     }
 
-    enemyTurnSystem_.executeTurn(state, enemyDatabase_, random);
+    if (!skipEnemyActions) {
+        enemyTurnSystem_.executeTurn(state, enemyDatabase_, random);
 
-    if (updateCombatResult(state)) {
-        return;
+        if (updateCombatResult(state)) {
+            return;
+        }
     }
 
     statusSystem_.onTurnEndedForSide(state, EntityType::Enemy);
@@ -118,29 +124,21 @@ void TurnSystem::endPlayerTurn(CombatState& state, Random& random) const {
 }
 
 void TurnSystem::refreshEnemyIntents(CombatState& state, Random& random) const {
+    bossPhaseSystem_.synchronizePhases(state, random);
+    bossPhaseSystem_.applyPlayerTurnEffects(state, random);
     enemyMoveSelector_.refreshIntents(state, enemyDatabase_, random);
 }
 
-void TurnSystem::refreshEnemyIntentValues(CombatState& state) const {
+void TurnSystem::refreshEnemyIntentValues(CombatState& state, Random& random) const {
+    if (bossPhaseSystem_.synchronizePhases(state, random)) {
+        enemyMoveSelector_.refreshIntents(state, enemyDatabase_, random);
+        return;
+    }
     enemyMoveSelector_.refreshIntentValues(state, enemyDatabase_);
 }
 
 bool TurnSystem::updateCombatResult(CombatState& state) const {
-    if (state.aliveEnemyIds().empty()) {
-        state.phase = CombatPhase::Won;
-        state.enemyIntents.clear();
-        state.log.add(CombatLogEntryType::CombatWon);
-        return true;
-    }
-
-    if (state.alivePlayerIds().empty()) {
-        state.phase = CombatPhase::Lost;
-        state.enemyIntents.clear();
-        state.log.add(CombatLogEntryType::CombatLost);
-        return true;
-    }
-
-    return false;
+    return combatController_.updateAfterAction(state).outcome != CombatOutcome::Ongoing;
 }
 
 void TurnSystem::startNextPlayerTurn(CombatState& state, Random& random) const {

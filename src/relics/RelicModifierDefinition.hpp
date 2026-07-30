@@ -6,9 +6,6 @@
 #include <string_view>
 
 enum class RelicModifierType {
-    OutgoingDamageAdd,
-    OutgoingDamageMultiply,
-    BlockAdd,
     GoldRewardMultiply
 };
 
@@ -16,7 +13,7 @@ std::string toString(RelicModifierType type);
 RelicModifierType relicModifierTypeFromString(std::string_view value);
 
 struct RelicModifierDefinition {
-    RelicModifierType type = RelicModifierType::OutgoingDamageAdd;
+    RelicModifierType type = RelicModifierType::GoldRewardMultiply;
 
     int amount = 0;
     double multiplier = 1.0;

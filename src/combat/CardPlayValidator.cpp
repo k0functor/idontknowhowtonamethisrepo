@@ -72,6 +72,17 @@ CardPlayValidationResult CardPlayValidator::validate(
         return invalidResult(CardPlayFailureReason::NotEnoughEnergy, "Not enough energy");
     }
 
+    int requiredStress = 0;
+    for (const EffectDefinition& effect : definition.effects) {
+        if (isStressConversionEffect(effect.type) && effect.value.isFixed()) {
+            requiredStress += effect.value.fixedAmount() * std::max(1, effect.repeatCount);
+        }
+    }
+
+    if (sourceEntity.stress < requiredStress) {
+        return invalidResult(CardPlayFailureReason::NotEnoughStress, "Not enough stress");
+    }
+
     const bool unplayable = std::find(
         definition.keywords.begin(),
         definition.keywords.end(),

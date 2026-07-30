@@ -30,15 +30,6 @@ std::string joinNames(const std::vector<std::string>& names) {
 std::string number(const int value) {
     return std::to_string(value);
 }
-
-std::string averagePerCombat(const int total, const int combats) {
-    if (combats <= 0) {
-        return "0";
-    }
-
-    const int rounded = static_cast<int>(static_cast<float>(total) / static_cast<float>(combats) + 0.5f);
-    return std::to_string(rounded);
-}
 }
 
 FloorCompleteScene::FloorCompleteScene(
@@ -48,6 +39,8 @@ FloorCompleteScene::FloorCompleteScene(
     const RelicDatabase& relics,
     const RunState& run,
     std::string nextFloorName,
+    std::string runModeLabel,
+    const RunCompletionType completionType,
     const bool canContinueToNextFloor,
     std::function<void()> onContinue,
     std::function<void()> onMainMenu
@@ -58,6 +51,8 @@ FloorCompleteScene::FloorCompleteScene(
       relics_(relics),
       run_(run),
       nextFloorName_(std::move(nextFloorName)),
+      runModeLabel_(std::move(runModeLabel)),
+      completionType_(completionType),
       canContinueToNextFloor_(canContinueToNextFloor),
       onContinue_(std::move(onContinue)),
       onMainMenu_(std::move(onMainMenu)) {}
@@ -89,139 +84,80 @@ void FloorCompleteScene::render() const {
     const Vector2 mouse = GetMousePosition();
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{10, 12, 18, 255});
-
     BasicUi::drawCenteredText(
         font_,
-        localization_.format(TextId("floor_complete.title"), {{"act", std::to_string(run_.completedAct > 0 ? run_.completedAct : run_.act)}}),
-        Rectangle{0.f, panel.y - 82.f, static_cast<float>(VirtualViewport::width()), 58.f},
-        42.f,
+        titleText(),
+        Rectangle{0.f, panel.y - 70.f, static_cast<float>(VirtualViewport::width()), 52.f},
+        40.f,
         Color{255, 228, 150, 255}
     );
 
     DrawRectangleRounded(panel, 0.035f, 14, Color{30, 33, 45, 250});
     DrawRectangleRoundedLinesEx(panel, 0.035f, 14, 3.f, Color{210, 172, 82, 255});
-
-    BasicUi::drawCenteredText(
-        font_,
-        localization_.get(TextId("floor_complete.subtitle")),
-        Rectangle{panel.x + 32.f, panel.y + 24.f, panel.width - 64.f, 40.f},
-        28.f,
-        Color{238, 240, 248, 255}
-    );
-
-    const std::vector<std::string> descriptionLines = BasicUi::wrapText(
-        font_,
-        localization_.get(TextId("floor_complete.description")),
-        18.f,
-        panel.width - 96.f
-    );
-
-    float y = panel.y + 78.f;
-    for (const std::string& line : descriptionLines) {
-        BasicUi::drawText(font_, line, Vector2{panel.x + 48.f, y}, 18.f, Color{190, 198, 220, 255});
-        y += 24.f;
-    }
-
-    y += 16.f;
-    BasicUi::drawText(
-        font_,
-        localization_.get(TextId("floor_complete.summary_title")),
-        Vector2{panel.x + 48.f, y},
-        24.f,
-        Color{255, 228, 150, 255}
-    );
-    y += 38.f;
+    renderRunModeBanner(panel);
 
     const std::vector<std::pair<std::string, std::string>> rows = statRows();
-    const std::size_t firstColumnCount = (rows.size() + 1u) / 2u;
-    const float columnGap = 24.f;
-    const float columnWidth = (panel.width - 96.f - columnGap) * 0.5f;
-    const float rowHeight = 29.f;
-    const float rowGap = 5.f;
+    constexpr std::size_t columnCount = 3u;
+    const std::size_t rowsPerColumn = std::max<std::size_t>(1u, (rows.size() + columnCount - 1u) / columnCount);
+    const float top = panel.y + (runModeLabel_.empty() ? 30.f : 68.f);
+    const float columnGap = 16.f;
+    const float columnWidth = (panel.width - 96.f - columnGap * static_cast<float>(columnCount - 1u)) /
+        static_cast<float>(columnCount);
+    const float rowHeight = 32.f;
+    const float rowGap = 7.f;
 
-    auto drawRow = [&](const Rectangle row, const std::string& label, const std::string& value) {
-        DrawRectangleRounded(row, 0.16f, 8, Color{40, 44, 58, 230});
+    for (std::size_t index = 0; index < rows.size(); ++index) {
+        const std::size_t column = index / rowsPerColumn;
+        const std::size_t rowIndex = index % rowsPerColumn;
+        const Rectangle row{
+            panel.x + 48.f + static_cast<float>(column) * (columnWidth + columnGap),
+            top + static_cast<float>(rowIndex) * (rowHeight + rowGap),
+            columnWidth,
+            rowHeight
+        };
+
+        DrawRectangleRounded(row, 0.14f, 8, Color{40, 44, 58, 230});
         BasicUi::drawTextFitted(
             font_,
-            label,
-            Vector2{row.x + 12.f, row.y + 7.f},
-            row.width * 0.46f,
-            16.f,
-            13.f,
+            rows[index].first,
+            Vector2{row.x + 9.f, row.y + 8.f},
+            row.width * 0.50f,
+            14.f,
+            11.f,
             Color{170, 178, 204, 255}
         );
         BasicUi::drawTextFitted(
             font_,
-            value,
-            Vector2{row.x + row.width * 0.52f, row.y + 7.f},
-            row.width * 0.45f,
-            16.f,
-            13.f,
+            rows[index].second,
+            Vector2{row.x + row.width * 0.54f, row.y + 8.f},
+            row.width * 0.40f,
+            14.f,
+            11.f,
             Color{238, 240, 248, 255}
         );
-    };
-
-    for (std::size_t index = 0; index < rows.size(); ++index) {
-        const std::size_t column = index < firstColumnCount ? 0u : 1u;
-        const std::size_t rowIndex = column == 0u ? index : index - firstColumnCount;
-        const Rectangle row{
-            panel.x + 48.f + static_cast<float>(column) * (columnWidth + columnGap),
-            y + static_cast<float>(rowIndex) * (rowHeight + rowGap),
-            columnWidth,
-            rowHeight
-        };
-        drawRow(row, rows[index].first, rows[index].second);
     }
 
-    y += static_cast<float>(firstColumnCount) * (rowHeight + rowGap) + 16.f;
-
-    BasicUi::drawText(
+    const float rowsBottom = top + static_cast<float>(rowsPerColumn) * (rowHeight + rowGap);
+    BasicUi::drawTextFitted(
         font_,
-        localization_.get(TextId("floor_complete.relic_list_label")),
-        Vector2{panel.x + 48.f, y},
-        20.f,
-        Color{255, 228, 150, 255}
-    );
-    y += 30.f;
-
-    const std::vector<std::string> relicLines = BasicUi::wrapText(font_, relicSummary(), 17.f, panel.width - 96.f);
-    for (const std::string& line : relicLines) {
-        BasicUi::drawText(font_, line, Vector2{panel.x + 48.f, y}, 17.f, Color{205, 211, 232, 255});
-        y += 22.f;
-    }
-
-    const Rectangle status = contentStatusBounds();
-    DrawRectangleRounded(status, 0.08f, 10, Color{42, 36, 30, 230});
-    DrawRectangleRoundedLinesEx(status, 0.08f, 10, 2.f, Color{190, 132, 70, 230});
-
-    const Rectangle nextFloorText{
-        status.x + 18.f,
-        status.y + 14.f,
-        status.width - 36.f,
-        48.f
-    };
-    drawWrappedTextBlock(
-        canContinueToNextFloor_
-            ? localization_.format(TextId("floor_complete.next_floor_ready"), {{"floor", nextFloorName_}})
-            : localization_.get(TextId("floor_complete.next_floor_placeholder")),
-        nextFloorText,
-        18.f,
-        Color{255, 226, 170, 255}
-    );
-
-    const Rectangle cleanupText{
-        status.x + 18.f,
-        status.y + 66.f,
-        status.width - 36.f,
-        52.f
-    };
-    drawWrappedTextBlock(
-        canContinueToNextFloor_
-            ? localization_.get(TextId("floor_complete.save_continue_note"))
-            : localization_.get(TextId("floor_complete.save_cleanup_note")),
-        cleanupText,
+        relicSummary(),
+        Vector2{panel.x + 48.f, rowsBottom + 12.f},
+        panel.width - 96.f,
         16.f,
-        Color{208, 198, 182, 255}
+        12.f,
+        Color{205, 211, 232, 255}
+    );
+
+    const Rectangle status = statusBounds();
+    DrawRectangleRounded(status, 0.10f, 10, Color{42, 36, 30, 255});
+    DrawRectangleRoundedLinesEx(status, 0.10f, 10, 2.f, Color{190, 132, 70, 230});
+    BasicUi::drawCenteredTextFitted(
+        font_,
+        statusText(),
+        Rectangle{status.x + 16.f, status.y + 8.f, status.width - 32.f, status.height - 16.f},
+        18.f,
+        13.f,
+        Color{255, 226, 170, 255}
     );
 
     BasicUi::drawButton(
@@ -230,15 +166,20 @@ void FloorCompleteScene::render() const {
         localization_.get(TextId(canContinueToNextFloor_ ? "floor_complete.continue_next" : "floor_complete.continue")),
         mouse
     );
-    BasicUi::drawButton(font_, mainMenuButtonBounds(), localization_.get(TextId("floor_complete.main_menu")), mouse);
+    BasicUi::drawButton(
+        font_,
+        mainMenuButtonBounds(),
+        localization_.get(TextId(canContinueToNextFloor_ ? "floor_complete.save_and_exit" : "floor_complete.main_menu")),
+        mouse
+    );
 }
 
 Rectangle FloorCompleteScene::panelBounds() const {
     const float width = std::min(1040.f, static_cast<float>(VirtualViewport::width()) - 92.f);
-    const float height = std::min(780.f, static_cast<float>(VirtualViewport::height()) - 160.f);
+    const float height = std::min(610.f, static_cast<float>(VirtualViewport::height()) - 178.f);
     return Rectangle{
         static_cast<float>(VirtualViewport::width()) * 0.5f - width * 0.5f,
-        static_cast<float>(VirtualViewport::height()) * 0.5f - height * 0.5f + 36.f,
+        static_cast<float>(VirtualViewport::height()) * 0.5f - height * 0.5f + 24.f,
         width,
         height
     };
@@ -248,41 +189,66 @@ Rectangle FloorCompleteScene::continueButtonBounds() const {
     const Rectangle panel = panelBounds();
     const float spacing = 24.f;
     const float width = std::min(300.f, (panel.width - 112.f - spacing) * 0.5f);
-    return Rectangle{panel.x + panel.width * 0.5f - width - spacing * 0.5f, panel.y + panel.height - 72.f, width, 52.f};
+    return Rectangle{panel.x + panel.width * 0.5f - width - spacing * 0.5f, panel.y + panel.height - 66.f, width, 48.f};
 }
 
 Rectangle FloorCompleteScene::mainMenuButtonBounds() const {
     const Rectangle panel = panelBounds();
     const float spacing = 24.f;
     const float width = std::min(300.f, (panel.width - 112.f - spacing) * 0.5f);
-    return Rectangle{panel.x + panel.width * 0.5f + spacing * 0.5f, panel.y + panel.height - 72.f, width, 52.f};
+    return Rectangle{panel.x + panel.width * 0.5f + spacing * 0.5f, panel.y + panel.height - 66.f, width, 48.f};
 }
 
-Rectangle FloorCompleteScene::contentStatusBounds() const {
+Rectangle FloorCompleteScene::statusBounds() const {
     const Rectangle panel = panelBounds();
-    return Rectangle{
-        panel.x + 48.f,
-        panel.y + panel.height - 214.f,
-        panel.width - 96.f,
-        126.f
-    };
+    return Rectangle{panel.x + 48.f, panel.y + panel.height - 128.f, panel.width - 96.f, 46.f};
 }
 
-void FloorCompleteScene::drawWrappedTextBlock(
-    const std::string& text,
-    const Rectangle bounds,
-    const float fontSize,
-    const Color color
-) const {
-    float y = bounds.y;
-    const std::vector<std::string> lines = BasicUi::wrapText(font_, text, fontSize, bounds.width);
-    for (const std::string& line : lines) {
-        if (y + fontSize > bounds.y + bounds.height) {
-            break;
-        }
-        BasicUi::drawText(font_, line, Vector2{bounds.x, y}, fontSize, color);
-        y += fontSize + 5.f;
+void FloorCompleteScene::renderRunModeBanner(const Rectangle panel) const {
+    if (runModeLabel_.empty()) {
+        return;
     }
+
+    const float width = std::min(560.f, panel.width - 96.f);
+    const Rectangle banner{panel.x + (panel.width - width) * 0.5f, panel.y + 22.f, width, 28.f};
+    DrawRectangleRounded(banner, 0.28f, 12, Color{58, 42, 82, 235});
+    DrawRectangleRoundedLinesEx(banner, 0.28f, 12, 1.5f, Color{194, 152, 236, 230});
+    BasicUi::drawCenteredText(font_, runModeLabel_, banner, 15.f, Color{238, 226, 255, 255});
+}
+
+bool FloorCompleteScene::isVictoryCompletion() const {
+    return completionType_ == RunCompletionType::Victory;
+}
+
+bool FloorCompleteScene::isContentComplete() const {
+    return completionType_ == RunCompletionType::PlayableContentComplete;
+}
+
+bool FloorCompleteScene::isFinalRunCompletion() const {
+    return isVictoryCompletion() || isContentComplete();
+}
+
+std::string FloorCompleteScene::titleText() const {
+    if (isVictoryCompletion()) {
+        return localization_.get(TextId("run_complete.title"));
+    }
+    if (isContentComplete()) {
+        return localization_.get(TextId("playable_content_complete.title"));
+    }
+    return localization_.format(
+        TextId("floor_complete.title"),
+        {{"act", std::to_string(run_.completedAct > 0 ? run_.completedAct : run_.act)}}
+    );
+}
+
+std::string FloorCompleteScene::statusText() const {
+    if (canContinueToNextFloor_) {
+        return localization_.format(TextId("floor_complete.next_floor_ready"), {{"floor", nextFloorName_}});
+    }
+    if (isVictoryCompletion()) {
+        return localization_.get(TextId("run_complete.status"));
+    }
+    return localization_.get(TextId("playable_content_complete.status_short"));
 }
 
 std::string FloorCompleteScene::bossSummary() const {
@@ -295,12 +261,21 @@ std::string FloorCompleteScene::bossSummary() const {
             names.push_back(bossId);
         }
     }
+    return names.empty() ? localization_.get(TextId("floor_complete.boss_unknown")) : joinNames(names);
+}
 
-    if (names.empty()) {
-        return localization_.get(TextId("floor_complete.boss_unknown"));
+std::string FloorCompleteScene::floorProgressSummary() const {
+    const int cleared = run_.completedAct > 0 ? run_.completedAct : run_.currentFloorIndex;
+    if (isVictoryCompletion()) {
+        return localization_.format(TextId("run_complete.floors_value"), {{"cleared", std::to_string(std::max(1, cleared))}});
     }
-
-    return joinNames(names);
+    if (isContentComplete()) {
+        return std::to_string(std::max(1, cleared));
+    }
+    return localization_.format(
+        TextId("floor_complete.floor_progress_value_short"),
+        {{"current", std::to_string(std::max(1, cleared))}, {"next", nextFloorName_.empty() ? "?" : nextFloorName_}}
+    );
 }
 
 std::string FloorCompleteScene::hpSummary() const {
@@ -310,69 +285,39 @@ std::string FloorCompleteScene::hpSummary() const {
         current += std::max(0, actor.currentHp);
         maximum += std::max(0, actor.maxHp);
     }
-
-    return localization_.format(
-        TextId("floor_complete.hp_value"),
-        {{"current", std::to_string(current)}, {"maximum", std::to_string(std::max(1, maximum))}}
-    );
+    return std::to_string(current) + "/" + std::to_string(std::max(1, maximum));
 }
 
 std::string FloorCompleteScene::relicSummary() const {
     std::vector<std::string> names;
     names.reserve(run_.relicIds.size());
-
     for (const std::string& relicId : run_.relicIds) {
         const RelicId id(relicId);
         if (relics_.contains(id)) {
             names.push_back(localization_.get(relics_.get(id).nameTextId));
-        } else if (!relicId.empty()) {
-            names.push_back(relicId);
         }
     }
-
-    if (names.empty()) {
-        return localization_.get(TextId("floor_complete.no_relics"));
-    }
-
-    return joinNames(names);
+    return names.empty() ? localization_.get(TextId("floor_complete.no_relics")) : joinNames(names);
 }
 
 std::string FloorCompleteScene::consumableSummary() const {
-    return localization_.format(
-        TextId("floor_complete.consumables_value"),
-        {{"current", std::to_string(run_.consumableIds.size())}, {"maximum", std::to_string(std::max(0, run_.maxConsumables))}}
-    );
+    return std::to_string(run_.consumableIds.size()) + "/" + std::to_string(std::max(0, run_.maxConsumables));
 }
 
 std::vector<std::pair<std::string, std::string>> FloorCompleteScene::statRows() const {
     return {
+        {localization_.get(TextId(isFinalRunCompletion() ? "run_complete.floors_label" : "floor_complete.floor_progress_label")), floorProgressSummary()},
         {localization_.get(TextId("floor_complete.boss_label")), bossSummary()},
-        {localization_.get(TextId("floor_complete.seed_label")), std::to_string(run_.seed)},
         {localization_.get(TextId("floor_complete.hp_label")), hpSummary()},
         {localization_.get(TextId("floor_complete.gold_label")), number(run_.gold)},
         {localization_.get(TextId("floor_complete.deck_label")), number(static_cast<int>(run_.deckCardIds.size()))},
         {localization_.get(TextId("floor_complete.relics_label")), number(static_cast<int>(run_.relicIds.size()))},
         {localization_.get(TextId("floor_complete.consumables_label")), consumableSummary()},
         {localization_.get(TextId("floor_complete.combats_label")), number(run_.stats.combatsWon)},
-        {localization_.get(TextId("floor_complete.average_damage_label")), averagePerCombat(run_.stats.damageTaken, run_.stats.combatsWon + run_.stats.combatsLost)},
         {localization_.get(TextId("floor_complete.enemies_label")), number(run_.stats.enemiesKilled)},
         {localization_.get(TextId("floor_complete.elites_label")), number(run_.stats.elitesKilled)},
-        {localization_.get(TextId("floor_complete.events_label")), number(run_.stats.eventsCompleted)},
-        {localization_.get(TextId("floor_complete.shops_label")), number(run_.stats.shopsVisited)},
-        {localization_.get(TextId("floor_complete.chests_label")), number(run_.stats.chestsOpened)},
-        {localization_.get(TextId("floor_complete.rests_label")), number(run_.stats.restsUsed)},
-        {localization_.get(TextId("floor_complete.rest_heals_label")), number(run_.stats.restHealsUsed)},
-        {localization_.get(TextId("floor_complete.rest_upgrades_label")), number(run_.stats.restUpgradesUsed)},
-        {localization_.get(TextId("floor_complete.rest_skips_label")), number(run_.stats.restSkips)},
         {localization_.get(TextId("floor_complete.damage_taken_label")), number(run_.stats.damageTaken)},
-        {localization_.get(TextId("floor_complete.consumables_used_label")), number(run_.stats.consumablesUsed)},
-        {localization_.get(TextId("floor_complete.gold_gained_label")), number(run_.stats.goldGained)},
-        {localization_.get(TextId("floor_complete.gold_spent_label")), number(run_.stats.goldSpent)},
-        {localization_.get(TextId("floor_complete.cards_added_label")), number(run_.stats.cardsAdded)},
-        {localization_.get(TextId("floor_complete.cards_removed_label")), number(run_.stats.cardsRemoved)},
         {localization_.get(TextId("floor_complete.cards_upgraded_label")), number(run_.stats.cardsUpgraded)},
-        {localization_.get(TextId("floor_complete.cards_skipped_label")), number(run_.stats.cardsSkipped)},
-        {localization_.get(TextId("floor_complete.rewards_skipped_label")), number(run_.stats.rewardsSkipped)},
         {localization_.get(TextId("floor_complete.nodes_label")), number(run_.stats.nodesCompleted)}
     };
 }

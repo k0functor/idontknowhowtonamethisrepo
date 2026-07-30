@@ -59,7 +59,7 @@ private:
     std::string statusStackRuntimeDescription(const std::string& statusId, int amount) const;
     std::string statusTypeText(StatusType type) const;
     std::string statusDurationText(StatusDurationRule rule) const;
-    std::string statusEndTurnEffectText(const std::string& effectId) const;
+    std::string statusEndTurnEffectText(StatusTriggerLogType logType) const;
     std::string effectSummary(const EffectDefinition& effect) const;
     std::string droneActionSummary(const DroneActionDefinition& action) const;
     std::string relicRarityText(RelicRarity rarity) const;

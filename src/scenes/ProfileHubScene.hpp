@@ -9,6 +9,7 @@
 #include "ui/UiFont.hpp"
 
 #include <functional>
+#include <string>
 #include <vector>
 
 class ProfileHubScene final : public Scene {
@@ -20,9 +21,14 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         std::vector<const PlayableArchetypeDefinition*> archetypes,
+        std::vector<std::string> unlockedArchetypeIds,
         bool hasSavedRun,
         std::function<void(PlayableArchetypeId)> onStartRun,
         std::function<void()> onContinueRun,
+        std::function<void()> onOpenChallenges,
+        std::function<void()> onOpenAchievements,
+        std::function<void()> onOpenCompendium,
+        std::function<void()> onOpenProgress,
         std::function<void()> onBack
     );
 
@@ -32,6 +38,9 @@ public:
 private:
     void moveSelection(int direction);
     const PlayableArchetypeDefinition& selectedArchetype() const;
+    bool isArchetypeUnlocked(const PlayableArchetypeDefinition& archetype) const;
+    bool isArchetypePlayable(const PlayableArchetypeDefinition& archetype) const;
+    std::string lockedTextFor(const PlayableArchetypeDefinition& archetype) const;
 
     void updateDetailsModal();
     void renderDetailsModal() const;
@@ -49,9 +58,14 @@ private:
     const CardDatabase& cards_;
     const RelicDatabase& relics_;
     std::vector<const PlayableArchetypeDefinition*> archetypes_;
+    std::vector<std::string> unlockedArchetypeIds_;
     bool hasSavedRun_ = false;
     std::function<void(PlayableArchetypeId)> onStartRun_;
     std::function<void()> onContinueRun_;
+    std::function<void()> onOpenChallenges_;
+    std::function<void()> onOpenAchievements_;
+    std::function<void()> onOpenCompendium_;
+    std::function<void()> onOpenProgress_;
     std::function<void()> onBack_;
 
     std::size_t selectedIndex_ = 0;

@@ -22,5 +22,7 @@ struct EffectContext {
 
     DiceCorruption diceCorruption;
 
+    bool usesActorStats = false;
+
     Random* random = nullptr;
 };

@@ -8,6 +8,15 @@
 #include <string>
 
 namespace {
+RunMapPlacementRules parsePlacementRules(
+    const JsonReader& reader,
+    RunMapPlacementRules fallback
+) {
+    fallback.maxPerLayer = reader.optionalInt("max_per_layer", fallback.maxPerLayer);
+    fallback.minLayerGap = reader.optionalInt("min_layer_gap", fallback.minLayerGap);
+    return fallback;
+}
+
 RunMapSpecialNodeConfig parseSpecialNodeConfig(
     const Json& json,
     const RunMapSpecialNodeConfig& fallback,
@@ -24,6 +33,7 @@ RunMapSpecialNodeConfig parseSpecialNodeConfig(
     result.minLayer = reader.optionalInt("min_layer", result.minLayer);
     result.maxLayer = reader.optionalInt("max_layer", result.maxLayer);
     result.fullLayer = reader.optionalBool("full_layer", result.fullLayer);
+    result.placement = parsePlacementRules(reader, result.placement);
     return result;
 }
 
@@ -42,6 +52,7 @@ RunMapEliteConfig parseEliteConfig(
     result.maximum = reader.optionalInt("max", result.maximum);
     result.minLayer = reader.optionalInt("min_layer", result.minLayer);
     result.maxLayer = reader.optionalInt("max_layer", result.maxLayer);
+    result.placement = parsePlacementRules(reader, result.placement);
     return result;
 }
 
@@ -60,6 +71,7 @@ RunMapEventConfig parseEventConfig(
     result.maximum = reader.optionalInt("max", result.maximum);
     result.minLayer = reader.optionalInt("min_layer", result.minLayer);
     result.maxLayer = reader.optionalInt("max_layer", result.maxLayer);
+    result.placement = parsePlacementRules(reader, result.placement);
     return result;
 }
 
@@ -137,6 +149,20 @@ int capacityInRange(
         capacity += layerNodeCounts[static_cast<std::size_t>(layer)];
     }
     return capacity;
+}
+
+void validatePlacementRules(
+    const RunMapPlacementRules& placement,
+    const std::filesystem::path& filePath,
+    const std::string& owner
+) {
+    if (placement.maxPerLayer < 0) {
+        throw std::runtime_error(filePath.string() + ": " + owner + ".max_per_layer must not be negative");
+    }
+
+    if (placement.minLayerGap < 0) {
+        throw std::runtime_error(filePath.string() + ": " + owner + ".min_layer_gap must not be negative");
+    }
 }
 }
 
@@ -305,6 +331,7 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
     if (shop_.count < 0) {
         throw std::runtime_error(filePath.string() + ": shop.count must not be negative");
     }
+    validatePlacementRules(shop_.placement, filePath, "shop");
 
     if (shop_.minLayer < firstMiddleLayer || shop_.maxLayer > lastMiddleLayer || shop_.minLayer > shop_.maxLayer) {
         throw std::runtime_error(filePath.string() + ": shop layer range must be inside middle layers");
@@ -313,6 +340,7 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
     if (chests_.count < 0) {
         throw std::runtime_error(filePath.string() + ": chests.count must not be negative");
     }
+    validatePlacementRules(chests_.placement, filePath, "chests");
 
     if (chests_.count > 0 && (chests_.minLayer < firstMiddleLayer || chests_.maxLayer > lastMiddleLayer || chests_.minLayer > chests_.maxLayer)) {
         throw std::runtime_error(filePath.string() + ": chests layer range must be inside middle layers");
@@ -336,6 +364,7 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
     if (elites_.minimum < 0 || elites_.maximum < 0 || elites_.minimum > elites_.maximum) {
         throw std::runtime_error(filePath.string() + ": elite min/max must be non-negative and min <= max");
     }
+    validatePlacementRules(elites_.placement, filePath, "elites");
 
     if (elites_.minLayer < firstMiddleLayer || elites_.maxLayer > lastMiddleLayer || elites_.minLayer > elites_.maxLayer) {
         throw std::runtime_error(filePath.string() + ": elite layer range must be inside middle layers");
@@ -345,6 +374,7 @@ void RunMapGenerationConfig::validate(const std::filesystem::path& filePath) con
         if (events_.minimum < 0 || events_.maximum < 0 || events_.minimum > events_.maximum) {
             throw std::runtime_error(filePath.string() + ": event min/max must be non-negative and min <= max");
         }
+        validatePlacementRules(events_.placement, filePath, "events");
 
         if (events_.minLayer < firstMiddleLayer || events_.maxLayer > lastMiddleLayer || events_.minLayer > events_.maxLayer) {
             throw std::runtime_error(filePath.string() + ": event layer range must be inside middle layers");

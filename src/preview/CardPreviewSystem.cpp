@@ -3,6 +3,7 @@
 #include "cards/CardUpgrade.hpp"
 #include "combat/CardCost.hpp"
 #include "combat/EffectContext.hpp"
+#include "combat/EffectScaling.hpp"
 
 #include <optional>
 #include <utility>
@@ -118,6 +119,7 @@ CardPreview CardPreviewSystem::previewCard(
     preview.unplayableReasonCode = validation.failureReason;
     preview.unplayableReason = validation.reason;
 
+    int cumulativeStressCost = 0;
     for (const EffectDefinition& effect : definition.effects) {
         const ResolvedEffectValue resolved = effectResolver_.resolveForPreview(effect.value);
         const std::optional<EntityId> effectTarget = previewTargetForEffect(
@@ -127,46 +129,67 @@ CardPreview CardPreviewSystem::previewCard(
             target
         );
 
+        const int scalingBonus = effectScalingBonus(state, effect, source, effectTarget);
+        const int scaledMinimum = std::max(0, resolved.minimum + scalingBonus);
+        const int scaledMaximum = std::max(0, resolved.maximum + scalingBonus);
+
         EffectPreview effectPreview;
         effectPreview.type = effect.type;
         effectPreview.target = effect.target;
-        effectPreview.value = PreviewValue{resolved.minimum, resolved.maximum};
+        effectPreview.value = PreviewValue{scaledMinimum, scaledMaximum};
         effectPreview.repeatCount = effect.repeatCount;
         effectPreview.statusId = effect.statusId;
 
-        if (effect.type == EffectType::Damage) {
+        CombatState postStressSpendState;
+        const CombatState* modifierState = &state;
+        if (isStressConversionEffect(effect.type)) {
+            effectPreview.stressCost = resolved.minimum;
+            effectPreview.value = PreviewValue{effect.outputAmount, effect.outputAmount};
+            cumulativeStressCost += resolved.minimum * std::max(1, effect.repeatCount);
+            if (state.hasEntity(source)) {
+                postStressSpendState = state;
+                CombatEntity& previewSource = postStressSpendState.entity(source);
+                previewSource.stress = std::max(0, previewSource.stress - cumulativeStressCost);
+                modifierState = &postStressSpendState;
+            }
+        }
+
+        if (effect.type == EffectType::Damage || effect.type == EffectType::SpendStressDamage) {
             if (effectTarget.has_value() && state.hasEntity(*effectTarget)) {
                 effectPreview.damage = damageSystem_.previewDamage(
-                    state,
+                    *modifierState,
                     source,
                     *effectTarget,
-                    resolved.minimum,
-                    resolved.maximum,
+                    effect.type == EffectType::SpendStressDamage ? effect.outputAmount : scaledMinimum,
+                    effect.type == EffectType::SpendStressDamage ? effect.outputAmount : scaledMaximum,
                     definition.id,
-                    definition.diceCorruption
+                    definition.diceCorruption,
+                    true
                 );
             } else {
                 effectPreview.damage = damageSystem_.previewOutgoingDamage(
-                    state,
+                    *modifierState,
                     source,
-                    resolved.minimum,
-                    resolved.maximum,
+                    effect.type == EffectType::SpendStressDamage ? effect.outputAmount : scaledMinimum,
+                    effect.type == EffectType::SpendStressDamage ? effect.outputAmount : scaledMaximum,
                     definition.id,
-                    definition.diceCorruption
+                    definition.diceCorruption,
+                    true
                 );
             }
         }
 
-        if (effect.type == EffectType::Block) {
+        if (effect.type == EffectType::Block || effect.type == EffectType::SpendStressBlock) {
             const EntityId blockTarget = effectTarget.value_or(source);
             const ModifiedValueRange blockRange = blockSystem_.previewBlock(
                 state,
                 source,
                 blockTarget,
-                resolved.minimum,
-                resolved.maximum,
+                effect.type == EffectType::SpendStressBlock ? effect.outputAmount : scaledMinimum,
+                effect.type == EffectType::SpendStressBlock ? effect.outputAmount : scaledMaximum,
                 definition.id,
-                definition.diceCorruption
+                definition.diceCorruption,
+                true
             );
             effectPreview.value = PreviewValue{blockRange.modifiedMin, blockRange.modifiedMax};
         }

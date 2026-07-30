@@ -1,8 +1,12 @@
 #pragma once
 
+#include "consumables/ConsumableDatabase.hpp"
+#include "data/CardDatabase.hpp"
 #include "events/RunEventDefinition.hpp"
+#include "events/RunEventChoicePreviewFormatter.hpp"
 #include "events/RunEventRequirement.hpp"
 #include "localization/LocalizationManager.hpp"
+#include "relics/RelicDatabase.hpp"
 #include "run/RunState.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
@@ -18,6 +22,9 @@ public:
     EventScene(
         const UiFont& font,
         const LocalizationManager& localization,
+        const CardDatabase& cards,
+        const RelicDatabase& relics,
+        const ConsumableDatabase& consumables,
         const RunState& runState,
         const RunEventDefinition& event,
         std::function<void(const RunEventChoiceDefinition&)> onChoice
@@ -32,11 +39,11 @@ private:
     RunEventChoiceAvailability choiceAvailability(const RunEventChoiceDefinition& choice) const;
     std::string choiceDescription(const RunEventChoiceDefinition& choice) const;
     std::string choiceUnavailableText(const RunEventChoiceAvailability& availability) const;
-    std::string blockReasonText(const RunEventChoiceBlockReason& reason) const;
 
 private:
     const UiFont& font_;
     const LocalizationManager& localization_;
+    RunEventChoicePreviewFormatter previewFormatter_;
     const RunState& runState_;
     const RunEventDefinition& event_;
     std::function<void(const RunEventChoiceDefinition&)> onChoice_;

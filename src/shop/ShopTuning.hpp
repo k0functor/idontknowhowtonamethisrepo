@@ -15,6 +15,7 @@ public:
     int cardRemovalPrice() const;
     int minimumCardPrice() const;
     int minimumConsumablePrice() const;
+    int activeItemOfferChancePercent() const;
     int merchantRestCardOfferCount() const;
     int merchantRestMaxCardPurchases() const;
     double merchantRestCardPriceMultiplier() const;
@@ -27,6 +28,7 @@ private:
     int cardRemovalPrice_ = 75;
     int minimumCardPrice_ = 20;
     int minimumConsumablePrice_ = 25;
+    int activeItemOfferChancePercent_ = 55;
     int merchantRestCardOfferCount_ = 5;
     int merchantRestMaxCardPurchases_ = 2;
     double merchantRestCardPriceMultiplier_ = 1.0;

@@ -1,8 +1,9 @@
 #pragma once
 
 #include "data/EnemyDatabase.hpp"
-#include "relics/RelicDatabase.hpp"
 #include "localization/LocalizationManager.hpp"
+#include "relics/RelicDatabase.hpp"
+#include "run/RunCompletionType.hpp"
 #include "run/RunState.hpp"
 #include "scenes/Scene.hpp"
 #include "ui/UiFont.hpp"
@@ -20,6 +21,8 @@ public:
         const RelicDatabase& relics,
         const RunState& run,
         std::string nextFloorName,
+        std::string runModeLabel,
+        RunCompletionType completionType,
         bool canContinueToNextFloor,
         std::function<void()> onContinue,
         std::function<void()> onMainMenu
@@ -32,9 +35,15 @@ private:
     Rectangle panelBounds() const;
     Rectangle continueButtonBounds() const;
     Rectangle mainMenuButtonBounds() const;
-    Rectangle contentStatusBounds() const;
-    void drawWrappedTextBlock(const std::string& text, Rectangle bounds, float fontSize, Color color) const;
+    Rectangle statusBounds() const;
+    void renderRunModeBanner(Rectangle panel) const;
+    bool isVictoryCompletion() const;
+    bool isContentComplete() const;
+    bool isFinalRunCompletion() const;
+    std::string titleText() const;
+    std::string statusText() const;
     std::string bossSummary() const;
+    std::string floorProgressSummary() const;
     std::string hpSummary() const;
     std::string relicSummary() const;
     std::string consumableSummary() const;
@@ -47,6 +56,8 @@ private:
     const RelicDatabase& relics_;
     const RunState& run_;
     std::string nextFloorName_;
+    std::string runModeLabel_;
+    RunCompletionType completionType_ = RunCompletionType::InProgress;
     bool canContinueToNextFloor_ = false;
     std::function<void()> onContinue_;
     std::function<void()> onMainMenu_;

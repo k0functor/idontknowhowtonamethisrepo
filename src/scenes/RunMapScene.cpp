@@ -10,6 +10,7 @@
 #include "consumables/ConsumableDefinition.hpp"
 #include "localization/TextFormatter.hpp"
 #include "relics/RelicDefinition.hpp"
+#include "run/StressEconomyRules.hpp"
 #include "ui/BasicUi.hpp"
 #include "ui/CardTransform.hpp"
 #include "ui/CardViewModel.hpp"
@@ -32,6 +33,14 @@ constexpr float NODE_WIDTH = 108.f;
 constexpr float NODE_HEIGHT = 64.f;
 constexpr float CARD_GRID_GAP = 20.f;
 constexpr int CARD_GRID_MAX_COLUMNS = 5;
+constexpr float MAP_SCROLL_EPSILON = 1.f;
+constexpr float MAP_EDGE_SCROLL_ZONE = 86.f;
+constexpr float MAP_EDGE_SCROLL_MAX_SPEED = 980.f;
+constexpr float MAP_VIEWPORT_MARGIN_X = 32.f;
+constexpr float MAP_VIEWPORT_TOP = 96.f;
+constexpr float MAP_VIEWPORT_MIN_HEIGHT = 150.f;
+constexpr float MAP_VIEWPORT_BOTTOM_RESERVE = 78.f;
+constexpr float MAP_CONTENT_EDGE_PADDING = 118.f;
 
 Vector2 standardCardSlotSize() {
     const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
@@ -105,11 +114,14 @@ RunMapScene::RunMapScene(
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
     const RunState& runState,
+    std::string runModeLabel,
     std::function<void(int)> onNodeSelected,
     std::function<void(int)> onRestHeal,
+    std::function<void(int)> onRestCalm,
     std::function<void(int, std::size_t)> onRestUpgrade,
     std::function<void(int)> onRestSkip,
-    std::function<void()> onBackToHub
+    std::function<void()> onBackToHub,
+    std::function<void()> onAbandonRun
 )
     : font_(font),
       localization_(localization),
@@ -117,14 +129,24 @@ RunMapScene::RunMapScene(
       relics_(relics),
       consumables_(consumables),
       runState_(runState),
+      runModeLabel_(std::move(runModeLabel)),
       onNodeSelected_(std::move(onNodeSelected)),
       onRestHeal_(std::move(onRestHeal)),
+      onRestCalm_(std::move(onRestCalm)),
       onRestUpgrade_(std::move(onRestUpgrade)),
       onRestSkip_(std::move(onRestSkip)),
-      onBackToHub_(std::move(onBackToHub)) {}
+      onBackToHub_(std::move(onBackToHub)),
+      onAbandonRun_(std::move(onAbandonRun)) {
+    mapScrollOffset_ = initialMapScrollOffset();
+}
 
-void RunMapScene::update(float) {
+void RunMapScene::update(const float deltaSeconds) {
     const Vector2 mouse = GetMousePosition();
+
+    if (abandonConfirmationOpen_) {
+        updateAbandonConfirmation(mouse);
+        return;
+    }
 
     if (overlayMode_ != OverlayMode::None) {
         updateOverlay(mouse);
@@ -135,6 +157,13 @@ void RunMapScene::update(float) {
         updateRestModal(mouse);
         return;
     }
+
+    if (IsKeyPressed(KEY_F)) {
+        focusMapOnPreferredNode();
+        return;
+    }
+
+    updateMapScroll(deltaSeconds);
 
     if (IsKeyPressed(KEY_D)) {
         openOverlay(OverlayMode::Deck);
@@ -157,6 +186,11 @@ void RunMapScene::update(float) {
         return;
     }
 
+    if (BasicUi::contains(abandonButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        abandonConfirmationOpen_ = true;
+        return;
+    }
+
     if (BasicUi::contains(deckButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         openOverlay(OverlayMode::Deck);
         return;
@@ -169,6 +203,10 @@ void RunMapScene::update(float) {
 
     if (BasicUi::contains(consumablesButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         openOverlay(OverlayMode::Consumables);
+        return;
+    }
+
+    if (!BasicUi::contains(mapViewportBounds(), mouse)) {
         return;
     }
 
@@ -200,6 +238,7 @@ void RunMapScene::render() const {
     const Vector2 mouse = GetMousePosition();
 
     BasicUi::drawButton(font_, Rectangle{32.f, 32.f, 230.f, 48.f}, localization_.get(TextId("settings.save_and_exit")), mouse);
+    BasicUi::drawButton(font_, abandonButtonBounds(), localization_.get(TextId("run.abandon")), mouse);
     BasicUi::drawButton(font_, deckButtonBounds(), localization_.get(TextId("run.view_deck")), mouse);
     BasicUi::drawButton(font_, relicsButtonBounds(), localization_.get(TextId("run.view_relics")), mouse);
     BasicUi::drawButton(font_, consumablesButtonBounds(), localization_.get(TextId("run.view_consumables")), mouse);
@@ -220,7 +259,20 @@ void RunMapScene::render() const {
         Color{220, 185, 230, 255}
     );
 
+    renderRunModeBanner();
+
+    const Rectangle viewport = mapViewportBounds();
+    DrawRectangleRounded(viewport, 0.035f, 10, Color{12, 14, 22, 132});
+    DrawRectangleRoundedLinesEx(viewport, 0.035f, 10, 1.5f, Color{68, 76, 104, 180});
+
     const RunMapNode* hoveredNode = hoveredMapNode(mouse);
+
+    BeginScissorMode(
+        static_cast<int>(std::round(viewport.x)),
+        static_cast<int>(std::round(viewport.y)),
+        static_cast<int>(std::round(viewport.width)),
+        static_cast<int>(std::round(viewport.height))
+    );
 
     for (const RunMapNode& node : runState_.map.nodes) {
         const Vector2 from = nodeScreenPosition(node);
@@ -256,8 +308,13 @@ void RunMapScene::render() const {
         BasicUi::drawCenteredText(font_, nodeLabel(node), bounds, 18.f, nodeTextColor(node));
     }
 
+    EndScissorMode();
+
     renderMapLegend();
 
+    if (hoveredNode != nullptr) {
+        renderMapNodeInspect(*hoveredNode);
+    }
 
     if (restModalNodeId_.has_value()) {
         renderRestModal();
@@ -266,40 +323,163 @@ void RunMapScene::render() const {
     if (overlayMode_ != OverlayMode::None) {
         renderOverlay();
     }
+
+    if (abandonConfirmationOpen_) {
+        renderAbandonConfirmation();
+    }
 }
 
 Vector2 RunMapScene::nodeScreenPosition(const RunMapNode& node) const {
     const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
-
-    const float rawWidth = safeDimension(rawBounds.maxX - rawBounds.minX);
-    const float rawHeight = safeDimension(rawBounds.maxY - rawBounds.minY);
-
-    const float screenWidth = static_cast<float>(VirtualViewport::width());
-    const float screenHeight = static_cast<float>(VirtualViewport::height());
-
-    const float horizontalPadding = std::max(150.f, screenWidth * 0.08f);
-    const float verticalPadding = std::max(110.f, screenHeight * 0.14f);
-
-    const float availableWidth = std::max(1.f, screenWidth - horizontalPadding * 2.f);
-    const float availableHeight = std::max(1.f, screenHeight - verticalPadding * 2.f);
-
-    const float scale = std::min(availableWidth / rawWidth, availableHeight / rawHeight);
+    const float scale = mapScale();
+    const Rectangle viewport = mapViewportBounds();
 
     const Vector2 rawCenter{
         (rawBounds.minX + rawBounds.maxX) * 0.5f,
         (rawBounds.minY + rawBounds.maxY) * 0.5f
     };
 
-    const Vector2 screenCenter{
-        screenWidth * 0.5f,
-        screenHeight * 0.5f
-    };
-
     return Vector2{
-        screenCenter.x + (node.position.x - rawCenter.x) * scale,
-        screenCenter.y + (node.position.y - rawCenter.y) * scale
+        viewport.x + MAP_CONTENT_EDGE_PADDING + (node.position.x - rawBounds.minX) * scale - mapScrollOffset_,
+        viewport.y + viewport.height * 0.5f + (node.position.y - rawCenter.y) * scale
     };
 }
+
+Rectangle RunMapScene::mapViewportBounds() const {
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float screenHeight = static_cast<float>(VirtualViewport::height());
+    const float width = std::max(1.f, screenWidth - MAP_VIEWPORT_MARGIN_X * 2.f);
+    const float height = std::max(
+        MAP_VIEWPORT_MIN_HEIGHT,
+        screenHeight - MAP_VIEWPORT_TOP - MAP_VIEWPORT_BOTTOM_RESERVE
+    );
+
+    return Rectangle{
+        MAP_VIEWPORT_MARGIN_X,
+        MAP_VIEWPORT_TOP,
+        width,
+        height
+    };
+}
+
+float RunMapScene::mapAvailableWidth() const {
+    return mapViewportBounds().width;
+}
+
+float RunMapScene::mapScale() const {
+    const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
+    const float rawHeight = safeDimension(rawBounds.maxY - rawBounds.minY);
+    const float verticalScale = mapViewportBounds().height / rawHeight;
+
+    // Horizontal readability is more important than fitting every layer on screen.
+    // Long maps scroll horizontally instead of compressing nodes into a tiny mess.
+    return std::min(1.f, verticalScale);
+}
+
+float RunMapScene::mapContentWidth() const {
+    const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
+    const float rawWidth = safeDimension(rawBounds.maxX - rawBounds.minX);
+    return rawWidth * mapScale() + MAP_CONTENT_EDGE_PADDING * 2.f;
+}
+
+float RunMapScene::mapMaxScrollOffset() const {
+    return std::max(0.f, mapContentWidth() - mapAvailableWidth());
+}
+
+float RunMapScene::scrollOffsetForNode(const RunMapNode& node) const {
+    const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
+    const Rectangle viewport = mapViewportBounds();
+    const float rawNodeX = MAP_CONTENT_EDGE_PADDING + (node.position.x - rawBounds.minX) * mapScale();
+    const float desiredScreenX = viewport.x + viewport.width * 0.5f;
+    return std::clamp(viewport.x + rawNodeX - desiredScreenX, 0.f, mapMaxScrollOffset());
+}
+
+const RunMapNode* RunMapScene::preferredMapFocusNode() const {
+    if (const RunMapNode* current = currentMapNode()) {
+        return current;
+    }
+
+    const RunMapNode* firstAvailable = nullptr;
+    for (const RunMapNode& node : runState_.map.nodes) {
+        if (node.state != RunMapNodeState::Available) {
+            continue;
+        }
+
+        if (firstAvailable == nullptr || node.position.x < firstAvailable->position.x) {
+            firstAvailable = &node;
+        }
+    }
+
+    return firstAvailable;
+}
+
+float RunMapScene::initialMapScrollOffset() const {
+    if (const RunMapNode* focus = preferredMapFocusNode()) {
+        return scrollOffsetForNode(*focus);
+    }
+
+    return 0.f;
+}
+
+void RunMapScene::clampMapScrollOffset() {
+    mapScrollOffset_ = std::clamp(mapScrollOffset_, 0.f, mapMaxScrollOffset());
+}
+
+void RunMapScene::focusMapOnPreferredNode() {
+    if (const RunMapNode* focus = preferredMapFocusNode()) {
+        mapScrollOffset_ = scrollOffsetForNode(*focus);
+    }
+
+    clampMapScrollOffset();
+}
+
+void RunMapScene::updateMapScroll(const float deltaSeconds) {
+    const float maxScroll = mapMaxScrollOffset();
+    if (maxScroll <= MAP_SCROLL_EPSILON) {
+        mapScrollOffset_ = 0.f;
+        isDraggingMapCanvas_ = false;
+        return;
+    }
+
+    const Vector2 mouse = GetMousePosition();
+    const Rectangle viewport = mapViewportBounds();
+
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+        BasicUi::contains(viewport, mouse) &&
+        hoveredMapNode(mouse) == nullptr) {
+        isDraggingMapCanvas_ = true;
+        mapCanvasDragStartX_ = mouse.x;
+        mapCanvasDragStartScrollOffset_ = mapScrollOffset_;
+    }
+
+    if (isDraggingMapCanvas_) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            mapScrollOffset_ = mapCanvasDragStartScrollOffset_ - (mouse.x - mapCanvasDragStartX_);
+        } else {
+            isDraggingMapCanvas_ = false;
+        }
+    }
+
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const bool mouseInsideScrollableBand = mouse.x >= 0.f &&
+        mouse.x <= screenWidth &&
+        mouse.y >= viewport.y &&
+        mouse.y <= viewport.y + viewport.height;
+
+    if (mouseInsideScrollableBand && !isDraggingMapCanvas_) {
+        if (mouse.x <= MAP_EDGE_SCROLL_ZONE) {
+            const float strength = 1.f - std::clamp(mouse.x / MAP_EDGE_SCROLL_ZONE, 0.f, 1.f);
+            mapScrollOffset_ -= MAP_EDGE_SCROLL_MAX_SPEED * strength * deltaSeconds;
+        } else if (mouse.x >= screenWidth - MAP_EDGE_SCROLL_ZONE) {
+            const float distanceFromRight = screenWidth - mouse.x;
+            const float strength = 1.f - std::clamp(distanceFromRight / MAP_EDGE_SCROLL_ZONE, 0.f, 1.f);
+            mapScrollOffset_ += MAP_EDGE_SCROLL_MAX_SPEED * strength * deltaSeconds;
+        }
+    }
+
+    clampMapScrollOffset();
+}
+
 
 Rectangle RunMapScene::nodeBounds(const RunMapNode& node) const {
     const Vector2 position = nodeScreenPosition(node);
@@ -323,7 +503,12 @@ Rectangle RunMapScene::restModalBounds() const {
 }
 
 Rectangle RunMapScene::restHealButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 42.f, modal.y + modal.height - 214.f, modal.width - 84.f, 52.f};
+    return Rectangle{modal.x + 42.f, modal.y + modal.height - 214.f, (modal.width - 96.f) * 0.5f, 52.f};
+}
+
+Rectangle RunMapScene::restCalmButtonBounds(const Rectangle modal) const {
+    const Rectangle heal = restHealButtonBounds(modal);
+    return Rectangle{heal.x + heal.width + 12.f, heal.y, heal.width, heal.height};
 }
 
 Rectangle RunMapScene::restUpgradeButtonBounds(const Rectangle modal) const {
@@ -364,6 +549,29 @@ Rectangle RunMapScene::consumablesButtonBounds() const {
     constexpr float gap = 10.f;
     const Rectangle relics = relicsButtonBounds();
     return Rectangle{relics.x + relics.width + gap, 32.f, buttonWidth, buttonHeight};
+}
+
+Rectangle RunMapScene::abandonButtonBounds() const {
+    return Rectangle{274.f, 32.f, 140.f, 48.f};
+}
+
+Rectangle RunMapScene::abandonModalBounds() const {
+    const float width = 440.f;
+    const float height = 190.f;
+    return Rectangle{
+        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
+        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
+        width,
+        height
+    };
+}
+
+Rectangle RunMapScene::abandonCancelButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + 28.f, modal.y + modal.height - 66.f, 180.f, 42.f};
+}
+
+Rectangle RunMapScene::abandonConfirmButtonBounds(const Rectangle modal) const {
+    return Rectangle{modal.x + modal.width - 208.f, modal.y + modal.height - 66.f, 180.f, 42.f};
 }
 
 Rectangle RunMapScene::overlayBounds() const {
@@ -415,7 +623,7 @@ Rectangle RunMapScene::upgradePreviewConfirmButtonBounds(const Rectangle modal) 
 }
 
 const RunMapNode* RunMapScene::hoveredMapNode(const Vector2 mousePosition) const {
-    if (isMapInteractionBlocked()) {
+    if (isMapInteractionBlocked() || !BasicUi::contains(mapViewportBounds(), mousePosition)) {
         return nullptr;
     }
 
@@ -598,33 +806,82 @@ std::string RunMapScene::nodeLabel(const RunMapNode& node) const {
     return "?";
 }
 
-void RunMapScene::renderMapLegend() const {
-    const float width = 520.f;
-    const float height = 112.f;
-    const Rectangle panel{
-        32.f,
-        static_cast<float>(VirtualViewport::height()) - height - 24.f,
-        std::min(width, static_cast<float>(VirtualViewport::width()) - 64.f),
-        height
+std::string RunMapScene::nodeStateLabel(const RunMapNode& node) const {
+    if (isPastLockedAlternative(node)) {
+        return localization_.get(TextId("run.node_state.blocked_alternative"));
+    }
+
+    switch (node.state) {
+        case RunMapNodeState::Available:
+            return localization_.get(TextId("run.node_state.available"));
+        case RunMapNodeState::Completed:
+            return localization_.get(TextId("run.node_state.completed"));
+        case RunMapNodeState::Current:
+            return localization_.get(TextId("run.node_state.current"));
+        case RunMapNodeState::Locked:
+            return localization_.get(TextId("run.node_state.future_locked"));
+    }
+
+    return "?";
+}
+
+void RunMapScene::renderRunModeBanner() const {
+    if (runModeLabel_.empty()) {
+        return;
+    }
+
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float maxWidth = std::min(560.f, std::max(1.f, screenWidth - 620.f));
+    if (maxWidth <= 120.f) {
+        return;
+    }
+
+    const Rectangle banner{
+        (screenWidth - maxWidth) * 0.5f,
+        76.f,
+        maxWidth,
+        24.f
     };
 
-    DrawRectangleRounded(panel, 0.08f, 12, Color{20, 22, 30, 205});
-    DrawRectangleRoundedLinesEx(panel, 0.08f, 12, 1.5f, Color{92, 98, 122, 180});
+    DrawRectangleRounded(banner, 0.28f, 12, Color{58, 42, 82, 225});
+    DrawRectangleRoundedLinesEx(banner, 0.28f, 12, 1.5f, Color{194, 152, 236, 220});
+    BasicUi::drawTextFitted(
+        font_,
+        runModeLabel_,
+        Vector2{banner.x + 14.f, banner.y + 5.f},
+        banner.width - 28.f,
+        15.f,
+        12.f,
+        Color{238, 226, 255, 255}
+    );
+}
 
-    BasicUi::drawText(
-        font_,
-        localization_.get(TextId("run.map_hint.hover")),
-        Vector2{panel.x + 16.f, panel.y + 12.f},
-        15.f,
-        Color{196, 204, 224, 255}
-    );
-    BasicUi::drawText(
-        font_,
-        localization_.get(TextId("run.map_hint.available_path")),
-        Vector2{panel.x + 16.f, panel.y + 33.f},
-        15.f,
-        Color{196, 204, 224, 255}
-    );
+Rectangle RunMapScene::mapNodeInspectBounds() const {
+    const Rectangle viewport = mapViewportBounds();
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float width = std::min(340.f, std::max(1.f, screenWidth - 64.f));
+    const float height = 82.f;
+
+    return Rectangle{
+        screenWidth - width - 32.f,
+        viewport.y + 12.f,
+        width,
+        std::min(height, std::max(1.f, viewport.height - 24.f))
+    };
+}
+
+void RunMapScene::renderMapLegend() const {
+    const float screenWidth = static_cast<float>(VirtualViewport::width());
+    const float width = std::min(560.f, screenWidth - 40.f);
+    const Rectangle panel{
+        20.f,
+        static_cast<float>(VirtualViewport::height()) - 68.f,
+        std::max(1.f, width),
+        44.f
+    };
+
+    DrawRectangleRounded(panel, 0.16f, 10, Color{20, 22, 30, 205});
+    DrawRectangleRoundedLinesEx(panel, 0.16f, 10, 1.5f, Color{92, 98, 122, 180});
 
     struct LegendItem {
         const char* key;
@@ -639,23 +896,103 @@ void RunMapScene::renderMapLegend() const {
         {"run.node_state.blocked_alternative", Color{48, 38, 44, 235}, Color{104, 72, 82, 210}}
     };
 
-    float x = panel.x + 16.f;
-    const float y = panel.y + 72.f;
+    float x = panel.x + 14.f;
     for (const LegendItem& item : items) {
-        const Rectangle swatch{x, y + 2.f, 16.f, 16.f};
+        const Rectangle swatch{x, panel.y + 13.f, 16.f, 16.f};
         DrawRectangleRounded(swatch, 0.25f, 6, item.fill);
         DrawRectangleRoundedLinesEx(swatch, 0.25f, 6, 1.5f, item.border);
         BasicUi::drawText(
             font_,
             localization_.get(TextId(item.key)),
-            Vector2{x + 23.f, y - 1.f},
+            Vector2{x + 22.f, panel.y + 10.f},
             14.f,
             Color{210, 216, 232, 255}
         );
-        x += 118.f;
+        x += 132.f;
     }
 }
 
+void RunMapScene::renderMapNodeInspect(const RunMapNode& node) const {
+    const Rectangle panel = mapNodeInspectBounds();
+
+    DrawRectangleRounded(panel, 0.08f, 12, Color{18, 20, 28, 225});
+    DrawRectangleRoundedLinesEx(panel, 0.08f, 12, 1.75f, nodeOutlineColor(node));
+
+    BasicUi::drawTextFitted(
+        font_,
+        nodeLabel(node),
+        Vector2{panel.x + 16.f, panel.y + 13.f},
+        panel.width - 32.f,
+        22.f,
+        15.f,
+        Color{244, 232, 184, 255}
+    );
+
+    BasicUi::drawTextFitted(
+        font_,
+        nodeStateLabel(node),
+        Vector2{panel.x + 16.f, panel.y + 46.f},
+        panel.width - 32.f,
+        16.f,
+        12.f,
+        Color{207, 214, 232, 255}
+    );
+}
+
+void RunMapScene::updateAbandonConfirmation(const Vector2 mousePosition) {
+    const Rectangle modal = abandonModalBounds();
+
+    if (IsKeyPressed(KEY_ESCAPE) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ||
+        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(abandonCancelButtonBounds(modal), mousePosition))) {
+        abandonConfirmationOpen_ = false;
+        return;
+    }
+
+    if (IsKeyPressed(KEY_ENTER) ||
+        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(abandonConfirmButtonBounds(modal), mousePosition))) {
+        abandonConfirmationOpen_ = false;
+        onAbandonRun_();
+    }
+}
+
+void RunMapScene::renderAbandonConfirmation() const {
+    const Vector2 mouse = GetMousePosition();
+    DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{8, 9, 13, 178});
+
+    const Rectangle modal = abandonModalBounds();
+    DrawRectangleRounded(modal, 0.08f, 10, Color{31, 34, 43, 252});
+    DrawRectangleRoundedLinesEx(modal, 0.08f, 10, 2.f, Color{180, 110, 105, 255});
+
+    BasicUi::drawCenteredText(
+        font_,
+        localization_.get(TextId("run.abandon.title")),
+        Rectangle{modal.x + 28.f, modal.y + 34.f, modal.width - 56.f, 38.f},
+        27.f,
+        Color{248, 238, 232, 255}
+    );
+
+    BasicUi::drawButton(
+        font_,
+        abandonCancelButtonBounds(modal),
+        localization_.get(TextId("ui.cancel")),
+        mouse
+    );
+    BasicUi::drawButton(
+        font_,
+        abandonConfirmButtonBounds(modal),
+        localization_.get(TextId("run.abandon.confirm")),
+        mouse,
+        true,
+        BasicUi::ButtonStyle{
+            Color{118, 55, 55, 255},
+            Color{150, 65, 65, 255},
+            Color{78, 42, 42, 255},
+            Color{238, 214, 210, 255},
+            Color{248, 232, 228, 255},
+            Color{150, 130, 128, 255}
+        }
+    );
+}
 
 void RunMapScene::updateRestModal(const Vector2 mousePosition) {
     if (!restModalNodeId_.has_value()) {
@@ -674,6 +1011,14 @@ void RunMapScene::updateRestModal(const Vector2 mousePosition) {
         const int nodeId = *restModalNodeId_;
         restModalNodeId_ = std::nullopt;
         onRestHeal_(nodeId);
+        return;
+    }
+
+    if (BasicUi::contains(restCalmButtonBounds(modal), mousePosition) &&
+        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        const int nodeId = *restModalNodeId_;
+        restModalNodeId_ = std::nullopt;
+        onRestCalm_(nodeId);
         return;
     }
 
@@ -754,10 +1099,10 @@ void RunMapScene::renderRestModal() const {
 
     BasicUi::drawText(
         font_,
-        restStressPreviewText(),
-        Vector2{preview.x + 18.f, preview.y + preview.height - 28.f},
+        restCalmPreviewText(),
+        Vector2{preview.x + 18.f, preview.y + preview.height - 26.f},
         16.f,
-        Color{220, 190, 230, 255}
+        Color{180, 214, 238, 255}
     );
 
     const std::vector<std::string> hintLines = BasicUi::wrapText(
@@ -776,6 +1121,7 @@ void RunMapScene::renderRestModal() const {
     }
 
     BasicUi::drawButton(font_, restHealButtonBounds(modal), localization_.get(TextId("rest.heal")), mouse);
+    BasicUi::drawButton(font_, restCalmButtonBounds(modal), localization_.get(TextId("rest.calm")), mouse);
     BasicUi::drawButton(
         font_,
         restUpgradeButtonBounds(modal),
@@ -811,7 +1157,7 @@ std::string RunMapScene::restHealPreviewText() const {
     );
 }
 
-std::string RunMapScene::restStressPreviewText() const {
+std::string RunMapScene::restCalmPreviewText() const {
     int current = 0;
     int after = 0;
     int maximum = 0;
@@ -820,12 +1166,12 @@ std::string RunMapScene::restStressPreviewText() const {
         const int actorMaximum = std::max(1, actor.maxStress);
         const int actorCurrent = std::clamp(actor.stress, 0, actorMaximum);
         current += actorCurrent;
-        after += std::max(0, actorCurrent - 30);
+        after += std::max(0, actorCurrent - StressEconomyRules::RestCalmAmount);
         maximum += actorMaximum;
     }
 
     return localization_.format(
-        TextId("rest.stress_preview"),
+        TextId("rest.calm_preview"),
         {
             {"current", std::to_string(current)},
             {"after", std::to_string(after)},
@@ -833,7 +1179,6 @@ std::string RunMapScene::restStressPreviewText() const {
         }
     );
 }
-
 
 std::string RunMapScene::runHpSummaryText() const {
     int current = 0;

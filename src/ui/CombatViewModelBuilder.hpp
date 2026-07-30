@@ -6,6 +6,7 @@
 #include "statuses/StatusDatabase.hpp"
 #include "drones/DroneDatabase.hpp"
 #include "data/CardDatabase.hpp"
+#include "data/EnemyDatabase.hpp"
 #include "ui/CardViewModelBuilder.hpp"
 #include "ui/CombatViewModel.hpp"
 #include "ui/StatusViewModel.hpp"
@@ -23,6 +24,7 @@ public:
         const StatusDatabase& statusDatabase,
         const DroneDatabase& droneDatabase,
         const CardDatabase& cardDatabase,
+        const EnemyDatabase& enemyDatabase,
         const CardViewModelBuilder& cardViewModelBuilder
     );
 
@@ -51,5 +53,6 @@ private:
     const StatusDatabase& statusDatabase_;
     const DroneDatabase& droneDatabase_;
     const CardDatabase& cardDatabase_;
+    const EnemyDatabase& enemyDatabase_;
     const CardViewModelBuilder& cardViewModelBuilder_;
 };

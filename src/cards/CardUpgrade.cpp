@@ -87,6 +87,7 @@ std::string summary(const CardDefinition& base, const CardDefinition& upgraded, 
             if (before.type != after.type ||
                 before.target != after.target ||
                 before.repeatCount != after.repeatCount ||
+                before.outputAmount != after.outputAmount ||
                 before.value.minimumPossibleValue() != after.value.minimumPossibleValue() ||
                 before.value.maximumPossibleValue() != after.value.maximumPossibleValue()) {
                 if (!result.empty()) {

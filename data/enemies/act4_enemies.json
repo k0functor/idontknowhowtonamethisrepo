@@ -1,0 +1,1598 @@
+[
+  {
+    "id": "starved_astronomer",
+    "name": "enemy.starved_astronomer.name",
+    "max_hp": 58,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "starved_astronomer_glass_needle",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "starved_astronomer_bad_omen",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "starved_astronomer_starving_formula",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "lens_spider",
+    "name": "enemy.lens_spider.name",
+    "max_hp": 42,
+    "starting_block": 6,
+    "actions": [
+      {
+        "id": "lens_spider_prism_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "repeat_count": 3
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "lens_spider_silk_refraction",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "lens_spider_bright_venom",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "status": "poison"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "gravity_acolyte",
+    "name": "enemy.gravity_acolyte.name",
+    "max_hp": 64,
+    "starting_block": 4,
+    "actions": [
+      {
+        "id": "gravity_acolyte_heavy_prayer",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "gravity_acolyte_falling_sigil",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "gravity_acolyte_anchor_bones",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "void_hound",
+    "name": "enemy.void_hound.name",
+    "max_hp": 52,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "void_hound_black_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "void_hound_howling_gap",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "cost"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "void_hound_starless_pounce",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "brass_astrologer",
+    "name": "enemy.brass_astrologer.name",
+    "max_hp": 68,
+    "starting_block": 10,
+    "actions": [
+      {
+        "id": "brass_astrologer_clockwork_chart",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2
+        }
+      },
+      {
+        "id": "brass_astrologer_geared_orbit",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      },
+      {
+        "id": "brass_astrologer_measured_beam",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "eclipse_warden",
+    "name": "enemy.eclipse_warden.name",
+    "max_hp": 72,
+    "starting_block": 12,
+    "actions": [
+      {
+        "id": "eclipse_warden_shadow_shield",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      },
+      {
+        "id": "eclipse_warden_blind_mandate",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "eclipse_warden_halberd_of_night",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "orbiting_reliquary",
+    "name": "enemy.orbiting_reliquary.name",
+    "max_hp": 50,
+    "starting_block": 18,
+    "actions": [
+      {
+        "id": "orbiting_reliquary_holy_rotation",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2
+        }
+      },
+      {
+        "id": "orbiting_reliquary_shard_rain",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "repeat_count": 4
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "orbiting_reliquary_sealed_case",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "comet_larva",
+    "name": "enemy.comet_larva.name",
+    "max_hp": 46,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "comet_larva_molten_trail",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "comet_larva_sudden_impact",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
+      },
+      {
+        "id": "comet_larva_feed_on_heat",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "minion"
+  },
+  {
+    "id": "atlas_jailer",
+    "name": "enemy.atlas_jailer.name",
+    "max_hp": 118,
+    "starting_block": 16,
+    "actions": [
+      {
+        "id": "atlas_jailer_world_chain",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 17
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "atlas_jailer_lock_the_sky",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "atlas_jailer_carry_the_dome",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "glass_comet",
+    "name": "enemy.glass_comet.name",
+    "max_hp": 96,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "glass_comet_first_impact",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "glass_comet_splinter_orbit",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            },
+            "repeat_count": 4
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70
+        }
+      },
+      {
+        "id": "glass_comet_burning_tail",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "striker"
+  },
+  {
+    "id": "orbit_saint",
+    "name": "enemy.orbit_saint.name",
+    "max_hp": 110,
+    "starting_block": 10,
+    "actions": [
+      {
+        "id": "orbit_saint_circular_blessing",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      },
+      {
+        "id": "orbit_saint_eccentric_lash",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "orbit_saint_pious_burn",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "gravity_executioner",
+    "name": "enemy.gravity_executioner.name",
+    "max_hp": 126,
+    "starting_block": 14,
+    "actions": [
+      {
+        "id": "gravity_executioner_sentence_weight",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "gain_stress",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "frenzy"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "gravity_executioner_black_axe",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "gravity_executioner_kneel",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "blind_astronomer",
+    "name": "enemy.blind_astronomer.name",
+    "max_hp": 104,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "blind_astronomer_name_the_dark",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "status_cards"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "blind_astronomer_invisible_ray",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "blind_astronomer_false_star",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2
+        }
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "the_empty_constellation",
+    "name": "enemy.the_empty_constellation.name",
+    "max_hp": 230,
+    "starting_block": 20,
+    "actions": [
+      {
+        "id": "the_empty_constellation_missing_star",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "the_empty_constellation_black_pattern",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "cost"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "the_empty_constellation_rewrite_orbit",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 26
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "missing_orbit",
+        "name": "enemy.phase.the_empty_constellation.missing_orbit",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "the_empty_constellation_black_pattern",
+          "the_empty_constellation_rewrite_orbit"
+        ]
+      },
+      {
+        "id": "starless_geometry",
+        "name": "enemy.phase.the_empty_constellation.starless_geometry",
+        "activate_below_hp_percent": 62,
+        "action_ids": [
+          "the_empty_constellation_missing_star",
+          "the_empty_constellation_black_pattern",
+          "the_empty_constellation_rewrite_orbit"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "comet_larva",
+          "lens_spider"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "empty_sky",
+        "name": "enemy.phase.the_empty_constellation.empty_sky",
+        "activate_below_hp_percent": 26,
+        "action_ids": [
+          "the_empty_constellation_missing_star",
+          "the_empty_constellation_black_pattern"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "summon_enemy_ids": [
+          "void_hound"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  },
+  {
+    "id": "clockwork_apostle",
+    "name": "enemy.clockwork_apostle.name",
+    "max_hp": 245,
+    "starting_block": 16,
+    "actions": [
+      {
+        "id": "clockwork_apostle_tick_sermon",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "clockwork_apostle_minute_hand",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            },
+            "repeat_count": 4
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "clockwork_apostle_bell_of_delay",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "first_hour",
+        "name": "enemy.phase.clockwork_apostle.first_hour",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "clockwork_apostle_tick_sermon",
+          "clockwork_apostle_bell_of_delay"
+        ]
+      },
+      {
+        "id": "broken_minute",
+        "name": "enemy.phase.clockwork_apostle.broken_minute",
+        "activate_below_hp_percent": 64,
+        "action_ids": [
+          "clockwork_apostle_minute_hand",
+          "clockwork_apostle_bell_of_delay",
+          "clockwork_apostle_tick_sermon"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 22
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "gravity_acolyte"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "thirteenth_hour",
+        "name": "enemy.phase.clockwork_apostle.thirteenth_hour",
+        "activate_below_hp_percent": 28,
+        "action_ids": [
+          "clockwork_apostle_minute_hand",
+          "clockwork_apostle_tick_sermon"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "orbiting_reliquary"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  },
+  {
+    "id": "moon_that_blinks",
+    "name": "enemy.moon_that_blinks.name",
+    "max_hp": 260,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "moon_that_blinks_lidless_gaze",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "frenzy"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "moon_that_blinks_tidal_crush",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "moon_that_blinks_close_the_sky",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 30
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "weak"
+          ],
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "open_eye",
+        "name": "enemy.phase.moon_that_blinks.open_eye",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "moon_that_blinks_lidless_gaze",
+          "moon_that_blinks_tidal_crush"
+        ]
+      },
+      {
+        "id": "eclipse_blink",
+        "name": "enemy.phase.moon_that_blinks.eclipse_blink",
+        "activate_below_hp_percent": 60,
+        "action_ids": [
+          "moon_that_blinks_close_the_sky",
+          "moon_that_blinks_lidless_gaze",
+          "moon_that_blinks_tidal_crush"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 26
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "void_hound"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "closed_sky",
+        "name": "enemy.phase.moon_that_blinks.closed_sky",
+        "activate_below_hp_percent": 25,
+        "action_ids": [
+          "moon_that_blinks_close_the_sky",
+          "moon_that_blinks_tidal_crush"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "summon_enemy_ids": [
+          "starved_astronomer"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  }
+]

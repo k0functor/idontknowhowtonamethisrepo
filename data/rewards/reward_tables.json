@@ -6,14 +6,16 @@
       "offer_cards": true,
       "card_choices": 3,
       "guaranteed_relic": false,
-      "consumable_chance_percent": 30
+      "consumable_chance_percent": 30,
+      "active_item_chance_percent": 0
     },
     "elite": {
       "gold": 35,
       "offer_cards": true,
       "card_choices": 3,
       "guaranteed_relic": true,
-      "consumable_chance_percent": 45
+      "consumable_chance_percent": 45,
+      "active_item_chance_percent": 35
     },
     "boss": {
       "gold": 75,
@@ -21,35 +23,41 @@
       "card_choices": 3,
       "guaranteed_relic": true,
       "consumable_chance_percent": 0,
-      "minimum_card_rarity": "uncommon"
+      "minimum_card_rarity": "uncommon",
+      "active_item_chance_percent": 20
     },
     "chest": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
       "guaranteed_relic": false,
-      "consumable_chance_percent": 0
+      "consumable_chance_percent": 0,
+      "active_item_chance_percent": 45
     },
     "event": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
       "guaranteed_relic": false,
-      "consumable_chance_percent": 0
+      "consumable_chance_percent": 0,
+      "active_item_chance_percent": 0
     },
     "shop": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
       "guaranteed_relic": false,
-      "consumable_chance_percent": 0
+      "consumable_chance_percent": 0,
+      "active_item_chance_percent": 0
     },
     "rest": {
       "gold": 0,
       "offer_cards": false,
       "card_choices": 0,
       "guaranteed_relic": false,
-      "consumable_chance_percent": 0
+      "consumable_chance_percent": 0,
+      "active_item_chance_percent": 0
     }
-  }
+  },
+  "group_gold_bonus_percent_per_extra_enemy": 20
 }

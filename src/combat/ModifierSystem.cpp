@@ -2,31 +2,17 @@
 
 #include "combat/CombatState.hpp"
 #include "localization/LocalizationManager.hpp"
-#include "localization/TextId.hpp"
-#include "run/SadistMasochistRules.hpp"
 #include "run/StressPsychopathRules.hpp"
 
 #include <algorithm>
 #include <cmath>
 
-namespace {
-constexpr const char* strengthStatusId = "strength";
-constexpr const char* weakStatusId = "weak";
-constexpr const char* vulnerableStatusId = "vulnerable";
-constexpr const char* dexterityStatusId = "dexterity";
-constexpr const char* stanceFlameStatusId = "stance_flame";
-constexpr const char* stanceAshStatusId = "stance_ash";
-constexpr const char* stanceSmokeStatusId = "stance_smoke";
-}
-
-namespace {
-std::string text(const LocalizationManager& localization, const char* textId) {
-    return localization.get(TextId(textId));
-}
-}
-
-ModifierSystem::ModifierSystem(const LocalizationManager& localization)
-    : localization_(localization) {}
+ModifierSystem::ModifierSystem(
+    const LocalizationManager& localization,
+    const StatusDatabase& statusDatabase
+)
+    : localization_(localization),
+      statusDatabase_(statusDatabase) {}
 
 void ModifierSystem::addProvider(const IModifierProvider& provider) {
     providers_.push_back(&provider);
@@ -98,7 +84,21 @@ std::vector<ValueModifier> ModifierSystem::collectModifiers(
 ) const {
     std::vector<ValueModifier> result;
 
-    collectBuiltInStatusModifiers(state, context, result);
+    collectStatusModifiers(state, context, result);
+
+    if (context.effectType == EffectType::Damage &&
+        state.hasEntity(context.source) &&
+        state.isEnemy(context.source) &&
+        std::abs(state.enemyDamageMultiplier - 1.f) > 0.0001f) {
+        result.push_back({
+            "difficulty_enemy_damage",
+            localization_.get(TextId("modifier.difficulty.enemy_damage_multiplier")),
+            ModifierOperation::Multiply,
+            0,
+            static_cast<double>(state.enemyDamageMultiplier),
+            25
+        });
+    }
 
     for (const IModifierProvider* provider : providers_) {
         provider->collectModifiers(state, context, result);
@@ -107,7 +107,7 @@ std::vector<ValueModifier> ModifierSystem::collectModifiers(
     return result;
 }
 
-void ModifierSystem::collectBuiltInStatusModifiers(
+void ModifierSystem::collectStatusModifiers(
     const CombatState& state,
     const ModifierContext& context,
     std::vector<ValueModifier>& output
@@ -116,167 +116,93 @@ void ModifierSystem::collectBuiltInStatusModifiers(
         return;
     }
 
+    collectModifiersFromEntity(
+        state,
+        context,
+        context.source,
+        StatusModifierEntity::Source,
+        output
+    );
+
+    if (context.hasTarget && state.hasEntity(context.target)) {
+        collectModifiersFromEntity(
+            state,
+            context,
+            context.target,
+            StatusModifierEntity::Target,
+            output
+        );
+    }
+
     const CombatEntity& source = state.entity(context.source);
-
-    const CombatEntity* target = nullptr;
-    if (context.hasTarget) {
-        if (!state.hasEntity(context.target)) {
-            return;
+    if (context.effectType == EffectType::Damage &&
+        context.usesActorStats &&
+        StressPsychopathRules::appliesTo(source.definitionId)) {
+        const int stressDamageBonus = StressPsychopathRules::damageBonusForStress(source.stress);
+        if (stressDamageBonus > 0) {
+            output.push_back({
+                "lost_psychopath_stress",
+                localization_.get(TextId("modifier.mechanic.lost_psychopath.stress_damage_add")),
+                ModifierOperation::Add,
+                stressDamageBonus,
+                1.0,
+                125
+            });
         }
-
-        target = &state.entity(context.target);
     }
+}
 
-    if (context.effectType == EffectType::Damage) {
-        const int strength = source.statuses.stacks(strengthStatusId);
-        if (strength > 0) {
-            output.push_back({
-                strengthStatusId,
-                text(localization_, "modifier.status.strength.outgoing_damage_add"),
-                ModifierOperation::Add,
-                strength,
-                1.0,
-                100
-            });
+void ModifierSystem::collectModifiersFromEntity(
+    const CombatState& state,
+    const ModifierContext& context,
+    const EntityId entityId,
+    const StatusModifierEntity modifierEntity,
+    std::vector<ValueModifier>& output
+) const {
+    const CombatEntity& entity = state.entity(entityId);
+
+    for (const auto& [statusId, stacks] : entity.statuses.all()) {
+        if (stacks <= 0 || !statusDatabase_.contains(StatusId(statusId))) {
+            continue;
         }
 
-        if (source.statuses.has(SadistMasochistRules::PainStatusId)) {
-            output.push_back({
-                SadistMasochistRules::PainStatusId,
-                text(localization_, "modifier.status.masochist_pain.outgoing_damage_add"),
-                ModifierOperation::Add,
-                2,
-                1.0,
-                110
-            });
-        }
-
-        if (StressPsychopathRules::appliesTo(source.definitionId)) {
-            const int stressDamageBonus = StressPsychopathRules::damageBonusForStress(source.stress);
-            if (stressDamageBonus > 0) {
-                output.push_back({
-                    "lost_psychopath_stress",
-                    text(localization_, "modifier.mechanic.lost_psychopath.stress_damage_add"),
-                    ModifierOperation::Add,
-                    stressDamageBonus,
-                    1.0,
-                    125
-                });
+        const StatusDefinition& definition = statusDatabase_.get(StatusId(statusId));
+        for (const StatusModifierDefinition& modifier : definition.modifiers) {
+            if (modifier.entity != modifierEntity || modifier.effectType != context.effectType) {
+                continue;
             }
-        }
+            if (modifier.requiresActorStats && !context.usesActorStats) {
+                continue;
+            }
 
-        if (source.statuses.has(stanceFlameStatusId)) {
-            output.push_back({
-                stanceFlameStatusId,
-                text(localization_, "modifier.status.stance_flame.outgoing_damage_increase"),
-                ModifierOperation::Multiply,
-                0,
-                1.25,
-                150
-            });
-        }
+            ValueModifier valueModifier;
+            valueModifier.sourceId = statusId;
+            valueModifier.description = localization_.get(modifier.descriptionTextId);
+            valueModifier.priority = modifier.priority;
 
-        if (source.statuses.has(SadistMasochistRules::PleasureStatusId)) {
-            output.push_back({
-                SadistMasochistRules::PleasureStatusId,
-                text(localization_, "modifier.status.sadist_pleasure.outgoing_damage_increase"),
-                ModifierOperation::Multiply,
-                0,
-                1.20,
-                155
-            });
-        }
+            switch (modifier.operation) {
+                case StatusModifierOperation::AddPerStack:
+                    valueModifier.operation = ModifierOperation::Add;
+                    valueModifier.addAmount = modifier.addAmount * stacks;
+                    break;
 
-        if (source.statuses.has(stanceAshStatusId)) {
-            output.push_back({
-                stanceAshStatusId,
-                text(localization_, "modifier.status.stance_ash.outgoing_damage_reduce"),
-                ModifierOperation::Multiply,
-                0,
-                0.85,
-                150
-            });
-        }
+                case StatusModifierOperation::AddFixed:
+                    valueModifier.operation = ModifierOperation::Add;
+                    valueModifier.addAmount = modifier.addAmount;
+                    break;
 
-        if (source.statuses.has(weakStatusId)) {
-            output.push_back({
-                weakStatusId,
-                text(localization_, "modifier.status.weak.outgoing_damage_reduce"),
-                ModifierOperation::Multiply,
-                0,
-                0.75,
-                200
-            });
-        }
+                case StatusModifierOperation::MultiplyPerStack:
+                    valueModifier.operation = ModifierOperation::Multiply;
+                    valueModifier.multiplier = 1.0 + modifier.multiplier * static_cast<double>(stacks);
+                    break;
 
-        if (target != nullptr && target->statuses.has(stanceFlameStatusId)) {
-            output.push_back({
-                stanceFlameStatusId,
-                text(localization_, "modifier.status.stance_flame.incoming_damage_increase"),
-                ModifierOperation::Multiply,
-                0,
-                1.25,
-                250
-            });
-        }
+                case StatusModifierOperation::MultiplyFixed:
+                    valueModifier.operation = ModifierOperation::Multiply;
+                    valueModifier.multiplier = modifier.multiplier;
+                    break;
+            }
 
-        if (target != nullptr && target->statuses.has(stanceSmokeStatusId)) {
-            output.push_back({
-                stanceSmokeStatusId,
-                text(localization_, "modifier.status.stance_smoke.incoming_damage_reduce"),
-                ModifierOperation::Multiply,
-                0,
-                0.75,
-                250
-            });
-        }
-
-        if (target != nullptr && target->statuses.has(vulnerableStatusId)) {
-            output.push_back({
-                vulnerableStatusId,
-                text(localization_, "modifier.status.vulnerable.incoming_damage_increase"),
-                ModifierOperation::Multiply,
-                0,
-                1.5,
-                300
-            });
-        }
-    }
-
-    if (context.effectType == EffectType::Block) {
-        const int dexterity = source.statuses.stacks(dexterityStatusId);
-
-        if (target != nullptr && target->statuses.has(SadistMasochistRules::PainStatusId)) {
-            output.push_back({
-                SadistMasochistRules::PainStatusId,
-                text(localization_, "modifier.status.masochist_pain.block_received_add"),
-                ModifierOperation::Add,
-                2,
-                1.0,
-                85
-            });
-        }
-
-        if (source.statuses.has(stanceAshStatusId)) {
-            output.push_back({
-                stanceAshStatusId,
-                text(localization_, "modifier.status.stance_ash.block_add"),
-                ModifierOperation::Add,
-                2,
-                1.0,
-                90
-            });
-        }
-
-        if (dexterity > 0) {
-            output.push_back({
-                dexterityStatusId,
-                text(localization_, "modifier.status.dexterity.block_add"),
-                ModifierOperation::Add,
-                dexterity,
-                1.0,
-                100
-            });
+            output.push_back(std::move(valueModifier));
         }
     }
 }

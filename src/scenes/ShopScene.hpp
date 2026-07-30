@@ -1,5 +1,6 @@
 #pragma once
 
+#include "active_items/ActiveItemDatabase.hpp"
 #include "actors/PlayerActorDatabase.hpp"
 #include "cards/CardId.hpp"
 #include "cards/CardInstanceId.hpp"
@@ -28,11 +29,14 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
+        const ActiveItemDatabase& activeItems,
         const PlayerActorDatabase& actors,
         const RunState& runState,
         ShopState shopState,
         std::function<bool(const ShopPurchase&)> onPurchase,
         std::function<void(const ShopState&)> onShopStateChanged,
+        std::function<bool(ShopState&)> onReroll,
+        std::function<bool(const CardId&)> onCopyCard,
         std::function<void()> onLeave
     );
 
@@ -76,6 +80,7 @@ private:
     void renderPurchaseConfirmation() const;
     void renderRelicOwnerChoice() const;
     void renderRemoveMode() const;
+    bool copyCardHintVisible(const ShopOffer& offer) const;
 
     bool canBuy(const ShopOffer& offer) const;
     void purchaseOfferAtIndex(std::size_t offerIndex);
@@ -98,7 +103,6 @@ private:
     std::string cardDescription(const CardId& cardId) const;
 
     std::string sceneTitle() const;
-    std::string sceneSubtitle() const;
     std::string leaveButtonText() const;
     std::string priceText(int price) const;
 
@@ -108,11 +112,14 @@ private:
     const CardDatabase& cards_;
     const RelicDatabase& relics_;
     const ConsumableDatabase& consumables_;
+    const ActiveItemDatabase& activeItems_;
     const PlayerActorDatabase& actors_;
     const RunState& runState_;
     ShopState shopState_;
     std::function<bool(const ShopPurchase&)> onPurchase_;
     std::function<void(const ShopState&)> onShopStateChanged_;
+    std::function<bool(ShopState&)> onReroll_;
+    std::function<bool(const CardId&)> onCopyCard_;
     std::function<void()> onLeave_;
     bool removeMode_ = false;
     bool relicOwnerChoiceOpen_ = false;

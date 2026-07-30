@@ -5,17 +5,21 @@
 #include "game/GameEventBus.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <stdexcept>
 
 namespace {
-constexpr const char* poisonDamageEffect = "poison_damage";
-constexpr const char* poisonStatus = "poison";
-constexpr const char* stanceFlame = "stance_flame";
-constexpr const char* stanceAsh = "stance_ash";
-constexpr const char* stanceSmoke = "stance_smoke";
+std::optional<CombatLogEntryType> combatLogType(const StatusTriggerLogType type) {
+    switch (type) {
+        case StatusTriggerLogType::None:
+            return std::nullopt;
+        case StatusTriggerLogType::PoisonDamage:
+            return CombatLogEntryType::PoisonDamage;
+        case StatusTriggerLogType::BurnDamage:
+            return CombatLogEntryType::BurnDamage;
+    }
 
-bool isStanceStatus(const std::string& statusId) {
-    return statusId == stanceFlame || statusId == stanceAsh || statusId == stanceSmoke;
+    return std::nullopt;
 }
 }
 
@@ -34,17 +38,19 @@ void StatusSystem::applyStatus(
         return;
     }
 
-    if (!statusDatabase_.contains(StatusId(statusId))) {
+    const StatusId id(statusId);
+    if (!statusDatabase_.contains(id)) {
         throw std::runtime_error("Cannot apply unknown status: '" + statusId + "'");
     }
 
-    CombatEntity& targetEntity = state.entity(target);
+    state.rememberStatusSeen(statusId);
 
-    if (isStanceStatus(statusId)) {
-        targetEntity.statuses.remove(stanceFlame);
-        targetEntity.statuses.remove(stanceAsh);
-        targetEntity.statuses.remove(stanceSmoke);
-        targetEntity.statuses.set(statusId, 1, source);
+    CombatEntity& targetEntity = state.entity(target);
+    const StatusDefinition& definition = statusDatabase_.get(id);
+
+    if (!definition.exclusiveGroup.empty()) {
+        removeExclusiveGroupStatuses(targetEntity, definition);
+        targetEntity.statuses.set(statusId, amount, source);
     } else {
         targetEntity.statuses.add(statusId, amount, source);
     }
@@ -58,6 +64,31 @@ void StatusSystem::applyStatus(
             {"target_text_id", targetEntity.nameTextId.value}
         }
     );
+}
+
+void StatusSystem::removeExclusiveGroupStatuses(
+    CombatEntity& entity,
+    const StatusDefinition& incomingDefinition
+) const {
+    if (incomingDefinition.exclusiveGroup.empty()) {
+        return;
+    }
+
+    for (const auto& [activeStatusId, stacks] : entity.statuses.all()) {
+        if (stacks <= 0 || activeStatusId == incomingDefinition.id.value) {
+            continue;
+        }
+
+        const StatusId activeId(activeStatusId);
+        if (!statusDatabase_.contains(activeId)) {
+            continue;
+        }
+
+        const StatusDefinition& activeDefinition = statusDatabase_.get(activeId);
+        if (activeDefinition.exclusiveGroup == incomingDefinition.exclusiveGroup) {
+            entity.statuses.remove(activeStatusId);
+        }
+    }
 }
 
 void StatusSystem::onTurnEndedForSide(
@@ -80,7 +111,6 @@ void StatusSystem::onTurnEndedForSide(
         }
 
         const std::vector<std::pair<std::string, int>> statuses = entity.statuses.all();
-
         for (const auto& [statusId, amount] : statuses) {
             processEndTurnStatus(state, entity.id, statusId, amount);
         }
@@ -101,7 +131,6 @@ void StatusSystem::onTurnEndedForEntity(
     }
 
     const std::vector<std::pair<std::string, int>> statuses = entity.statuses.all();
-
     for (const auto& [statusId, amount] : statuses) {
         processEndTurnStatus(state, owner, statusId, amount);
     }
@@ -113,60 +142,114 @@ void StatusSystem::processEndTurnStatus(
     const std::string& statusId,
     const int amount
 ) const {
-    if (amount <= 0 || !statusDatabase_.contains(StatusId(statusId))) {
+    const StatusId id(statusId);
+    if (amount <= 0 || !statusDatabase_.contains(id)) {
         return;
     }
 
-    const StatusDefinition& definition = statusDatabase_.get(StatusId(statusId));
+    const StatusDefinition& definition = statusDatabase_.get(id);
     CombatEntity& entity = state.entity(owner);
 
-    bool alreadyDecreased = false;
-
-    if (definition.endTurnEffect == poisonDamageEffect) {
-        applyPoisonDamage(state, owner, amount);
-
-        if (definition.decreaseAfterTrigger) {
-            entity.statuses.add(statusId, -1);
-            alreadyDecreased = true;
+    int stacksToRemove = 0;
+    for (const StatusTriggerDefinition& trigger : definition.triggers) {
+        if (trigger.event != StatusTriggerEvent::EndOwnerTurn) {
+            continue;
         }
+
+        applyTriggeredEffect(state, owner, statusId, amount, trigger);
+        stacksToRemove += std::max(0, trigger.removeStacks);
     }
 
-    if (definition.durationRule == StatusDurationRule::DecreaseEndOfOwnerTurn && !alreadyDecreased) {
-        entity.statuses.add(statusId, -1);
+    if (definition.durationRule == StatusDurationRule::DecreaseEndOfOwnerTurn) {
+        ++stacksToRemove;
+    }
+
+    if (stacksToRemove > 0) {
+        entity.statuses.add(statusId, -stacksToRemove);
     }
 }
 
-void StatusSystem::applyPoisonDamage(
+void StatusSystem::applyTriggeredEffect(
     CombatState& state,
     const EntityId owner,
-    const int amount
+    const std::string& statusId,
+    const int stacks,
+    const StatusTriggerDefinition& trigger
 ) const {
-    if (amount <= 0) {
+    const int amount = std::max(0, trigger.flatValue + trigger.valuePerStack * stacks);
+    if (amount <= 0 || !state.hasEntity(owner)) {
         return;
     }
 
     CombatEntity& entity = state.entity(owner);
-    const std::optional<EntityId> source = entity.statuses.source(poisonStatus);
+    switch (trigger.effect) {
+        case StatusTriggeredEffect::DamageHp:
+            applyTriggeredDamage(state, owner, statusId, amount, trigger.logType);
+            return;
+
+        case StatusTriggeredEffect::Heal: {
+            const int healed = entity.health.heal(amount);
+            if (healed > 0) {
+                state.log.add(
+                    CombatLogEntryType::Heal,
+                    {
+                        {"target", entity.definitionId.empty() ? std::to_string(owner.value) : entity.definitionId},
+                        {"target_text_id", entity.nameTextId.value},
+                        {"amount", std::to_string(healed)},
+                        {"status", statusId}
+                    }
+                );
+            }
+            return;
+        }
+
+        case StatusTriggeredEffect::GainBlock:
+            entity.block += amount;
+            state.log.add(
+                CombatLogEntryType::BlockGained,
+                {
+                    {"target", entity.definitionId.empty() ? std::to_string(owner.value) : entity.definitionId},
+                    {"target_text_id", entity.nameTextId.value},
+                    {"amount", std::to_string(amount)},
+                    {"status", statusId}
+                }
+            );
+            return;
+    }
+}
+
+void StatusSystem::applyTriggeredDamage(
+    CombatState& state,
+    const EntityId owner,
+    const std::string& statusId,
+    const int amount,
+    const StatusTriggerLogType logType
+) const {
+    CombatEntity& entity = state.entity(owner);
+    const std::optional<EntityId> source = entity.statuses.source(statusId);
     const int hpDamage = entity.health.takeDamage(amount);
     const bool killed = entity.health.isDead();
 
-    state.log.add(
-        CombatLogEntryType::PoisonDamage,
-        {
-            {"target", entity.definitionId.empty() ? std::to_string(owner.value) : entity.definitionId},
-            {"target_text_id", entity.nameTextId.value},
-            {"amount", std::to_string(hpDamage)},
-            {"stacks", std::to_string(amount)},
-            {"remaining", std::to_string(std::max(0, amount - 1))}
-        }
-    );
+    if (const std::optional<CombatLogEntryType> type = combatLogType(logType); type.has_value()) {
+        state.log.add(
+            *type,
+            {
+                {"target", entity.definitionId.empty() ? std::to_string(owner.value) : entity.definitionId},
+                {"target_text_id", entity.nameTextId.value},
+                {"amount", std::to_string(hpDamage)},
+                {"stacks", std::to_string(entity.statuses.stacks(statusId))},
+                {"remaining", std::to_string(std::max(0, entity.statuses.stacks(statusId) - 1))}
+            }
+        );
+    }
 
-    emitPoisonDamageEvents(state, owner, source, hpDamage, killed);
+    emitDamageOverTimeEvents(state, owner, statusId, source, hpDamage, killed);
 }
 
-void StatusSystem::emitPoisonDamageEvents(
+void StatusSystem::emitDamageOverTimeEvents(
     CombatState& state,
     const EntityId owner,
+    const std::string& statusId,
     const std::optional<EntityId> source,
     const int hpDamage,
     const bool killed
@@ -179,9 +262,9 @@ void StatusSystem::emitPoisonDamageEvents(
     dealt.type = GameEventType::DamageDealt;
     dealt.source = source;
     dealt.target = owner;
-    dealt.cardDefinitionId = CardId("status.poison");
+    dealt.cardDefinitionId = CardId("status." + statusId);
     dealt.effectType = EffectType::Damage;
-    dealt.statusId = poisonStatus;
+    dealt.statusId = statusId;
     dealt.amount = hpDamage;
     dealt.turn = state.turn;
 

@@ -42,6 +42,14 @@ EncounterDefinition parseEncounter(
         throw std::runtime_error(filePath.string() + ": encounter '" + definition.id + "' must contain at least one enemy");
     }
 
+    if (definition.enemyIds.size() > EncounterDefinition::MaximumEnemyCount) {
+        throw std::runtime_error(
+            filePath.string() + ": encounter '" + definition.id + "' contains " +
+            std::to_string(definition.enemyIds.size()) + " enemies, but combat supports at most " +
+            std::to_string(EncounterDefinition::MaximumEnemyCount)
+        );
+    }
+
     if (definition.weight <= 0) {
         throw std::runtime_error(filePath.string() + ": encounter '" + definition.id + "' must have positive weight");
     }

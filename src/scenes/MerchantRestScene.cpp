@@ -3,6 +3,7 @@
 
 #include "cards/CardDefinition.hpp"
 #include "cards/CardUpgrade.hpp"
+#include "run/StressEconomyRules.hpp"
 #include "ui/BasicUi.hpp"
 
 #include <algorithm>
@@ -29,6 +30,7 @@ MerchantRestScene::MerchantRestScene(
     ShopState shopState,
     std::function<void(ShopState)> onBuyCards,
     std::function<void()> onHeal,
+    std::function<void()> onCalm,
     std::function<void(std::size_t)> onUpgrade,
     std::function<void()> onSkip
 )
@@ -39,6 +41,7 @@ MerchantRestScene::MerchantRestScene(
       shopState_(std::move(shopState)),
       onBuyCards_(std::move(onBuyCards)),
       onHeal_(std::move(onHeal)),
+      onCalm_(std::move(onCalm)),
       onUpgrade_(std::move(onUpgrade)),
       onSkip_(std::move(onSkip)) {}
 
@@ -93,13 +96,17 @@ Rectangle MerchantRestScene::panelBounds() const {
 
 Rectangle MerchantRestScene::actionButtonBounds(const std::size_t index) const {
     const Rectangle panel = panelBounds();
-    constexpr float gap = 24.f;
-    const float width = (panel.width - 96.f - 2.f * gap) / 3.f;
+    constexpr float gap = 18.f;
+    constexpr float rowGap = 18.f;
+    const float width = (panel.width - 96.f - gap) * 0.5f;
+    const float height = 150.f;
+    const std::size_t column = index % 2u;
+    const std::size_t row = index / 2u;
     return Rectangle{
-        panel.x + 48.f + static_cast<float>(index) * (width + gap),
-        panel.y + 190.f,
+        panel.x + 48.f + static_cast<float>(column) * (width + gap),
+        panel.y + 92.f + static_cast<float>(row) * (height + rowGap),
         width,
-        188.f
+        height
     };
 }
 
@@ -169,6 +176,12 @@ void MerchantRestScene::updateActions(const Vector2 mousePosition) {
     }
 
     if (IsKeyPressed(KEY_FOUR) ||
+        (BasicUi::contains(actionButtonBounds(3u), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+        onCalm_();
+        return;
+    }
+
+    if (IsKeyPressed(KEY_FIVE) ||
         (BasicUi::contains(skipButtonBounds(), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         onSkip_();
     }
@@ -234,33 +247,22 @@ void MerchantRestScene::renderActions() const {
         Color{245, 226, 166, 255}
     );
 
-    const std::vector<std::string> copy = BasicUi::wrapText(
-        font_,
-        localization_.get(TextId("merchant_rest.choose_action_description")),
-        17.f,
-        panel.width - 120.f
-    );
-    float y = panel.y + 78.f;
-    for (const std::string& line : copy) {
-        BasicUi::drawCenteredText(font_, line, Rectangle{panel.x + 60.f, y, panel.width - 120.f, 22.f}, 17.f, Color{184, 193, 214, 255});
-        y += 22.f;
-    }
-
     struct ActionView {
         const char* titleKey;
         const char* hotkeyKey;
-        std::string description;
+        std::string summary;
         bool enabled;
     };
 
     const std::vector<std::size_t> upgradable = upgradableDeckIndices();
-    const ActionView actions[3] = {
+    const ActionView actions[4] = {
         ActionView{"merchant_rest.buy_cards", "merchant_rest.hotkey_1", buyCardsSummary(), canOpenCardShop()},
-        ActionView{"merchant_rest.upgrade_card", "merchant_rest.hotkey_2", localization_.format(TextId("merchant_rest.upgrade_summary"), {{"count", std::to_string(upgradable.size())}}), !upgradable.empty()},
-        ActionView{"merchant_rest.heal", "merchant_rest.hotkey_3", healPreviewText() + " " + stressPreviewText(), true}
+        ActionView{"merchant_rest.upgrade_card", "merchant_rest.hotkey_2", localization_.format(TextId("rest.upgradable_count"), {{"upgradable", std::to_string(upgradable.size())}, {"total", std::to_string(runState_.deckCardIds.size())}}), !upgradable.empty()},
+        ActionView{"merchant_rest.heal", "merchant_rest.hotkey_3", healPreviewText(), true},
+        ActionView{"merchant_rest.calm", "merchant_rest.hotkey_4", calmPreviewText(), true}
     };
 
-    for (std::size_t i = 0u; i < 3u; ++i) {
+    for (std::size_t i = 0u; i < 4u; ++i) {
         const Rectangle bounds = actionButtonBounds(i);
         const bool hovered = actions[i].enabled && BasicUi::contains(bounds, mouse);
         DrawRectangleRounded(bounds, 0.065f, 12, hovered ? Color{48, 52, 66, 255} : Color{36, 39, 51, 255});
@@ -276,19 +278,25 @@ void MerchantRestScene::renderActions() const {
         BasicUi::drawCenteredText(
             font_,
             localization_.get(TextId(actions[i].hotkeyKey)),
-            Rectangle{bounds.x + 18.f, bounds.y + 52.f, bounds.width - 36.f, 24.f},
+            Rectangle{bounds.x + 18.f, bounds.y + 50.f, bounds.width - 36.f, 24.f},
             16.f,
             actions[i].enabled ? Color{164, 178, 214, 255} : Color{100, 106, 124, 255}
         );
 
-        const std::vector<std::string> lines = BasicUi::wrapText(font_, actions[i].description, 15.f, bounds.width - 36.f);
-        y = bounds.y + 88.f;
-        for (const std::string& line : lines) {
-            if (y > bounds.y + bounds.height - 22.f) {
+        const std::vector<std::string> summaryLines = BasicUi::wrapText(font_, actions[i].summary, 14.f, bounds.width - 30.f);
+        float summaryY = bounds.y + 82.f;
+        for (const std::string& line : summaryLines) {
+            if (summaryY > bounds.y + bounds.height - 20.f) {
                 break;
             }
-            BasicUi::drawText(font_, line, Vector2{bounds.x + 18.f, y}, 15.f, actions[i].enabled ? Color{205, 214, 232, 255} : Color{120, 126, 142, 255});
-            y += 19.f;
+            BasicUi::drawCenteredText(
+                font_,
+                line,
+                Rectangle{bounds.x + 15.f, summaryY, bounds.width - 30.f, 18.f},
+                14.f,
+                actions[i].enabled ? Color{190, 198, 218, 255} : Color{105, 110, 126, 255}
+            );
+            summaryY += 18.f;
         }
     }
 
@@ -310,14 +318,6 @@ void MerchantRestScene::renderUpgradeList() const {
         Rectangle{panel.x + 40.f, panel.y + 28.f, panel.width - 80.f, 34.f},
         29.f,
         Color{245, 226, 166, 255}
-    );
-
-    BasicUi::drawCenteredText(
-        font_,
-        localization_.get(TextId("merchant_rest.upgrade_action_hint")),
-        Rectangle{panel.x + 54.f, panel.y + 70.f, panel.width - 108.f, 24.f},
-        16.f,
-        Color{184, 193, 214, 255}
     );
 
     DrawRectangleRounded(list, 0.035f, 10, Color{22, 24, 32, 255});
@@ -503,7 +503,7 @@ std::string MerchantRestScene::healPreviewText() const {
     );
 }
 
-std::string MerchantRestScene::stressPreviewText() const {
+std::string MerchantRestScene::calmPreviewText() const {
     int current = 0;
     int after = 0;
     int maximum = 0;
@@ -512,12 +512,12 @@ std::string MerchantRestScene::stressPreviewText() const {
         const int actorMaximum = std::max(1, actor.maxStress);
         const int actorCurrent = std::clamp(actor.stress, 0, actorMaximum);
         current += actorCurrent;
-        after += std::max(0, actorCurrent - 30);
+        after += std::max(0, actorCurrent - StressEconomyRules::RestCalmAmount);
         maximum += actorMaximum;
     }
 
     return localization_.format(
-        TextId("rest.stress_preview"),
+        TextId("rest.calm_preview"),
         {{"current", std::to_string(current)}, {"after", std::to_string(after)}, {"maximum", std::to_string(maximum)}}
     );
 }

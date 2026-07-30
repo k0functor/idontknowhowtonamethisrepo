@@ -26,6 +26,7 @@ public:
         ShopState shopState,
         std::function<void(ShopState)> onBuyCards,
         std::function<void()> onHeal,
+        std::function<void()> onCalm,
         std::function<void(std::size_t)> onUpgrade,
         std::function<void()> onSkip
     );
@@ -62,7 +63,7 @@ private:
     std::string cardName(const CardId& cardId) const;
     std::string cardUpgradeSummary(const CardId& cardId) const;
     std::string healPreviewText() const;
-    std::string stressPreviewText() const;
+    std::string calmPreviewText() const;
     std::string buyCardsSummary() const;
     bool canOpenCardShop() const;
 
@@ -74,6 +75,7 @@ private:
     ShopState shopState_;
     std::function<void(ShopState)> onBuyCards_;
     std::function<void()> onHeal_;
+    std::function<void()> onCalm_;
     std::function<void(std::size_t)> onUpgrade_;
     std::function<void()> onSkip_;
 

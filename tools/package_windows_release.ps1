@@ -137,81 +137,104 @@ function Get-DllNamesFromObjdump {
     return @($names | Sort-Object -Unique)
 }
 
-function Find-DllFile {
+function Get-CMakeCacheValue {
     param(
-        [string]$DllName,
-        [string[]]$ExtraDirectories
+        [string]$BuildDirectory,
+        [string]$Name
     )
 
-    foreach ($directory in $ExtraDirectories) {
-        if ([string]::IsNullOrWhiteSpace($directory)) { continue }
-        $candidate = Join-Path $directory $DllName
-        if (Test-Path $candidate) {
-            return (Resolve-Path $candidate).Path
-        }
+    $cachePath = Join-Path $BuildDirectory "CMakeCache.txt"
+    if (-not (Test-Path $cachePath)) {
+        throw "CMake cache was not found after configuration: $cachePath"
     }
 
-    foreach ($directory in ($env:PATH -split ';')) {
-        if ([string]::IsNullOrWhiteSpace($directory)) { continue }
-        $candidate = Join-Path $directory $DllName
-        if (Test-Path $candidate) {
-            return (Resolve-Path $candidate).Path
-        }
+    $line = Get-Content $cachePath | Where-Object { $_ -match "^$([regex]::Escape($Name)):[^=]+=" } | Select-Object -First 1
+    if ($null -eq $line) {
+        throw "CMake cache variable '$Name' was not found in $cachePath"
     }
 
-    return $null
+    return ($line -split "=", 2)[1].Trim()
 }
 
-function Copy-RuntimeDlls {
+function Assert-CMakeCacheBool {
     param(
-        [string]$ExePath,
-        [string]$PackageDir
+        [string]$BuildDirectory,
+        [string]$Name,
+        [bool]$Expected
     )
 
-    $exeDir = Split-Path -Parent $ExePath
-    $detectedDlls = @(Get-DllNamesFromObjdump -ExePath $ExePath | Where-Object { -not (Test-IsSystemDll $_) })
-    $usedObjdump = $detectedDlls.Count -gt 0
+    $actualValue = (Get-CMakeCacheValue -BuildDirectory $BuildDirectory -Name $Name).ToUpperInvariant()
+    $actual = switch ($actualValue) {
+        { $_ -in @("1", "ON", "TRUE", "YES", "Y") } { $true; break }
+        { $_ -in @("0", "OFF", "FALSE", "NO", "N") } { $false; break }
+        default { throw "CMake cache variable '$Name' has unsupported boolean value '$actualValue'" }
+    }
+    if ($actual -ne $Expected) {
+        throw "CMake cache variable '$Name' is '$actualValue'; expected '$Expected'"
+    }
+}
 
-    if (-not $usedObjdump) {
-        Write-Warning "objdump did not provide DLL dependencies. Falling back to common MinGW/raylib DLL names."
-        $detectedDlls = @(
-            "libgcc_s_seh-1.dll",
-            "libstdc++-6.dll",
-            "libwinpthread-1.dll",
-            "raylib.dll"
-        )
+function Assert-StaticRuntimeDependencies {
+    param([string]$ExePath)
+
+    $objdump = Get-Command objdump -ErrorAction SilentlyContinue
+    if ($null -eq $objdump) {
+        throw "objdump is required to verify release runtime dependencies"
     }
 
-    $copied = New-Object System.Collections.Generic.List[string]
-    $searchDirs = @(
-        $exeDir,
-        (Join-Path (Split-Path -Parent $exeDir) "bin")
+    $dllNames = @(Get-DllNamesFromObjdump -ExePath $ExePath)
+    if ($dllNames.Count -eq 0) {
+        throw "objdump did not report DLL dependencies for: $ExePath"
+    }
+
+    $nonSystemDlls = @($dllNames | Where-Object { -not (Test-IsSystemDll $_) })
+    if ($nonSystemDlls.Count -gt 0) {
+        throw "Release executable still depends on non-system DLLs: $($nonSystemDlls -join ', ')"
+    }
+}
+
+function Write-ReleaseConfig {
+    param([string]$ConfigPath)
+
+    if (-not (Test-Path $ConfigPath)) {
+        throw "Packaged app config was not found: $ConfigPath"
+    }
+
+    $config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+    if ($null -eq $config.debug) {
+        $config | Add-Member -NotePropertyName "debug" -NotePropertyValue ([pscustomobject]@{})
+    }
+    if ($null -eq $config.debug.PSObject.Properties["enabled"]) {
+        $config.debug | Add-Member -NotePropertyName "enabled" -NotePropertyValue $false
+    } else {
+        $config.debug.enabled = $false
+    }
+
+    $config | ConvertTo-Json -Depth 32 | Set-Content -Path $ConfigPath -Encoding UTF8
+}
+
+function Invoke-ReleasePackageValidator {
+    param(
+        [string]$ProjectRoot,
+        [string]$PackagePath,
+        [string]$ExecutableName
     )
 
-    foreach ($dllName in $detectedDlls) {
-        $dllPath = Find-DllFile -DllName $dllName -ExtraDirectories $searchDirs
-        if ($null -eq $dllPath) {
-            if ($usedObjdump) {
-                throw "Required runtime DLL was not found on PATH or near the executable: $dllName"
-            }
-
-            Write-Warning "Optional/common DLL was not found and was not copied: $dllName"
-            continue
-        }
-
-        Copy-Item $dllPath (Join-Path $PackageDir $dllName) -Force
-        $copied.Add($dllName) | Out-Null
+    $validatorPath = Join-Path $ProjectRoot "tools/validate_release_package.py"
+    if (-not (Test-Path $validatorPath)) {
+        throw "Release package validator was not found: $validatorPath"
     }
 
-    $localDlls = Get-ChildItem $exeDir -Filter "*.dll" -File -ErrorAction SilentlyContinue
-    foreach ($dll in $localDlls) {
-        Copy-Item $dll.FullName (Join-Path $PackageDir $dll.Name) -Force
-        if (-not $copied.Contains($dll.Name)) {
-            $copied.Add($dll.Name) | Out-Null
-        }
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -eq $python) {
+        throw "Python 3 is required to validate release packages"
     }
 
-    return @($copied | Sort-Object -Unique)
+    Invoke-CheckedCommand -FilePath $python.Source -Arguments @(
+        $validatorPath,
+        $PackagePath,
+        "--executable", $ExecutableName
+    )
 }
 
 function Write-PackageReadme {
@@ -226,7 +249,7 @@ IDontKnowHowToNameThisGame - Windows portable build
 How to run:
 1. Extract the whole ZIP archive into a separate folder.
 2. Run $ExecutableName from that extracted folder.
-3. Do not move the EXE away from config/, data/, assets/ and saves/.
+3. Keep the EXE next to config/, data/ and assets/. The saves/ directory is created on first launch.
 
 If Windows SmartScreen warns about an unknown publisher, use:
 More info -> Run anyway.
@@ -257,7 +280,7 @@ try {
         Write-Step "Configuring CMake preset '$ConfigurePreset'"
         Invoke-CheckedCommand -FilePath "cmake" -Arguments @(
             "--preset", $ConfigurePreset,
-            "-DGAME_STATIC_MINGW_RUNTIME=ON",
+            "-DGAME_STATIC_LINK_LIBRARIES=ON",
             "-DGAME_FORCE_FETCH_RAYLIB=ON",
             "-DBUILD_SHARED_LIBS=OFF"
         )
@@ -265,6 +288,9 @@ try {
         Write-Step "Building CMake preset '$BuildPreset'"
         Invoke-CheckedCommand -FilePath "cmake" -Arguments @("--build", "--preset", $BuildPreset)
     }
+
+    Assert-CMakeCacheBool -BuildDirectory $buildDir -Name "GAME_STATIC_LINK_LIBRARIES" -Expected $true
+    Assert-CMakeCacheBool -BuildDirectory $buildDir -Name "BUILD_SHARED_LIBS" -Expected $false
 
     if (-not (Test-Path $exePath)) {
         throw "Executable was not found after build: $exePath"
@@ -286,30 +312,25 @@ try {
     Copy-DirectoryFresh -Source (Join-Path $projectRoot "config") -Destination (Join-Path $packageDir "config")
     Copy-DirectoryFresh -Source (Join-Path $projectRoot "data") -Destination (Join-Path $packageDir "data")
     Copy-DirectoryFresh -Source (Join-Path $projectRoot "assets") -Destination (Join-Path $packageDir "assets")
+    Write-ReleaseConfig -ConfigPath (Join-Path $packageDir "config/app.json")
 
-    $packageSavesDir = Join-Path $packageDir "saves"
-    New-Item -ItemType Directory -Path $packageSavesDir -Force | Out-Null
-    $settingsPath = Join-Path $projectRoot "saves/settings.json"
-    if (Test-Path $settingsPath) {
-        Copy-Item $settingsPath (Join-Path $packageSavesDir "settings.json") -Force
-    }
-
-    Write-Step "Copying required DLLs"
-    $copiedDlls = @(Copy-RuntimeDlls -ExePath $exePath -PackageDir $packageDir)
-
+    Write-Step "Verifying static runtime dependencies"
+    Assert-StaticRuntimeDependencies -ExePath $exePath
     Write-Step "Writing README.txt"
     Write-PackageReadme -PackageDir $packageDir -ExecutableName $ExecutableName
+
+    Write-Step "Validating package directory"
+    Invoke-ReleasePackageValidator -ProjectRoot $projectRoot -PackagePath $packageDir -ExecutableName $ExecutableName
 
     Write-Step "Creating ZIP archive"
     Compress-Archive -Path (Join-Path $packageDir "*") -DestinationPath $zipPath -Force
 
+    Write-Step "Validating ZIP archive"
+    Invoke-ReleasePackageValidator -ProjectRoot $projectRoot -PackagePath $zipPath -ExecutableName $ExecutableName
+
     Write-Host ""
     Write-Host "Portable package created: $zipPath"
-    if ($copiedDlls.Count -gt 0) {
-        Write-Host "Copied DLLs: $($copiedDlls -join ', ')"
-    } else {
-        Write-Host "Copied DLLs: none detected or needed"
-    }
+    Write-Host "Runtime DLLs: only Windows system libraries detected"
     Write-Host "Test the ZIP on a machine without MSYS2 before sending it to players. Obviously."
 }
 finally {

@@ -3,6 +3,7 @@
 #include "cards/CardInstanceFactory.hpp"
 #include "cards/DrawSystem.hpp"
 #include "combat/BlockSystem.hpp"
+#include "combat/BossPhaseSystem.hpp"
 #include "combat/CardPlaySystem.hpp"
 #include "combat/CardPlayValidator.hpp"
 #include "combat/CombatController.hpp"
@@ -61,7 +62,8 @@ public:
         const LocalizationManager& localization,
         Random& random,
         const UiFont& uiFont,
-        const RunState& runState,
+        RunState& runState,
+        std::function<void(std::string)> onActiveItemUsed,
         std::function<void(const CombatResult&)> onCombatWon,
         std::function<void(const CombatResult&)> onCombatLost
     );
@@ -141,6 +143,7 @@ private:
     Rectangle consumableCancelButtonBounds(Rectangle modal) const;
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
+    bool resolvePendingForcedCardPlay();
 
     enum class CardFlightAnimationKind {
         PlayedToDiscard,
@@ -166,6 +169,11 @@ private:
     struct EnemyAttackAnimation {
         EntityId enemyId;
         EntityId targetId;
+        float elapsedSeconds = 0.f;
+    };
+
+    struct GroupImpactAnimation {
+        std::vector<EntityId> targetIds;
         float elapsedSeconds = 0.f;
     };
 
@@ -222,6 +230,13 @@ private:
     void enqueueEnemyAttackAnimation(EntityId enemyId, EntityId targetId);
     void updateEnemyAttackAnimations(float deltaSeconds);
     void applyEnemyAttackVisuals(CombatViewModel& model) const;
+    void enqueueGroupImpactAnimation(std::vector<EntityId> targetIds);
+    void updateGroupImpactAnimations(float deltaSeconds);
+    void applyGroupImpactVisuals(CombatViewModel& model) const;
+    void renderGroupImpactAnimations() const;
+    bool cardAffectsAllEnemies(CardInstanceId cardInstanceId) const;
+    bool consumableAffectsAllEnemies(std::size_t index) const;
+    void sanitizeTargetSelection();
     void startDeathAnimationsForNewlyDeadEnemies();
     bool deathAnimationExists(EntityId enemyId) const;
     bool enemyDeathAnimationsComplete() const;
@@ -263,6 +278,7 @@ private:
     bool cardCanTargetPlayer(CardInstanceId cardInstanceId) const;
 
     void finishCombatIfNeeded();
+    bool handleActiveItemInput();
 
     void openRewardModalIfNeeded();
     void updateRewardModalInput(Vector2 mousePosition);
@@ -303,8 +319,9 @@ private:
     const LocalizationManager& localization_;
     Random& random_;
     const UiFont& uiFont_;
-    const RunState& runState_;
+    RunState& runState_;
 
+    std::function<void(std::string)> onActiveItemUsed_;
     std::function<RewardState(const CombatResult&)> createRewardOnVictory_;
     std::function<void(const RewardState&, const RewardSelection&)> onRewardAccepted_;
     std::function<void(const CombatResult&)> onCombatWon_;
@@ -325,6 +342,7 @@ private:
     DroneSystem droneSystem_;
     CardPlayValidator validator_;
     EffectSystem effectSystem_;
+    BossPhaseSystem bossPhaseSystem_;
     CardPlaySystem cardPlaySystem_;
     CardPreviewSystem previewSystem_;
 
@@ -344,6 +362,7 @@ private:
 
     EntityId playerId_;
     std::vector<std::string> combatConsumableIds_;
+    std::vector<std::string> encounteredEnemyIds_;
     std::optional<CardInstanceId> selectedCardId_;
     std::optional<CardInstanceId> draggedCardId_;
     std::optional<EntityId> keyboardTargetId_;
@@ -359,12 +378,14 @@ private:
     std::optional<std::size_t> targetingConsumableIndex_;
     std::deque<PlayedCardAnimation> playedCardAnimations_;
     std::deque<EnemyAttackAnimation> enemyAttackAnimations_;
+    std::vector<GroupImpactAnimation> groupImpactAnimations_;
     std::vector<EnemyDeathAnimation> enemyDeathAnimations_;
     std::vector<CombatFloatingFeedback> floatingFeedbacks_;
     std::vector<CombatHitFeedback> hitFeedbacks_;
     float feedbackStaggerCursorSeconds_ = 0.f;
     std::vector<CardInstanceId> visuallyDiscardingCardIds_;
     bool pendingEndTurnResolution_ = false;
+    bool skipNextEnemyTurn_ = false;
     PileOverlayMode pileOverlayMode_ = PileOverlayMode::None;
     float pileOverlayScrollOffset_ = 0.f;
 

@@ -29,7 +29,8 @@ enum class GameEventType {
     EnemyKilled,
     RewardGenerated,
     GoldGained,
-    RelicCollected
+    RelicCollected,
+    StressBreakdownTriggered
 };
 
 std::string toString(GameEventType type);
@@ -47,6 +48,8 @@ struct GameEvent {
 
     std::string statusId;
     std::string relicId;
+    std::string breakdownType;
+    int breakdownSeverity = 0;
 
     EffectType effectType = EffectType::Damage;
     int amount = 0;

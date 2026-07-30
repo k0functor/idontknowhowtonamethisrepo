@@ -55,6 +55,10 @@ RelicTriggerDefinition parseTrigger(
     if (reader.has("card_type")) {
         trigger.cardType = cardTypeFromString(reader.requiredString("card_type"));
     }
+    if (reader.has("breakdown_type")) {
+        trigger.breakdownType = reader.requiredString("breakdown_type");
+    }
+    trigger.minimumBreakdownSeverity = reader.optionalInt("min_breakdown_severity", 0);
     trigger.sourceSide = reader.optionalString("source_side", "any");
     trigger.minimumAmount = reader.optionalInt("min_amount", 0);
 
@@ -75,6 +79,19 @@ RelicTriggerDefinition parseTrigger(
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() + "': min_amount must not be negative"
         );
+    }
+    if (trigger.minimumBreakdownSeverity < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': min_breakdown_severity must not be negative"
+        );
+    }
+    if (trigger.breakdownType.has_value()) {
+        const std::string& value = *trigger.breakdownType;
+        if (value != "discard" && value != "energy" && value != "status_cards" && value != "cost" && value != "frenzy") {
+            throw std::runtime_error(
+                "JSON error in '" + sourcePath.string() + "': invalid breakdown_type '" + value + "'"
+            );
+        }
     }
 
     const Json& effectsJson = reader.optionalArray("effects");

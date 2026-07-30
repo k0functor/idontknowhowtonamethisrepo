@@ -5,12 +5,11 @@
 #include <cstddef>
 #include <string>
 
-#include <raylib.h>
-
 enum class ShopOfferType {
     Card,
     Relic,
     Consumable,
+    ActiveItem,
     CardRemoval
 };
 

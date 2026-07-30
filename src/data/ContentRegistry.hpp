@@ -1,6 +1,9 @@
 #pragma once
 
+#include "active_items/ActiveItemDatabase.hpp"
+#include "achievements/AchievementDatabase.hpp"
 #include "actors/PlayerActorDatabase.hpp"
+#include "challenges/ChallengeDatabase.hpp"
 #include "archetypes/PlayableArchetypeDatabase.hpp"
 #include "data/CardDatabase.hpp"
 #include "data/EnemyDatabase.hpp"
@@ -50,8 +53,17 @@ public:
     const ConsumableDatabase& consumables() const;
     ConsumableDatabase& consumables();
 
+    const ActiveItemDatabase& activeItems() const;
+    ActiveItemDatabase& activeItems();
+
     const DroneDatabase& drones() const;
     DroneDatabase& drones();
+
+    const ChallengeDatabase& challenges() const;
+    ChallengeDatabase& challenges();
+
+    const AchievementDatabase& achievements() const;
+    AchievementDatabase& achievements();
 
     const EventDatabase& events() const;
     EventDatabase& events();
@@ -82,7 +94,10 @@ private:
     PlayerActorDatabase actors_;
     DifficultyDatabase difficulties_;
     ConsumableDatabase consumables_;
+    ActiveItemDatabase activeItems_;
     DroneDatabase drones_;
+    ChallengeDatabase challenges_;
+    AchievementDatabase achievements_;
     EventDatabase events_;
     EncounterDatabase encounters_;
     RewardTuning rewardTuning_;

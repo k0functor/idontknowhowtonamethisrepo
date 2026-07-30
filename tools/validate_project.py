@@ -18,6 +18,12 @@ CARD_KEYWORDS = {"exhaust", "retain", "ethereal", "innate", "unplayable"}
 RELIC_RARITIES = {"starter", "common", "uncommon", "rare", "boss", "special"}
 STATUS_TYPES = {"buff", "debuff", "neutral"}
 STATUS_DURATION_RULES = {"persistent_combat", "decrease_end_of_owner_turn", "custom"}
+STATUS_MODIFIER_ENTITIES = {"source", "target"}
+STATUS_MODIFIER_OPERATIONS = {"add_per_stack", "add_fixed", "multiply_per_stack", "multiply_fixed"}
+STATUS_TRIGGER_EVENTS = {"end_owner_turn"}
+STATUS_TRIGGER_EFFECTS = {"damage_hp", "heal", "gain_block"}
+STATUS_TRIGGER_LOGS = {"none", "poison_damage", "burn_damage"}
+MAX_ENEMIES_PER_ENCOUNTER = 3
 CONSUMABLE_RARITIES = {"common", "uncommon", "rare", "special"}
 EFFECT_TYPES = {
     "damage",
@@ -25,17 +31,32 @@ EFFECT_TYPES = {
     "heal",
     "draw_cards",
     "discard_cards",
+    "recover_cards",
     "apply_status",
     "gain_energy",
     "gain_stress",
     "lose_energy",
     "lose_stress",
+    "spend_stress_damage",
+    "spend_stress_block",
+    "spend_stress_energy",
+    "spend_stress_draw",
     "lose_hp",
     "enter_stance",
     "summon_drone",
     "use_drone",
+    "prime_stress_breakdown",
 }
 DRONE_EFFECT_TYPES = {"damage", "block", "heal", "draw_cards", "apply_status", "gain_energy"}
+STRESS_BREAKDOWN_TYPES = {"discard", "energy", "status_cards", "cost", "frenzy"}
+KNOWN_TRAITS = {"stress_breakdown", "stress_resolve"}
+
+STRESS_CONVERSION_TYPES = {
+    "spend_stress_damage": {"single_enemy", "all_enemies"},
+    "spend_stress_block": {"self"},
+    "spend_stress_energy": {"self"},
+    "spend_stress_draw": {"self"},
+}
 
 EFFECT_TARGETS = {
     "self",
@@ -65,11 +86,9 @@ GAME_EVENTS = {
     "reward_generated",
     "gold_gained",
     "relic_collected",
+    "stress_breakdown_triggered",
 }
 RELIC_MODIFIERS = {
-    "outgoing_damage_add",
-    "outgoing_damage_multiply",
-    "block_add",
     "gold_reward_multiply",
 }
 RUN_EVENT_EFFECTS = {
@@ -87,9 +106,16 @@ RUN_EVENT_EFFECTS = {
     "lose_stress",
     "lose_hp",
     "heal_all",
+    "set_flag",
+    "clear_flag",
     "skip",
 }
 NODE_TYPES = {"combat", "elite", "boss", "chest", "event", "shop", "rest"}
+LEGACY_LAYOUT_FILES = {
+    "data/localization/ru.json": "split Russian localization into data/localization/ru/*.json",
+    "data/localization/en.json": "split English localization into data/localization/en/*.json",
+    "data/cards/starter_cards.json": "store starter card definitions in archetype card files and reference them from starting_deck",
+}
 
 NUMERIC_RUN_EVENT_EFFECTS = {
     "gain_gold",
@@ -104,8 +130,10 @@ CONTENT_RUN_EVENT_EFFECTS = {
     "remove_card": "card",
     "gain_relic": "relic",
     "gain_consumable": "consumable",
+    "set_flag": "flag",
+    "clear_flag": "flag",
 }
-ZERO_AMOUNT_RUN_EVENT_EFFECTS = {"remove_random_card", "skip"}
+ZERO_AMOUNT_RUN_EVENT_EFFECTS = {"remove_random_card", "set_flag", "clear_flag", "skip"}
 
 
 @dataclass
@@ -133,6 +161,8 @@ class IdIndex:
 class ProjectContent:
     actors: IdIndex = field(default_factory=IdIndex)
     archetypes: IdIndex = field(default_factory=IdIndex)
+    challenges: IdIndex = field(default_factory=IdIndex)
+    achievements: IdIndex = field(default_factory=IdIndex)
     cards: IdIndex = field(default_factory=IdIndex)
     consumables: IdIndex = field(default_factory=IdIndex)
     drones: IdIndex = field(default_factory=IdIndex)
@@ -168,6 +198,18 @@ class ProjectValidator:
 
         self.loaded_json_files += 1
         return data
+
+    def validate_repository_layout(self) -> None:
+        for relative_path, guidance in LEGACY_LAYOUT_FILES.items():
+            path = ROOT / relative_path
+            if path.exists():
+                self.error(relative_path, f"legacy layout file is not allowed; {guidance}")
+
+        readme_path = ROOT / "README.md"
+        if not readme_path.exists():
+            self.error("README.md", "file is missing")
+        elif not readme_path.read_text(encoding="utf-8", errors="ignore").strip():
+            self.error("README.md", "file must describe build, validation and data layout")
 
     def validate_json_parse_smoke(self) -> None:
         for base_dir in (DATA_DIR, CONFIG_DIR):
@@ -227,6 +269,18 @@ class ProjectValidator:
                 "is_available",
             ],
         )
+        for path in sorted((DATA_DIR / "challenges").glob("*.json")):
+            self.load_list_file(
+                path.relative_to(ROOT).as_posix(),
+                self.content.challenges,
+                ["name", "description", "goal", "completion"],
+            )
+        for path in sorted((DATA_DIR / "achievements").glob("*.json")):
+            self.load_list_file(
+                path.relative_to(ROOT).as_posix(),
+                self.content.achievements,
+                ["name", "description", "goal", "completion"],
+            )
         for path in sorted((DATA_DIR / "cards").glob("*.json")):
             self.load_list_file(
                 path.relative_to(ROOT).as_posix(),
@@ -273,34 +327,36 @@ class ProjectValidator:
         self.load_encounters()
 
     def load_encounters(self) -> None:
-        relative_path = "data/encounters/act1_encounters.json"
-        data = self.load_json(ROOT / relative_path)
-        if data is None:
-            return
-        if not isinstance(data, dict):
-            self.error(relative_path, "root must be an object")
-            return
-        pools = data.get("pools")
-        if not isinstance(pools, dict):
-            self.error(relative_path, "pools must be an object")
-            return
-        for pool_name, encounters in pools.items():
-            owner = f"{relative_path}:pools.{pool_name}"
-            if pool_name not in {"combat", "elite", "boss"}:
-                self.error(owner, "unknown encounter pool")
-            if not isinstance(encounters, list):
-                self.error(owner, "pool must be an array")
+        encounter_dir = DATA_DIR / "encounters"
+        for path in sorted(encounter_dir.glob("*.json")):
+            relative_path = path.relative_to(ROOT).as_posix()
+            data = self.load_json(path)
+            if data is None:
                 continue
-            for encounter_index, encounter in enumerate(encounters):
-                encounter_owner = f"{owner}[{encounter_index}]"
-                if not isinstance(encounter, dict):
-                    self.error(encounter_owner, "encounter must be an object")
+            if not isinstance(data, dict):
+                self.error(relative_path, "root must be an object")
+                continue
+            pools = data.get("pools")
+            if not isinstance(pools, dict):
+                self.error(relative_path, "pools must be an object")
+                continue
+            for pool_name, encounters in pools.items():
+                owner = f"{relative_path}:pools.{pool_name}"
+                if pool_name not in {"combat", "elite", "boss"}:
+                    self.error(owner, "unknown encounter pool")
+                if not isinstance(encounters, list):
+                    self.error(owner, "pool must be an array")
                     continue
-                id_value = encounter.get("id")
-                if not isinstance(id_value, str) or not id_value:
-                    self.error(encounter_owner, "id must be a non-empty string")
-                    continue
-                self.content.encounters.add(id_value, encounter, f"{relative_path}:{id_value}", self.errors)
+                for encounter_index, encounter in enumerate(encounters):
+                    encounter_owner = f"{owner}[{encounter_index}]"
+                    if not isinstance(encounter, dict):
+                        self.error(encounter_owner, "encounter must be an object")
+                        continue
+                    id_value = encounter.get("id")
+                    if not isinstance(id_value, str) or not id_value:
+                        self.error(encounter_owner, "id must be a non-empty string")
+                        continue
+                    self.content.encounters.add(id_value, encounter, f"{relative_path}:{id_value}", self.errors)
 
     def expect_enum(self, owner: str, field_name: str, value: Any, allowed: set[str]) -> str | None:
         if not isinstance(value, str):
@@ -356,6 +412,53 @@ class ProjectValidator:
             if "times" in effect:
                 self.expect_int(effect_owner, "times", effect.get("times"), minimum=1)
 
+            if effect_type in STRESS_CONVERSION_TYPES:
+                value = effect.get("value")
+                if not isinstance(value, dict) or value.get("type") != "fixed":
+                    self.error(effect_owner, "stress conversion value must be a fixed stress cost")
+                else:
+                    self.expect_int(effect_owner, "value.amount", value.get("amount"), minimum=1)
+                self.expect_int(effect_owner, "output", effect.get("output"), minimum=1)
+                target = effect.get("target", "self")
+                if target not in STRESS_CONVERSION_TYPES[effect_type]:
+                    self.error(effect_owner, f"invalid target '{target}' for {effect_type}")
+            elif "output" in effect:
+                self.error(effect_owner, "output is only valid for stress conversion effects")
+
+            scaling = effect.get("scaling")
+            if scaling is not None:
+                if not isinstance(scaling, dict):
+                    self.error(effect_owner, "scaling must be an object")
+                else:
+                    scaling_status = scaling.get("status")
+                    if scaling_status is not None:
+                        if not isinstance(scaling_status, str) or not scaling_status:
+                            self.error(effect_owner, "scaling.status must be a non-empty string")
+                        elif scaling_status not in self.content.statuses:
+                            self.error(effect_owner, f"scaling references unknown status '{scaling_status}'")
+                        self.expect_enum(effect_owner, "scaling.status_owner", scaling.get("status_owner", "source"), {"source", "target"})
+                    elif "status_owner" in scaling:
+                        self.error(effect_owner, "scaling.status_owner requires scaling.status")
+                    for field in (
+                        "bonus_if_present",
+                        "bonus_per_stack",
+                        "bonus_per_card_in_hand",
+                        "bonus_per_card_in_discard",
+                    ):
+                        if field in scaling:
+                            self.expect_int(effect_owner, f"scaling.{field}", scaling.get(field), minimum=0)
+                    if "maximum_bonus" in scaling:
+                        maximum_bonus = self.expect_int(effect_owner, "scaling.maximum_bonus", scaling.get("maximum_bonus"))
+                        if maximum_bonus is not None and maximum_bonus < -1:
+                            self.error(effect_owner, "scaling.maximum_bonus must be -1 or greater")
+                    if (scaling.get("bonus_if_present", 0) or scaling.get("bonus_per_stack", 0)) and not scaling_status:
+                        self.error(effect_owner, "status-based scaling requires scaling.status")
+                if effect_type in STRESS_CONVERSION_TYPES:
+                    self.error(effect_owner, "stress conversion effects do not support scaling")
+
+            if effect_type == "recover_cards" and effect.get("target", "self") != "self":
+                self.error(effect_owner, "recover_cards must target self")
+
             status_id = effect.get("status")
             if effect_type == "apply_status" or effect_type == "enter_stance":
                 if not isinstance(status_id, str) or not status_id:
@@ -367,6 +470,13 @@ class ProjectValidator:
                     self.error(effect_owner, "summon_drone must define a non-empty drone id in status")
                 elif status_id not in self.content.drones:
                     self.error(effect_owner, f"references unknown drone '{status_id}'")
+            elif effect_type == "prime_stress_breakdown":
+                if not isinstance(status_id, str) or not status_id:
+                    self.error(effect_owner, "prime_stress_breakdown must define a breakdown type in status")
+                elif status_id not in STRESS_BREAKDOWN_TYPES:
+                    self.error(effect_owner, f"references unknown stress breakdown type '{status_id}'")
+                if effect.get("target", "self") not in {"self", "random_ally", "all_allies"}:
+                    self.error(effect_owner, "prime_stress_breakdown target must be self, random_ally, or all_allies")
             elif status_id is not None:
                 self.warn(effect_owner, f"has unused status field '{status_id}' for effect type '{effect_type}'")
 
@@ -472,12 +582,74 @@ class ProjectValidator:
         return relic.get("rarity") not in {"starter", "special"}
 
     def validate_consumables_drones_statuses_relics(self) -> None:
+        exclusive_groups: Counter[str] = Counter()
         for status_id, status in self.content.statuses.items.items():
             owner = self.content.statuses.paths[status_id]
             self.expect_enum(owner, "type", status.get("type"), STATUS_TYPES)
             self.expect_enum(owner, "duration_rule", status.get("duration_rule"), STATUS_DURATION_RULES)
-            if status.get("end_turn_effect") not in (None, "poison_damage"):
-                self.error(owner, f"unknown end_turn_effect '{status.get('end_turn_effect')}'")
+
+            exclusive_group = status.get("exclusive_group", "")
+            if exclusive_group:
+                if not isinstance(exclusive_group, str):
+                    self.error(owner, "exclusive_group must be a string")
+                else:
+                    exclusive_groups[exclusive_group] += 1
+
+            modifiers = status.get("modifiers", [])
+            if not isinstance(modifiers, list):
+                self.error(owner, "modifiers must be an array")
+                modifiers = []
+            for index, modifier in enumerate(modifiers):
+                modifier_owner = f"{owner} modifiers[{index}]"
+                if not isinstance(modifier, dict):
+                    self.error(modifier_owner, "modifier must be an object")
+                    continue
+                self.expect_enum(modifier_owner, "effect_type", modifier.get("effect_type"), EFFECT_TYPES)
+                self.expect_enum(modifier_owner, "entity", modifier.get("entity", "source"), STATUS_MODIFIER_ENTITIES)
+                operation = modifier.get("operation")
+                self.expect_enum(modifier_owner, "operation", operation, STATUS_MODIFIER_OPERATIONS)
+                if not isinstance(modifier.get("description"), str) or not modifier.get("description"):
+                    self.error(modifier_owner, "description must be a non-empty localization id")
+                value = modifier.get("value")
+                if not isinstance(value, (int, float)) or isinstance(value, bool):
+                    self.error(modifier_owner, "value must be numeric")
+                elif operation in {"multiply_fixed"} and value <= 0:
+                    self.error(modifier_owner, "multiply_fixed value must be positive")
+                elif operation in {"add_per_stack", "add_fixed", "multiply_per_stack"} and value == 0:
+                    self.error(modifier_owner, "modifier value must not be zero")
+
+            triggers = status.get("triggers", [])
+            if not isinstance(triggers, list):
+                self.error(owner, "triggers must be an array")
+                triggers = []
+            for index, trigger in enumerate(triggers):
+                trigger_owner = f"{owner} triggers[{index}]"
+                if not isinstance(trigger, dict):
+                    self.error(trigger_owner, "trigger must be an object")
+                    continue
+                self.expect_enum(trigger_owner, "event", trigger.get("event"), STATUS_TRIGGER_EVENTS)
+                self.expect_enum(trigger_owner, "effect", trigger.get("effect"), STATUS_TRIGGER_EFFECTS)
+                self.expect_enum(trigger_owner, "log", trigger.get("log", "none"), STATUS_TRIGGER_LOGS)
+                flat_value = trigger.get("flat_value", 0)
+                value_per_stack = trigger.get("value_per_stack", 0)
+                remove_stacks = trigger.get("remove_stacks", 0)
+                if not isinstance(flat_value, int) or isinstance(flat_value, bool):
+                    self.error(trigger_owner, "flat_value must be an integer")
+                if not isinstance(value_per_stack, int) or isinstance(value_per_stack, bool):
+                    self.error(trigger_owner, "value_per_stack must be an integer")
+                if flat_value == 0 and value_per_stack == 0:
+                    self.error(trigger_owner, "trigger must define flat_value or value_per_stack")
+                if not isinstance(remove_stacks, int) or isinstance(remove_stacks, bool) or remove_stacks < 0:
+                    self.error(trigger_owner, "remove_stacks must be a non-negative integer")
+
+            if status.get("duration_rule") == "custom" and not triggers:
+                self.error(owner, "custom duration status must define at least one trigger")
+            if "end_turn_effect" in status or "decrease_after_trigger" in status:
+                self.error(owner, "legacy end-turn status fields are not supported")
+
+        for group_id, count in exclusive_groups.items():
+            if count < 2:
+                self.error("statuses", f"exclusive group '{group_id}' must contain at least two statuses")
 
         for consumable_id, consumable in self.content.consumables.items.items():
             owner = self.content.consumables.paths[consumable_id]
@@ -535,6 +707,16 @@ class ProjectValidator:
                     self.expect_int(trigger_owner, "every_n_turns", trigger.get("every_n_turns"), minimum=0)
                 if "min_amount" in trigger:
                     self.expect_int(trigger_owner, "min_amount", trigger.get("min_amount"), minimum=0)
+                breakdown_type = trigger.get("breakdown_type")
+                minimum_breakdown_severity = trigger.get("min_breakdown_severity")
+                if breakdown_type is not None:
+                    self.expect_enum(trigger_owner, "breakdown_type", breakdown_type, STRESS_BREAKDOWN_TYPES)
+                    if trigger.get("event") != "stress_breakdown_triggered":
+                        self.error(trigger_owner, "breakdown_type filter is supported only for stress_breakdown_triggered")
+                if minimum_breakdown_severity is not None:
+                    self.expect_int(trigger_owner, "min_breakdown_severity", minimum_breakdown_severity, minimum=0)
+                    if trigger.get("event") != "stress_breakdown_triggered":
+                        self.error(trigger_owner, "min_breakdown_severity is supported only for stress_breakdown_triggered")
                 self.validate_effect_list(trigger_owner, trigger.get("effects"))
 
     def validate_enemies_and_encounters(self) -> None:
@@ -568,6 +750,8 @@ class ProjectValidator:
             if not isinstance(enemies, list) or not enemies:
                 self.error(owner, "enemies must be a non-empty array")
             else:
+                if len(enemies) > MAX_ENEMIES_PER_ENCOUNTER:
+                    self.error(owner, f"enemies must contain at most {MAX_ENEMIES_PER_ENCOUNTER} entries")
                 for enemy_id in enemies:
                     if enemy_id not in self.content.enemies:
                         self.error(owner, f"references unknown enemy '{enemy_id}'")
@@ -576,6 +760,190 @@ class ProjectValidator:
             max_layer = self.expect_int(owner, "max_layer", encounter.get("max_layer", 0), minimum=0)
             if min_layer is not None and max_layer is not None and min_layer > max_layer:
                 self.error(owner, "min_layer must be <= max_layer")
+
+
+    def validate_unlock_rewards(self, owner: str, rewards: object) -> None:
+        if rewards is None:
+            return
+        if not isinstance(rewards, dict):
+            self.error(owner, "rewards must be an object")
+            return
+
+        allowed_keys = {"unlock_archetypes", "unlock_cards", "unlock_relics"}
+        for key in rewards:
+            if key not in allowed_keys:
+                self.error(owner, f"rewards has unknown key '{key}'")
+
+        for key, index, content_name in (
+            ("unlock_archetypes", self.content.archetypes, "archetype"),
+            ("unlock_cards", self.content.cards, "card"),
+            ("unlock_relics", self.content.relics, "relic"),
+        ):
+            values = rewards.get(key, [])
+            if not isinstance(values, list):
+                self.error(owner, f"rewards.{key} must be an array")
+                continue
+            seen: set[str] = set()
+            for value_index, value in enumerate(values):
+                if not isinstance(value, str) or not value:
+                    self.error(owner, f"rewards.{key}[{value_index}] must be a non-empty string")
+                    continue
+                if value in seen:
+                    self.error(owner, f"rewards.{key} duplicates '{value}'")
+                seen.add(value)
+                if value not in index:
+                    self.error(owner, f"rewards.{key} references unknown {content_name} '{value}'")
+
+    def validate_challenges(self) -> None:
+        allowed_completion_types = {
+            "clear_floor",
+            "clear_floor_without_shop",
+            "clear_floor_with_elites",
+            "clear_floor_with_archetype",
+            "clear_floor_low_damage",
+        }
+        floor_ids = set()
+        floors_data = self.load_json(ROOT / "data/run/floors.json")
+        if isinstance(floors_data, dict):
+            for floor in floors_data.get("floors", []):
+                if isinstance(floor, dict) and isinstance(floor.get("id"), str):
+                    floor_ids.add(floor["id"])
+
+        for challenge_id, challenge in self.content.challenges.items.items():
+            owner = self.content.challenges.paths[challenge_id]
+            if not isinstance(challenge.get("is_available", True), bool):
+                self.error(owner, "is_available must be boolean")
+            self.expect_int(owner, "selection_order", challenge.get("selection_order", 0), minimum=0)
+            self.validate_unlock_rewards(owner, challenge.get("rewards"))
+
+            for archetype_id in challenge.get("required_unlocked_archetypes", []):
+                if archetype_id not in self.content.archetypes:
+                    self.error(owner, f"required_unlocked_archetypes references unknown archetype '{archetype_id}'")
+            for required_challenge_id in challenge.get("required_completed_challenges", []):
+                if required_challenge_id not in self.content.challenges:
+                    self.error(owner, f"required_completed_challenges references unknown challenge '{required_challenge_id}'")
+
+            starting_archetype_id = challenge.get("starting_archetype_id")
+            if starting_archetype_id is not None and starting_archetype_id not in self.content.archetypes:
+                self.error(owner, f"starting_archetype_id references unknown archetype '{starting_archetype_id}'")
+            starting_difficulty_id = challenge.get("starting_difficulty_id")
+            if starting_difficulty_id is not None and starting_difficulty_id not in self.content.difficulties:
+                self.error(owner, f"starting_difficulty_id references unknown difficulty '{starting_difficulty_id}'")
+            starting_floor_id = challenge.get("starting_floor_id")
+            if starting_floor_id is not None and starting_floor_id not in floor_ids:
+                self.error(owner, f"starting_floor_id references unknown floor '{starting_floor_id}'")
+            if "starting_gold" in challenge:
+                self.expect_int(owner, "starting_gold", challenge.get("starting_gold"), minimum=0)
+            for card_id in challenge.get("fixed_starting_deck", []):
+                if card_id not in self.content.cards:
+                    self.error(owner, f"fixed_starting_deck references unknown card '{card_id}'")
+            for relic_id in challenge.get("fixed_starting_relics", []):
+                if relic_id not in self.content.relics:
+                    self.error(owner, f"fixed_starting_relics references unknown relic '{relic_id}'")
+            for consumable_id in challenge.get("fixed_starting_consumables", []):
+                if consumable_id not in self.content.consumables:
+                    self.error(owner, f"fixed_starting_consumables references unknown consumable '{consumable_id}'")
+
+            completion = challenge.get("completion")
+            if not isinstance(completion, dict):
+                self.error(owner, "completion must be an object")
+                continue
+            completion_type = self.expect_enum(owner, "completion.type", completion.get("type"), allowed_completion_types)
+            floor_id = completion.get("floor_id")
+            if floor_id is not None and floor_id not in floor_ids:
+                self.error(owner, f"completion references unknown floor '{floor_id}'")
+            archetype_id = completion.get("archetype_id")
+            if archetype_id is not None and archetype_id not in self.content.archetypes:
+                self.error(owner, f"completion references unknown archetype '{archetype_id}'")
+            for counter in ("min_elites_killed", "min_bosses_killed"):
+                if counter in completion:
+                    self.expect_int(owner, f"completion.{counter}", completion.get(counter), minimum=0)
+            for counter in ("max_shops_visited", "max_damage_taken"):
+                if counter in completion:
+                    value = self.expect_int(owner, f"completion.{counter}", completion.get(counter))
+                    if value is not None and value < -1:
+                        self.error(owner, f"completion.{counter} must be >= -1")
+
+            if completion_type == "clear_floor_with_archetype" and not archetype_id:
+                self.error(owner, "clear_floor_with_archetype requires completion.archetype_id")
+
+    def validate_achievements(self) -> None:
+        allowed_completion_types = {
+            "clear_floor",
+            "clear_floor_with_archetype",
+            "clear_floor_with_elites",
+            "clear_floor_low_damage",
+            "complete_challenges",
+            "complete_achievements",
+            "win_runs",
+            "lose_runs",
+        }
+        floor_ids = set()
+        floors_data = self.load_json(ROOT / "data/run/floors.json")
+        if isinstance(floors_data, dict):
+            for floor in floors_data.get("floors", []):
+                if isinstance(floor, dict) and isinstance(floor.get("id"), str):
+                    floor_ids.add(floor["id"])
+
+        for achievement_id, achievement in self.content.achievements.items.items():
+            owner = self.content.achievements.paths[achievement_id]
+            if not isinstance(achievement.get("is_available", True), bool):
+                self.error(owner, "is_available must be boolean")
+            self.expect_int(owner, "selection_order", achievement.get("selection_order", 0), minimum=0)
+            self.validate_unlock_rewards(owner, achievement.get("rewards"))
+
+            for archetype_id in achievement.get("required_unlocked_archetypes", []):
+                if archetype_id not in self.content.archetypes:
+                    self.error(owner, f"required_unlocked_archetypes references unknown archetype '{archetype_id}'")
+            for required_challenge_id in achievement.get("required_completed_challenges", []):
+                if required_challenge_id not in self.content.challenges:
+                    self.error(owner, f"required_completed_challenges references unknown challenge '{required_challenge_id}'")
+            for required_achievement_id in achievement.get("required_completed_achievements", []):
+                if required_achievement_id not in self.content.achievements:
+                    self.error(owner, f"required_completed_achievements references unknown achievement '{required_achievement_id}'")
+                if required_achievement_id == achievement_id:
+                    self.error(owner, "achievement cannot require itself")
+
+            completion = achievement.get("completion")
+            if not isinstance(completion, dict):
+                self.error(owner, "completion must be an object")
+                continue
+            completion_type = self.expect_enum(owner, "completion.type", completion.get("type"), allowed_completion_types)
+            floor_id = completion.get("floor_id")
+            if floor_id is not None and floor_id not in floor_ids:
+                self.error(owner, f"completion references unknown floor '{floor_id}'")
+            archetype_id = completion.get("archetype_id")
+            if archetype_id is not None and archetype_id not in self.content.archetypes:
+                self.error(owner, f"completion references unknown archetype '{archetype_id}'")
+
+            for counter in (
+                "min_victories",
+                "min_defeats",
+                "min_completed_challenges",
+                "min_completed_achievements",
+                "min_elites_killed",
+                "min_bosses_killed",
+                "min_events_completed",
+                "min_relics",
+                "min_gold",
+            ):
+                if counter in completion:
+                    self.expect_int(owner, f"completion.{counter}", completion.get(counter), minimum=0)
+            if "max_damage_taken" in completion:
+                value = self.expect_int(owner, "completion.max_damage_taken", completion.get("max_damage_taken"))
+                if value is not None and value < -1:
+                    self.error(owner, "completion.max_damage_taken must be >= -1")
+
+            if completion_type == "clear_floor_with_archetype" and not archetype_id:
+                self.error(owner, "clear_floor_with_archetype requires completion.archetype_id")
+            if completion_type == "complete_challenges" and completion.get("min_completed_challenges", 0) <= 0:
+                self.error(owner, "complete_challenges requires completion.min_completed_challenges > 0")
+            if completion_type == "complete_achievements" and completion.get("min_completed_achievements", 0) <= 0:
+                self.error(owner, "complete_achievements requires completion.min_completed_achievements > 0")
+            if completion_type == "win_runs" and completion.get("min_victories", 0) <= 0:
+                self.error(owner, "win_runs requires completion.min_victories > 0")
+            if completion_type == "lose_runs" and completion.get("min_defeats", 0) <= 0:
+                self.error(owner, "lose_runs requires completion.min_defeats > 0")
 
     def validate_events(self) -> None:
         has_card_rewards = any(self.card_can_appear_as_reward(card) for card in self.content.cards.items.values())
@@ -613,9 +981,26 @@ class ProjectValidator:
                     for card_id in requirements.get(key, []):
                         if card_id not in self.content.cards:
                             self.error(choice_owner, f"{key} references unknown card '{card_id}'")
-                for numeric_key in ("min_gold", "min_hp", "min_deck_size"):
+                for numeric_key in ("min_gold", "min_hp", "min_deck_size", "min_stress", "max_stress"):
                     if numeric_key in requirements:
                         self.expect_int(choice_owner, numeric_key, requirements.get(numeric_key), minimum=0)
+                if (
+                    isinstance(requirements.get("min_stress"), int)
+                    and isinstance(requirements.get("max_stress"), int)
+                    and requirements["min_stress"] > requirements["max_stress"]
+                ):
+                    self.error(choice_owner, "min_stress must not exceed max_stress")
+                for key in ("has_trait", "missing_trait"):
+                    trait_id = requirements.get(key)
+                    if trait_id is not None:
+                        self.expect_enum(choice_owner, key, trait_id, KNOWN_TRAITS)
+                for key in ("has_traits", "missing_traits"):
+                    trait_ids = requirements.get(key, [])
+                    if not isinstance(trait_ids, list):
+                        self.error(choice_owner, f"{key} must be an array")
+                    else:
+                        for trait_id in trait_ids:
+                            self.expect_enum(choice_owner, key, trait_id, KNOWN_TRAITS)
 
                 effects = choice.get("effects", [])
                 if not isinstance(effects, list):
@@ -640,6 +1025,8 @@ class ProjectValidator:
                             or effect.get("card_id")
                             or effect.get("relic_id")
                             or effect.get("consumable_id")
+                            or effect.get("flag")
+                            or effect.get("flag_id")
                         )
                         if not isinstance(content_id, str) or not content_id:
                             self.error(effect_owner, "content effect must define a content id")
@@ -649,6 +1036,8 @@ class ProjectValidator:
                             self.error(effect_owner, f"references unknown relic '{content_id}'")
                         elif CONTENT_RUN_EVENT_EFFECTS[effect_type] == "consumable" and content_id not in self.content.consumables:
                             self.error(effect_owner, f"references unknown consumable '{content_id}'")
+                        elif CONTENT_RUN_EVENT_EFFECTS[effect_type] == "flag" and not content_id.startswith("chain."):
+                            self.error(effect_owner, "event flags must use the 'chain.' namespace")
                     elif effect_type == "gain_random_card" and not has_card_rewards:
                         self.error(effect_owner, "random card reward pool is empty")
                     elif effect_type == "gain_random_relic" and not has_relic_rewards:
@@ -893,6 +1282,7 @@ class ProjectValidator:
                     self.error(owner, f"{key} must be positive")
 
     def run(self) -> int:
+        self.validate_repository_layout()
         self.validate_json_parse_smoke()
         self.load_indexed_content()
         if self.errors:
@@ -904,6 +1294,8 @@ class ProjectValidator:
         self.validate_actors_and_archetypes()
         self.validate_enemies_and_encounters()
         self.validate_events()
+        self.validate_challenges()
+        self.validate_achievements()
         self.validate_reward_and_shop_tables()
         self.validate_map_config()
         self.validate_difficulties()
@@ -925,6 +1317,8 @@ class ProjectValidator:
                 f"{len(self.content.relics)} relics, "
                 f"{len(self.content.consumables)} consumables, "
                 f"{len(self.content.events)} events, "
+                f"{len(self.content.challenges)} challenges, "
+                f"{len(self.content.achievements)} achievements, "
                 f"{len(self.content.archetypes)} archetypes"
             )
             if self.effect_type_counts:

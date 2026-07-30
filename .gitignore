@@ -11,6 +11,8 @@ Testing/
 
 # Local caches
 .cache/
+__pycache__/
+*.pyc
 
 # IDE/editor state
 .idea/
@@ -32,7 +34,7 @@ Testing/
 *.obj
 
 # Runtime-local state
-saves/settings.json
-saves/slot_*/
+saves/**
+!saves/.gitkeep
 logs/
 *.log

@@ -1,0 +1,1422 @@
+[
+  {
+    "id": "oathbound_soldier",
+    "name": "enemy.oathbound_soldier.name",
+    "max_hp": 72,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "oathbound_soldier_black_halberd",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "oathbound_soldier_kneel_behind_oath",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "oathbound_soldier_break_the_line",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "crownless_supplicant",
+    "name": "enemy.crownless_supplicant.name",
+    "max_hp": 54,
+    "starting_block": 4,
+    "actions": [
+      {
+        "id": "crownless_supplicant_begging_knife",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "crownless_supplicant_shared_fever",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "crownless_supplicant_crawl_to_the_throne",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
+      }
+    ],
+    "role": "minion"
+  },
+  {
+    "id": "black_censer",
+    "name": "enemy.black_censer.name",
+    "max_hp": 48,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "black_censer_choking_incense",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "status": "poison"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "frenzy"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "black_censer_swinging_chain",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 11
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "black_censer_smoke_wall",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "marrow_scribe",
+    "name": "enemy.marrow_scribe.name",
+    "max_hp": 50,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "marrow_scribe_write_in_bone",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "marrow_scribe_ledger_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "marrow_scribe_catalogue_grief",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "cost"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "hollow_bannerman",
+    "name": "enemy.hollow_bannerman.name",
+    "max_hp": 78,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "hollow_bannerman_raise_the_last_banner",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      },
+      {
+        "id": "hollow_bannerman_banner_spear",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 15
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "hollow_bannerman_war_song_without_lungs",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "chain_confessor",
+    "name": "enemy.chain_confessor.name",
+    "max_hp": 64,
+    "starting_block": 6,
+    "actions": [
+      {
+        "id": "chain_confessor_absolve_with_iron",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "chain_confessor_name_the_sin",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "chain_confessor_drag_the_kneeling",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "grave_courtier",
+    "name": "enemy.grave_courtier.name",
+    "max_hp": 58,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "grave_courtier_courtesy_stab",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "grave_courtier_invite_to_bow",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "grave_courtier_polished_lies",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "oath_eater",
+    "name": "enemy.oath_eater.name",
+    "max_hp": 82,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "oath_eater_bite_the_vow",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "oath_eater_swallow_courage",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "energy"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "oath_eater_gorge_on_promises",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "royal_headsman",
+    "name": "enemy.royal_headsman.name",
+    "max_hp": 126,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "royal_headsman_first_sentence",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "royal_headsman_read_the_verdict",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "royal_headsman_sharpen_the_square",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "reliquary_knight",
+    "name": "enemy.reliquary_knight.name",
+    "max_hp": 138,
+    "starting_block": 14,
+    "actions": [
+      {
+        "id": "reliquary_knight_casket_charge",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            },
+            "repeat_count": 3
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "reliquary_knight_guard_the_dead_crown",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 22
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "reliquary_knight_bone_splinters",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "choir_of_blades",
+    "name": "enemy.choir_of_blades.name",
+    "max_hp": 112,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "choir_of_blades_three_part_hymn",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            },
+            "repeat_count": 4
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "choir_of_blades_cut_the_breath",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "choir_of_blades_tune_the_steel",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "false_saint",
+    "name": "enemy.false_saint.name",
+    "max_hp": 118,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "false_saint_blessed_lash",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 19
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "false_saint_miracle_of_fever",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            },
+            "status": "poison"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "false_saint_gilded_wound",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "iron_abbot",
+    "name": "enemy.iron_abbot.name",
+    "max_hp": 150,
+    "starting_block": 10,
+    "actions": [
+      {
+        "id": "iron_abbot_monastery_bell",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "iron_abbot_vow_of_weight",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 26
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "iron_abbot_command_silence",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "the_oath_buried_king",
+    "name": "enemy.the_oath_buried_king.name",
+    "max_hp": 340,
+    "starting_block": 20,
+    "actions": [
+      {
+        "id": "the_oath_buried_king_crownfall",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 26
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "the_oath_buried_king_all_kneel",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "the_oath_buried_king_buried_oath",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "the_oath_buried_king_tax_the_living",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "poison"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "sealed_court",
+        "name": "enemy.phase.the_oath_buried_king.sealed_court",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "the_oath_buried_king_all_kneel",
+          "the_oath_buried_king_buried_oath"
+        ]
+      },
+      {
+        "id": "opened_tomb",
+        "name": "enemy.phase.the_oath_buried_king.opened_tomb",
+        "activate_below_hp_percent": 65,
+        "action_ids": [
+          "the_oath_buried_king_tax_the_living",
+          "the_oath_buried_king_crownfall",
+          "the_oath_buried_king_buried_oath"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 28
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "crownless_supplicant",
+          "black_censer"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "last_oath",
+        "name": "enemy.phase.the_oath_buried_king.last_oath",
+        "activate_below_hp_percent": 30,
+        "action_ids": [
+          "the_oath_buried_king_crownfall",
+          "the_oath_buried_king_tax_the_living",
+          "the_oath_buried_king_all_kneel"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 20
+            }
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "poison"
+          }
+        ],
+        "summon_enemy_ids": [
+          "hollow_bannerman",
+          "grave_courtier"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  }
+]

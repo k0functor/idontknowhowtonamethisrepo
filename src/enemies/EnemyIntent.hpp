@@ -1,7 +1,11 @@
 #pragma once
 
+#include "effects/EffectTarget.hpp"
+#include "effects/EffectType.hpp"
+
 #include <string>
 #include <string_view>
+#include <vector>
 
 enum class EnemyIntentType {
     Attack,
@@ -15,6 +19,17 @@ enum class EnemyIntentType {
 std::string toString(EnemyIntentType type);
 EnemyIntentType enemyIntentTypeFromString(std::string_view value);
 
+struct EnemyIntentEffectSummary {
+    EffectType type = EffectType::Damage;
+    EffectTarget target = EffectTarget::Self;
+
+    int valueMin = 0;
+    int valueMax = 0;
+    int repeatCount = 1;
+
+    std::string statusId;
+};
+
 struct EnemyIntent {
     EnemyIntentType type = EnemyIntentType::Unknown;
 
@@ -23,4 +38,9 @@ struct EnemyIntent {
     int valueMin = 0;
     int valueMax = 0;
     int hitCount = 1;
+
+    // Inspect-facing summaries of the actual effects the action will apply.
+    // The compact intent label stays simple, while the inspect panel can show
+    // target scope, statuses, energy loss and other non-damage consequences.
+    std::vector<EnemyIntentEffectSummary> effectSummaries;
 };

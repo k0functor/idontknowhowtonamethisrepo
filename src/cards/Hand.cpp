@@ -7,16 +7,34 @@ bool Hand::empty() const {
     return cards_.empty();
 }
 
+bool Hand::full() const {
+    return cards_.size() >= MaximumSize;
+}
+
 std::size_t Hand::size() const {
     return cards_.size();
+}
+
+std::size_t Hand::remainingCapacity() const {
+    return cards_.size() >= MaximumSize ? 0u : MaximumSize - cards_.size();
 }
 
 void Hand::clear() {
     cards_.clear();
 }
 
-void Hand::add(CardInstance card) {
+bool Hand::tryAdd(CardInstance card) {
+    if (full()) {
+        return false;
+    }
     cards_.push_back(std::move(card));
+    return true;
+}
+
+void Hand::add(CardInstance card) {
+    if (!tryAdd(std::move(card))) {
+        throw std::runtime_error("Cannot add card to a full hand");
+    }
 }
 
 bool Hand::contains(const CardInstanceId id) const {

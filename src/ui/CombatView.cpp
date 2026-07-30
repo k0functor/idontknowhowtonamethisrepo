@@ -334,23 +334,45 @@ void CombatView::layoutPlayers() {
 
 void CombatView::layoutEnemies() {
     const Rectangle battlefield = battlefieldBounds();
-    const float viewWidth = std::clamp(battlefield.width * 0.20f, 190.f, 250.f);
-    const float viewHeight = 180.f;
-    const float spacingX = viewWidth + 28.f;
+    if (enemyViews_.empty()) {
+        return;
+    }
 
-    const float totalWidth = enemyViews_.empty()
-        ? 0.f
-        : viewWidth * static_cast<float>(enemyViews_.size()) + 28.f * static_cast<float>(enemyViews_.size() - 1);
-    const float centerX = battlefield.x + battlefield.width * 0.70f;
-    const float startX = centerX - totalWidth * 0.5f;
-    const float y = battlefield.y + battlefield.height * 0.48f - viewHeight * 0.5f;
+    const std::size_t enemyCount = enemyViews_.size();
+    const float gap = enemyCount >= 3 ? 14.f : 22.f;
+    const float regionFactor = enemyCount == 1 ? 0.54f : (enemyCount == 2 ? 0.48f : 0.42f);
+    const float regionX = battlefield.x + battlefield.width * regionFactor;
+    const float regionWidth = battlefield.x + battlefield.width - regionX - 18.f;
+    const float count = static_cast<float>(enemyCount);
+    const float availablePerEnemy = (regionWidth - gap * std::max(0.f, count - 1.f)) / count;
 
-    for (std::size_t i = 0; i < enemyViews_.size(); ++i) {
-        enemyViews_[i].setPosition(Vector2{startX + spacingX * static_cast<float>(i), y});
+    const float minimumWidth = enemyCount >= 3 ? 150.f : 170.f;
+    const float maximumWidth = enemyCount == 1 ? 240.f : (enemyCount == 2 ? 220.f : 195.f);
+    const float viewWidth = std::clamp(availablePerEnemy, minimumWidth, maximumWidth);
+    const float viewHeight = enemyCount >= 3 ? 162.f : 180.f;
+    const float totalWidth = viewWidth * count + gap * std::max(0.f, count - 1.f);
+    const float startX = regionX + std::max(0.f, (regionWidth - totalWidth) * 0.5f);
 
-        const bool hasSeveralEnemies = enemyViews_.size() > 1;
-        const bool isLeftmostEnemy = i == 0;
-        enemyViews_[i].setStatusesOnRight(hasSeveralEnemies && !isLeftmostEnemy);
+    const float minimumBodyY = battlefield.y + 64.f;
+    const float centeredBodyY = battlefield.y + battlefield.height * 0.54f - viewHeight * 0.5f;
+    const float baseY = std::max(minimumBodyY, centeredBodyY);
+    const bool compactStatuses = enemyCount > 1;
+
+    for (std::size_t i = 0; i < enemyCount; ++i) {
+        float verticalOffset = 0.f;
+        if (enemyCount == 3) {
+            verticalOffset = i == 1 ? -14.f : 12.f;
+        } else if (enemyCount == 2) {
+            verticalOffset = i == 0 ? 6.f : -6.f;
+        }
+
+        enemyViews_[i].setSize(Vector2{viewWidth, viewHeight});
+        enemyViews_[i].setPosition(Vector2{
+            startX + (viewWidth + gap) * static_cast<float>(i),
+            baseY + verticalOffset
+        });
+        enemyViews_[i].setCompactStatuses(compactStatuses);
+        enemyViews_[i].setStatusesOnRight(i + 1 == enemyCount);
     }
 }
 

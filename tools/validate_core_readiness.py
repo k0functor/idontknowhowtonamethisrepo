@@ -149,21 +149,21 @@ class CoreReadinessValidator:
             if status.get("duration_rule") != "decrease_end_of_owner_turn":
                 self.error(status_owner, "temporary Sadist/Masochist status must expire at end of owner turn")
 
-    def validate_no_flat_attack_damage_relics(self) -> None:
+    def validate_status_driven_combat_relics(self) -> None:
         for relic_id, relic in sorted(self.project.content.relics.items.items()):
             owner = self.project.content.relics.paths[relic_id]
             for index, modifier in enumerate(relic.get("modifiers", [])):
-                if modifier.get("type") == "outgoing_damage_add":
+                if modifier.get("type") != "gold_reward_multiply":
                     self.error(
                         f"{owner}.modifiers[{index}]",
-                        "flat +damage relics should be implemented as combat_started strength instead",
+                        "combat relic scaling must be implemented through statuses",
                     )
 
     def run(self) -> int:
         if self.load_content():
             self.validate_available_archetypes()
             self.validate_sadist_masochist_contract()
-            self.validate_no_flat_attack_damage_relics()
+            self.validate_status_driven_combat_relics()
 
         if self.errors:
             print("Core readiness validation failed:")
@@ -175,7 +175,7 @@ class CoreReadinessValidator:
         for line in self.lines:
             print(line)
         print(" - sadist_masochist: shared cards, fixed Sadist -> Masochist subturns, 2+2 energy contract, temporary pain/pleasure statuses OK")
-        print(" - relics: no flat outgoing_damage_add relic modifiers")
+        print(" - relics: combat card scaling is status-driven")
         return 0
 
 

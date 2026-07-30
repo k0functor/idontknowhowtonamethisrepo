@@ -4,6 +4,7 @@
 #include "dice/DiceCorruption.hpp"
 #include "effects/EffectType.hpp"
 #include "entities/EntityId.hpp"
+#include "statuses/StatusDatabase.hpp"
 
 #include <string>
 #include <vector>
@@ -36,6 +37,7 @@ struct ModifierContext {
 
     CardId cardId;
     DiceCorruption diceCorruption;
+    bool usesActorStats = false;
 
     bool preview = false;
 };
@@ -74,7 +76,10 @@ public:
 
 class ModifierSystem {
 public:
-    explicit ModifierSystem(const LocalizationManager& localization);
+    ModifierSystem(
+        const LocalizationManager& localization,
+        const StatusDatabase& statusDatabase
+    );
 
     void addProvider(const IModifierProvider& provider);
     void clearProviders();
@@ -98,9 +103,17 @@ private:
         const ModifierContext& context
     ) const;
 
-    void collectBuiltInStatusModifiers(
+    void collectStatusModifiers(
         const CombatState& state,
         const ModifierContext& context,
+        std::vector<ValueModifier>& output
+    ) const;
+
+    void collectModifiersFromEntity(
+        const CombatState& state,
+        const ModifierContext& context,
+        EntityId entityId,
+        StatusModifierEntity modifierEntity,
         std::vector<ValueModifier>& output
     ) const;
 
@@ -108,5 +121,6 @@ private:
 
 private:
     const LocalizationManager& localization_;
+    const StatusDatabase& statusDatabase_;
     std::vector<const IModifierProvider*> providers_;
 };

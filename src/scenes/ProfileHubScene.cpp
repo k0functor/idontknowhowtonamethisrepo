@@ -31,6 +31,7 @@ struct ProfileHubLayout {
     Rectangle challengesButton{};
     Rectangle achievementsButton{};
     Rectangle compendiumButton{};
+    Rectangle progressButton{};
     Rectangle notification{};
 };
 
@@ -97,6 +98,7 @@ ProfileHubLayout calculateProfileHubLayout(const bool hasSavedRun) {
     layout.challengesButton = Rectangle{sideX, nextButtonY + (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
     layout.achievementsButton = Rectangle{sideX, nextButtonY + 2.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
     layout.compendiumButton = Rectangle{sideX, nextButtonY + 3.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
+    layout.progressButton = Rectangle{sideX, nextButtonY + 4.f * (sideButtonHeight + sideButtonGap), sideButtonWidth, sideButtonHeight};
 
     layout.notification = Rectangle{0.f, screenHeight - 50.f, screenWidth, 32.f};
 
@@ -152,9 +154,14 @@ ProfileHubScene::ProfileHubScene(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     std::vector<const PlayableArchetypeDefinition*> archetypes,
+    std::vector<std::string> unlockedArchetypeIds,
     const bool hasSavedRun,
     std::function<void(PlayableArchetypeId)> onStartRun,
     std::function<void()> onContinueRun,
+    std::function<void()> onOpenChallenges,
+    std::function<void()> onOpenAchievements,
+    std::function<void()> onOpenCompendium,
+    std::function<void()> onOpenProgress,
     std::function<void()> onBack
 )
     : font_(font),
@@ -163,9 +170,14 @@ ProfileHubScene::ProfileHubScene(
       cards_(cards),
       relics_(relics),
       archetypes_(std::move(archetypes)),
+      unlockedArchetypeIds_(std::move(unlockedArchetypeIds)),
       hasSavedRun_(hasSavedRun),
       onStartRun_(std::move(onStartRun)),
       onContinueRun_(std::move(onContinueRun)),
+      onOpenChallenges_(std::move(onOpenChallenges)),
+      onOpenAchievements_(std::move(onOpenAchievements)),
+      onOpenCompendium_(std::move(onOpenCompendium)),
+      onOpenProgress_(std::move(onOpenProgress)),
       onBack_(std::move(onBack)) {
     if (archetypes_.empty()) {
         notification_ = localization_.get(TextId("profile_hub.no_archetypes"));
@@ -210,10 +222,11 @@ void ProfileHubScene::update(float) {
     }
 
     if (BasicUi::contains(layout.startButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !archetypes_.empty()) {
-        if (selectedArchetype().isAvailable) {
-            onStartRun_(selectedArchetype().id);
+        const PlayableArchetypeDefinition& archetype = selectedArchetype();
+        if (isArchetypePlayable(archetype)) {
+            onStartRun_(archetype.id);
         } else {
-            notification_ = localization_.get(TextId("profile_hub.archetype_in_development"));
+            notification_ = lockedTextFor(archetype);
         }
     }
 
@@ -222,15 +235,23 @@ void ProfileHubScene::update(float) {
     }
 
     if (BasicUi::contains(layout.challengesButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = localization_.get(TextId("ui.challenges_later"));
+        onOpenChallenges_();
+        return;
     }
 
     if (BasicUi::contains(layout.achievementsButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = localization_.get(TextId("ui.achievements_later"));
+        onOpenAchievements_();
+        return;
     }
 
     if (BasicUi::contains(layout.compendiumButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = localization_.get(TextId("ui.compendium_later"));
+        onOpenCompendium_();
+        return;
+    }
+
+    if (BasicUi::contains(layout.progressButton, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        onOpenProgress_();
+        return;
     }
 }
 
@@ -251,27 +272,43 @@ void ProfileHubScene::render() const {
 
     if (!archetypes_.empty()) {
         const PlayableArchetypeDefinition& archetype = selectedArchetype();
-        const bool available = archetype.isAvailable;
-        const Color titleColor = available ? Color{245, 245, 250, 255} : Color{165, 168, 184, 255};
-        const Color accent = available ? archetypeAccentColor(archetype) : Color{105, 108, 124, 255};
-        const Color accentFill = available ? archetypeAccentColor(archetype, 70) : Color{65, 67, 78, 190};
+        const bool playable = isArchetypePlayable(archetype);
+        const Color titleColor = playable ? Color{245, 245, 250, 255} : Color{165, 168, 184, 255};
+        const Color accent = playable ? archetypeAccentColor(archetype) : Color{105, 108, 124, 255};
+        const Color accentFill = playable ? archetypeAccentColor(archetype, 70) : Color{65, 67, 78, 190};
 
         BasicUi::drawCenteredText(font_, localization_.get(archetype.nameTextId), Rectangle{characterPanel.x, characterPanel.y + 40.f, characterPanel.width, 50.f}, 34.f, titleColor);
 
         DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 96.f, accentFill);
         DrawCircleLines(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 96.f, accent);
-        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 82.f, available ? Color{75, 79, 96, 255} : Color{48, 50, 60, 255});
+        DrawCircle(static_cast<int>(characterPanel.x + characterPanel.width * 0.5f), static_cast<int>(characterPanel.y + 265.f), 82.f, playable ? Color{75, 79, 96, 255} : Color{48, 50, 60, 255});
+
+        if (!playable) {
+            const Rectangle badge{characterPanel.x + characterPanel.width * 0.5f - 116.f, characterPanel.y + 378.f, 232.f, 36.f};
+            DrawRectangleRounded(badge, 0.22f, 8, Color{42, 44, 55, 235});
+            DrawRectangleRoundedLinesEx(badge, 0.22f, 8, 2.f, Color{115, 120, 145, 255});
+            BasicUi::drawCenteredTextFitted(
+                font_,
+                archetype.isAvailable ? localization_.get(TextId("profile_hub.locked_badge")) : localization_.get(TextId("profile_hub.in_development_badge")),
+                Rectangle{badge.x + 10.f, badge.y, badge.width - 20.f, badge.height},
+                22.f,
+                15.f,
+                Color{205, 210, 230, 255}
+            );
+        }
     }
 
     if (hasSavedRun_) {
         BasicUi::drawButton(font_, layout.continueButton, localization_.get(TextId("save_slot.continue_run")), mouse);
+
     }
 
-    const bool selectedAvailable = !archetypes_.empty() && selectedArchetype().isAvailable;
-    BasicUi::drawButton(font_, layout.startButton, localization_.get(TextId("ui.to_the_road")), mouse, selectedAvailable);
+    const bool selectedPlayable = !archetypes_.empty() && isArchetypePlayable(selectedArchetype());
+    BasicUi::drawButton(font_, layout.startButton, localization_.get(TextId("ui.to_the_road")), mouse, selectedPlayable);
     BasicUi::drawButton(font_, layout.challengesButton, localization_.get(TextId("ui.challenges")), mouse);
     BasicUi::drawButton(font_, layout.achievementsButton, localization_.get(TextId("ui.achievements")), mouse);
     BasicUi::drawButton(font_, layout.compendiumButton, localization_.get(TextId("ui.compendium")), mouse);
+    BasicUi::drawButton(font_, layout.progressButton, localization_.get(TextId("ui.progress_log")), mouse);
 
     if (!notification_.empty()) {
         BasicUi::drawCenteredText(font_, notification_, layout.notification, 18.f, Color{185, 190, 210, 255});
@@ -303,6 +340,31 @@ void ProfileHubScene::moveSelection(const int direction) {
 
 const PlayableArchetypeDefinition& ProfileHubScene::selectedArchetype() const {
     return *archetypes_.at(selectedIndex_);
+}
+
+bool ProfileHubScene::isArchetypeUnlocked(const PlayableArchetypeDefinition& archetype) const {
+    return std::find(
+        unlockedArchetypeIds_.begin(),
+        unlockedArchetypeIds_.end(),
+        archetype.id.value
+    ) != unlockedArchetypeIds_.end();
+}
+
+bool ProfileHubScene::isArchetypePlayable(const PlayableArchetypeDefinition& archetype) const {
+    return archetype.isAvailable && isArchetypeUnlocked(archetype);
+}
+
+std::string ProfileHubScene::lockedTextFor(const PlayableArchetypeDefinition& archetype) const {
+    if (!archetype.isAvailable) {
+        return localization_.get(TextId("profile_hub.archetype_in_development"));
+    }
+
+    const TextId hintId("profile_hub.unlock_hint." + archetype.id.value);
+    if (localization_.hasText(hintId)) {
+        return localization_.get(hintId);
+    }
+
+    return localization_.get(TextId("profile_hub.archetype_locked"));
 }
 
 void ProfileHubScene::updateDetailsModal() {
@@ -424,20 +486,12 @@ float ProfileHubScene::renderDetailsContent(const Rectangle contentBounds, const
         y += 32.f;
     };
 
-    if (!archetype.isAvailable) {
-        addWrappedText(localization_.get(TextId("profile_hub.archetype_in_development")), 18.f, 24.f, baseX, wrappedWidth + 16.f, Color{226, 214, 240, 255});
+    if (!isArchetypePlayable(archetype)) {
+        addWrappedText(lockedTextFor(archetype), 18.f, 24.f, baseX, wrappedWidth + 16.f, Color{226, 214, 240, 255});
         y += 8.f;
     }
 
     addWrappedText(localization_.get(archetype.detailsDescriptionTextId), 18.f, 24.f, baseX, wrappedWidth + 16.f, Color{200, 206, 226, 255});
-
-    if (!archetype.visualIdentityTextId.value.empty()) {
-        addSectionTitle(localization_.get(TextId("profile_hub.visual_identity")), archetypeAccentColor(archetype));
-        addWrappedText(localization_.get(archetype.visualIdentityTextId), 17.f, 23.f, indentedX, wrappedWidth, Color{220, 224, 238, 255});
-    }
-
-    addSectionTitle(localization_.get(TextId("profile_hub.palette")), archetypeAccentColor(archetype));
-    addWrappedText(localization_.get(archetype.palette.nameTextId), 17.f, 23.f, indentedX, wrappedWidth, Color{220, 224, 238, 255});
 
     addSectionTitle(localization_.get(TextId("profile_hub.starting_resources")), Color{240, 235, 210, 255});
     drawTextIfNeeded(localization_.format(TextId("profile_hub.gold_value"), {{"gold", std::to_string(archetype.startingGold)}}), Vector2{indentedX, y}, 19.f, Color{220, 224, 238, 255});

@@ -10,5 +10,6 @@ enum class CardPlayFailureReason {
     WrongActorTurn,
     WrongActorForCard,
     NotEnoughEnergy,
+    NotEnoughStress,
     UnplayableKeyword
 };

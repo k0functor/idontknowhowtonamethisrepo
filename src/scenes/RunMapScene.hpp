@@ -34,11 +34,14 @@ public:
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
         const RunState& runState,
+        std::string runModeLabel,
         std::function<void(int)> onNodeSelected,
         std::function<void(int)> onRestHeal,
+        std::function<void(int)> onRestCalm,
         std::function<void(int, std::size_t)> onRestUpgrade,
         std::function<void(int)> onRestSkip,
-        std::function<void()> onBackToHub
+        std::function<void()> onBackToHub,
+        std::function<void()> onAbandonRun
     );
 
     void update(float deltaSeconds) override;
@@ -54,15 +57,31 @@ private:
     };
 
     Vector2 nodeScreenPosition(const RunMapNode& node) const;
+    Rectangle mapViewportBounds() const;
+    float mapAvailableWidth() const;
+    float mapScale() const;
+    float mapContentWidth() const;
+    float mapMaxScrollOffset() const;
+    float scrollOffsetForNode(const RunMapNode& node) const;
+    const RunMapNode* preferredMapFocusNode() const;
+    float initialMapScrollOffset() const;
+    void clampMapScrollOffset();
+    void focusMapOnPreferredNode();
+    void updateMapScroll(float deltaSeconds);
     Rectangle nodeBounds(const RunMapNode& node) const;
     Rectangle restModalBounds() const;
     Rectangle restHealButtonBounds(Rectangle modal) const;
+    Rectangle restCalmButtonBounds(Rectangle modal) const;
     Rectangle restUpgradeButtonBounds(Rectangle modal) const;
     Rectangle restSkipButtonBounds(Rectangle modal) const;
     Rectangle restCancelButtonBounds(Rectangle modal) const;
     Rectangle deckButtonBounds() const;
     Rectangle relicsButtonBounds() const;
     Rectangle consumablesButtonBounds() const;
+    Rectangle abandonButtonBounds() const;
+    Rectangle abandonModalBounds() const;
+    Rectangle abandonCancelButtonBounds(Rectangle modal) const;
+    Rectangle abandonConfirmButtonBounds(Rectangle modal) const;
     Rectangle overlayBounds() const;
     Rectangle overlayCloseButtonBounds(Rectangle modal) const;
     Rectangle overlayGridBounds(Rectangle modal) const;
@@ -86,12 +105,18 @@ private:
     Color nodeTextColor(const RunMapNode& node) const;
     float nodeOutlineThickness(const RunMapNode& node) const;
     std::string nodeLabel(const RunMapNode& node) const;
+    std::string nodeStateLabel(const RunMapNode& node) const;
+    Rectangle mapNodeInspectBounds() const;
+    void renderRunModeBanner() const;
     void renderMapLegend() const;
+    void renderMapNodeInspect(const RunMapNode& node) const;
 
     void updateRestModal(Vector2 mousePosition);
     void renderRestModal() const;
+    void updateAbandonConfirmation(Vector2 mousePosition);
+    void renderAbandonConfirmation() const;
     std::string restHealPreviewText() const;
-    std::string restStressPreviewText() const;
+    std::string restCalmPreviewText() const;
     std::string runHpSummaryText() const;
     std::string runStressSummaryText() const;
 
@@ -151,12 +176,20 @@ private:
     const RelicDatabase& relics_;
     const ConsumableDatabase& consumables_;
     const RunState& runState_;
+    std::string runModeLabel_;
     std::function<void(int)> onNodeSelected_;
     std::function<void(int)> onRestHeal_;
+    std::function<void(int)> onRestCalm_;
     std::function<void(int, std::size_t)> onRestUpgrade_;
     std::function<void(int)> onRestSkip_;
     std::function<void()> onBackToHub_;
+    std::function<void()> onAbandonRun_;
 
+    float mapScrollOffset_ = 0.f;
+    bool abandonConfirmationOpen_ = false;
+    bool isDraggingMapCanvas_ = false;
+    float mapCanvasDragStartX_ = 0.f;
+    float mapCanvasDragStartScrollOffset_ = 0.f;
     std::optional<int> restModalNodeId_;
     OverlayMode overlayMode_ = OverlayMode::None;
     float overlayScrollOffset_ = 0.f;

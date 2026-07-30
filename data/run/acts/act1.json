@@ -15,7 +15,9 @@
   "shop": {
     "count": 2,
     "min_layer": 1,
-    "max_layer": 5
+    "max_layer": 5,
+    "max_per_layer": 1,
+    "min_layer_gap": 2
   },
   "chests": {
     "count": 4,
@@ -27,11 +29,13 @@
     "min": 2,
     "max": 2,
     "min_layer": 1,
-    "max_layer": 5
+    "max_layer": 5,
+    "max_per_layer": 1,
+    "min_layer_gap": 1
   },
   "layout": {
     "start_x": 120.0,
-    "layer_step_x": 180.0,
+    "layer_step_x": 220.0,
     "center_y": 500.0,
     "node_spacing_y": 125.0
   },

@@ -462,7 +462,11 @@
         "target": "self",
         "value": {
           "type": "fixed",
-          "amount": 8
+          "amount": 3
+        },
+        "scaling": {
+          "bonus_per_card_in_hand": 1,
+          "maximum_bonus": 7
         }
       },
       {
@@ -481,7 +485,11 @@
           "target": "self",
           "value": {
             "type": "fixed",
-            "amount": 11
+            "amount": 5
+          },
+          "scaling": {
+            "bonus_per_card_in_hand": 1,
+            "maximum_bonus": 8
           }
         },
         {
@@ -829,7 +837,11 @@
         "target": "all_enemies",
         "value": {
           "type": "fixed",
-          "amount": 10
+          "amount": 6
+        },
+        "scaling": {
+          "bonus_per_card_in_discard": 1,
+          "maximum_bonus": 8
         }
       }
     ],
@@ -840,7 +852,11 @@
           "target": "all_enemies",
           "value": {
             "type": "fixed",
-            "amount": 13
+            "amount": 8
+          },
+          "scaling": {
+            "bonus_per_card_in_discard": 1,
+            "maximum_bonus": 10
           }
         }
       ]

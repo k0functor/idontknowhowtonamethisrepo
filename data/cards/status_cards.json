@@ -18,7 +18,8 @@
       }
     ],
     "keywords": [
-      "unplayable"
+      "unplayable",
+      "ethereal"
     ]
   },
   {
@@ -29,16 +30,7 @@
     "energy_cost": 0,
     "gold_cost": 0,
     "type": "status",
-    "effects": [
-      {
-        "type": "damage",
-        "target": "self",
-        "value": {
-          "type": "fixed",
-          "amount": 1
-        }
-      }
-    ],
+    "effects": [],
     "keywords": [
       "unplayable"
     ]

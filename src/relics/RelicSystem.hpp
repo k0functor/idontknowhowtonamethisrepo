@@ -1,7 +1,6 @@
 #pragma once
 
 #include "combat/EffectSystem.hpp"
-#include "combat/ModifierSystem.hpp"
 #include "core/Random.hpp"
 #include "game/GameEvent.hpp"
 #include "relics/RelicDatabase.hpp"
@@ -10,11 +9,10 @@
 
 #include <optional>
 
-class LocalizationManager;
 
-class RelicSystem final : public IModifierProvider {
+class RelicSystem final {
 public:
-    RelicSystem(const RelicDatabase& database, const LocalizationManager& localization);
+    explicit RelicSystem(const RelicDatabase& database);
 
     void setRelics(const std::vector<std::string>& relicIds);
     void setRelics(const RunState& run);
@@ -24,12 +22,6 @@ public:
     RelicInventory& inventory();
 
     void startCombat();
-
-    void collectModifiers(
-        const CombatState& state,
-        const ModifierContext& context,
-        std::vector<ValueModifier>& output
-    ) const override;
 
     void handleEvent(
         CombatState& state,
@@ -52,6 +44,5 @@ private:
 
 private:
     const RelicDatabase& database_;
-    const LocalizationManager& localization_;
     RelicInventory inventory_;
 };

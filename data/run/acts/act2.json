@@ -5,36 +5,52 @@
     5,
     5,
     5,
+    5,
     4,
     5,
     4,
+    4,
     1
   ],
-  "event_weight": 35,
-  "combat_weight": 65,
+  "event_weight": 30,
+  "combat_weight": 70,
   "shop": {
     "count": 2,
     "min_layer": 1,
-    "max_layer": 5
+    "max_layer": 7,
+    "max_per_layer": 1,
+    "min_layer_gap": 3
   },
   "chests": {
     "count": 2,
     "min_layer": 2,
-    "max_layer": 4,
-    "full_layer": false
+    "max_layer": 7,
+    "full_layer": false,
+    "max_per_layer": 1,
+    "min_layer_gap": 3
   },
   "elites": {
     "min": 2,
     "max": 3,
     "min_layer": 2,
-    "max_layer": 5
+    "max_layer": 7,
+    "max_per_layer": 1,
+    "min_layer_gap": 1
   },
   "layout": {
-    "start_x": 120.0,
-    "layer_step_x": 180.0,
+    "start_x": 90.0,
+    "layer_step_x": 230.0,
     "center_y": 500.0,
-    "node_spacing_y": 118.0
+    "node_spacing_y": 112.0
   },
-  "extra_connection_chance": 10,
-  "question_mark_combat_chance": 45
+  "extra_connection_chance": 18,
+  "question_mark_combat_chance": 30,
+  "events": {
+    "min": 4,
+    "max": 6,
+    "min_layer": 1,
+    "max_layer": 7,
+    "max_per_layer": 2,
+    "min_layer_gap": 0
+  }
 }

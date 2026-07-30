@@ -2,6 +2,7 @@
 
 #include "dice/DiceExpression.hpp"
 #include "preview/EffectPreview.hpp"
+#include "combat/EffectScaling.hpp"
 
 #include <cstddef>
 #include <string>
@@ -69,8 +70,10 @@ TextFormatter::Variables CardDescriptionFormatter::defaultVariables() const {
     variables.emplace("heal", "?");
     variables.emplace("draw_cards", "?");
     variables.emplace("discard_cards", "?");
+    variables.emplace("recover_cards", "?");
     variables.emplace("energy", "?");
     variables.emplace("stress", "?");
+    variables.emplace("stress_cost", "?");
     variables.emplace("lose_hp", "?");
     variables.emplace("poison", "?");
     variables.emplace("burn", "?");
@@ -82,6 +85,12 @@ TextFormatter::Variables CardDescriptionFormatter::defaultVariables() const {
     variables.emplace("value", "?");
     variables.emplace("times", "?");
     variables.emplace("repeat_suffix", "");
+    variables.emplace("scaling_bonus", "0");
+    variables.emplace("bonus_if_status", "0");
+    variables.emplace("bonus_per_stack", "0");
+    variables.emplace("bonus_per_hand", "0");
+    variables.emplace("bonus_per_discard", "0");
+    variables.emplace("maximum_bonus", "-");
 
     return variables;
 }
@@ -91,6 +100,15 @@ void CardDescriptionFormatter::fillVariablesFromStaticEffect(
     const EffectDefinition& effect
 ) const {
     const std::string value = effectValueText(effect.value);
+    if (!effect.scaling.empty()) {
+        variables["bonus_if_status"] = std::to_string(effect.scaling.bonusIfStatusPresent);
+        variables["bonus_per_stack"] = std::to_string(effect.scaling.bonusPerStatusStack);
+        variables["bonus_per_hand"] = std::to_string(effect.scaling.bonusPerCardInHand);
+        variables["bonus_per_discard"] = std::to_string(effect.scaling.bonusPerCardInDiscard);
+        variables["maximum_bonus"] = effect.scaling.maximumBonus >= 0
+            ? std::to_string(effect.scaling.maximumBonus)
+            : "-";
+    }
     if (shouldUseRepeatCountAsTimes(effect.type, effect.repeatCount)) {
         variables["times"] = std::to_string(effect.repeatCount);
     }
@@ -123,6 +141,11 @@ void CardDescriptionFormatter::fillVariablesFromStaticEffect(
             variables["value"] = value;
             break;
 
+        case EffectType::RecoverCards:
+            variables["recover_cards"] = value;
+            variables["value"] = value;
+            break;
+
         case EffectType::GainEnergy:
         case EffectType::LoseEnergy:
             variables["energy"] = value;
@@ -133,6 +156,34 @@ void CardDescriptionFormatter::fillVariablesFromStaticEffect(
         case EffectType::LoseStress:
             variables["stress"] = value;
             variables["value"] = value;
+            break;
+
+        case EffectType::SpendStressDamage:
+            variables["stress"] = value;
+            variables["stress_cost"] = value;
+            variables["damage"] = std::to_string(effect.outputAmount);
+            variables["value"] = std::to_string(effect.outputAmount);
+            break;
+
+        case EffectType::SpendStressBlock:
+            variables["stress"] = value;
+            variables["stress_cost"] = value;
+            variables["block"] = std::to_string(effect.outputAmount);
+            variables["value"] = std::to_string(effect.outputAmount);
+            break;
+
+        case EffectType::SpendStressEnergy:
+            variables["stress"] = value;
+            variables["stress_cost"] = value;
+            variables["energy"] = std::to_string(effect.outputAmount);
+            variables["value"] = std::to_string(effect.outputAmount);
+            break;
+
+        case EffectType::SpendStressDraw:
+            variables["stress"] = value;
+            variables["stress_cost"] = value;
+            variables["draw_cards"] = std::to_string(effect.outputAmount);
+            variables["value"] = std::to_string(effect.outputAmount);
             break;
 
         case EffectType::LoseHp:
@@ -151,6 +202,7 @@ void CardDescriptionFormatter::fillVariablesFromStaticEffect(
         case EffectType::EnterStance:
         case EffectType::SummonDrone:
         case EffectType::UseDrone:
+        case EffectType::PrimeStressBreakdown:
             variables["value"] = value;
             break;
     }
@@ -169,6 +221,20 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
         const EffectDefinition* effectDefinition = i < card.effects.size()
             ? &card.effects[i]
             : nullptr;
+
+        if (effectDefinition != nullptr && !effectDefinition->scaling.empty()) {
+            const std::optional<EntityId> scalingTarget = target;
+            variables["scaling_bonus"] = std::to_string(
+                effectScalingBonus(state, *effectDefinition, source, scalingTarget)
+            );
+            variables["bonus_if_status"] = std::to_string(effectDefinition->scaling.bonusIfStatusPresent);
+            variables["bonus_per_stack"] = std::to_string(effectDefinition->scaling.bonusPerStatusStack);
+            variables["bonus_per_hand"] = std::to_string(effectDefinition->scaling.bonusPerCardInHand);
+            variables["bonus_per_discard"] = std::to_string(effectDefinition->scaling.bonusPerCardInDiscard);
+            variables["maximum_bonus"] = effectDefinition->scaling.maximumBonus >= 0
+                ? std::to_string(effectDefinition->scaling.maximumBonus)
+                : "-";
+        }
 
         if (effectPreview.type == EffectType::Damage) {
             if (effectPreview.damage.has_value()) {
@@ -234,6 +300,11 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
                 variables["value"] = valueText;
                 break;
 
+            case EffectType::RecoverCards:
+                variables["recover_cards"] = valueText;
+                variables["value"] = valueText;
+                break;
+
             case EffectType::GainEnergy:
             case EffectType::LoseEnergy:
                 variables["energy"] = valueText;
@@ -243,6 +314,36 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
             case EffectType::GainStress:
             case EffectType::LoseStress:
                 variables["stress"] = valueText;
+                variables["value"] = valueText;
+                break;
+
+            case EffectType::SpendStressDamage:
+                variables["stress"] = std::to_string(effectPreview.stressCost);
+                variables["stress_cost"] = std::to_string(effectPreview.stressCost);
+                variables["damage"] = effectPreview.damage.has_value()
+                    ? rangeToString(effectPreview.damage->modifiedMin, effectPreview.damage->modifiedMax)
+                    : valueText;
+                variables["value"] = variables["damage"];
+                break;
+
+            case EffectType::SpendStressBlock:
+                variables["stress"] = std::to_string(effectPreview.stressCost);
+                variables["stress_cost"] = std::to_string(effectPreview.stressCost);
+                variables["block"] = valueText;
+                variables["value"] = valueText;
+                break;
+
+            case EffectType::SpendStressEnergy:
+                variables["stress"] = std::to_string(effectPreview.stressCost);
+                variables["stress_cost"] = std::to_string(effectPreview.stressCost);
+                variables["energy"] = valueText;
+                variables["value"] = valueText;
+                break;
+
+            case EffectType::SpendStressDraw:
+                variables["stress"] = std::to_string(effectPreview.stressCost);
+                variables["stress_cost"] = std::to_string(effectPreview.stressCost);
+                variables["draw_cards"] = valueText;
                 variables["value"] = valueText;
                 break;
 
@@ -264,6 +365,7 @@ void CardDescriptionFormatter::fillVariablesFromPreviewEffect(
             case EffectType::EnterStance:
             case EffectType::SummonDrone:
             case EffectType::UseDrone:
+            case EffectType::PrimeStressBreakdown:
                 break;
         }
     }

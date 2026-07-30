@@ -8,10 +8,15 @@
 
 class Hand {
 public:
+    static constexpr std::size_t MaximumSize = 10;
+
     bool empty() const;
+    bool full() const;
     std::size_t size() const;
+    std::size_t remainingCapacity() const;
 
     void clear();
+    bool tryAdd(CardInstance card);
     void add(CardInstance card);
 
     bool contains(CardInstanceId id) const;

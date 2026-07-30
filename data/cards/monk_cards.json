@@ -72,6 +72,9 @@
     "gold_cost": 0,
     "type": "skill",
     "owner_actor": "monk",
+    "keywords": [
+      "innate"
+    ],
     "effects": [
       {
         "type": "enter_stance",
@@ -116,6 +119,9 @@
     "gold_cost": 0,
     "type": "skill",
     "owner_actor": "monk",
+    "keywords": [
+      "innate"
+    ],
     "effects": [
       {
         "type": "enter_stance",
@@ -159,6 +165,9 @@
     "gold_cost": 0,
     "type": "skill",
     "owner_actor": "monk",
+    "keywords": [
+      "innate"
+    ],
     "effects": [
       {
         "type": "enter_stance",
@@ -863,7 +872,13 @@
         "target": "all_enemies",
         "value": {
           "type": "fixed",
-          "amount": 7
+          "amount": 6
+        },
+        "scaling": {
+          "status": "stance_flame",
+          "status_owner": "source",
+          "bonus_if_status_present": 4,
+          "maximum_bonus": 4
         }
       }
     ],
@@ -874,7 +889,13 @@
           "target": "all_enemies",
           "value": {
             "type": "fixed",
-            "amount": 9
+            "amount": 8
+          },
+          "scaling": {
+            "status": "stance_flame",
+            "status_owner": "source",
+            "bonus_if_status_present": 5,
+            "maximum_bonus": 5
           }
         }
       ]
@@ -895,7 +916,13 @@
         "target": "self",
         "value": {
           "type": "fixed",
-          "amount": 10
+          "amount": 6
+        },
+        "scaling": {
+          "status": "stance_ash",
+          "status_owner": "source",
+          "bonus_if_status_present": 5,
+          "maximum_bonus": 5
         }
       },
       {
@@ -914,7 +941,13 @@
           "target": "self",
           "value": {
             "type": "fixed",
-            "amount": 13
+            "amount": 8
+          },
+          "scaling": {
+            "status": "stance_ash",
+            "status_owner": "source",
+            "bonus_if_status_present": 6,
+            "maximum_bonus": 6
           }
         },
         {
@@ -943,17 +976,23 @@
         "target": "self",
         "value": {
           "type": "fixed",
-          "amount": 5
+          "amount": 4
+        },
+        "scaling": {
+          "status": "stance_smoke",
+          "status_owner": "source",
+          "bonus_if_status_present": 4,
+          "maximum_bonus": 4
         }
       },
       {
         "type": "apply_status",
         "target": "all_enemies",
-        "status": "weak",
         "value": {
           "type": "fixed",
           "amount": 1
-        }
+        },
+        "status": "weak"
       }
     ],
     "upgrade": {
@@ -963,7 +1002,13 @@
           "target": "self",
           "value": {
             "type": "fixed",
-            "amount": 8
+            "amount": 6
+          },
+          "scaling": {
+            "status": "stance_smoke",
+            "status_owner": "source",
+            "bonus_if_status_present": 5,
+            "maximum_bonus": 5
           }
         },
         {

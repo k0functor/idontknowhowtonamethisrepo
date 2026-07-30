@@ -17,7 +17,10 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
       },
       {
         "id": "rusted_mite_skitter",
@@ -31,9 +34,13 @@
               "amount": 3
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "minion"
   },
   {
     "id": "rat_cultist",
@@ -53,7 +60,15 @@
               "amount": 5
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "rat_cultist_curse",
@@ -67,8 +82,29 @@
               "type": "fixed",
               "amount": 1
             }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "discard"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "rat_cultist_hide",
@@ -82,9 +118,13 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "grave_lamp",
@@ -104,7 +144,15 @@
               "amount": 5
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "grave_lamp_glare",
@@ -118,8 +166,29 @@
               "type": "fixed",
               "amount": 1
             }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "energy"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "grave_lamp_dim",
@@ -133,9 +202,13 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "ash_hound",
@@ -156,7 +229,10 @@
             },
             "repeat_count": 3
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "ash_hound_ember_bite",
@@ -170,7 +246,15 @@
               "amount": 7
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "ash_hound_snarl",
@@ -185,9 +269,18 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "bruiser"
   },
   {
     "id": "plague_spider",
@@ -208,7 +301,10 @@
               "amount": 2
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "plague_spider_bite",
@@ -231,7 +327,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "plague_spider_web",
@@ -246,9 +350,18 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "knife_acolyte",
@@ -268,7 +381,15 @@
               "amount": 6
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "knife_acolyte_dirty_cut",
@@ -291,7 +412,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "knife_acolyte_sharpen",
@@ -306,9 +435,13 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "shield_bearer",
@@ -322,13 +455,28 @@
         "effects": [
           {
             "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "block",
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 3
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
       },
       {
         "id": "shield_bearer_bash",
@@ -351,7 +499,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "shield_bearer_rally",
@@ -366,9 +522,13 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "defender"
   },
   {
     "id": "mold_marksman",
@@ -389,7 +549,15 @@
             },
             "repeat_count": 2
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "mold_marksman_choking_shot",
@@ -412,7 +580,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "mold_marksman_take_aim",
@@ -427,9 +603,13 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "rust_taskmaster",
@@ -443,14 +623,20 @@
         "effects": [
           {
             "type": "apply_status",
-            "target": "self",
+            "target": "all_enemies",
             "status": "strength",
             "value": {
               "type": "fixed",
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2
+        }
       },
       {
         "id": "rust_taskmaster_whip",
@@ -473,7 +659,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "rust_taskmaster_bulwark",
@@ -487,7 +681,10 @@
               "amount": 10
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "rust_taskmaster_crackdown",
@@ -502,9 +699,18 @@
             },
             "repeat_count": 2
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "ash_crow",
@@ -525,7 +731,15 @@
             },
             "repeat_count": 2
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "ash_crow_scatter_embers",
@@ -548,7 +762,10 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "ash_crow_cracked_caw",
@@ -562,10 +779,32 @@
               "type": "fixed",
               "amount": 1
             }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "status_cards"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "minion"
   },
   {
     "id": "lockjaw_husk",
@@ -594,7 +833,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "lockjaw_husk_curl",
@@ -608,7 +855,10 @@
               "amount": 10
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "lockjaw_husk_lunge",
@@ -622,9 +872,18 @@
               "amount": 13
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "bruiser"
   },
   {
     "id": "mold_shepherd",
@@ -638,22 +897,37 @@
         "effects": [
           {
             "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "block",
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 7
+              "amount": 3
             }
           },
           {
             "type": "apply_status",
-            "target": "self",
+            "target": "all_enemies",
             "status": "strength",
             "value": {
               "type": "fixed",
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
       },
       {
         "id": "mold_shepherd_green_sermon",
@@ -668,7 +942,10 @@
               "amount": 2
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "mold_shepherd_staff_sweep",
@@ -682,9 +959,13 @@
               "amount": 5
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "censer_imp",
@@ -713,7 +994,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "censer_imp_bitter_cloud",
@@ -728,7 +1017,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "censer_imp_hide_in_smoke",
@@ -742,9 +1039,13 @@
               "amount": 5
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "bone_debtor",
@@ -764,7 +1065,15 @@
               "amount": 6
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "bone_debtor_collect_interest",
@@ -786,7 +1095,10 @@
               "amount": 3
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "bone_debtor_rattle_ledger",
@@ -801,9 +1113,18 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "wax_undertaker",
@@ -823,7 +1144,15 @@
               "amount": 8
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "wax_undertaker_embalm",
@@ -845,7 +1174,13 @@
               "amount": 6
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
       },
       {
         "id": "wax_undertaker_grave_wax",
@@ -868,9 +1203,18 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "bruiser"
   },
   {
     "id": "chain_novice",
@@ -891,7 +1235,15 @@
             },
             "repeat_count": 3
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "chain_novice_drag",
@@ -914,7 +1266,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "chain_novice_brace",
@@ -937,9 +1297,13 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "striker"
   },
   {
     "id": "grave_scribe",
@@ -968,7 +1332,15 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "grave_scribe_bad_record",
@@ -990,8 +1362,21 @@
               "type": "fixed",
               "amount": 4
             }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "discard"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "grave_scribe_rewrite",
@@ -999,7 +1384,7 @@
         "effects": [
           {
             "type": "apply_status",
-            "target": "self",
+            "target": "all_enemies",
             "status": "dexterity",
             "value": {
               "type": "fixed",
@@ -1014,8 +1399,16 @@
               "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
       }
-    ]
+    ],
+    "role": "support"
   }
 ]

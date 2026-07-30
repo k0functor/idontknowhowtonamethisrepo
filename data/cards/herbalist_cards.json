@@ -215,9 +215,14 @@
         "type": "damage",
         "target": "single_enemy",
         "value": {
-          "type": "dice",
-          "count": 1,
-          "die": "d6"
+          "type": "fixed",
+          "amount": 3
+        },
+        "scaling": {
+          "status": "poison",
+          "status_owner": "target",
+          "bonus_if_status_present": 6,
+          "maximum_bonus": 6
         }
       },
       {
@@ -236,9 +241,14 @@
           "type": "damage",
           "target": "single_enemy",
           "value": {
-            "type": "dice",
-            "count": 1,
-            "die": "d8"
+            "type": "fixed",
+            "amount": 5
+          },
+          "scaling": {
+            "status": "poison",
+            "status_owner": "target",
+            "bonus_if_status_present": 7,
+            "maximum_bonus": 7
           }
         },
         {
@@ -1219,7 +1229,13 @@
           "type": "fixed",
           "amount": 2
         },
-        "repeat_count": 5
+        "repeat_count": 5,
+        "scaling": {
+          "status": "poison",
+          "status_owner": "target",
+          "bonus_per_status_stack": 1,
+          "maximum_bonus": 2
+        }
       },
       {
         "type": "apply_status",
@@ -1240,7 +1256,13 @@
             "type": "fixed",
             "amount": 3
           },
-          "repeat_count": 5
+          "repeat_count": 5,
+          "scaling": {
+            "status": "poison",
+            "status_owner": "target",
+            "bonus_per_status_stack": 1,
+            "maximum_bonus": 3
+          }
         },
         {
           "type": "apply_status",

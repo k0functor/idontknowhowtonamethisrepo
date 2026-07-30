@@ -79,10 +79,26 @@ std::vector<EntityId> Targeting::resolveTargets(
 
         case EffectTarget::SingleEnemy: {
             const std::optional<EntityId> targetId = explicitEnemyTarget(state, context);
-            if (!targetId.has_value()) {
-                throw std::runtime_error("SingleEnemy effect requires explicit enemy target");
+            if (targetId.has_value()) {
+                return {*targetId};
             }
-            return {*targetId};
+
+            // A card can contain several effects or repeated hits for the same
+            // explicitly selected enemy. If an earlier effect killed that enemy,
+            // the remaining effects must harmlessly miss instead of aborting the
+            // whole game. The absence of any explicit selection is still a caller
+            // error and remains fatal.
+            if (context.explicitEnemyTarget.has_value()) {
+                return {};
+            }
+
+            if (context.explicitTarget.has_value() &&
+                state.hasEntity(*context.explicitTarget) &&
+                state.isEnemy(*context.explicitTarget)) {
+                return {};
+            }
+
+            throw std::runtime_error("SingleEnemy effect requires explicit enemy target");
         }
 
         case EffectTarget::AllEnemies:

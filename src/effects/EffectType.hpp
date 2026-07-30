@@ -9,11 +9,17 @@ enum class EffectType {
     Heal,
     DrawCards,
     DiscardCards,
+    RecoverCards,
     ApplyStatus,
     GainEnergy,
     GainStress,
     LoseEnergy,
     LoseStress,
+    SpendStressDamage,
+    SpendStressBlock,
+    SpendStressEnergy,
+    SpendStressDraw,
+    PrimeStressBreakdown,
     LoseHp,
     EnterStance,
     SummonDrone,
@@ -23,3 +29,5 @@ enum class EffectType {
 std::string toString(const EffectType& effect);
 
 EffectType effectTypeFromString(std::string_view value);
+
+bool isStressConversionEffect(EffectType effect);

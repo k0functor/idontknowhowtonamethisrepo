@@ -2,38 +2,73 @@
   "version": 6,
   "configurePresets": [
     {
-      "name": "gcc-debug",
-      "displayName": "GCC Debug",
-      "description": "Configure project with GCC / MinGW in Debug mode",
-      "generator": "MinGW Makefiles",
-      "binaryDir": "${sourceDir}/build/gcc-debug",
+      "name": "ninja-gcc-common",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "app-gcc-common",
+      "hidden": true,
+      "inherits": "ninja-gcc-common",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/.cache/fetchcontent"
+      }
+    },
+    {
+      "name": "gcc-debug",
+      "inherits": "app-gcc-common",
+      "displayName": "GCC Debug",
+      "description": "Configure the complete project with GCC / MinGW in Debug mode",
+      "binaryDir": "${sourceDir}/build/gcc-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "GAME_BUILD_APP": "ON",
+        "BUILD_TESTING": "ON"
       }
     },
     {
       "name": "gcc-release",
+      "inherits": "app-gcc-common",
       "displayName": "GCC Release",
-      "description": "Configure project with GCC / MinGW in Release mode",
-      "generator": "MinGW Makefiles",
+      "description": "Configure the complete project with GCC / MinGW in Release mode",
       "binaryDir": "${sourceDir}/build/gcc-release",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "GAME_BUILD_APP": "ON",
+        "BUILD_TESTING": "ON",
+        "GAME_STATIC_LINK_LIBRARIES": "ON"
       }
     },
     {
-      "name": "gcc-ninja-debug",
-      "displayName": "GCC Ninja Debug",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/gcc-ninja-debug",
+      "name": "core-debug",
+      "inherits": "ninja-gcc-common",
+      "displayName": "Dependency-free core tests",
+      "description": "Configure gameplay tests without fetching raylib or nlohmann/json",
+      "binaryDir": "${sourceDir}/build/core-tests",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc",
-        "CMAKE_CXX_COMPILER": "g++",
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "GAME_BUILD_APP": "OFF",
+        "BUILD_TESTING": "ON",
+        "GAME_BUILD_PERSISTENCE": "OFF"
+      }
+    },
+    {
+      "name": "persistence-debug",
+      "inherits": "ninja-gcc-common",
+      "displayName": "Persistence tests",
+      "description": "Configure real JSON save tests without building the raylib application",
+      "binaryDir": "${sourceDir}/build/persistence-tests",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "FETCHCONTENT_BASE_DIR": "${sourceDir}/.cache/fetchcontent",
+        "GAME_BUILD_APP": "OFF",
+        "GAME_BUILD_PERSISTENCE": "ON",
+        "BUILD_TESTING": "ON"
       }
     }
   ],
@@ -47,8 +82,40 @@
       "configurePreset": "gcc-release"
     },
     {
-      "name": "gcc-ninja-debug",
-      "configurePreset": "gcc-ninja-debug"
+      "name": "core-debug",
+      "configurePreset": "core-debug"
+    },
+    {
+      "name": "persistence-debug",
+      "configurePreset": "persistence-debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "core-debug",
+      "configurePreset": "core-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "gcc-debug",
+      "configurePreset": "gcc-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "persistence-debug",
+      "configurePreset": "persistence-debug",
+      "filter": {
+        "include": {
+          "name": "^run_state_persistence$"
+        }
+      },
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }

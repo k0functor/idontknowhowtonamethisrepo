@@ -33,6 +33,8 @@ std::string toString(const GameEventType type) {
             return "gold_gained";
         case GameEventType::RelicCollected:
             return "relic_collected";
+        case GameEventType::StressBreakdownTriggered:
+            return "stress_breakdown_triggered";
     }
 
     throw std::runtime_error("Unknown GameEventType");
@@ -53,6 +55,7 @@ GameEventType gameEventTypeFromString(const std::string_view value) {
     if (value == "reward_generated") return GameEventType::RewardGenerated;
     if (value == "gold_gained") return GameEventType::GoldGained;
     if (value == "relic_collected") return GameEventType::RelicCollected;
+    if (value == "stress_breakdown_triggered") return GameEventType::StressBreakdownTriggered;
 
     throw std::runtime_error("Unknown game event type: " + std::string(value));
 }

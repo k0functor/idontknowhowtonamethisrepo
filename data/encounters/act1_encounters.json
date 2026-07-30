@@ -293,6 +293,17 @@
         "weight": 1,
         "min_layer": 4,
         "max_layer": 5
+      },
+      {
+        "id": "act1_cultist_pack",
+        "enemies": [
+          "rat_cultist",
+          "rusted_mite",
+          "ash_crow"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 5
       }
     ],
     "elite": [

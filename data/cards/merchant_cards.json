@@ -430,11 +430,19 @@
     "owner_actor": "merchant",
     "effects": [
       {
+        "type": "recover_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        }
+      },
+      {
         "type": "draw_cards",
         "target": "self",
         "value": {
           "type": "fixed",
-          "amount": 2
+          "amount": 1
         }
       }
     ],
@@ -444,11 +452,19 @@
     "upgrade": {
       "effects": [
         {
+          "type": "recover_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 2
+          }
+        },
+        {
           "type": "draw_cards",
           "target": "self",
           "value": {
             "type": "fixed",
-            "amount": 3
+            "amount": 1
           }
         }
       ]
@@ -847,7 +863,11 @@
         "target": "all_enemies",
         "value": {
           "type": "fixed",
-          "amount": 10
+          "amount": 7
+        },
+        "scaling": {
+          "bonus_per_card_in_discard": 1,
+          "maximum_bonus": 6
         }
       }
     ],
@@ -858,7 +878,11 @@
           "target": "all_enemies",
           "value": {
             "type": "fixed",
-            "amount": 14
+            "amount": 9
+          },
+          "scaling": {
+            "bonus_per_card_in_discard": 1,
+            "maximum_bonus": 8
           }
         }
       ]

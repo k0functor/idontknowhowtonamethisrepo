@@ -12,6 +12,7 @@ struct NodeRewardTuning {
     int cardChoices = 0;
     bool guaranteedRelic = false;
     int consumableChancePercent = 0;
+    int activeItemChancePercent = 0;
     std::optional<CardRarity> minimumCardRarity;
 };
 
@@ -23,6 +24,7 @@ public:
 
     const NodeRewardTuning& node(RunMapNodeType nodeType) const;
     double merchantGoldMultiplier() const;
+    double groupGoldMultiplier(int enemyCount) const;
 
 private:
     NodeRewardTuning& mutableNode(RunMapNodeType nodeType);
@@ -36,4 +38,5 @@ private:
     NodeRewardTuning rest_;
     NodeRewardTuning boss_;
     double merchantGoldMultiplier_ = 1.25;
+    int groupGoldBonusPercentPerExtraEnemy_ = 20;
 };

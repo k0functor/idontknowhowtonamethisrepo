@@ -1,0 +1,425 @@
+{
+  "pools": {
+    "combat": [
+      {
+        "id": "act3_ash_gardener",
+        "enemies": [
+          "ash_gardener"
+        ],
+        "weight": 5,
+        "min_layer": 0,
+        "max_layer": 3
+      },
+      {
+        "id": "act3_glass_pollen_moth",
+        "enemies": [
+          "glass_pollen_moth"
+        ],
+        "weight": 5,
+        "min_layer": 0,
+        "max_layer": 4
+      },
+      {
+        "id": "act3_thorn_halberdier",
+        "enemies": [
+          "thorn_halberdier"
+        ],
+        "weight": 4,
+        "min_layer": 1,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_furnace_orchid",
+        "enemies": [
+          "furnace_orchid"
+        ],
+        "weight": 4,
+        "min_layer": 1,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_bellows_imp",
+        "enemies": [
+          "bellows_imp"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 4
+      },
+      {
+        "id": "act3_seed_butcher",
+        "enemies": [
+          "seed_butcher"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_wax_root",
+        "enemies": [
+          "wax_root"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_green_fire_acolyte",
+        "enemies": [
+          "green_fire_acolyte"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_moth_and_gardener",
+        "enemies": [
+          "glass_pollen_moth",
+          "ash_gardener"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_imp_and_orchid",
+        "enemies": [
+          "bellows_imp",
+          "furnace_orchid"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_thorn_and_pollen",
+        "enemies": [
+          "thorn_halberdier",
+          "glass_pollen_moth"
+        ],
+        "weight": 2,
+        "min_layer": 3,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_root_and_acolyte",
+        "enemies": [
+          "wax_root",
+          "green_fire_acolyte"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_butcher_garden",
+        "enemies": [
+          "seed_butcher",
+          "ash_gardener"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_burning_greenhouse",
+        "enemies": [
+          "furnace_orchid",
+          "bellows_imp",
+          "glass_pollen_moth"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_thorn_procession",
+        "enemies": [
+          "thorn_halberdier",
+          "green_fire_acolyte",
+          "ash_gardener"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_late_glasshouse_watch",
+        "enemies": [
+          "ash_gardener",
+          "wax_root"
+        ],
+        "weight": 4,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_imp_pollen_swarm",
+        "enemies": [
+          "bellows_imp",
+          "glass_pollen_moth",
+          "glass_pollen_moth"
+        ],
+        "weight": 3,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_seed_butcher_and_thorn",
+        "enemies": [
+          "seed_butcher",
+          "thorn_halberdier"
+        ],
+        "weight": 4,
+        "min_layer": 5,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_orchid_acolyte_rite",
+        "enemies": [
+          "furnace_orchid",
+          "green_fire_acolyte"
+        ],
+        "weight": 4,
+        "min_layer": 5,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_wax_root_garden",
+        "enemies": [
+          "wax_root",
+          "ash_gardener",
+          "bellows_imp"
+        ],
+        "weight": 3,
+        "min_layer": 6,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_late_burning_grove",
+        "enemies": [
+          "seed_butcher",
+          "furnace_orchid",
+          "glass_pollen_moth"
+        ],
+        "weight": 3,
+        "min_layer": 6,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_green_fire_line",
+        "enemies": [
+          "green_fire_acolyte",
+          "thorn_halberdier",
+          "bellows_imp"
+        ],
+        "weight": 3,
+        "min_layer": 7,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_root_and_butcher",
+        "enemies": [
+          "wax_root",
+          "seed_butcher"
+        ],
+        "weight": 4,
+        "min_layer": 7,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_pollen_thorn_garden",
+        "enemies": [
+          "glass_pollen_moth",
+          "thorn_halberdier",
+          "ash_gardener"
+        ],
+        "weight": 3,
+        "min_layer": 8,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_final_greenhouse_guard",
+        "enemies": [
+          "green_fire_acolyte",
+          "wax_root",
+          "seed_butcher"
+        ],
+        "weight": 3,
+        "min_layer": 9,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_ashen_knife_bed",
+        "enemies": [
+          "bellows_imp",
+          "seed_butcher",
+          "thorn_halberdier"
+        ],
+        "weight": 3,
+        "min_layer": 9,
+        "max_layer": 11
+      },
+      {
+        "id": "act3_smoldering_root_wall",
+        "enemies": [
+          "wax_root",
+          "furnace_orchid",
+          "green_fire_acolyte"
+        ],
+        "weight": 2,
+        "min_layer": 10,
+        "max_layer": 11
+      }
+    ],
+    "elite": [
+      {
+        "id": "act3_furnace_saint",
+        "enemies": [
+          "furnace_saint"
+        ],
+        "weight": 4,
+        "min_layer": 2,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_thorn_executioner",
+        "enemies": [
+          "thorn_executioner"
+        ],
+        "weight": 4,
+        "min_layer": 2,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_glass_arbiter",
+        "enemies": [
+          "glass_arbiter"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_pollen_librarian",
+        "enemies": [
+          "pollen_librarian"
+        ],
+        "weight": 3,
+        "min_layer": 3,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_root_titan",
+        "enemies": [
+          "root_titan"
+        ],
+        "weight": 2,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_saint_and_imp",
+        "enemies": [
+          "furnace_saint",
+          "bellows_imp"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_arbiter_and_moth",
+        "enemies": [
+          "glass_arbiter",
+          "glass_pollen_moth"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_librarian_and_imp",
+        "enemies": [
+          "pollen_librarian",
+          "bellows_imp"
+        ],
+        "weight": 3,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_executioner_and_orchid",
+        "enemies": [
+          "thorn_executioner",
+          "furnace_orchid"
+        ],
+        "weight": 3,
+        "min_layer": 4,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_saint_and_acolyte",
+        "enemies": [
+          "furnace_saint",
+          "green_fire_acolyte"
+        ],
+        "weight": 3,
+        "min_layer": 5,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_titan_and_gardener",
+        "enemies": [
+          "root_titan",
+          "ash_gardener"
+        ],
+        "weight": 2,
+        "min_layer": 6,
+        "max_layer": 10
+      },
+      {
+        "id": "act3_arbiter_procession",
+        "enemies": [
+          "glass_arbiter",
+          "thorn_halberdier",
+          "glass_pollen_moth"
+        ],
+        "weight": 2,
+        "min_layer": 7,
+        "max_layer": 10
+      }
+    ],
+    "boss": [
+      {
+        "id": "act3_queen_of_cinders",
+        "enemies": [
+          "queen_of_cinders"
+        ],
+        "weight": 1,
+        "min_layer": 12,
+        "max_layer": 12
+      },
+      {
+        "id": "act3_saint_of_green_fire",
+        "enemies": [
+          "saint_of_green_fire"
+        ],
+        "weight": 1,
+        "min_layer": 12,
+        "max_layer": 12
+      },
+      {
+        "id": "act3_grafted_sun",
+        "enemies": [
+          "grafted_sun"
+        ],
+        "weight": 1,
+        "min_layer": 12,
+        "max_layer": 12
+      }
+    ]
+  }
+}

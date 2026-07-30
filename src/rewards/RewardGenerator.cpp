@@ -1,5 +1,7 @@
 #include "RewardGenerator.hpp"
 
+#include "active_items/ActiveItemAcquisitionSystem.hpp"
+
 #include "cards/CardRarity.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "relics/RelicDefinition.hpp"
@@ -45,6 +47,7 @@ RewardState RewardGenerator::generateCombatReward(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
+    const ActiveItemDatabase& activeItems,
     const RewardTuning& tuning,
     Random& random
 ) const {
@@ -54,6 +57,7 @@ RewardState RewardGenerator::generateCombatReward(
     const NodeRewardTuning& nodeTuning = tuning.node(context.nodeType);
     const int baseGold = nodeTuning.gold;
     int gold = static_cast<int>(static_cast<float>(baseGold) * context.run.goldRewardMultiplier);
+    gold = static_cast<int>(static_cast<double>(gold) * tuning.groupGoldMultiplier(context.enemyCount));
     gold = static_cast<int>(static_cast<double>(gold) * relicGoldMultiplier(context, relics));
 
     if (context.run.archetypeMechanicId == "merchant_progression") {
@@ -103,6 +107,18 @@ RewardState RewardGenerator::generateCombatReward(
         const std::optional<RelicId> relic = chooseRelicReward(context, relics, random);
         if (relic.has_value()) {
             reward.options.push_back(RewardOption::relic(relic->value));
+        }
+    }
+
+    if (nodeTuning.activeItemChancePercent > 0 &&
+        random.chance(static_cast<double>(nodeTuning.activeItemChancePercent) / 100.0)) {
+        const std::optional<ActiveItemId> item = ActiveItemAcquisitionSystem::chooseReward(
+            activeItems,
+            context.run.activeItem.itemId,
+            random
+        );
+        if (item.has_value()) {
+            reward.options.push_back(RewardOption::activeItem(item->value));
         }
     }
 

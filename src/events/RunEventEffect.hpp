@@ -17,6 +17,8 @@ enum class RunEventEffectType {
     LoseStress,
     LoseHp,
     HealAll,
+    SetFlag,
+    ClearFlag,
     Skip
 };
 

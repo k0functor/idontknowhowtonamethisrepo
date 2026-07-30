@@ -14,6 +14,7 @@ struct EffectPreview {
 
     PreviewValue value;
     int repeatCount = 1;
+    int stressCost = 0;
     std::optional<DamagePreview> damage;
 
     std::optional<std::string> statusId;

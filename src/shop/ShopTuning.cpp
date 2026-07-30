@@ -24,6 +24,7 @@ void ShopTuning::loadFromFile(const std::filesystem::path& filePath) {
     cardRemovalPrice_ = reader.optionalInt("card_removal_price", cardRemovalPrice_);
     minimumCardPrice_ = reader.optionalInt("minimum_card_price", minimumCardPrice_);
     minimumConsumablePrice_ = reader.optionalInt("minimum_consumable_price", minimumConsumablePrice_);
+    activeItemOfferChancePercent_ = reader.optionalInt("active_item_offer_chance_percent", activeItemOfferChancePercent_);
     merchantRestCardOfferCount_ = reader.optionalInt("merchant_rest_card_offers", merchantRestCardOfferCount_);
     merchantRestMaxCardPurchases_ = reader.optionalInt("merchant_rest_max_card_purchases", merchantRestMaxCardPurchases_);
     merchantRestCardPriceMultiplier_ = reader.optionalDouble("merchant_rest_card_price_multiplier", merchantRestCardPriceMultiplier_);
@@ -34,6 +35,9 @@ void ShopTuning::loadFromFile(const std::filesystem::path& filePath) {
     requireNonNegative(filePath, "card_removal_price", cardRemovalPrice_);
     requireNonNegative(filePath, "minimum_card_price", minimumCardPrice_);
     requireNonNegative(filePath, "minimum_consumable_price", minimumConsumablePrice_);
+    if (activeItemOfferChancePercent_ < 0 || activeItemOfferChancePercent_ > 100) {
+        throw std::runtime_error(filePath.string() + ": 'active_item_offer_chance_percent' must be between 0 and 100");
+    }
     requireNonNegative(filePath, "merchant_rest_card_offers", merchantRestCardOfferCount_);
     requireNonNegative(filePath, "merchant_rest_max_card_purchases", merchantRestMaxCardPurchases_);
     if (merchantRestCardPriceMultiplier_ < 0.0) {
@@ -79,6 +83,10 @@ int ShopTuning::minimumCardPrice() const {
 
 int ShopTuning::minimumConsumablePrice() const {
     return minimumConsumablePrice_;
+}
+
+int ShopTuning::activeItemOfferChancePercent() const {
+    return activeItemOfferChancePercent_;
 }
 
 int ShopTuning::merchantRestCardOfferCount() const {

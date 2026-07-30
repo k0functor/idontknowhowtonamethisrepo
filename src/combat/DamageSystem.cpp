@@ -15,7 +15,8 @@ DamageResult DamageSystem::dealDamage(
     const EntityId target,
     const int rawDamage,
     const CardId& cardId,
-    const DiceCorruption diceCorruption
+    const DiceCorruption diceCorruption,
+    const bool usesActorStats
 ) const {
     ModifierContext modifierContext;
     modifierContext.effectType = EffectType::Damage;
@@ -24,6 +25,7 @@ DamageResult DamageSystem::dealDamage(
     modifierContext.hasTarget = true;
     modifierContext.cardId = cardId;
     modifierContext.diceCorruption = diceCorruption;
+    modifierContext.usesActorStats = usesActorStats;
 
     const ModifiedValue modified = modifierSystem_.modifyValue(
         state,
@@ -43,6 +45,14 @@ DamageResult DamageSystem::dealDamage(
     result.hpDamage = std::max(0, result.modifiedDamage - result.blockedDamage);
     targetEntity.health.takeDamage(result.hpDamage);
     result.killed = targetEntity.health.isDead();
+
+    if (state.isEnemy(target) && state.isPlayer(source)) {
+        state.telemetry.damageDealtToEnemies += result.hpDamage;
+        state.telemetry.maximumSingleHit = std::max(state.telemetry.maximumSingleHit, result.hpDamage);
+    } else if (state.isPlayer(target)) {
+        state.telemetry.damageTakenByPlayers += result.hpDamage;
+        state.telemetry.damageBlockedByPlayers += result.blockedDamage;
+    }
 
     state.log.add(
         CombatLogEntryType::DamageDealt,
@@ -92,7 +102,8 @@ DamagePreview DamageSystem::previewDamage(
     const int rawMin,
     const int rawMax,
     const CardId& cardId,
-    const DiceCorruption diceCorruption
+    const DiceCorruption diceCorruption,
+    const bool usesActorStats
 ) const {
     ModifierContext modifierContext;
     modifierContext.effectType = EffectType::Damage;
@@ -101,6 +112,7 @@ DamagePreview DamageSystem::previewDamage(
     modifierContext.hasTarget = true;
     modifierContext.cardId = cardId;
     modifierContext.diceCorruption = diceCorruption;
+    modifierContext.usesActorStats = usesActorStats;
     modifierContext.preview = true;
 
     const ModifiedValueRange modified = modifierSystem_.modifyRange(
@@ -130,7 +142,8 @@ DamagePreview DamageSystem::previewOutgoingDamage(
     const int rawMin,
     const int rawMax,
     const CardId& cardId,
-    const DiceCorruption diceCorruption
+    const DiceCorruption diceCorruption,
+    const bool usesActorStats
 ) const {
     ModifierContext modifierContext;
     modifierContext.effectType = EffectType::Damage;
@@ -139,6 +152,7 @@ DamagePreview DamageSystem::previewOutgoingDamage(
     modifierContext.hasTarget = false;
     modifierContext.cardId = cardId;
     modifierContext.diceCorruption = diceCorruption;
+    modifierContext.usesActorStats = usesActorStats;
     modifierContext.preview = true;
 
     const ModifiedValueRange modified = modifierSystem_.modifyRange(

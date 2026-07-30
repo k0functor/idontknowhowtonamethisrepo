@@ -1,5 +1,6 @@
 #pragma once
 
+#include "active_items/ActiveItemDatabase.hpp"
 #include "core/Random.hpp"
 #include "data/CardDatabase.hpp"
 #include "consumables/ConsumableDatabase.hpp"
@@ -19,6 +20,7 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
+        const ActiveItemDatabase& activeItems,
         const RewardTuning& tuning,
         Random& random
     ) const;

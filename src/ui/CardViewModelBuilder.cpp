@@ -4,6 +4,8 @@
 #include "cards/CardDescriptionFormatter.hpp"
 #include "cards/CardUpgrade.hpp"
 
+#include <algorithm>
+
 namespace {
 std::string localizedOrFallback(
     const LocalizationManager& localization,
@@ -66,6 +68,7 @@ std::string cardFailureReasonText(
     const CardPlayFailureReason reason,
     const EntityId source,
     const int energyCost,
+    const int stressCost,
     const std::string& fallback
 ) {
     switch (reason) {
@@ -115,6 +118,17 @@ std::string cardFailureReasonText(
                     {"actor", entityDisplayName(state, localization, source, "actor")},
                     {"current", std::to_string(state.resources.energyFor(source))},
                     {"cost", std::to_string(energyCost)}
+                },
+                {}
+            );
+        case CardPlayFailureReason::NotEnoughStress:
+            return formatOrFallback(
+                localization,
+                TextId("ui.card_unplayable.not_enough_stress_actor"),
+                {
+                    {"actor", entityDisplayName(state, localization, source, "actor")},
+                    {"current", state.hasEntity(source) ? std::to_string(state.entity(source).stress) : "0"},
+                    {"cost", std::to_string(stressCost)}
                 },
                 {}
             );
@@ -186,12 +200,18 @@ CardViewModel CardViewModelBuilder::build(
     model.rarity = definition.rarity;
     model.upgraded = instance.upgraded;
     model.playable = preview.playable;
+    int requiredStress = 0;
+    for (const EffectPreview& effect : preview.effects) {
+        requiredStress += effect.stressCost * std::max(1, effect.repeatCount);
+    }
+
     model.unplayableReason = cardFailureReasonText(
         state,
         localization_,
         preview.unplayableReasonCode,
         source,
         preview.energyCost,
+        requiredStress,
         preview.unplayableReason
     );
     return model;

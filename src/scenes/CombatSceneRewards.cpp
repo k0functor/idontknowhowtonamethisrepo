@@ -460,6 +460,13 @@ void CombatScene::takeRewardOption(const std::size_t optionIndex) {
             }
             reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
             break;
+
+        case RewardOptionType::ActiveItem:
+            if (!option.activeItemId.empty()) {
+                rewardSelection_.selectedActiveItemId = option.activeItemId;
+            }
+            reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
+            break;
     }
 }
 
@@ -506,6 +513,15 @@ std::string CombatScene::rewardOptionTitle(const RewardOption& option) const {
                 TextId("reward.take_relic"),
                 {{"relic", rewardRelicName(option.relicId)}}
             );
+
+        case RewardOptionType::ActiveItem:
+            if (content_.activeItems().contains(ActiveItemId(option.activeItemId))) {
+                return localization_.format(
+                    TextId("reward.take_active_item"),
+                    {{"item", localization_.get(content_.activeItems().get(ActiveItemId(option.activeItemId)).nameTextId)}}
+                );
+            }
+            return option.activeItemId;
     }
 
     return {};
@@ -526,6 +542,12 @@ std::string CombatScene::rewardOptionDescription(const RewardOption& option) con
             return option.consumableId;
 
         case RewardOptionType::Relic:
+            return {};
+
+        case RewardOptionType::ActiveItem:
+            if (content_.activeItems().contains(ActiveItemId(option.activeItemId))) {
+                return localization_.get(content_.activeItems().get(ActiveItemId(option.activeItemId)).descriptionTextId);
+            }
             return {};
     }
 

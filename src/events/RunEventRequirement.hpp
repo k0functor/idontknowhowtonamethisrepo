@@ -10,10 +10,16 @@ struct RunEventChoiceRequirements {
     int minHp = 0;
     bool freeConsumableSlot = false;
     int minDeckSize = 0;
+    int minStress = 0;
+    int maxStress = 0;
     std::vector<std::string> requiredRelicIds;
     std::vector<std::string> forbiddenRelicIds;
     std::vector<std::string> requiredCardIds;
     std::vector<std::string> forbiddenCardIds;
+    std::vector<std::string> requiredTraitIds;
+    std::vector<std::string> forbiddenTraitIds;
+    std::vector<std::string> requiredEventFlags;
+    std::vector<std::string> forbiddenEventFlags;
 };
 
 enum class RunEventChoiceBlockReasonType {
@@ -24,7 +30,13 @@ enum class RunEventChoiceBlockReasonType {
     MissingRequiredRelic,
     HasForbiddenRelic,
     MissingRequiredCard,
-    HasForbiddenCard
+    HasForbiddenCard,
+    StressTooLow,
+    StressTooHigh,
+    MissingRequiredTrait,
+    HasForbiddenTrait,
+    MissingRequiredEventFlag,
+    HasForbiddenEventFlag
 };
 
 struct RunEventChoiceBlockReason {

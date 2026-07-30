@@ -11,7 +11,10 @@ void ContentRegistry::clear() {
     actors_.clear();
     difficulties_.clear();
     consumables_.clear();
+    activeItems_.clear();
     drones_.clear();
+    challenges_.clear();
+    achievements_.clear();
     events_.clear();
     encounters_.clear();
     rewardTuning_ = RewardTuning{};
@@ -33,7 +36,10 @@ void ContentRegistry::loadFromDataDirectory(const std::filesystem::path& dataDir
     archetypes_.loadFromDirectory(dataDirectory / "archetypes");
     difficulties_.loadFromFile(dataDirectory / "run" / "difficulties.json");
     consumables_.loadFromDirectory(dataDirectory / "consumables");
+    activeItems_.loadFromDirectory(dataDirectory / "active_items");
     drones_.loadFromDirectory(dataDirectory / "drones");
+    challenges_.loadFromDirectory(dataDirectory / "challenges");
+    achievements_.loadFromDirectory(dataDirectory / "achievements");
     events_.loadFromDirectory(dataDirectory / "events");
     floors_.loadFromFile(dataDirectory / "run" / "floors.json");
 
@@ -127,6 +133,14 @@ ConsumableDatabase& ContentRegistry::consumables() {
     return consumables_;
 }
 
+const ActiveItemDatabase& ContentRegistry::activeItems() const {
+    return activeItems_;
+}
+
+ActiveItemDatabase& ContentRegistry::activeItems() {
+    return activeItems_;
+}
+
 
 const DroneDatabase& ContentRegistry::drones() const {
     return drones_;
@@ -134,6 +148,22 @@ const DroneDatabase& ContentRegistry::drones() const {
 
 DroneDatabase& ContentRegistry::drones() {
     return drones_;
+}
+
+const ChallengeDatabase& ContentRegistry::challenges() const {
+    return challenges_;
+}
+
+ChallengeDatabase& ContentRegistry::challenges() {
+    return challenges_;
+}
+
+const AchievementDatabase& ContentRegistry::achievements() const {
+    return achievements_;
+}
+
+AchievementDatabase& ContentRegistry::achievements() {
+    return achievements_;
 }
 
 const EventDatabase& ContentRegistry::events() const {

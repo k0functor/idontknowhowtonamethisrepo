@@ -2,6 +2,8 @@
 
 #include <cstddef>
 
+#include "active_items/ActiveItemUseContext.hpp"
+#include "active_items/ActiveItemRerollSystem.hpp"
 #include "archetypes/PlayableArchetypeId.hpp"
 #include "cards/CardId.hpp"
 #include "combat/CombatResult.hpp"
@@ -13,9 +15,11 @@
 #include "rewards/RewardSelection.hpp"
 #include "rewards/RewardState.hpp"
 #include "events/RunEventDefinition.hpp"
+#include "events/RunEventChoiceResult.hpp"
 #include "shop/ShopState.hpp"
 #include "run/DifficultyId.hpp"
 #include "run/RunController.hpp"
+#include "run/RunEndReason.hpp"
 #include "save/RunSaveSystem.hpp"
 #include "settings/UserSettings.hpp"
 #include "ui/UiFont.hpp"
@@ -26,6 +30,11 @@
 #include <optional>
 #include <string>
 #include <vector>
+
+struct ProfileToast {
+    std::string text;
+    float remainingSeconds = 0.f;
+};
 
 class GameFlowController {
 public:
@@ -56,7 +65,14 @@ private:
     void closeSettingsOverlay();
     void saveAndExitRunToSaveSlots();
     void saveAndExitRunToProfileHub();
+    void abandonActiveRun();
     bool shouldShowInGameSettingsButton() const;
+    std::optional<ActiveItemUseContext> currentActiveItemContext() const;
+    bool handleActiveItemShortcut();
+    bool rerollRewardWithActiveItem(RewardState& reward, const RewardSelection& selection);
+    bool rerollShopWithActiveItem(ShopState& shop);
+    bool copyCardWithActiveItem(const CardId& cardId, ActiveItemUseContext context);
+    void renderActiveItemHud() const;
     bool debugPanelEnabled() const;
     void toggleDebugPanel();
     void updateDebugPanel();
@@ -68,11 +84,22 @@ private:
     bool executeRunDebugCommand(const std::vector<std::string>& tokens, std::string& output);
     void addDebugMessage(std::string message);
     void setSaveSlotScene();
+    std::string runSaveSummaryText(std::size_t slotIndex) const;
     void setProfileHubScene();
+    void setChallengeScene();
+    void setAchievementScene();
+    void startChallengeRun(const std::string& challengeId);
+    void applyChallengeLoadout(const ChallengeDefinition& challenge);
+    std::string challengeRunLabel(const RunState& run) const;
+    std::string challengeRunGoalLabel(const RunState& run) const;
+    std::string challengeRunProgressLabel(const RunState& run) const;
+    void setCompendiumScene();
+    void setProfileProgressScene();
     void setDifficultySelectScene();
     void setRunMapScene();
     void setFloorCompleteScene();
     void setRunDefeatScene();
+    void setRunCompleteScene(RunState completedRun, RunEndReason reason);
     bool setPendingRoomSceneIfNeeded();
     bool setPendingRoomSceneForNodeIfNeeded(int nodeId);
     void setCombatScene(int nodeId);
@@ -81,6 +108,7 @@ private:
     void setShopScene(int nodeId, ShopState shopState);
     void setMerchantRestScene(int nodeId, ShopState shopState);
     void setEventScene(int nodeId, const RunEventDefinition& event);
+    void setEventOutcomeScene(RunEventChoiceResult result);
 
     void showMainMenu();
     void showSettings();
@@ -92,6 +120,7 @@ private:
     void selectDifficulty(DifficultyId difficultyId);
     void startMapNode(int nodeId);
     void restHeal(int nodeId);
+    void restCalm(int nodeId);
     void restUpgrade(int nodeId, std::size_t deckIndex);
     void restSkip(int nodeId);
     bool purchaseShopItem(const ShopPurchase& purchase);
@@ -102,7 +131,32 @@ private:
     void finishChestReward(int nodeId, RewardSelection selection);
     void finishFloorCompleteContinue();
     void finishFloorCompleteMainMenu();
+    bool advanceCompletedRunToNextFloor();
+    bool completedRunCanContinueToNextFloor() const;
+    void saveAndCloseCompletedRunForLater();
     void finishCompletedRunAndDeleteSave();
+    void finishRun(RunEndReason reason);
+    RunEndReason completedRunEndReason(const RunState& run) const;
+    RunEndReason defeatedRunEndReason(const RunState& run) const;
+    void grantFloorCompletionUnlocks(const RunState& run);
+    void recordProfileStatsFromCombatResult(const CombatResult& result);
+    void discoverProfileContentFromCombatResult(const CombatResult& result);
+    void unlockProfileContentFromRunState(const RunState& run);
+    void unlockProfileContentFromRewardSelection(const RewardSelection& selection);
+    void unlockProfileContentFromShopPurchase(const ShopPurchase& purchase);
+    void unlockProfileContentFromEventOutcome(const RunEventChoiceResult& result);
+    bool unlockArchetypeAndToast(const std::string& archetypeId);
+    bool unlockCardAndToast(const std::string& cardId);
+    bool unlockRelicAndToast(const std::string& relicId);
+    bool discoverEnemyAndToast(const std::string& enemyId);
+    bool discoverStatusAndToast(const std::string& statusId);
+    bool discoverConsumableAndToast(const std::string& consumableId);
+    void applyUnlockRewardAndToast(const UnlockReward& reward);
+    void pushProfileToast(std::string message);
+    void updateProfileToasts(float deltaSeconds);
+    void renderProfileToasts() const;
+    void completeEligibleChallenges(const RunState& run);
+    void completeEligibleAchievements(const RunState* run);
     void finishRunDefeatToProfileHub();
     void finishRunDefeatToMainMenu();
     void finishDefeatedRunAndDeleteSave();
@@ -137,5 +191,6 @@ private:
     float debugBackspaceHeldSeconds_ = 0.f;
     float debugBackspaceRepeatSeconds_ = 0.f;
     std::vector<std::string> debugMessages_;
+    std::vector<ProfileToast> profileToasts_;
     std::string saveSlotStatusMessage_;
 };

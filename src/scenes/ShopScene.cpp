@@ -1,9 +1,11 @@
 #include "ShopScene.hpp"
 #include "ui/VirtualViewport.hpp"
 
+#include "active_items/ActiveItemSystem.hpp"
 #include "cards/CardDefinition.hpp"
 #include "cards/CardDescriptionFormatter.hpp"
 #include "relics/RelicDefinition.hpp"
+#include "ui/ActiveItemComparisonView.hpp"
 #include "ui/BasicUi.hpp"
 #include "ui/CardViewModelFactory.hpp"
 #include "ui/CardVisualInstance.hpp"
@@ -39,11 +41,14 @@ ShopScene::ShopScene(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
+    const ActiveItemDatabase& activeItems,
     const PlayerActorDatabase& actors,
     const RunState& runState,
     ShopState shopState,
     std::function<bool(const ShopPurchase&)> onPurchase,
     std::function<void(const ShopState&)> onShopStateChanged,
+    std::function<bool(ShopState&)> onReroll,
+    std::function<bool(const CardId&)> onCopyCard,
     std::function<void()> onLeave
 )
     : font_(font),
@@ -51,11 +56,14 @@ ShopScene::ShopScene(
       cards_(cards),
       relics_(relics),
       consumables_(consumables),
+      activeItems_(activeItems),
       actors_(actors),
       runState_(runState),
       shopState_(std::move(shopState)),
       onPurchase_(std::move(onPurchase)),
       onShopStateChanged_(std::move(onShopStateChanged)),
+      onReroll_(std::move(onReroll)),
+      onCopyCard_(std::move(onCopyCard)),
       onLeave_(std::move(onLeave)) {}
 
 void ShopScene::update(float) {
@@ -73,6 +81,22 @@ void ShopScene::update(float) {
 
     if (pendingPurchaseIndex_.has_value()) {
         updatePurchaseConfirmation(mouse);
+        return;
+    }
+
+    if (IsKeyPressed(KEY_SPACE)) {
+        if (!runState_.activeItem.empty()) {
+            const ActiveItemId itemId(runState_.activeItem.itemId);
+            if (activeItems_.contains(itemId) &&
+                ActiveItemSystem::hasEffect(activeItems_.get(itemId), ActiveItemEffectType::CopyCard) &&
+                onCopyCard_) {
+                (void)onCopyCard_(CardId{});
+                return;
+            }
+        }
+        if (onReroll_) {
+            (void)onReroll_(shopState_);
+        }
         return;
     }
 
@@ -97,17 +121,6 @@ void ShopScene::render() const {
         23.f,
         Color{219, 205, 130, 255}
     );
-
-    const std::string subtitle = sceneSubtitle();
-    if (!subtitle.empty()) {
-        BasicUi::drawCenteredText(
-            font_,
-            subtitle,
-            Rectangle{70.f, 116.f, static_cast<float>(VirtualViewport::width()) - 140.f, 30.f},
-            18.f,
-            Color{184, 193, 214, 255}
-        );
-    }
 
     const Rectangle panel = panelBounds();
     DrawRectangleRounded(panel, 0.04f, 14, Color{29, 31, 41, 250});
@@ -136,10 +149,10 @@ void ShopScene::render() const {
 
 Rectangle ShopScene::panelBounds() const {
     const float width = std::min(1580.f, static_cast<float>(VirtualViewport::width()) - 80.f);
-    const float height = std::min(760.f, static_cast<float>(VirtualViewport::height()) - 230.f);
+    const float height = std::min(790.f, static_cast<float>(VirtualViewport::height()) - 196.f);
     return Rectangle{
         (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        150.f,
+        118.f,
         width,
         height
     };
@@ -344,8 +357,12 @@ Rectangle ShopScene::removeCancelButtonBounds(const Rectangle modal) const {
 }
 
 Rectangle ShopScene::purchaseConfirmationBounds() const {
-    const float width = 620.f;
-    const float height = 270.f;
+    bool activeItem = false;
+    if (pendingPurchaseIndex_.has_value() && *pendingPurchaseIndex_ < shopState_.offers.size()) {
+        activeItem = shopState_.offers[*pendingPurchaseIndex_].type == ShopOfferType::ActiveItem;
+    }
+    const float width = activeItem ? std::min(920.f, static_cast<float>(VirtualViewport::width()) - 72.f) : 620.f;
+    const float height = activeItem ? std::min(590.f, static_cast<float>(VirtualViewport::height()) - 72.f) : 270.f;
     return Rectangle{
         (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
         (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
@@ -438,6 +455,11 @@ void ShopScene::updatePurchaseConfirmation(const Vector2 mouse) {
     }
 
     const Rectangle modal = purchaseConfirmationBounds();
+    if (IsKeyPressed(KEY_SPACE) && offer.type == ShopOfferType::Card && onCopyCard_) {
+        (void)onCopyCard_(CardId(offer.contentId));
+        return;
+    }
+
     if (IsKeyPressed(KEY_ESCAPE) ||
         (BasicUi::contains(purchaseCancelButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         pendingPurchaseIndex_.reset();
@@ -719,7 +741,7 @@ void ShopScene::renderHoverDescription() const {
 
     for (std::size_t i = 0; i < shopState_.offers.size(); ++i) {
         const ShopOffer& offer = shopState_.offers[i];
-        if (offer.purchased || (offer.type != ShopOfferType::Relic && offer.type != ShopOfferType::Consumable)) {
+        if (offer.purchased || (offer.type != ShopOfferType::Relic && offer.type != ShopOfferType::Consumable && offer.type != ShopOfferType::ActiveItem)) {
             continue;
         }
         if (!BasicUi::contains(offerBounds(i), mouse)) {
@@ -769,6 +791,28 @@ void ShopScene::renderPurchaseConfirmation() const {
         Color{255, 235, 175, 255}
     );
 
+    if (offer.type == ShopOfferType::ActiveItem) {
+        BasicUi::drawCenteredTextFitted(
+            font_,
+            localization_.format(TextId("active_item.compare.shop_price"), {{"price", priceText(offer.price)}}),
+            Rectangle{modal.x + 42.f, modal.y + 66.f, modal.width - 84.f, 32.f},
+            20.f,
+            15.f,
+            Color{214, 220, 238, 255}
+        );
+        ActiveItemComparisonView::render(
+            font_,
+            localization_,
+            activeItems_,
+            runState_,
+            offer.contentId,
+            Rectangle{modal.x + 42.f, modal.y + 108.f, modal.width - 84.f, modal.height - 206.f}
+        );
+        BasicUi::drawButton(font_, purchaseConfirmButtonBounds(modal), localization_.get(TextId("active_item.compare.buy_equip")), mouse);
+        BasicUi::drawButton(font_, purchaseCancelButtonBounds(modal), localization_.get(TextId("active_item.compare.keep")), mouse);
+        return;
+    }
+
     BasicUi::drawCenteredTextFitted(
         font_,
         localization_.format(
@@ -783,6 +827,17 @@ void ShopScene::renderPurchaseConfirmation() const {
         16.f,
         Color{214, 220, 238, 255}
     );
+
+    if (copyCardHintVisible(offer)) {
+        BasicUi::drawCenteredTextFitted(
+            font_,
+            localization_.get(TextId("active_item.hint.copy_selected")),
+            Rectangle{modal.x + 42.f, modal.y + 132.f, modal.width - 84.f, 24.f},
+            16.f,
+            12.f,
+            Color{196, 176, 235, 255}
+        );
+    }
 
     BasicUi::drawText(
         font_,
@@ -1024,6 +1079,15 @@ std::string ShopScene::actorRelicSummary(const RunActorState& actor) const {
     );
 }
 
+bool ShopScene::copyCardHintVisible(const ShopOffer& offer) const {
+    if (offer.type != ShopOfferType::Card || !onCopyCard_ || runState_.activeItem.empty()) {
+        return false;
+    }
+    const ActiveItemId id(runState_.activeItem.itemId);
+    return activeItems_.contains(id) &&
+        ActiveItemSystem::hasEffect(activeItems_.get(id), ActiveItemEffectType::CopyCard);
+}
+
 bool ShopScene::canBuy(const ShopOffer& offer) const {
     if (offer.purchased) {
         return false;
@@ -1038,6 +1102,10 @@ bool ShopScene::canBuy(const ShopOffer& offer) const {
     }
 
     if (offer.type == ShopOfferType::Consumable && static_cast<int>(runState_.consumableIds.size()) >= runState_.maxConsumables) {
+        return false;
+    }
+
+    if (offer.type == ShopOfferType::ActiveItem && offer.contentId == runState_.activeItem.itemId) {
         return false;
     }
 
@@ -1062,6 +1130,11 @@ std::string ShopScene::offerName(const ShopOffer& offer) const {
                 return localization_.get(consumables_.get(ConsumableId(offer.contentId)).nameTextId);
             }
             return offer.contentId;
+        case ShopOfferType::ActiveItem:
+            if (activeItems_.contains(ActiveItemId(offer.contentId))) {
+                return localization_.get(activeItems_.get(ActiveItemId(offer.contentId)).nameTextId);
+            }
+            return offer.contentId;
         case ShopOfferType::CardRemoval:
             return localization_.get(TextId("shop.remove_card"));
     }
@@ -1083,6 +1156,11 @@ std::string ShopScene::offerDescription(const ShopOffer& offer) const {
                 return localization_.get(consumables_.get(ConsumableId(offer.contentId)).descriptionTextId);
             }
             return offer.contentId;
+        case ShopOfferType::ActiveItem:
+            if (activeItems_.contains(ActiveItemId(offer.contentId))) {
+                return localization_.get(activeItems_.get(ActiveItemId(offer.contentId)).descriptionTextId);
+            }
+            return offer.contentId;
         case ShopOfferType::CardRemoval:
             return localization_.get(TextId("shop.remove_card_short_description"));
     }
@@ -1098,6 +1176,8 @@ std::string ShopScene::offerKind(const ShopOffer& offer) const {
             return localization_.get(TextId("shop.kind.relic"));
         case ShopOfferType::Consumable:
             return localization_.get(TextId("shop.kind.consumable"));
+        case ShopOfferType::ActiveItem:
+            return localization_.get(TextId("shop.kind.active_item"));
         case ShopOfferType::CardRemoval:
             return localization_.get(TextId("shop.kind.service"));
     }
@@ -1116,6 +1196,10 @@ std::string ShopScene::offerStatus(const ShopOffer& offer) const {
 
     if (offer.type == ShopOfferType::Consumable && static_cast<int>(runState_.consumableIds.size()) >= runState_.maxConsumables) {
         return localization_.get(TextId("shop.status.consumables_full"));
+    }
+
+    if (offer.type == ShopOfferType::ActiveItem && offer.contentId == runState_.activeItem.itemId) {
+        return localization_.get(TextId("shop.status.active_item_equipped"));
     }
 
     if (offer.type == ShopOfferType::CardRemoval) {
@@ -1223,19 +1307,6 @@ std::string ShopScene::sceneTitle() const {
     return localization_.get(TextId(shopState_.isMerchantRest() ? "merchant_rest.title" : "shop.title"));
 }
 
-std::string ShopScene::sceneSubtitle() const {
-    if (!shopState_.isMerchantRest()) {
-        return {};
-    }
-
-    return localization_.format(
-        TextId("merchant_rest.subtitle"),
-        {
-            {"remaining", std::to_string(shopState_.cardPurchasesRemaining())},
-            {"maximum", std::to_string(shopState_.maxCardPurchases)}
-        }
-    );
-}
 
 std::string ShopScene::leaveButtonText() const {
     return localization_.get(TextId(shopState_.isMerchantRest() ? "merchant_rest.leave" : "shop.leave"));

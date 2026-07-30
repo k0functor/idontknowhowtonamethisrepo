@@ -18,6 +18,23 @@ int totalCurrentHp(const RunState& state) {
     }
     return total;
 }
+
+int maximumCurrentStress(const RunState& state) {
+    int maximum = 0;
+    for (const RunActorState& actor : state.actorStates) {
+        maximum = std::max(maximum, std::max(0, actor.stress));
+    }
+    return maximum;
+}
+
+bool anyActorHasTrait(const RunState& state, const std::string& traitId) {
+    for (const RunActorState& actor : state.actorStates) {
+        if (std::find(actor.traitIds.begin(), actor.traitIds.end(), traitId) != actor.traitIds.end()) {
+            return true;
+        }
+    }
+    return false;
+}
 }
 
 RunEventChoiceAvailability evaluateRunEventChoiceRequirements(
@@ -63,6 +80,24 @@ RunEventChoiceAvailability evaluateRunEventChoiceRequirements(
         });
     }
 
+    const int currentStress = maximumCurrentStress(state);
+    if (requirements.minStress > 0 && currentStress < requirements.minStress) {
+        result.reasons.push_back(RunEventChoiceBlockReason{
+            RunEventChoiceBlockReasonType::StressTooLow,
+            requirements.minStress,
+            currentStress,
+            {}
+        });
+    }
+    if (requirements.maxStress > 0 && currentStress > requirements.maxStress) {
+        result.reasons.push_back(RunEventChoiceBlockReason{
+            RunEventChoiceBlockReasonType::StressTooHigh,
+            requirements.maxStress,
+            currentStress,
+            {}
+        });
+    }
+
     for (const std::string& cardId : requirements.requiredCardIds) {
         if (!deckContainsCardId(state.deckCardIds, cardId)) {
             result.reasons.push_back(RunEventChoiceBlockReason{
@@ -103,6 +138,44 @@ RunEventChoiceAvailability evaluateRunEventChoiceRequirements(
                 0,
                 0,
                 relicId
+            });
+        }
+    }
+
+    for (const std::string& traitId : requirements.requiredTraitIds) {
+        if (!anyActorHasTrait(state, traitId)) {
+            result.reasons.push_back(RunEventChoiceBlockReason{
+                RunEventChoiceBlockReasonType::MissingRequiredTrait,
+                0,
+                0,
+                traitId
+            });
+        }
+    }
+
+    for (const std::string& traitId : requirements.forbiddenTraitIds) {
+        if (anyActorHasTrait(state, traitId)) {
+            result.reasons.push_back(RunEventChoiceBlockReason{
+                RunEventChoiceBlockReasonType::HasForbiddenTrait,
+                0,
+                0,
+                traitId
+            });
+        }
+    }
+
+    for (const std::string& flag : requirements.requiredEventFlags) {
+        if (!containsId(state.eventFlags, flag)) {
+            result.reasons.push_back(RunEventChoiceBlockReason{
+                RunEventChoiceBlockReasonType::MissingRequiredEventFlag, 0, 0, flag
+            });
+        }
+    }
+
+    for (const std::string& flag : requirements.forbiddenEventFlags) {
+        if (containsId(state.eventFlags, flag)) {
+            result.reasons.push_back(RunEventChoiceBlockReason{
+                RunEventChoiceBlockReasonType::HasForbiddenEventFlag, 0, 0, flag
             });
         }
     }

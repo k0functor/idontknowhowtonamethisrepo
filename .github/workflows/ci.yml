@@ -1,56 +1,131 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    name: ${{ matrix.platform.name }} ${{ matrix.config.name }}
-    runs-on: ${{ matrix.platform.os }}
+  core-tests:
+    name: Core tests and validators
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
 
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install --yes ninja-build
+
+      - name: Restore FetchContent cache
+        uses: actions/cache@v6
+        with:
+          path: .cache/fetchcontent
+          key: ${{ runner.os }}-core-fetchcontent-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
+
+      - name: Configure dependency-free tests
+        run: cmake --preset core-debug
+
+      - name: Build gameplay tests
+        run: cmake --build --preset core-debug --parallel 2
+
+      - name: Run CTest suite
+        run: ctest --preset core-debug
+
+      - name: Run content validators
+        run: cmake --build build/core-tests --target validate_content
+
+      - name: Configure JSON persistence tests
+        run: cmake --preset persistence-debug
+
+      - name: Build JSON persistence tests
+        run: cmake --build --preset persistence-debug --parallel 2
+
+      - name: Run real save round-trip and recovery tests
+        run: ctest --preset persistence-debug
+
+  linux-app:
+    name: Full Linux app (${{ matrix.build_type }})
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        platform:
-        - { name: Windows,     os: windows-latest }
-        - { name: Linux GCC,   os: ubuntu-latest }
-        - { name: Linux Clang, os: ubuntu-latest, flags: -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ }
-        - { name: macOS,       os: macos-latest  }
-        config:
-        - { name: Shared, flags: -DBUILD_SHARED_LIBS=TRUE }
-        - { name: Static, flags: -DBUILD_SHARED_LIBS=FALSE }
-
+        build_type: [Debug, Release]
     steps:
-    - name: Install Linux Dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          libx11-dev \
-          libxext-dev \
-          libxrandr-dev \
-          libxinerama-dev \
-          libxcursor-dev \
-          libxi-dev \
-          libudev-dev \
-          libflac-dev \
-          libvorbis-dev \
-          libgl1-mesa-dev \
-          libegl1-mesa-dev \
-          libfreetype-dev \
-          libharfbuzz-dev \
-          libmbedtls-dev \
-          libssh2-1-dev \
-          libasound2-dev
+      - uses: actions/checkout@v7.0.1
 
-    - name: Checkout
-      uses: actions/checkout@v6
+      - name: Install raylib build dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install --yes
+          ninja-build xvfb
+          libasound2-dev libgl1-mesa-dev libglu1-mesa-dev
+          libx11-dev libxcursor-dev libxi-dev libxinerama-dev libxrandr-dev
 
-    - name: Configure
-      run: cmake -B build ${{ matrix.platform.flags }} ${{ matrix.config.flags }}
+      - name: Restore FetchContent cache
+        uses: actions/cache@v6
+        with:
+          path: .cache/fetchcontent
+          key: ${{ runner.os }}-fetchcontent-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
 
-    - name: Build
-      run: cmake --build build --config Release
+      - name: Configure full app
+        run: >-
+          cmake -S . -B build/ci-app-${{ matrix.build_type }} -G Ninja
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DFETCHCONTENT_BASE_DIR=${{ github.workspace }}/.cache/fetchcontent
+          -DGAME_FORCE_FETCH_RAYLIB=ON
+          -DGAME_BUILD_APP=ON
+          -DBUILD_TESTING=ON
+
+      - name: Build full app
+        run: cmake --build build/ci-app-${{ matrix.build_type }} --parallel 2
+
+      - name: Run tests against full configuration
+        run: ctest --test-dir build/ci-app-${{ matrix.build_type }} --output-on-failure
+
+      - name: Smoke-start executable
+        run: |
+          set +e
+          timeout 5s xvfb-run -a build/ci-app-${{ matrix.build_type }}/bin/i_dont_know_how_to_name_this_game
+          status=$?
+          set -e
+          if [ "$status" -ne 124 ]; then
+            exit "$status"
+          fi
+
+  windows-package:
+    name: Windows portable package
+    runs-on: windows-latest
+    steps:
+      - name: Preserve repository line endings
+        shell: pwsh
+        run: git config --global core.autocrlf input
+
+      - uses: actions/checkout@v7.0.1
+
+      - name: Set up MSYS2 UCRT64
+        uses: msys2/setup-msys2@v2.32.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-binutils
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-python
+
+      - name: Restore FetchContent cache
+        uses: actions/cache@v6
+        with:
+          path: .cache/fetchcontent
+          key: ${{ runner.os }}-ucrt64-fetchcontent-${{ hashFiles('CMakeLists.txt', 'CMakePresets.json') }}
+
+      - name: Build and validate portable ZIP
+        shell: msys2 {0}
+        run: pwsh -NoProfile -File tools/package_windows_release.ps1

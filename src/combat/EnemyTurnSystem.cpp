@@ -35,10 +35,15 @@ void EnemyTurnSystem::executeTurn(
         context.cardInstanceId = CardInstanceId{};
         context.cardDefinitionId = CardId("enemy_action." + action.id);
         context.diceCorruption = DiceCorruption{};
+        context.usesActorStats = true;
         context.random = &random;
 
         state.log.add(CombatLogEntryType::EnemyAction, {{"action", action.id}});
         effectSystem_.applyEffects(state, action.effects, context);
+
+        if (state.alivePlayerCount() == 0) {
+            break;
+        }
     }
 
     state.log.add(CombatLogEntryType::EnemyTurnEnded);

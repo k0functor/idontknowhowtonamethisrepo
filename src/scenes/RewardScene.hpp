@@ -1,5 +1,6 @@
 #pragma once
 
+#include "active_items/ActiveItemDatabase.hpp"
 #include "actors/PlayerActorDatabase.hpp"
 #include "consumables/ConsumableDatabase.hpp"
 #include "data/CardDatabase.hpp"
@@ -26,9 +27,12 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
+        const ActiveItemDatabase& activeItems,
         const PlayerActorDatabase& actors,
         const RunState& runState,
         RewardState reward,
+        std::function<bool(RewardState&, const RewardSelection&)> onReroll,
+        std::function<bool(const CardId&)> onCopyCard,
         std::function<void(RewardSelection)> onContinue
     );
 
@@ -48,7 +52,17 @@ private:
     Rectangle relicOwnerOptionBounds(std::size_t index) const;
     Rectangle relicOwnerCancelButtonBounds() const;
 
+    Rectangle activeItemModalBounds() const;
+    Rectangle activeItemKeepButtonBounds() const;
+    Rectangle activeItemEquipButtonBounds() const;
+
     void moveRelicOwnerSelection(int delta);
+
+    void updateActiveItemChoice(Vector2 mouse);
+    void renderActiveItemChoice() const;
+    void openActiveItemChoice(std::size_t index);
+    void closeActiveItemChoice();
+    void confirmActiveItemChoice();
 
     void takeOption(std::size_t index);
     void updateRelicOwnerChoice(Vector2 mouse);
@@ -64,20 +78,20 @@ private:
     void updateCardChoice(Vector2 mouse);
     void renderCardChoice() const;
     void renderRelicInspect(const RewardOption& option, Rectangle row) const;
+    bool copyCardHintVisible() const;
 
     const RewardOption* activeOption() const;
     RewardOption* activeOption();
 
     std::string optionTitle(const RewardOption& option) const;
-    std::string optionDescription(const RewardOption& option) const;
     std::string cardName(const CardId& cardId) const;
     std::string cardDescription(const CardId& cardId) const;
     std::string relicName(const std::string& relicId) const;
     std::string relicDescription(const std::string& relicId) const;
     std::string consumableName(const std::string& consumableId) const;
     std::string consumableDescription(const std::string& consumableId) const;
+    std::string activeItemName(const std::string& activeItemId) const;
     std::string rewardTitle() const;
-    std::string rewardHint() const;
 
 private:
     const UiFont& font_;
@@ -85,10 +99,13 @@ private:
     const CardDatabase& cards_;
     const RelicDatabase& relics_;
     const ConsumableDatabase& consumables_;
+    const ActiveItemDatabase& activeItems_;
     const PlayerActorDatabase& actors_;
     const RunState& runState_;
     RewardState reward_;
     RewardSelection selection_;
+    std::function<bool(RewardState&, const RewardSelection&)> onReroll_;
+    std::function<bool(const CardId&)> onCopyCard_;
     std::function<void(RewardSelection)> onContinue_;
     InspectPanelView inspectPanelView_;
 
@@ -96,6 +113,8 @@ private:
     std::optional<std::size_t> selectedCardIndex_;
     std::optional<std::size_t> activeRelicOwnerOptionIndex_;
     std::optional<std::size_t> selectedRelicOwnerIndex_;
+    std::optional<std::size_t> activeItemOptionIndex_;
     bool cardChoiceOpen_ = false;
     bool relicOwnerChoiceOpen_ = false;
+    bool activeItemChoiceOpen_ = false;
 };

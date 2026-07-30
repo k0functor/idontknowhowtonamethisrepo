@@ -6,4 +6,5 @@
 struct RewardContext {
     const RunState& run;
     RunMapNodeType nodeType = RunMapNodeType::Combat;
+    int enemyCount = 1;
 };

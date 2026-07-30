@@ -11,11 +11,25 @@ struct RunStats {
     int chestsOpened = 0;
     int restsUsed = 0;
     int restHealsUsed = 0;
+    int restCalmsUsed = 0;
     int restUpgradesUsed = 0;
     int restSkips = 0;
 
     int damageTaken = 0;
+    int damageDealt = 0;
+    int damageBlocked = 0;
+    int blockGained = 0;
+    int combatTurns = 0;
+    int cardsPlayedInCombat = 0;
+    int energySpentOnCards = 0;
+    int maximumSingleHit = 0;
+    int longestCombatTurns = 0;
+    int mostCardsPlayedInCombat = 0;
     int consumablesUsed = 0;
+    int activeItemsUsed = 0;
+    int activeItemChargeGained = 0;
+    int activeItemsGained = 0;
+    int activeItemsReplaced = 0;
 
     int goldGained = 0;
     int goldSpent = 0;

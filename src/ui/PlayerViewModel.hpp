@@ -32,8 +32,14 @@ struct PlayerViewModel {
     std::string stanceShiftBonusLabel = {};
     std::string stressPowerLabel = {};
     std::string stressPowerDescription = {};
+    std::string stressBandName = {};
+    std::string stressBandRiskDescription = {};
     std::string relicsLabel = {};
+    int stressBandIndex = 0;
     int stressPowerDamageBonus = 0;
+    int stressPowerEnergyBonus = 0;
+    int stressPowerDiscardCount = 0;
+    int stressBreakdownSeverity = 0;
     int stressPowerNextThreshold = 0;
 
     std::vector<StatusViewModel> statuses;

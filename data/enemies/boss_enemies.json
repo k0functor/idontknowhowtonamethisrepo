@@ -26,7 +26,15 @@
             },
             "status": "weak"
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "baron_royal_guard",
@@ -49,7 +57,10 @@
             },
             "status": "strength"
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       },
       {
         "id": "baron_decree",
@@ -72,7 +83,15 @@
               "amount": 7
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "baron_execution",
@@ -86,7 +105,114 @@
               "amount": 24
             }
           }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "ashen_court",
+        "name": "enemy.phase.baron_of_ashes.ashen_court",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "baron_ash_tax",
+          "baron_royal_guard"
         ]
+      },
+      {
+        "id": "royal_levy",
+        "name": "enemy.phase.baron_of_ashes.royal_levy",
+        "activate_below_hp_percent": 65,
+        "action_ids": [
+          "baron_decree",
+          "baron_royal_guard",
+          "baron_ash_tax"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "rust_taskmaster"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "execution_hour",
+        "name": "enemy.phase.baron_of_ashes.execution_hour",
+        "activate_below_hp_percent": 30,
+        "action_ids": [
+          "baron_execution",
+          "baron_decree",
+          "baron_ash_tax"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "shield_bearer"
+        ],
+        "maximum_alive_enemies": 3
       }
     ]
   },
@@ -116,8 +242,29 @@
               "type": "fixed",
               "amount": 6
             }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "frenzy"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "bishop_rusted_wall",
@@ -140,7 +287,10 @@
             },
             "status": "dexterity"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "bishop_censer_swing",
@@ -155,7 +305,15 @@
             },
             "repeat_count": 2
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "bishop_false_blessing",
@@ -179,7 +337,15 @@
             },
             "status": "vulnerable"
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "bishop_cracked_mitre",
@@ -193,7 +359,110 @@
               "amount": 10
             }
           }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "first_toll",
+        "name": "enemy.phase.rusted_bishop.first_toll",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "bishop_bell_toll",
+          "bishop_rusted_wall",
+          "bishop_censer_swing"
         ]
+      },
+      {
+        "id": "broken_liturgy",
+        "name": "enemy.phase.rusted_bishop.broken_liturgy",
+        "activate_below_hp_percent": 62,
+        "action_ids": [
+          "bishop_false_blessing",
+          "bishop_cracked_mitre",
+          "bishop_bell_toll"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "censer_imp"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "last_bell",
+        "name": "enemy.phase.rusted_bishop.last_bell",
+        "activate_below_hp_percent": 28,
+        "action_ids": [
+          "bishop_cracked_mitre",
+          "bishop_censer_swing",
+          "bishop_bell_toll"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "summon_enemy_ids": [
+          "grave_scribe"
+        ],
+        "maximum_alive_enemies": 3
       }
     ]
   },
@@ -224,7 +493,10 @@
               "amount": 2
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "candle_king_waxen_decree",
@@ -246,8 +518,29 @@
               "type": "fixed",
               "amount": 12
             }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "cost"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "candle_king_melted_crown",
@@ -270,7 +563,18 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ],
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "candle_king_feeding_wick",
@@ -293,7 +597,13 @@
               "amount": 10
             }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
       },
       {
         "id": "candle_king_final_candle",
@@ -307,7 +617,91 @@
               "amount": 13
             }
           }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "wax_court",
+        "name": "enemy.phase.candle_king.wax_court",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "candle_king_royal_flame",
+          "candle_king_waxen_decree"
         ]
+      },
+      {
+        "id": "melting_crown",
+        "name": "enemy.phase.candle_king.melting_crown",
+        "activate_below_hp_percent": 66,
+        "action_ids": [
+          "candle_king_melted_crown",
+          "candle_king_feeding_wick",
+          "candle_king_royal_flame"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "summon_enemy_ids": [
+          "wax_undertaker"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "last_wick",
+        "name": "enemy.phase.candle_king.last_wick",
+        "activate_below_hp_percent": 30,
+        "action_ids": [
+          "candle_king_final_candle",
+          "candle_king_melted_crown",
+          "candle_king_royal_flame"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "burn"
+          }
+        ],
+        "summon_enemy_ids": [
+          "censer_imp"
+        ],
+        "maximum_alive_enemies": 3
       }
     ]
   }

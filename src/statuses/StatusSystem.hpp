@@ -1,5 +1,6 @@
 #pragma once
 
+#include "combat/CombatLog.hpp"
 #include "entities/EntityId.hpp"
 #include "entities/EntityType.hpp"
 #include "statuses/StatusDatabase.hpp"
@@ -7,6 +8,7 @@
 #include <optional>
 #include <string>
 
+class CombatEntity;
 class CombatState;
 class GameEventBus;
 
@@ -33,6 +35,11 @@ public:
     ) const;
 
 private:
+    void removeExclusiveGroupStatuses(
+        CombatEntity& entity,
+        const StatusDefinition& incomingDefinition
+    ) const;
+
     void processEndTurnStatus(
         CombatState& state,
         EntityId owner,
@@ -40,15 +47,26 @@ private:
         int amount
     ) const;
 
-    void applyPoisonDamage(
+    void applyTriggeredEffect(
         CombatState& state,
         EntityId owner,
-        int amount
+        const std::string& statusId,
+        int stacks,
+        const StatusTriggerDefinition& trigger
     ) const;
 
-    void emitPoisonDamageEvents(
+    void applyTriggeredDamage(
         CombatState& state,
         EntityId owner,
+        const std::string& statusId,
+        int amount,
+        StatusTriggerLogType logType
+    ) const;
+
+    void emitDamageOverTimeEvents(
+        CombatState& state,
+        EntityId owner,
+        const std::string& statusId,
         std::optional<EntityId> source,
         int hpDamage,
         bool killed

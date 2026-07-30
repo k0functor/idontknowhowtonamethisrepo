@@ -354,6 +354,7 @@ void Application::loadContent() {
         std::cout << "Loaded archetypes: " << content_.archetypes().size() << '\n';
         std::cout << "Loaded difficulties: " << content_.difficulties().size() << '\n';
         std::cout << "Loaded consumables: " << content_.consumables().size() << '\n';
+        std::cout << "Loaded active items: " << content_.activeItems().size() << '\n';
     }
 }
 

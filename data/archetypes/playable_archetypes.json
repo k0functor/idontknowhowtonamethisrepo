@@ -65,9 +65,9 @@
       "herbalist_basic_defend",
       "herbalist_basic_defend",
       "herbalist_scalpel",
-      "herbalist_scalpel",
       "herbalist_toxin_vial",
-      "herbalist_smoke_mask"
+      "herbalist_smoke_mask",
+      "herbalist_basic_defend"
     ],
     "starting_relics": [
       "copper_inhaler"
@@ -252,7 +252,7 @@
       "lost_psychopath_basic_strike",
       "lost_psychopath_basic_defend",
       "lost_psychopath_basic_defend",
-      "lost_psychopath_clean_cut",
+      "lost_psychopath_balanced_cut",
       "lost_psychopath_breathe",
       "lost_psychopath_risky_stab"
     ],
@@ -299,9 +299,9 @@
       "sadist_clean_cut",
       "sadist_blood_lesson",
       "masochist_endure",
-      "masochist_endure",
       "masochist_grin",
-      "shared_violent_rhythm"
+      "shared_violent_rhythm",
+      "sadist_basic_strike"
     ],
     "starting_relics": [
       "razor_contract",

@@ -1,7 +1,9 @@
 #include "CombatViewModelBuilder.hpp"
+#include "combat/BossPhaseRules.hpp"
 
 #include "drones/DroneDefinition.hpp"
 #include "drones/DroneId.hpp"
+#include "ui/EnemyIntentPresentation.hpp"
 #include "run/StressPsychopathRules.hpp"
 #include "statuses/StatusType.hpp"
 
@@ -10,6 +12,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -153,7 +156,174 @@ std::string intentLabel(
     return base + " " + value;
 }
 
-std::string intentDetailText(
+std::string statusName(
+    const LocalizationManager& localization,
+    const StatusDatabase& statuses,
+    const std::string& statusIdText
+);
+
+std::string targetScopeText(
+    const LocalizationManager& localization,
+    const EffectTarget target
+) {
+    switch (target) {
+        case EffectTarget::Self:
+            return localized(localization, "intent.target.self");
+        case EffectTarget::Ally:
+            return localized(localization, "intent.target.single_player");
+        case EffectTarget::AllAllies:
+            return localized(localization, "intent.target.all_players");
+        case EffectTarget::RandomAlly:
+            return localized(localization, "intent.target.random_player");
+        case EffectTarget::SingleEnemy:
+            return localized(localization, "intent.target.single_enemy");
+        case EffectTarget::AllEnemies:
+            return localized(localization, "intent.target.all_enemies");
+        case EffectTarget::RandomEnemy:
+            return localized(localization, "intent.target.random_enemy");
+    }
+
+    return localized(localization, "intent.target.unknown");
+}
+
+std::string repeatedValueText(const EnemyIntentEffectSummary& summary) {
+    const std::string value = numericRangeText(summary.valueMin, summary.valueMax);
+    if (summary.repeatCount <= 1) {
+        return value;
+    }
+
+    const int totalMin = summary.valueMin * summary.repeatCount;
+    const int totalMax = summary.valueMax * summary.repeatCount;
+    return value + " × " + std::to_string(summary.repeatCount) +
+           " = " + numericRangeText(totalMin, totalMax);
+}
+
+std::string effectSummaryLine(
+    const LocalizationManager& localization,
+    const StatusDatabase& statuses,
+    const EnemyIntentEffectSummary& summary
+) {
+    const std::string target = targetScopeText(localization, summary.target);
+    const std::string value = repeatedValueText(summary);
+
+    switch (summary.type) {
+        case EffectType::Damage:
+            return localizedFormat(
+                localization,
+                "intent.summary.damage",
+                {{"damage", value}, {"target", target}}
+            );
+
+        case EffectType::Block:
+            return localizedFormat(
+                localization,
+                "intent.summary.block",
+                {{"block", value}, {"target", target}}
+            );
+
+        case EffectType::Heal:
+            return localizedFormat(
+                localization,
+                "intent.summary.heal",
+                {{"heal", value}, {"target", target}}
+            );
+
+        case EffectType::ApplyStatus:
+        case EffectType::EnterStance:
+            return localizedFormat(
+                localization,
+                "intent.summary.status",
+                {
+                    {"status", statusName(localization, statuses, summary.statusId)},
+                    {"amount", value},
+                    {"target", target}
+                }
+            );
+
+        case EffectType::LoseEnergy:
+            return localizedFormat(
+                localization,
+                "intent.summary.lose_energy",
+                {{"energy", value}, {"target", target}}
+            );
+
+        case EffectType::GainStress:
+            return localizedFormat(
+                localization,
+                "intent.summary.gain_stress",
+                {{"stress", value}, {"target", target}}
+            );
+
+        case EffectType::PrimeStressBreakdown:
+            return localizedFormat(
+                localization,
+                "intent.summary.prime_stress_breakdown",
+                {{"type", localized(localization, "breakdown.type." + summary.statusId)}, {"target", target}}
+            );
+
+        case EffectType::LoseStress:
+            return localizedFormat(
+                localization,
+                "intent.summary.lose_stress",
+                {{"stress", value}, {"target", target}}
+            );
+
+        case EffectType::LoseHp:
+            return localizedFormat(
+                localization,
+                "intent.summary.lose_hp",
+                {{"hp", value}, {"target", target}}
+            );
+
+        case EffectType::DrawCards:
+            return localizedFormat(
+                localization,
+                "intent.summary.draw_cards",
+                {{"cards", value}, {"target", target}}
+            );
+
+        case EffectType::DiscardCards:
+            return localizedFormat(
+                localization,
+                "intent.summary.discard_cards",
+                {{"cards", value}, {"target", target}}
+            );
+
+        case EffectType::RecoverCards:
+            return localizedFormat(
+                localization,
+                "intent.summary.recover_cards",
+                {{"cards", value}, {"target", target}}
+            );
+
+        case EffectType::GainEnergy:
+            return localizedFormat(
+                localization,
+                "intent.summary.gain_energy",
+                {{"energy", value}, {"target", target}}
+            );
+
+        case EffectType::SpendStressDamage:
+        case EffectType::SpendStressBlock:
+        case EffectType::SpendStressEnergy:
+        case EffectType::SpendStressDraw:
+        case EffectType::SummonDrone:
+        case EffectType::UseDrone:
+            return localizedFormat(
+                localization,
+                "intent.summary.special_effect",
+                {{"target", target}}
+            );
+    }
+
+    return localizedFormat(
+        localization,
+        "intent.summary.special_effect",
+        {{"target", target}}
+    );
+}
+
+std::string baseIntentDescription(
     const LocalizationManager& localization,
     const EnemyIntent& intent
 ) {
@@ -205,6 +375,24 @@ std::string intentDetailText(
     }
 
     return localized(localization, "intent.unknown.description");
+}
+
+std::string intentDetailText(
+    const LocalizationManager& localization,
+    const StatusDatabase& statuses,
+    const EnemyIntent& intent
+) {
+    std::ostringstream stream;
+    stream << baseIntentDescription(localization, intent);
+
+    if (!intent.effectSummaries.empty()) {
+        stream << "\n" << localized(localization, "intent.summary.effects_header");
+        for (const EnemyIntentEffectSummary& summary : intent.effectSummaries) {
+            stream << "\n• " << effectSummaryLine(localization, statuses, summary);
+        }
+    }
+
+    return stream.str();
 }
 
 std::string variableOrFallback(
@@ -448,6 +636,26 @@ std::string localizeLogEntry(
             return localizedFormat(localization, "combat.log.enemy_action", variables);
         }
 
+        case CombatLogEntryType::BossPhaseChanged: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["boss"] = localizedTextIdVariable(localization, entry, "boss_text_id", "boss");
+            variables["phase"] = localizedTextIdVariable(localization, entry, "phase_text_id", "phase");
+            return localizedFormat(localization, "combat.log.boss_phase_changed", variables);
+        }
+
+        case CombatLogEntryType::BossArenaEffect: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["boss"] = localizedTextIdVariable(localization, entry, "boss_text_id", "boss");
+            variables["phase"] = localizedTextIdVariable(localization, entry, "phase_text_id", "phase");
+            return localizedFormat(localization, "combat.log.boss_arena_effect", variables);
+        }
+
+        case CombatLogEntryType::EnemySummoned: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["enemy"] = localizedTextIdVariable(localization, entry, "enemy_text_id", "enemy");
+            return localizedFormat(localization, "combat.log.enemy_summoned", variables);
+        }
+
         case CombatLogEntryType::DamageDealt:
             return localizedFormat(localization, "combat.log.damage_detail", entry.variables);
 
@@ -485,6 +693,12 @@ std::string localizeLogEntry(
             return localizedFormat(localization, "combat.log.poison_damage", variables);
         }
 
+        case CombatLogEntryType::BurnDamage: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["target"] = localizedTextIdVariable(localization, entry, "target_text_id", "target");
+            return localizedFormat(localization, "combat.log.burn_damage", variables);
+        }
+
         case CombatLogEntryType::GainStress:
             return localizedFormat(localization, "combat.log.gain_stress", entry.variables);
 
@@ -496,6 +710,8 @@ std::string localizeLogEntry(
 
         case CombatLogEntryType::StressBreakdown:
             return localizedFormat(localization, "combat.log.stress_breakdown", actorLogVariables(localization, entry));
+        case CombatLogEntryType::StressBreakdownPrevented:
+            return localizedFormat(localization, "combat.log.stress_breakdown_prevented", actorLogVariables(localization, entry));
 
         case CombatLogEntryType::StressCollapse:
             return localizedFormat(localization, "combat.log.stress_collapse", actorLogVariables(localization, entry));
@@ -504,6 +720,21 @@ std::string localizeLogEntry(
             CombatLogEntry::Variables variables = actorLogVariables(localization, entry);
             variables["card"] = cardName(localization, cards, variableOrFallback(entry, "card"));
             return localizedFormat(localization, "combat.log.stress_breakdown_discard", variables);
+        }
+
+        case CombatLogEntryType::StressBreakdownEnergy:
+            return localizedFormat(localization, "combat.log.stress_breakdown_energy", actorLogVariables(localization, entry));
+
+        case CombatLogEntryType::StressBreakdownStatusCards:
+            return localizedFormat(localization, "combat.log.stress_breakdown_status_cards", actorLogVariables(localization, entry));
+
+        case CombatLogEntryType::StressBreakdownCost:
+            return localizedFormat(localization, "combat.log.stress_breakdown_cost", actorLogVariables(localization, entry));
+
+        case CombatLogEntryType::StressBreakdownForcedCard: {
+            CombatLogEntry::Variables variables = actorLogVariables(localization, entry);
+            variables["card"] = cardName(localization, cards, variableOrFallback(entry, "card"));
+            return localizedFormat(localization, "combat.log.stress_breakdown_forced_card", variables);
         }
 
         case CombatLogEntryType::MonkStanceShiftReward:
@@ -561,12 +792,14 @@ CombatViewModelBuilder::CombatViewModelBuilder(
     const StatusDatabase& statusDatabase,
     const DroneDatabase& droneDatabase,
     const CardDatabase& cardDatabase,
+    const EnemyDatabase& enemyDatabase,
     const CardViewModelBuilder& cardViewModelBuilder
 )
     : localization_(localization),
       statusDatabase_(statusDatabase),
       droneDatabase_(droneDatabase),
       cardDatabase_(cardDatabase),
+      enemyDatabase_(enemyDatabase),
       cardViewModelBuilder_(cardViewModelBuilder) {}
 
 CombatViewModel CombatViewModelBuilder::build(
@@ -636,14 +869,72 @@ CombatViewModel CombatViewModelBuilder::build(
         playerModel.blockLabel = localized(localization_, "ui.block");
         playerModel.stressLabel = localized(localization_, "ui.stress");
         playerModel.relicsLabel = localized(localization_, "ui.actor_relics");
+
+        const StressRules::StressBand stressBand = StressRules::bandForStress(player.stress);
+        playerModel.stressBandIndex = static_cast<int>(stressBand);
+        playerModel.stressBandName = localization_.get(TextId(
+            std::string("ui.stress_band.") + StressRules::bandLocalizationSuffix(stressBand) + ".name"
+        ));
+
         if (StressPsychopathRules::appliesTo(player.definitionId)) {
-            playerModel.stressPowerDamageBonus = StressPsychopathRules::damageBonusForStress(player.stress);
+            const bool hasBreakdown = StressRules::hasTrait(player, StressRules::BreakdownTraitId);
+            const bool hasResolve = StressRules::hasTrait(player, StressRules::ResolveTraitId);
+            const StressPsychopathRules::StressBandEffects stressEffects = StressPsychopathRules::effectsFor(
+                player.stress,
+                hasBreakdown,
+                hasResolve
+            );
+
+            playerModel.stressPowerDamageBonus = stressEffects.attackDamageBonus;
+            playerModel.stressPowerEnergyBonus = stressEffects.startTurnEnergyBonus;
+            playerModel.stressPowerDiscardCount = stressEffects.startTurnDiscardCount;
+            playerModel.stressBreakdownSeverity = stressEffects.breakdownSeverity;
             playerModel.stressPowerNextThreshold = StressPsychopathRules::nextDamageBonusThreshold(player.stress);
             playerModel.stressPowerLabel = localized(localization_, "ui.lost_psychopath_stress_power");
             playerModel.stressPowerDescription = localizedFormat(localization_, "ui.lost_psychopath_stress_power.value", {
                 {"bonus", std::to_string(playerModel.stressPowerDamageBonus)},
                 {"next", playerModel.stressPowerNextThreshold > 0 ? std::to_string(playerModel.stressPowerNextThreshold) : "-"}
             });
+
+            if (stressEffects.startTurnEnergyBonus > 0 && stressEffects.breakdownSeverity > 0) {
+                playerModel.stressBandRiskDescription = localizedFormat(
+                    localization_,
+                    "ui.lost_psychopath_stress_risk.energy_and_breakdown",
+                    {
+                        {"energy", std::to_string(stressEffects.startTurnEnergyBonus)},
+                        {"severity", std::to_string(stressEffects.breakdownSeverity)}
+                    }
+                );
+            } else if (stressEffects.breakdownSeverity > 0) {
+                playerModel.stressBandRiskDescription = localizedFormat(
+                    localization_,
+                    "ui.lost_psychopath_stress_risk.breakdown",
+                    {{"severity", std::to_string(stressEffects.breakdownSeverity)}}
+                );
+            } else if (stressEffects.startTurnEnergyBonus > 0 && stressEffects.startTurnDiscardCount > 0) {
+                playerModel.stressBandRiskDescription = localizedFormat(
+                    localization_,
+                    "ui.lost_psychopath_stress_risk.energy_and_discard",
+                    {
+                        {"energy", std::to_string(stressEffects.startTurnEnergyBonus)},
+                        {"cards", std::to_string(stressEffects.startTurnDiscardCount)}
+                    }
+                );
+            } else if (stressEffects.startTurnEnergyBonus > 0) {
+                playerModel.stressBandRiskDescription = localizedFormat(
+                    localization_,
+                    "ui.lost_psychopath_stress_risk.energy",
+                    {{"energy", std::to_string(stressEffects.startTurnEnergyBonus)}}
+                );
+            } else if (stressEffects.startTurnDiscardCount > 0) {
+                playerModel.stressBandRiskDescription = localizedFormat(
+                    localization_,
+                    "ui.lost_psychopath_stress_risk.discard",
+                    {{"cards", std::to_string(stressEffects.startTurnDiscardCount)}}
+                );
+            } else {
+                playerModel.stressBandRiskDescription = localized(localization_, "ui.lost_psychopath_stress_risk.stable");
+            }
         }
         playerModel.activeTurnLabel = state.useSequentialPlayerTurns
             ? localized(localization_, "ui.active_turn")
@@ -686,10 +977,19 @@ CombatViewModel CombatViewModelBuilder::build(
     }
 
     model.enemies.reserve(state.enemies.size());
-    for (const CombatEntity& enemy : state.enemies) {
+    for (std::size_t enemyIndex = 0; enemyIndex < state.enemies.size(); ++enemyIndex) {
+        const CombatEntity& enemy = state.enemies[enemyIndex];
         EnemyViewModel enemyModel;
+        enemyModel.formationLabel = std::to_string(enemyIndex + 1) + "/" + std::to_string(state.enemies.size());
+        enemyModel.defeatedLabel = localized(localization_, "ui.enemy.defeated");
         enemyModel.entityId = enemy.id;
         enemyModel.name = localization_.get(enemy.nameTextId);
+        if (enemyDatabase_.contains(EnemyId(enemy.definitionId))) {
+            const EnemyDefinition& definition = enemyDatabase_.get(EnemyId(enemy.definitionId));
+            if (const EnemyPhaseDefinition* phase = BossPhaseRules::activePhase(state, definition, enemy)) {
+                enemyModel.phaseName = localization_.get(phase->nameTextId);
+            }
+        }
         enemyModel.currentHp = enemy.health.current();
         enemyModel.maxHp = enemy.health.maximum();
         enemyModel.block = enemy.block;
@@ -701,11 +1001,21 @@ CombatViewModel CombatViewModelBuilder::build(
         if (intentIterator != intentsByEnemy.end()) {
             enemyModel.intent = intentIterator->second;
             enemyModel.intentText = intentLabel(localization_, enemyModel.intent);
-            enemyModel.intentDetailText = intentDetailText(localization_, enemyModel.intent);
+            enemyModel.intentDetailText = intentDetailText(localization_, statusDatabase_, enemyModel.intent);
+
+            const EnemyIntentPresentation presentation = summarizeEnemyIntent(enemyModel.intent);
+            enemyModel.intentAffectsMultipleTargets = presentation.affectsMultipleTargets;
+            if (presentation.affectsAllPlayers && presentation.affectsEnemyTeam) {
+                enemyModel.intentScopeLabel = localized(localization_, "ui.intent_scope.party_and_team");
+            } else if (presentation.affectsAllPlayers) {
+                enemyModel.intentScopeLabel = localized(localization_, "ui.intent_scope.party");
+            } else if (presentation.affectsEnemyTeam) {
+                enemyModel.intentScopeLabel = localized(localization_, "ui.intent_scope.enemy_team");
+            }
         } else {
             enemyModel.intent.type = EnemyIntentType::Unknown;
             enemyModel.intentText = enemyModel.alive ? "..." : "";
-            enemyModel.intentDetailText = enemyModel.alive ? intentDetailText(localization_, enemyModel.intent) : "";
+            enemyModel.intentDetailText = enemyModel.alive ? intentDetailText(localization_, statusDatabase_, enemyModel.intent) : "";
         }
 
         model.enemies.push_back(std::move(enemyModel));

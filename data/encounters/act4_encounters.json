@@ -1,0 +1,470 @@
+{
+  "pools": {
+    "combat": [
+      {
+        "id": "act4_starved_astronomer",
+        "enemies": [
+          "starved_astronomer"
+        ],
+        "weight": 5,
+        "min_layer": 0,
+        "max_layer": 3
+      },
+      {
+        "id": "act4_lens_spider",
+        "enemies": [
+          "lens_spider"
+        ],
+        "weight": 5,
+        "min_layer": 0,
+        "max_layer": 4
+      },
+      {
+        "id": "act4_gravity_acolyte",
+        "enemies": [
+          "gravity_acolyte"
+        ],
+        "weight": 4,
+        "min_layer": 1,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_void_hound",
+        "enemies": [
+          "void_hound"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 5
+      },
+      {
+        "id": "act4_brass_astrologer",
+        "enemies": [
+          "brass_astrologer"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_eclipse_warden",
+        "enemies": [
+          "eclipse_warden"
+        ],
+        "weight": 3,
+        "min_layer": 3,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_orbiting_reliquary",
+        "enemies": [
+          "orbiting_reliquary"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_comet_larva",
+        "enemies": [
+          "comet_larva"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 5
+      },
+      {
+        "id": "act4_hound_and_spider",
+        "enemies": [
+          "void_hound",
+          "lens_spider"
+        ],
+        "weight": 2,
+        "min_layer": 1,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_acolyte_and_astronomer",
+        "enemies": [
+          "gravity_acolyte",
+          "starved_astronomer"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_astrologer_and_reliquary",
+        "enemies": [
+          "brass_astrologer",
+          "orbiting_reliquary"
+        ],
+        "weight": 2,
+        "min_layer": 3,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_eclipse_patrol",
+        "enemies": [
+          "eclipse_warden",
+          "void_hound"
+        ],
+        "weight": 2,
+        "min_layer": 4,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_comet_swarm",
+        "enemies": [
+          "comet_larva",
+          "comet_larva"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 6
+      },
+      {
+        "id": "act4_observatory_choir",
+        "enemies": [
+          "starved_astronomer",
+          "gravity_acolyte",
+          "lens_spider"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_black_orbit",
+        "enemies": [
+          "brass_astrologer",
+          "orbiting_reliquary",
+          "void_hound"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_eclipse_calculation",
+        "enemies": [
+          "eclipse_warden",
+          "gravity_acolyte",
+          "comet_larva"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_lens_hound_pack",
+        "enemies": [
+          "lens_spider",
+          "void_hound",
+          "lens_spider"
+        ],
+        "weight": 2,
+        "min_layer": 6,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_gravity_starved_pair",
+        "enemies": [
+          "gravity_acolyte",
+          "starved_astronomer"
+        ],
+        "weight": 4,
+        "min_layer": 4,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_brass_eclipse_formula",
+        "enemies": [
+          "brass_astrologer",
+          "eclipse_warden"
+        ],
+        "weight": 4,
+        "min_layer": 5,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_reliquary_orbit_guard",
+        "enemies": [
+          "orbiting_reliquary",
+          "gravity_acolyte",
+          "comet_larva"
+        ],
+        "weight": 3,
+        "min_layer": 5,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_comet_larva_swarm",
+        "enemies": [
+          "comet_larva",
+          "comet_larva",
+          "lens_spider"
+        ],
+        "weight": 2,
+        "min_layer": 6,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_void_observatory_watch",
+        "enemies": [
+          "void_hound",
+          "starved_astronomer",
+          "brass_astrologer"
+        ],
+        "weight": 2,
+        "min_layer": 8,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_eclipse_reliquary_wall",
+        "enemies": [
+          "eclipse_warden",
+          "orbiting_reliquary"
+        ],
+        "weight": 4,
+        "min_layer": 7,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_astrologer_lens_nest",
+        "enemies": [
+          "brass_astrologer",
+          "lens_spider",
+          "lens_spider"
+        ],
+        "weight": 2,
+        "min_layer": 8,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_gravity_hound_line",
+        "enemies": [
+          "gravity_acolyte",
+          "void_hound",
+          "comet_larva"
+        ],
+        "weight": 2,
+        "min_layer": 9,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_late_orbit_tax",
+        "enemies": [
+          "orbiting_reliquary",
+          "brass_astrologer",
+          "starved_astronomer"
+        ],
+        "weight": 3,
+        "min_layer": 9,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_black_eclipse_pack",
+        "enemies": [
+          "eclipse_warden",
+          "void_hound",
+          "lens_spider"
+        ],
+        "weight": 3,
+        "min_layer": 9,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_final_calculation_hall",
+        "enemies": [
+          "gravity_acolyte",
+          "brass_astrologer",
+          "eclipse_warden"
+        ],
+        "weight": 1,
+        "min_layer": 11,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_satellite_pit",
+        "enemies": [
+          "orbiting_reliquary",
+          "comet_larva",
+          "comet_larva"
+        ],
+        "weight": 3,
+        "min_layer": 10,
+        "max_layer": 13
+      },
+      {
+        "id": "act4_dead_moon_promenade",
+        "enemies": [
+          "starved_astronomer",
+          "void_hound",
+          "orbiting_reliquary"
+        ],
+        "weight": 2,
+        "min_layer": 11,
+        "max_layer": 13
+      }
+    ],
+    "elite": [
+      {
+        "id": "act4_atlas_jailer",
+        "enemies": [
+          "atlas_jailer"
+        ],
+        "weight": 4,
+        "min_layer": 2,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_glass_comet",
+        "enemies": [
+          "glass_comet"
+        ],
+        "weight": 4,
+        "min_layer": 2,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_orbit_saint",
+        "enemies": [
+          "orbit_saint"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_gravity_executioner",
+        "enemies": [
+          "gravity_executioner"
+        ],
+        "weight": 3,
+        "min_layer": 3,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_blind_astronomer",
+        "enemies": [
+          "blind_astronomer"
+        ],
+        "weight": 3,
+        "min_layer": 3,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_jailer_and_hound",
+        "enemies": [
+          "atlas_jailer",
+          "void_hound"
+        ],
+        "weight": 2,
+        "min_layer": 4,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_saint_and_reliquary",
+        "enemies": [
+          "orbit_saint",
+          "orbiting_reliquary"
+        ],
+        "weight": 2,
+        "min_layer": 4,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_executioner_and_acolyte",
+        "enemies": [
+          "gravity_executioner",
+          "gravity_acolyte"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_comet_and_spiders",
+        "enemies": [
+          "glass_comet",
+          "lens_spider",
+          "lens_spider"
+        ],
+        "weight": 2,
+        "min_layer": 7,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_jailer_and_astrologer",
+        "enemies": [
+          "atlas_jailer",
+          "brass_astrologer"
+        ],
+        "weight": 3,
+        "min_layer": 5,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_blind_astronomer_and_comets",
+        "enemies": [
+          "blind_astronomer",
+          "comet_larva",
+          "comet_larva"
+        ],
+        "weight": 1,
+        "min_layer": 8,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_executioner_and_warden",
+        "enemies": [
+          "gravity_executioner",
+          "eclipse_warden"
+        ],
+        "weight": 2,
+        "min_layer": 7,
+        "max_layer": 12
+      },
+      {
+        "id": "act4_orbit_saint_and_hound",
+        "enemies": [
+          "orbit_saint",
+          "void_hound"
+        ],
+        "weight": 2,
+        "min_layer": 8,
+        "max_layer": 12
+      }
+    ],
+    "boss": [
+      {
+        "id": "act4_the_empty_constellation",
+        "enemies": [
+          "the_empty_constellation"
+        ],
+        "weight": 1,
+        "min_layer": 14,
+        "max_layer": 14
+      },
+      {
+        "id": "act4_clockwork_apostle",
+        "enemies": [
+          "clockwork_apostle"
+        ],
+        "weight": 1,
+        "min_layer": 14,
+        "max_layer": 14
+      },
+      {
+        "id": "act4_moon_that_blinks",
+        "enemies": [
+          "moon_that_blinks"
+        ],
+        "weight": 1,
+        "min_layer": 14,
+        "max_layer": 14
+      }
+    ]
+  }
+}

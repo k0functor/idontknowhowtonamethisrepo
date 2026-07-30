@@ -2,6 +2,7 @@
 
 #include <cstddef>
 
+#include "active_items/ActiveItemDatabase.hpp"
 #include "archetypes/PlayableArchetypeDefinition.hpp"
 #include "actors/PlayerActorDatabase.hpp"
 #include "combat/CombatResult.hpp"
@@ -10,6 +11,7 @@
 #include "data/CardDatabase.hpp"
 #include "consumables/ConsumableDatabase.hpp"
 #include "events/RunEventDefinition.hpp"
+#include "events/RunEventChoiceResult.hpp"
 #include "rewards/RewardGenerator.hpp"
 #include "rewards/RewardSelection.hpp"
 #include "rewards/RewardState.hpp"
@@ -90,6 +92,7 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
+        const ActiveItemDatabase& activeItems,
         const RewardTuning& rewardTuning,
         Random& random
     );
@@ -99,6 +102,7 @@ public:
         const CardDatabase& cards,
         const RelicDatabase& relics,
         const ConsumableDatabase& consumables,
+        const ActiveItemDatabase& activeItems,
         const RewardTuning& rewardTuning,
         Random& random
     );
@@ -119,10 +123,16 @@ public:
         Random& random
     ) const;
 
+    std::optional<ActiveItemId> chooseActiveItemReward(
+        const ActiveItemDatabase& activeItems,
+        Random& random
+    ) const;
+
     void completeChestAndTakeRelic(int nodeId, const RelicId& relicId);
     void completeChestNode(int nodeId);
     void completeEventNode(int nodeId);
     void completeRestHeal(int nodeId);
+    void completeRestCalm(int nodeId);
     bool completeRestUpgrade(int nodeId, std::size_t deckIndex);
     void completeRestSkip(int nodeId);
 
@@ -130,7 +140,7 @@ public:
     void completeShopNode(int nodeId);
     void completeMerchantRestNode(int nodeId);
 
-    bool completeEventChoice(
+    RunEventChoiceResult completeEventChoice(
         int nodeId,
         const RunEventChoiceDefinition& choice,
         const CardDatabase& cards,

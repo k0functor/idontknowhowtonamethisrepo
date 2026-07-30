@@ -1,6 +1,8 @@
 #include "EnemyMoveSelector.hpp"
+#include "combat/BossPhaseRules.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <stdexcept>
 #include <utility>
 
@@ -33,7 +35,269 @@ const EnemyActionDefinition& actionById(
 
     return *iterator;
 }
+
+std::pair<int, int> rawValueRange(const EffectDefinition& effect) {
+    return {effect.value.minimumPossibleValue(), effect.value.maximumPossibleValue()};
 }
+
+bool hpAtOrBelowPercent(const CombatEntity& entity, const int percent) {
+    return static_cast<std::int64_t>(entity.health.current()) * 100 <=
+        static_cast<std::int64_t>(entity.health.maximum()) * percent;
+}
+
+bool hpAtOrAbovePercent(const CombatEntity& entity, const int percent) {
+    return static_cast<std::int64_t>(entity.health.current()) * 100 >=
+        static_cast<std::int64_t>(entity.health.maximum()) * percent;
+}
+
+const EnemyAiState* aiStateFor(const CombatState& state, const EntityId enemyId) {
+    const auto iterator = std::find_if(
+        state.enemyAiStates.begin(),
+        state.enemyAiStates.end(),
+        [enemyId](const EnemyAiState& aiState) {
+            return aiState.enemyId == enemyId;
+        }
+    );
+    return iterator == state.enemyAiStates.end() ? nullptr : &*iterator;
+}
+
+EnemyAiState& mutableAiStateFor(CombatState& state, const EntityId enemyId) {
+    const auto iterator = std::find_if(
+        state.enemyAiStates.begin(),
+        state.enemyAiStates.end(),
+        [enemyId](const EnemyAiState& aiState) {
+            return aiState.enemyId == enemyId;
+        }
+    );
+    if (iterator != state.enemyAiStates.end()) {
+        return *iterator;
+    }
+
+    EnemyAiState aiState;
+    aiState.enemyId = enemyId;
+    state.enemyAiStates.push_back(std::move(aiState));
+    return state.enemyAiStates.back();
+}
+
+bool hasAllStatuses(
+    const CombatEntity& entity,
+    const std::vector<std::string>& statusIds
+) {
+    return std::all_of(
+        statusIds.begin(),
+        statusIds.end(),
+        [&entity](const std::string& statusId) {
+            return entity.statuses.has(statusId);
+        }
+    );
+}
+
+bool hasAnyStatus(
+    const CombatEntity& entity,
+    const std::vector<std::string>& statusIds
+) {
+    return std::any_of(
+        statusIds.begin(),
+        statusIds.end(),
+        [&entity](const std::string& statusId) {
+            return entity.statuses.has(statusId);
+        }
+    );
+}
+
+bool playersSatisfyRequiredStatuses(
+    const CombatState& state,
+    const std::vector<std::string>& statusIds
+) {
+    return std::all_of(
+        statusIds.begin(),
+        statusIds.end(),
+        [&state](const std::string& statusId) {
+            return std::any_of(
+                state.players.begin(),
+                state.players.end(),
+                [&statusId](const CombatEntity& player) {
+                    return player.isAlive() && player.statuses.has(statusId);
+                }
+            );
+        }
+    );
+}
+
+bool playersAvoidForbiddenStatuses(
+    const CombatState& state,
+    const std::vector<std::string>& statusIds
+) {
+    return std::none_of(
+        state.players.begin(),
+        state.players.end(),
+        [&statusIds](const CombatEntity& player) {
+            return player.isAlive() && hasAnyStatus(player, statusIds);
+        }
+    );
+}
+
+bool conditionsPass(
+    const CombatState& state,
+    const CombatEntity& enemy,
+    const EnemyActionCondition& condition
+) {
+    if (state.turn < condition.minTurn) {
+        return false;
+    }
+    if (condition.maxTurn.has_value() && state.turn > *condition.maxTurn) {
+        return false;
+    }
+
+    const int aliveEnemies = static_cast<int>(state.aliveEnemyCount());
+    if (aliveEnemies < condition.minAliveEnemies) {
+        return false;
+    }
+    if (condition.maxAliveEnemies.has_value() && aliveEnemies > *condition.maxAliveEnemies) {
+        return false;
+    }
+
+    if (condition.selfHpBelowPercent.has_value() &&
+        !hpAtOrBelowPercent(enemy, *condition.selfHpBelowPercent)) {
+        return false;
+    }
+    if (condition.selfHpAbovePercent.has_value() &&
+        !hpAtOrAbovePercent(enemy, *condition.selfHpAbovePercent)) {
+        return false;
+    }
+
+    if (condition.anyPlayerHpBelowPercent.has_value()) {
+        const bool found = std::any_of(
+            state.players.begin(),
+            state.players.end(),
+            [&condition](const CombatEntity& player) {
+                return player.isAlive() &&
+                    hpAtOrBelowPercent(player, *condition.anyPlayerHpBelowPercent);
+            }
+        );
+        if (!found) {
+            return false;
+        }
+    }
+
+    if (condition.anyPlayerHpAbovePercent.has_value()) {
+        const bool found = std::any_of(
+            state.players.begin(),
+            state.players.end(),
+            [&condition](const CombatEntity& player) {
+                return player.isAlive() &&
+                    hpAtOrAbovePercent(player, *condition.anyPlayerHpAbovePercent);
+            }
+        );
+        if (!found) {
+            return false;
+        }
+    }
+
+    if (condition.anyOtherEnemyHpBelowPercent.has_value()) {
+        const bool found = std::any_of(
+            state.enemies.begin(),
+            state.enemies.end(),
+            [&condition, &enemy](const CombatEntity& ally) {
+                return ally.isAlive() && ally.id != enemy.id &&
+                    hpAtOrBelowPercent(ally, *condition.anyOtherEnemyHpBelowPercent);
+            }
+        );
+        if (!found) {
+            return false;
+        }
+    }
+
+    if (!hasAllStatuses(enemy, condition.requiredSelfStatuses) ||
+        hasAnyStatus(enemy, condition.forbiddenSelfStatuses)) {
+        return false;
+    }
+    if (!playersSatisfyRequiredStatuses(state, condition.requiredPlayerStatuses) ||
+        !playersAvoidForbiddenStatuses(state, condition.forbiddenPlayerStatuses)) {
+        return false;
+    }
+
+    return true;
+}
+
+bool historyConstraintsPass(
+    const CombatState& state,
+    const EntityId enemyId,
+    const EnemyActionDefinition& action
+) {
+    const EnemyAiState* aiState = aiStateFor(state, enemyId);
+    if (aiState == nullptr) {
+        return true;
+    }
+
+    const auto cooldown = std::find_if(
+        aiState->cooldowns.begin(),
+        aiState->cooldowns.end(),
+        [&action](const EnemyActionCooldownState& entry) {
+            return entry.actionId == action.id;
+        }
+    );
+    if (cooldown != aiState->cooldowns.end() && state.turn < cooldown->availableOnTurn) {
+        return false;
+    }
+
+    if (action.maxConsecutiveUses > 0 &&
+        aiState->lastActionId == action.id &&
+        aiState->consecutiveUses >= action.maxConsecutiveUses) {
+        return false;
+    }
+
+    return true;
+}
+
+const EnemyActionDefinition& weightedChoice(
+    const std::vector<const EnemyActionDefinition*>& candidates,
+    Random& random
+) {
+    int totalWeight = 0;
+    for (const EnemyActionDefinition* action : candidates) {
+        totalWeight += action->weight;
+    }
+
+    int roll = random.rangeInclusive(1, totalWeight);
+    for (const EnemyActionDefinition* action : candidates) {
+        roll -= action->weight;
+        if (roll <= 0) {
+            return *action;
+        }
+    }
+
+    return *candidates.back();
+}
+
+void rememberSelectedAction(
+    CombatState& state,
+    const EntityId enemyId,
+    const EnemyActionDefinition& action
+) {
+    EnemyAiState& aiState = mutableAiStateFor(state, enemyId);
+    if (aiState.lastActionId == action.id) {
+        ++aiState.consecutiveUses;
+    } else {
+        aiState.lastActionId = action.id;
+        aiState.consecutiveUses = 1;
+    }
+
+    const int availableOnTurn = state.turn + action.cooldown + 1;
+    const auto cooldown = std::find_if(
+        aiState.cooldowns.begin(),
+        aiState.cooldowns.end(),
+        [&action](const EnemyActionCooldownState& entry) {
+            return entry.actionId == action.id;
+        }
+    );
+    if (cooldown == aiState.cooldowns.end()) {
+        aiState.cooldowns.push_back({action.id, availableOnTurn});
+    } else {
+        cooldown->availableOnTurn = availableOnTurn;
+    }
+}
+} // namespace
 
 EnemyMoveSelector::EnemyMoveSelector(const ModifierSystem& modifierSystem)
     : modifierSystem_(modifierSystem) {}
@@ -41,18 +305,59 @@ EnemyMoveSelector::EnemyMoveSelector(const ModifierSystem& modifierSystem)
 const EnemyActionDefinition& EnemyMoveSelector::selectAction(
     const CombatState& state,
     const EnemyDefinition& enemyDefinition,
-    const EntityId,
-    Random&
+    const EntityId enemyId,
+    Random& random
 ) const {
     if (enemyDefinition.actions.empty()) {
         throw std::runtime_error("Enemy definition has no actions: " + enemyDefinition.id.value);
     }
+    if (!state.hasEntity(enemyId) || !state.isEnemy(enemyId)) {
+        throw std::runtime_error("Enemy action selection requires a living enemy entity");
+    }
 
-    const std::size_t index = static_cast<std::size_t>(
-        std::max(0, state.turn - 1)
-    ) % enemyDefinition.actions.size();
+    const CombatEntity& enemy = state.entity(enemyId);
+    std::vector<const EnemyActionDefinition*> eligible;
+    std::vector<const EnemyActionDefinition*> conditionEligible;
+    eligible.reserve(enemyDefinition.actions.size());
+    conditionEligible.reserve(enemyDefinition.actions.size());
 
-    return enemyDefinition.actions[index];
+    for (const EnemyActionDefinition& action : enemyDefinition.actions) {
+        if (!BossPhaseRules::actionAllowed(state, enemyDefinition, enemy, action.id)) {
+            continue;
+        }
+        if (!conditionsPass(state, enemy, action.condition)) {
+            continue;
+        }
+
+        conditionEligible.push_back(&action);
+        if (historyConstraintsPass(state, enemyId, action)) {
+            eligible.push_back(&action);
+        }
+    }
+
+    // A malformed or extremely restrictive data set must not soft-lock combat.
+    // Prefer actions whose state conditions still make sense, then fall back to
+    // the full move set only as a final safety valve.
+    if (!eligible.empty()) {
+        return weightedChoice(eligible, random);
+    }
+    if (!conditionEligible.empty()) {
+        return weightedChoice(conditionEligible, random);
+    }
+
+    std::vector<const EnemyActionDefinition*> fallback;
+    fallback.reserve(enemyDefinition.actions.size());
+    for (const EnemyActionDefinition& action : enemyDefinition.actions) {
+        if (BossPhaseRules::actionAllowed(state, enemyDefinition, enemy, action.id)) {
+            fallback.push_back(&action);
+        }
+    }
+    if (fallback.empty()) {
+        for (const EnemyActionDefinition& action : enemyDefinition.actions) {
+            fallback.push_back(&action);
+        }
+    }
+    return weightedChoice(fallback, random);
 }
 
 void EnemyMoveSelector::refreshIntents(
@@ -61,6 +366,12 @@ void EnemyMoveSelector::refreshIntents(
     Random& random
 ) const {
     state.enemyIntents.clear();
+    std::erase_if(
+        state.enemyAiStates,
+        [&state](const EnemyAiState& aiState) {
+            return !state.hasEntity(aiState.enemyId) || !state.entity(aiState.enemyId).isAlive();
+        }
+    );
 
     for (const CombatEntity& enemy : state.enemies) {
         if (!enemy.isAlive()) {
@@ -74,6 +385,7 @@ void EnemyMoveSelector::refreshIntents(
             enemy.id,
             random
         );
+        rememberSelectedAction(state, enemy.id, action);
 
         EnemyIntentState intentState;
         intentState.enemyId = enemy.id;
@@ -129,6 +441,7 @@ EnemyIntent EnemyMoveSelector::makeIntent(
 ) const {
     EnemyIntent intent;
     intent.type = action.intentType;
+    intent.effectSummaries.reserve(action.effects.size());
 
     switch (action.intentType) {
         case EnemyIntentType::Attack: {
@@ -183,6 +496,56 @@ EnemyIntent EnemyMoveSelector::makeIntent(
             break;
     }
 
+    for (const EffectDefinition& effect : action.effects) {
+        EnemyIntentEffectSummary summary;
+        summary.type = effect.type;
+        summary.target = effect.target;
+        summary.repeatCount = std::max(1, effect.repeatCount);
+        if (effect.statusId.has_value()) {
+            summary.statusId = *effect.statusId;
+        }
+
+        switch (effect.type) {
+            case EffectType::Damage: {
+                const std::pair<int, int> range = estimateDamageRange(state, enemy, effect);
+                summary.valueMin = range.first;
+                summary.valueMax = range.second;
+                break;
+            }
+
+            case EffectType::Block:
+                summary.valueMin = estimateBlockValue(state, enemy, effect);
+                summary.valueMax = summary.valueMin;
+                break;
+
+            case EffectType::Heal:
+            case EffectType::ApplyStatus:
+            case EffectType::DrawCards:
+            case EffectType::DiscardCards:
+            case EffectType::RecoverCards:
+            case EffectType::GainEnergy:
+            case EffectType::GainStress:
+            case EffectType::SpendStressDamage:
+            case EffectType::SpendStressBlock:
+            case EffectType::SpendStressEnergy:
+            case EffectType::SpendStressDraw:
+            case EffectType::LoseEnergy:
+            case EffectType::LoseStress:
+            case EffectType::LoseHp:
+            case EffectType::EnterStance:
+            case EffectType::SummonDrone:
+            case EffectType::UseDrone:
+            case EffectType::PrimeStressBreakdown: {
+                const std::pair<int, int> range = rawValueRange(effect);
+                summary.valueMin = range.first;
+                summary.valueMax = range.second;
+                break;
+            }
+        }
+
+        intent.effectSummaries.push_back(std::move(summary));
+    }
+
     return intent;
 }
 
@@ -198,6 +561,7 @@ int EnemyMoveSelector::estimateBlockValue(
     context.hasTarget = true;
     context.cardId = noCardId();
     context.diceCorruption = noDiceCorruption();
+    context.usesActorStats = true;
     context.preview = true;
 
     const ModifiedValueRange modified = modifierSystem_.modifyRange(
@@ -225,6 +589,7 @@ std::pair<int, int> EnemyMoveSelector::estimateDamageRange(
         context.hasTarget = false;
         context.cardId = noCardId();
         context.diceCorruption = noDiceCorruption();
+        context.usesActorStats = true;
         context.preview = true;
 
         const ModifiedValueRange modified = modifierSystem_.modifyRange(
@@ -249,6 +614,7 @@ std::pair<int, int> EnemyMoveSelector::estimateDamageRange(
         context.hasTarget = true;
         context.cardId = noCardId();
         context.diceCorruption = noDiceCorruption();
+        context.usesActorStats = true;
         context.preview = true;
 
         const ModifiedValueRange modified = modifierSystem_.modifyRange(

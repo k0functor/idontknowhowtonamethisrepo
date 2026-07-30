@@ -10,7 +10,7 @@
     "locale": "ru",
     "version": 1,
     "window": {
-        "framerate_limit": 60,
+        "framerate_limit": 0,
         "fullscreen": true,
         "height": 720,
         "vertical_sync": false,

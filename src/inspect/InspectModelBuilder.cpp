@@ -123,7 +123,7 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
         formatRawText("inspect.player.stress.value",
             {{"current", std::to_string(player.stress)}, {"maximum", std::to_string(player.maxStress)}}
         ),
-        player.stress >= 100 ? InspectEntryStyle::Warning : InspectEntryStyle::Normal
+        player.stressBandIndex >= 3 ? InspectEntryStyle::Warning : InspectEntryStyle::Normal
     });
 
     if (!player.stressPowerDescription.empty()) {
@@ -131,11 +131,15 @@ InspectPanelModel InspectModelBuilder::buildPlayer(const PlayerViewModel& player
             rawText("inspect.player.lost_psychopath_stress_power.name"),
             formatRawText("inspect.player.lost_psychopath_stress_power.value",
                 {
+                    {"band", player.stressBandName},
                     {"bonus", std::to_string(player.stressPowerDamageBonus)},
+                    {"energy", std::to_string(player.stressPowerEnergyBonus)},
+                    {"discard", std::to_string(player.stressPowerDiscardCount)},
+                    {"severity", std::to_string(player.stressBreakdownSeverity)},
                     {"next", player.stressPowerNextThreshold > 0 ? std::to_string(player.stressPowerNextThreshold) : "-"}
                 }
             ),
-            player.stress >= 100 ? InspectEntryStyle::Warning : InspectEntryStyle::Hint
+            player.stressBandIndex >= 3 ? InspectEntryStyle::Warning : InspectEntryStyle::Hint
         });
     }
 
@@ -590,14 +594,17 @@ std::string InspectModelBuilder::statusRuleDescription(const std::string& status
         {{"duration", statusDurationText(definition.durationRule)}}
     ));
 
-    if (!definition.endTurnEffect.empty()) {
-        parts.push_back(formatRawText("inspect.status.end_turn_effect.value",
-            {{"effect", statusEndTurnEffectText(definition.endTurnEffect)}}
-        ));
-    }
+    for (const StatusTriggerDefinition& trigger : definition.triggers) {
+        const std::string effectText = statusEndTurnEffectText(trigger.logType);
+        if (!effectText.empty()) {
+            parts.push_back(formatRawText("inspect.status.end_turn_effect.value",
+                {{"effect", effectText}}
+            ));
+        }
 
-    if (definition.decreaseAfterTrigger) {
-        parts.push_back(rawText("inspect.status.decrease_after_trigger"));
+        if (trigger.removeStacks > 0) {
+            parts.push_back(rawText("inspect.status.decrease_after_trigger"));
+        }
     }
 
     std::ostringstream out;
@@ -618,12 +625,17 @@ std::string InspectModelBuilder::statusDurationText(const StatusDurationRule rul
     return rawTextOrFallback("status.duration." + toString(rule), toString(rule));
 }
 
-std::string InspectModelBuilder::statusEndTurnEffectText(const std::string& effectId) const {
-    if (effectId.empty()) {
-        return {};
+std::string InspectModelBuilder::statusEndTurnEffectText(const StatusTriggerLogType logType) const {
+    switch (logType) {
+        case StatusTriggerLogType::None:
+            return {};
+        case StatusTriggerLogType::PoisonDamage:
+            return rawTextOrFallback("status.end_turn_effect.poison_damage", "poison_damage");
+        case StatusTriggerLogType::BurnDamage:
+            return rawTextOrFallback("status.end_turn_effect.burn_damage", "burn_damage");
     }
 
-    return rawTextOrFallback("status.end_turn_effect." + effectId, effectId);
+    return {};
 }
 
 std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) const {
@@ -645,6 +657,9 @@ std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) c
         case EffectType::DiscardCards:
             out << rawText("inspect.effect.discard_cards");
             break;
+        case EffectType::RecoverCards:
+            out << rawText("inspect.effect.recover_cards");
+            break;
         case EffectType::ApplyStatus:
             out << rawText("inspect.effect.apply_status");
             break;
@@ -660,6 +675,32 @@ std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) c
         case EffectType::LoseStress:
             out << rawText("inspect.effect.lose_stress");
             break;
+        case EffectType::SpendStressDamage:
+            out << rawText("inspect.effect.spend_stress_damage")
+                << ": " << effect.outputAmount
+                << " / " << rawText("inspect.effect.stress_cost")
+                << " " << valueText(effect.value)
+                << " -> " << targetText(effect.target);
+            return out.str();
+        case EffectType::SpendStressBlock:
+            out << rawText("inspect.effect.spend_stress_block")
+                << ": " << effect.outputAmount
+                << " / " << rawText("inspect.effect.stress_cost")
+                << " " << valueText(effect.value)
+                << " -> " << targetText(effect.target);
+            return out.str();
+        case EffectType::SpendStressEnergy:
+            out << rawText("inspect.effect.spend_stress_energy")
+                << ": " << effect.outputAmount
+                << " / " << rawText("inspect.effect.stress_cost")
+                << " " << valueText(effect.value);
+            return out.str();
+        case EffectType::SpendStressDraw:
+            out << rawText("inspect.effect.spend_stress_draw")
+                << ": " << effect.outputAmount
+                << " / " << rawText("inspect.effect.stress_cost")
+                << " " << valueText(effect.value);
+            return out.str();
         case EffectType::LoseHp:
             out << rawText("inspect.effect.lose_hp");
             break;
@@ -680,6 +721,8 @@ std::string InspectModelBuilder::effectSummary(const EffectDefinition& effect) c
             return out.str();
         case EffectType::UseDrone:
             return rawText("inspect.effect.use_drone");
+        case EffectType::PrimeStressBreakdown:
+            return rawText("inspect.effect.prime_stress_breakdown");
     }
 
     out << ": " << valueText(effect.value);

@@ -517,7 +517,13 @@
         "target": "single_enemy",
         "value": {
           "type": "fixed",
-          "amount": 4
+          "amount": 3
+        },
+        "scaling": {
+          "status": "drone_mark",
+          "status_owner": "target",
+          "bonus_per_status_stack": 2,
+          "maximum_bonus": 8
         }
       },
       {
@@ -537,7 +543,13 @@
           "target": "single_enemy",
           "value": {
             "type": "fixed",
-            "amount": 6
+            "amount": 5
+          },
+          "scaling": {
+            "status": "drone_mark",
+            "status_owner": "target",
+            "bonus_per_status_stack": 2,
+            "maximum_bonus": 10
           }
         },
         {
@@ -682,7 +694,11 @@
         "target": "all_enemies",
         "value": {
           "type": "fixed",
-          "amount": 4
+          "amount": 3
+        },
+        "scaling": {
+          "bonus_per_card_in_hand": 1,
+          "maximum_bonus": 5
         }
       },
       {
@@ -690,7 +706,11 @@
         "target": "self",
         "value": {
           "type": "fixed",
-          "amount": 4
+          "amount": 3
+        },
+        "scaling": {
+          "bonus_per_card_in_hand": 1,
+          "maximum_bonus": 5
         }
       }
     ],
@@ -701,7 +721,11 @@
           "target": "all_enemies",
           "value": {
             "type": "fixed",
-            "amount": 5
+            "amount": 4
+          },
+          "scaling": {
+            "bonus_per_card_in_hand": 1,
+            "maximum_bonus": 6
           }
         },
         {
@@ -709,7 +733,11 @@
           "target": "self",
           "value": {
             "type": "fixed",
-            "amount": 6
+            "amount": 5
+          },
+          "scaling": {
+            "bonus_per_card_in_hand": 1,
+            "maximum_bonus": 6
           }
         }
       ]

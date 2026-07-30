@@ -134,11 +134,21 @@
     "name": "relic.iron_nerves.name",
     "description": "relic.iron_nerves.description",
     "rarity": "starter",
-    "modifiers": [
+    "triggers": [
       {
-        "type": "block_add",
-        "amount": 1,
-        "priority": 450
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ]
       }
     ]
   },
@@ -215,13 +225,6 @@
     "name": "relic.bastion_seal.name",
     "description": "relic.bastion_seal.description",
     "rarity": "starter",
-    "modifiers": [
-      {
-        "type": "block_add",
-        "amount": 1,
-        "priority": 440
-      }
-    ],
     "triggers": [
       {
         "event": "combat_started",
@@ -235,6 +238,15 @@
               "amount": 1
             },
             "status": "strength"
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
           }
         ]
       }
@@ -275,12 +287,13 @@
         "once_per_combat": true,
         "effects": [
           {
-            "type": "block",
+            "type": "apply_status",
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 6
-            }
+              "amount": 1
+            },
+            "status": "dexterity"
           }
         ],
         "min_amount": 1
@@ -346,14 +359,22 @@
     "name": "relic.ember_lens.name",
     "description": "relic.ember_lens.description",
     "rarity": "uncommon",
-    "modifiers": [
-      {
-        "type": "outgoing_damage_multiply",
-        "multiplier": 1.1,
-        "priority": 420
-      }
-    ],
     "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "ferocity"
+          }
+        ]
+      },
       {
         "event": "card_played",
         "card_type": "attack",
@@ -378,13 +399,6 @@
     "name": "relic.splint_mail.name",
     "description": "relic.splint_mail.description",
     "rarity": "common",
-    "modifiers": [
-      {
-        "type": "block_add",
-        "amount": 2,
-        "priority": 450
-      }
-    ],
     "triggers": [
       {
         "event": "combat_started",
@@ -397,6 +411,15 @@
               "type": "fixed",
               "amount": 4
             }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "dexterity"
           }
         ]
       }
@@ -580,8 +603,17 @@
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 7
+              "amount": 4
             }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
           }
         ]
       }
@@ -610,6 +642,686 @@
             "value": {
               "type": "fixed",
               "amount": 3
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "grounding_bead",
+    "name": "relic.grounding_bead.name",
+    "description": "relic.grounding_bead.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "stress_breakdown_triggered",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "lose_stress",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 20
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cracked_metronome",
+    "name": "relic.cracked_metronome.name",
+    "description": "relic.cracked_metronome.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "stress_breakdown_triggered",
+        "source_side": "player",
+        "breakdown_type": "energy",
+        "effects": [
+          {
+            "type": "gain_energy",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ash_filter",
+    "name": "relic.ash_filter.name",
+    "description": "relic.ash_filter.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "stress_breakdown_triggered",
+        "source_side": "player",
+        "breakdown_type": "status_cards",
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "lose_stress",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "red_thread_spool",
+    "name": "relic.red_thread_spool.name",
+    "description": "relic.red_thread_spool.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "stress_breakdown_triggered",
+        "source_side": "player",
+        "breakdown_type": "frenzy",
+        "min_breakdown_severity": 2,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "lose_stress",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 15
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "polished_guard",
+    "name": "relic.polished_guard.name",
+    "description": "relic.polished_guard.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "butcher_hook",
+    "name": "relic.butcher_hook.name",
+    "description": "relic.butcher_hook.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "enemy_killed",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "venom_vial",
+    "name": "relic.venom_vial.name",
+    "description": "relic.venom_vial.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_enemy",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ash_thread",
+    "name": "relic.ash_thread.name",
+    "description": "relic.ash_thread.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_enemy",
+            "status": "burn",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "iron_spur",
+    "name": "relic.iron_spur.name",
+    "description": "relic.iron_spur.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "card_played",
+        "card_type": "attack",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "prayer_strip",
+    "name": "relic.prayer_strip.name",
+    "description": "relic.prayer_strip.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "card_played",
+        "card_type": "skill",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cracked_prism",
+    "name": "relic.cracked_prism.name",
+    "description": "relic.cracked_prism.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "turn_started",
+        "every_n_turns": 3,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "scar_talisman",
+    "name": "relic.scar_talisman.name",
+    "description": "relic.scar_talisman.description",
+    "rarity": "common",
+    "triggers": [
+      {
+        "event": "damage_taken",
+        "source_side": "enemy",
+        "min_amount": 1,
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "duelist_coin",
+    "name": "relic.duelist_coin.name",
+    "description": "relic.duelist_coin.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "toxic_censer",
+    "name": "relic.toxic_censer.name",
+    "description": "relic.toxic_censer.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "status_applied",
+        "status": "poison",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "drone_caliper",
+    "name": "relic.drone_caliper.name",
+    "description": "relic.drone_caliper.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "summon_drone",
+            "target": "self",
+            "status": "drone_guardian",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "threefold_bead",
+    "name": "relic.threefold_bead.name",
+    "description": "relic.threefold_bead.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "blood_receipt",
+    "name": "relic.blood_receipt.name",
+    "description": "relic.blood_receipt.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "damage_taken",
+        "source_side": "enemy",
+        "min_amount": 5,
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "smoke_clasp",
+    "name": "relic.smoke_clasp.name",
+    "description": "relic.smoke_clasp.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "turn_started",
+        "every_n_turns": 2,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ember_compass",
+    "name": "relic.ember_compass.name",
+    "description": "relic.ember_compass.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_enemy",
+            "status": "burn",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "collector_badge",
+    "name": "relic.collector_badge.name",
+    "description": "relic.collector_badge.description",
+    "rarity": "uncommon",
+    "triggers": [
+      {
+        "event": "enemy_killed",
+        "source_side": "player",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "crown_of_nails",
+    "name": "relic.crown_of_nails.name",
+    "description": "relic.crown_of_nails.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "glass_heart",
+    "name": "relic.glass_heart.name",
+    "description": "relic.glass_heart.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "vulnerable",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "serpent_standard",
+    "name": "relic.serpent_standard.name",
+    "description": "relic.serpent_standard.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "combat_started",
+        "once_per_combat": true,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "status": "poison",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "clockwork_halo",
+    "name": "relic.clockwork_halo.name",
+    "description": "relic.clockwork_halo.description",
+    "rarity": "rare",
+    "triggers": [
+      {
+        "event": "turn_started",
+        "every_n_turns": 3,
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
             }
           }
         ]

@@ -101,7 +101,7 @@ std::vector<int> addLayer(
         node.id = nextId++;
         node.type = types[i];
         node.state = RunMapNodeState::Locked;
-        node.position = Vector2{x, layout.centerY + offsets[i]};
+        node.position = Vec2{x, layout.centerY + offsets[i]};
 
         ids.push_back(node.id);
         map.nodes.push_back(std::move(node));
@@ -366,12 +366,53 @@ std::vector<Slot> collectSlots(
     return result;
 }
 
+int countPlacedOnLayer(const std::vector<Slot>& slots, const int layer) {
+    return static_cast<int>(std::count_if(slots.begin(), slots.end(), [&](const Slot& slot) {
+        return slot.layer == layer;
+    }));
+}
+
+bool respectsPlacementRules(
+    const Slot& candidate,
+    const std::vector<Slot>& placedOfSameType,
+    const RunMapPlacementRules& placement
+) {
+    if (placement.maxPerLayer > 0 && countPlacedOnLayer(placedOfSameType, candidate.layer) >= placement.maxPerLayer) {
+        return false;
+    }
+
+    if (placement.minLayerGap > 0) {
+        for (const Slot& placed : placedOfSameType) {
+            if (std::abs(placed.layer - candidate.layer) < placement.minLayerGap) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+std::vector<int> validCandidateIndices(
+    const std::vector<Slot>& candidates,
+    const std::vector<Slot>& placedOfSameType,
+    const RunMapPlacementRules& placement
+) {
+    std::vector<int> result;
+    for (int index = 0; index < static_cast<int>(candidates.size()); ++index) {
+        if (respectsPlacementRules(candidates[static_cast<std::size_t>(index)], placedOfSameType, placement)) {
+            result.push_back(index);
+        }
+    }
+    return result;
+}
+
 void placeSpecials(
     std::vector<std::vector<RunMapNodeType>>& layers,
     std::vector<Slot>& usedSlots,
     std::vector<Slot> candidates,
     const int count,
     const RunMapNodeType type,
+    const RunMapPlacementRules& placement,
     Random& random,
     const std::string& label
 ) {
@@ -383,13 +424,23 @@ void placeSpecials(
         throw std::runtime_error("Cannot place " + label + " nodes in generated act map: not enough candidate slots");
     }
 
+    std::vector<Slot> placedOfSameType;
+    placedOfSameType.reserve(static_cast<std::size_t>(count));
+
     for (int i = 0; i < count; ++i) {
-        const int index = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
-        const Slot slot = candidates[static_cast<std::size_t>(index)];
-        candidates.erase(candidates.begin() + index);
+        const std::vector<int> validIndices = validCandidateIndices(candidates, placedOfSameType, placement);
+        if (validIndices.empty()) {
+            throw std::runtime_error("Cannot place " + label + " nodes in generated act map: placement rules are too strict");
+        }
+
+        const int indexInValidList = random.rangeInclusive(0, static_cast<int>(validIndices.size()) - 1);
+        const int candidateIndex = validIndices[static_cast<std::size_t>(indexInValidList)];
+        const Slot slot = candidates[static_cast<std::size_t>(candidateIndex)];
+        candidates.erase(candidates.begin() + candidateIndex);
 
         layers[static_cast<std::size_t>(slot.layer)][static_cast<std::size_t>(slot.index)] = type;
         usedSlots.push_back(slot);
+        placedOfSameType.push_back(slot);
     }
 }
 
@@ -604,6 +655,7 @@ RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGeneration
         collectSlots(layerTypes, chests.minLayer, chests.maxLayer, usedSlots),
         chests.count,
         RunMapNodeType::Chest,
+        chests.placement,
         random,
         "chest"
     );
@@ -615,6 +667,7 @@ RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGeneration
         collectSlots(layerTypes, shop.minLayer, shop.maxLayer, usedSlots),
         shop.count,
         RunMapNodeType::Shop,
+        shop.placement,
         random,
         "shop"
     );
@@ -627,6 +680,7 @@ RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGeneration
         collectSlots(layerTypes, elites.minLayer, elites.maxLayer, usedSlots),
         eliteCount,
         RunMapNodeType::Elite,
+        elites.placement,
         random,
         "elite"
     );
@@ -640,6 +694,7 @@ RunMap RunMapGenerator::generateActOneMap(Random& random, const RunMapGeneration
             collectSlots(layerTypes, events.minLayer, events.maxLayer, usedSlots),
             eventCount,
             RunMapNodeType::Event,
+            events.placement,
             random,
             "event"
         );

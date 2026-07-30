@@ -19,12 +19,14 @@ struct RewardSelection {
     // selectedRelics so the relic can be bound to a specific actor.
     std::vector<std::string> selectedRelicIds;
     std::vector<RelicRewardSelection> selectedRelics;
+    std::string selectedActiveItemId;
 
     bool empty() const {
         return goldTaken == 0 &&
             selectedCardIds.empty() &&
             selectedConsumableIds.empty() &&
             selectedRelicIds.empty() &&
-            selectedRelics.empty();
+            selectedRelics.empty() &&
+            selectedActiveItemId.empty();
     }
 };

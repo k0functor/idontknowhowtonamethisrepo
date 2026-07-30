@@ -10,6 +10,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 LOCALE_DIR = DATA_DIR / "localization"
+LEGACY_LOCALE_FILES = (
+    LOCALE_DIR / "ru.json",
+    LOCALE_DIR / "en.json",
+)
 
 TEXT_ID_KEY_RE = re.compile(r"(^|_)(text_id|text)$|(_text_id|_text_ids)$")
 TEXT_ID_VALUE_RE = re.compile(r"^[a-z0-9_.-]+\.[a-z0-9_.-]+$")
@@ -39,6 +43,17 @@ ALLOWED_CPP_SUBSTRINGS = (
 def load_json(path: Path):
     with path.open("r", encoding="utf-8-sig") as file:
         return json.load(file)
+
+
+def validate_localization_layout() -> list[str]:
+    errors: list[str] = []
+    for path in LEGACY_LOCALE_FILES:
+        if path.exists():
+            errors.append(
+                f"{path.relative_to(ROOT).as_posix()}: legacy root localization file is not allowed; "
+                "use data/localization/<locale>/*.json bundles"
+            )
+    return errors
 
 
 def load_locale(locale: str) -> tuple[dict[str, str], list[str]]:
@@ -174,7 +189,7 @@ def main() -> int:
     parser.add_argument("--strict-hardcoded", action="store_true")
     args = parser.parse_args()
 
-    errors: list[str] = []
+    errors: list[str] = validate_localization_layout()
     ru, ru_errors = load_locale("ru")
     en, en_errors = load_locale("en")
     errors.extend(ru_errors)

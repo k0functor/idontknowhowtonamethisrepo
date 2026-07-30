@@ -100,8 +100,17 @@
   "enemy.action.candle_king_melted_crown.name": "Melted Crown",
   "enemy.action.candle_king_feeding_wick.name": "Feeding Wick",
   "enemy.action.candle_king_final_candle.name": "Final Candle",
-  "combat.log.stress_breakdown_discard": "{actor} discards {card} because of stress breakdown.",
+  "combat.log.stress_breakdown_discard": "{actor} discards {card} because of high stress.",
+  "combat.log.stress_breakdown_energy": "{actor} loses {amount} energy in a stress crash.",
+  "combat.log.stress_breakdown_status_cards": "Intrusive thoughts add {amount} status cards to {actor}’s hand.",
+  "combat.log.stress_breakdown_cost": "Stress makes {actor}’s cards cost {amount} more this turn.",
+  "combat.log.stress_breakdown_forced_card": "{actor} uncontrollably plays {card}.",
   "combat.log.monk_stance_shift_reward": "Stance shift: +{energy} energy, draw {draw} cards.",
   "combat.feedback.block": "Block",
-  "combat.feedback.hp": "HP"
+  "combat.feedback.hp": "HP",
+  "combat.log.burn_damage": "Burn: {target} takes {amount} damage. Burn left: {remaining}",
+  "combat.log.stress_breakdown_prevented": "{actor} steadies themselves and prevents a stress breakdown.",
+  "combat.log.boss_phase_changed": "{boss} enters phase: {phase}.",
+  "combat.log.boss_arena_effect": "The arena rule of {boss} triggers: {phase}.",
+  "combat.log.enemy_summoned": "Reinforcement summoned: {enemy}."
 }

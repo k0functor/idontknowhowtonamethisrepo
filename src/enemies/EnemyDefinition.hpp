@@ -2,6 +2,8 @@
 
 #include "enemies/EnemyActionDefinition.hpp"
 #include "enemies/EnemyId.hpp"
+#include "enemies/EnemyRole.hpp"
+#include "enemies/EnemyPhaseDefinition.hpp"
 #include "localization/TextId.hpp"
 
 #include <vector>
@@ -12,6 +14,8 @@ struct EnemyDefinition {
 
     int maxHp = 1;
     int startingBlock = 0;
+    EnemyRole role = EnemyRole::Striker;
 
     std::vector<EnemyActionDefinition> actions;
+    std::vector<EnemyPhaseDefinition> phases;
 };

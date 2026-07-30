@@ -1,0 +1,197 @@
+[
+  {
+    "id": "clear_first_floor",
+    "name": "challenge.clear_first_floor.name",
+    "description": "challenge.clear_first_floor.description",
+    "goal": "challenge.clear_first_floor.goal",
+    "reward": "challenge.reward.rusted_punishing_swing",
+    "unlock_hint": "challenge.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 10,
+    "completion": {
+      "type": "clear_floor",
+      "floor_id": "floor1",
+      "min_bosses_killed": 1
+    },
+    "rewards": {
+      "unlock_cards": [
+        "rusted_punishing_swing"
+      ]
+    },
+    "starting_archetype_id": "rusted_knight",
+    "starting_difficulty_id": "normal",
+    "starting_floor_id": "floor1",
+    "starting_gold": 55,
+    "fixed_starting_deck": [
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_defend",
+      "rusted_knight_basic_defend",
+      "rusted_shield_bash",
+      "rusted_bastion",
+      "rusted_punishing_swing",
+      "rusted_tempered_rage"
+    ],
+    "fixed_starting_relics": [
+      "bastion_seal"
+    ]
+  },
+  {
+    "id": "no_shop_first_floor",
+    "name": "challenge.no_shop_first_floor.name",
+    "description": "challenge.no_shop_first_floor.description",
+    "goal": "challenge.no_shop_first_floor.goal",
+    "reward": "challenge.reward.copper_coin",
+    "unlock_hint": "challenge.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 20,
+    "completion": {
+      "type": "clear_floor_without_shop",
+      "floor_id": "floor1",
+      "max_shops_visited": 0,
+      "min_bosses_killed": 1
+    },
+    "rewards": {
+      "unlock_relics": [
+        "copper_coin"
+      ]
+    },
+    "starting_archetype_id": "rusted_knight",
+    "starting_difficulty_id": "normal",
+    "starting_floor_id": "floor1",
+    "starting_gold": 55,
+    "fixed_starting_deck": [
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_defend",
+      "rusted_knight_basic_defend",
+      "rusted_shield_bash",
+      "rusted_bastion",
+      "rusted_punishing_swing",
+      "rusted_tempered_rage"
+    ],
+    "fixed_starting_relics": [
+      "bastion_seal"
+    ]
+  },
+  {
+    "id": "elite_hunter_first_floor",
+    "name": "challenge.elite_hunter_first_floor.name",
+    "description": "challenge.elite_hunter_first_floor.description",
+    "goal": "challenge.elite_hunter_first_floor.goal",
+    "reward": "challenge.reward.bastion_seal",
+    "unlock_hint": "challenge.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 30,
+    "completion": {
+      "type": "clear_floor_with_elites",
+      "floor_id": "floor1",
+      "min_elites_killed": 1,
+      "min_bosses_killed": 1
+    },
+    "rewards": {
+      "unlock_relics": [
+        "bastion_seal"
+      ]
+    },
+    "starting_archetype_id": "rusted_knight",
+    "starting_difficulty_id": "normal",
+    "starting_floor_id": "floor1",
+    "starting_gold": 55,
+    "fixed_starting_deck": [
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_strike",
+      "rusted_knight_basic_defend",
+      "rusted_knight_basic_defend",
+      "rusted_shield_bash",
+      "rusted_bastion",
+      "rusted_punishing_swing",
+      "rusted_tempered_rage"
+    ],
+    "fixed_starting_relics": [
+      "bastion_seal"
+    ]
+  },
+  {
+    "id": "replicant_archive_trial",
+    "name": "challenge.replicant_archive_trial.name",
+    "description": "challenge.replicant_archive_trial.description",
+    "goal": "challenge.replicant_archive_trial.goal",
+    "reward": "challenge.reward.replicant_surgeon_drone",
+    "unlock_hint": "challenge.replicant_archive_trial.unlock_hint",
+    "is_available": true,
+    "selection_order": 40,
+    "required_unlocked_archetypes": [
+      "replicant"
+    ],
+    "completion": {
+      "type": "clear_floor_with_archetype",
+      "floor_id": "floor2",
+      "archetype_id": "replicant",
+      "min_bosses_killed": 2
+    },
+    "rewards": {
+      "unlock_cards": [
+        "replicant_surgeon_drone"
+      ]
+    },
+    "starting_archetype_id": "replicant",
+    "starting_difficulty_id": "normal",
+    "starting_floor_id": "floor1",
+    "starting_gold": 60,
+    "fixed_starting_deck": [
+      "replicant_basic_strike",
+      "replicant_basic_strike",
+      "replicant_basic_defend",
+      "replicant_basic_defend",
+      "replicant_striker_drone",
+      "replicant_guardian_drone",
+      "replicant_trigger_drone",
+      "replicant_wrench_hit"
+    ],
+    "fixed_starting_relics": [
+      "empty_dock"
+    ]
+  },
+  {
+    "id": "ashen_low_damage",
+    "name": "challenge.ashen_low_damage.name",
+    "description": "challenge.ashen_low_damage.description",
+    "goal": "challenge.ashen_low_damage.goal",
+    "reward": "challenge.reward.ember_lens",
+    "unlock_hint": "challenge.ashen_low_damage.unlock_hint",
+    "is_available": true,
+    "selection_order": 50,
+    "required_completed_challenges": [
+      "clear_first_floor"
+    ],
+    "completion": {
+      "type": "clear_floor_low_damage",
+      "floor_id": "floor3",
+      "max_damage_taken": 120,
+      "min_bosses_killed": 3
+    },
+    "rewards": {
+      "unlock_relics": [
+        "ember_lens"
+      ]
+    },
+    "starting_archetype_id": "herbalist",
+    "starting_difficulty_id": "normal",
+    "starting_floor_id": "floor1",
+    "starting_gold": 65,
+    "fixed_starting_deck": [
+      "herbalist_basic_strike",
+      "herbalist_basic_strike",
+      "herbalist_basic_defend",
+      "herbalist_basic_defend",
+      "herbalist_scalpel",
+      "herbalist_scalpel",
+      "herbalist_toxin_vial",
+      "herbalist_smoke_mask"
+    ],
+    "fixed_starting_relics": [
+      "copper_inhaler"
+    ]
+  }
+]

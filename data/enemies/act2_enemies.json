@@ -2,7 +2,7 @@
   {
     "id": "brine_leech",
     "name": "enemy.brine_leech.name",
-    "max_hp": 30,
+    "max_hp": 28,
     "starting_block": 0,
     "actions": [
       {
@@ -14,7 +14,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 7
+              "amount": 6
             }
           },
           {
@@ -22,10 +22,13 @@
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 3
+              "amount": 2
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
       },
       {
         "id": "brine_leech_sour_blood",
@@ -40,7 +43,10 @@
             },
             "status": "poison"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "brine_leech_submerge",
@@ -51,17 +57,21 @@
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 7
+              "amount": 6
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "minion"
   },
   {
     "id": "drowned_cantor",
     "name": "enemy.drowned_cantor.name",
-    "max_hp": 34,
+    "max_hp": 32,
     "starting_block": 0,
     "actions": [
       {
@@ -77,7 +87,15 @@
             },
             "status": "weak"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "drowned_cantor_cracked_note",
@@ -88,7 +106,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 6
+              "amount": 5
             }
           },
           {
@@ -99,8 +117,32 @@
               "amount": 1
             },
             "status": "vulnerable"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "status_cards"
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ],
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "drowned_cantor_breathless_prayer",
@@ -108,30 +150,46 @@
         "effects": [
           {
             "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "block",
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 3
             }
           },
           {
             "type": "apply_status",
-            "target": "self",
+            "target": "all_enemies",
+            "status": "strength",
             "value": {
               "type": "fixed",
               "amount": 1
-            },
-            "status": "strength"
+            }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "barnacle_guard",
     "name": "enemy.barnacle_guard.name",
-    "max_hp": 42,
-    "starting_block": 8,
+    "max_hp": 40,
+    "starting_block": 6,
     "actions": [
       {
         "id": "barnacle_guard_shell_wall",
@@ -139,22 +197,37 @@
         "effects": [
           {
             "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "block",
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 12
+              "amount": 4
             }
           },
           {
             "type": "apply_status",
             "target": "self",
+            "status": "dexterity",
             "value": {
               "type": "fixed",
               "amount": 1
-            },
-            "status": "dexterity"
+            }
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
       },
       {
         "id": "barnacle_guard_anchor_hook",
@@ -165,10 +238,13 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 10
+              "amount": 9
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
       },
       {
         "id": "barnacle_guard_salt_shield",
@@ -179,7 +255,7 @@
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 6
+              "amount": 5
             }
           },
           {
@@ -191,14 +267,18 @@
             },
             "status": "strength"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       }
-    ]
+    ],
+    "role": "defender"
   },
   {
     "id": "mirror_eel",
     "name": "enemy.mirror_eel.name",
-    "max_hp": 28,
+    "max_hp": 27,
     "starting_block": 0,
     "actions": [
       {
@@ -214,7 +294,15 @@
             },
             "repeat_count": 2
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "mirror_eel_split_reflection",
@@ -236,8 +324,24 @@
               "amount": 1
             },
             "status": "dexterity"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "energy"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       },
       {
         "id": "mirror_eel_blinding_scale",
@@ -261,14 +365,24 @@
             },
             "status": "vulnerable"
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "controller"
   },
   {
     "id": "tide_apprentice",
     "name": "enemy.tide_apprentice.name",
-    "max_hp": 36,
+    "max_hp": 34,
     "starting_block": 0,
     "actions": [
       {
@@ -280,10 +394,13 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 7
             }
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
       },
       {
         "id": "tide_apprentice_draining_glyph",
@@ -297,7 +414,10 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "tide_apprentice_tide_ward",
@@ -305,20 +425,36 @@
         "effects": [
           {
             "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "block",
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 9
+              "amount": 4
             }
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
       }
-    ]
+    ],
+    "role": "support"
   },
   {
     "id": "drowned_abbot",
     "name": "enemy.drowned_abbot.name",
-    "max_hp": 92,
+    "max_hp": 88,
     "starting_block": 6,
     "actions": [
       {
@@ -330,7 +466,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 9
+              "amount": 8
             }
           },
           {
@@ -342,7 +478,15 @@
             },
             "status": "weak"
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "drowned_abbot_collect_tithes",
@@ -353,7 +497,7 @@
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 14
+              "amount": 12
             }
           },
           {
@@ -361,11 +505,14 @@
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 2
+              "amount": 1
             },
             "status": "strength"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       },
       {
         "id": "drowned_abbot_baptism_of_salt",
@@ -380,7 +527,15 @@
             },
             "status": "vulnerable"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "drowned_abbot_sunken_crozier",
@@ -394,14 +549,23 @@
               "amount": 16
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "defender"
   },
   {
     "id": "mirror_executioner",
     "name": "enemy.mirror_executioner.name",
-    "max_hp": 86,
+    "max_hp": 84,
     "starting_block": 0,
     "actions": [
       {
@@ -417,7 +581,10 @@
             },
             "repeat_count": 3
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "mirror_executioner_polished_mask",
@@ -440,7 +607,10 @@
             },
             "status": "dexterity"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
       },
       {
         "id": "mirror_executioner_cruel_angle",
@@ -455,7 +625,15 @@
             },
             "status": "vulnerable"
           }
-        ]
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "mirror_executioner_final_glint",
@@ -469,14 +647,383 @@
               "amount": 24
             }
           }
-        ]
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
       }
-    ]
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "drowned_cartographer",
+    "name": "enemy.drowned_cartographer.name",
+    "max_hp": 84,
+    "starting_block": 4,
+    "actions": [
+      {
+        "id": "drowned_cartographer_redraw_route",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "drowned_cartographer_compass_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "drowned_cartographer_inked_barrier",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "drowned_cartographer_wrong_turn",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "saltglass_matron",
+    "name": "enemy.saltglass_matron.name",
+    "max_hp": 90,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "saltglass_matron_preserve_in_salt",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "poison"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "saltglass_matron_glass_lullaby",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "discard"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "saltglass_matron_crystal_apron",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 15
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "saltglass_matron_shard_burst",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "repeat_count": 4
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "tidebound_jailer",
+    "name": "enemy.tidebound_jailer.name",
+    "max_hp": 96,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "tidebound_jailer_rusty_lock",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "tidebound_jailer_chain_current",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "tidebound_jailer_cell_wall",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "tidebound_jailer_drowning_sentence",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ],
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "defender"
   },
   {
     "id": "saint_of_the_sunken_bell",
     "name": "enemy.saint_of_the_sunken_bell.name",
-    "max_hp": 168,
+    "max_hp": 164,
     "starting_block": 10,
     "actions": [
       {
@@ -500,7 +1047,15 @@
             },
             "status": "weak"
           }
-        ]
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
       },
       {
         "id": "sunken_bell_saint_salt_benediction",
@@ -511,7 +1066,7 @@
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 18
+              "amount": 16
             }
           },
           {
@@ -523,7 +1078,10 @@
             },
             "status": "strength"
           }
-        ]
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
       },
       {
         "id": "sunken_bell_saint_drown_the_flame",
@@ -546,10 +1104,263 @@
               "amount": 1
             }
           }
-        ]
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
       },
       {
         "id": "sunken_bell_saint_bell_collapse",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "sunken_bell_saint_last_resonance",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "low_tide_mass",
+        "name": "enemy.phase.saint_of_the_sunken_bell.low_tide_mass",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "sunken_bell_saint_low_toll",
+          "sunken_bell_saint_salt_benediction"
+        ]
+      },
+      {
+        "id": "drowned_choir",
+        "name": "enemy.phase.saint_of_the_sunken_bell.drowned_choir",
+        "activate_below_hp_percent": 65,
+        "action_ids": [
+          "sunken_bell_saint_drown_the_flame",
+          "sunken_bell_saint_bell_collapse",
+          "sunken_bell_saint_salt_benediction"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "drowned_cantor"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "last_resonance",
+        "name": "enemy.phase.saint_of_the_sunken_bell.last_resonance",
+        "activate_below_hp_percent": 30,
+        "action_ids": [
+          "sunken_bell_saint_last_resonance",
+          "sunken_bell_saint_bell_collapse",
+          "sunken_bell_saint_low_toll"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "brine_leech"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  },
+  {
+    "id": "librarian_of_the_last_tide",
+    "name": "enemy.librarian_of_the_last_tide.name",
+    "max_hp": 170,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "last_tide_librarian_page_storm",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "last_tide_librarian_overdue_notice",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "last_tide_librarian_shelving_rite",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "last_tide_librarian_black_footnote",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "poison"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "last_tide_librarian_index_collapse",
         "intent": "attack",
         "effects": [
           {
@@ -561,10 +1372,200 @@
             },
             "repeat_count": 2
           }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "open_catalogue",
+        "name": "enemy.phase.librarian_of_the_last_tide.open_catalogue",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "last_tide_librarian_page_storm",
+          "last_tide_librarian_shelving_rite"
         ]
       },
       {
-        "id": "sunken_bell_saint_last_resonance",
+        "id": "forbidden_index",
+        "name": "enemy.phase.librarian_of_the_last_tide.forbidden_index",
+        "activate_below_hp_percent": 64,
+        "action_ids": [
+          "last_tide_librarian_overdue_notice",
+          "last_tide_librarian_black_footnote",
+          "last_tide_librarian_shelving_rite"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "poison"
+          }
+        ],
+        "summon_enemy_ids": [
+          "ink_moth"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "final_footnote",
+        "name": "enemy.phase.librarian_of_the_last_tide.final_footnote",
+        "activate_below_hp_percent": 28,
+        "action_ids": [
+          "last_tide_librarian_index_collapse",
+          "last_tide_librarian_page_storm",
+          "last_tide_librarian_black_footnote"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "summon_enemy_ids": [
+          "silt_scribe"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  },
+  {
+    "id": "pearl_mirror_oracle",
+    "name": "enemy.pearl_mirror_oracle.name",
+    "max_hp": 158,
+    "starting_block": 14,
+    "actions": [
+      {
+        "id": "pearl_mirror_oracle_reflected_tide",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            },
+            "repeat_count": 3
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "pearl_mirror_oracle_veiled_forecast",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "pearl_mirror_oracle_salt_prophecy",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "pearl_mirror_oracle_fracture_future",
         "intent": "attack",
         "effects": [
           {
@@ -572,11 +1573,481 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 18
+              "amount": 10
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "poison"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "pearl_mirror_oracle_glass_verdict",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 22
+            }
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
             }
           }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "clear_reflection",
+        "name": "enemy.phase.pearl_mirror_oracle.clear_reflection",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "pearl_mirror_oracle_reflected_tide",
+          "pearl_mirror_oracle_veiled_forecast"
         ]
+      },
+      {
+        "id": "fractured_forecast",
+        "name": "enemy.phase.pearl_mirror_oracle.fractured_forecast",
+        "activate_below_hp_percent": 65,
+        "action_ids": [
+          "pearl_mirror_oracle_salt_prophecy",
+          "pearl_mirror_oracle_fracture_future",
+          "pearl_mirror_oracle_veiled_forecast"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 15
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "mirror_eel"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "glass_verdict",
+        "name": "enemy.phase.pearl_mirror_oracle.glass_verdict",
+        "activate_below_hp_percent": 30,
+        "action_ids": [
+          "pearl_mirror_oracle_glass_verdict",
+          "pearl_mirror_oracle_fracture_future",
+          "pearl_mirror_oracle_reflected_tide"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "summon_enemy_ids": [
+          "lantern_fish"
+        ],
+        "maximum_alive_enemies": 3
       }
     ]
+  },
+  {
+    "id": "ink_moth",
+    "name": "enemy.ink_moth.name",
+    "max_hp": 26,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "ink_moth_black_wing",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "ink_moth_powder_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "repeat_count": 3
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "ink_moth_ink_spores",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "poison"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "silt_scribe",
+    "name": "enemy.silt_scribe.name",
+    "max_hp": 34,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "silt_scribe_margin_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "silt_scribe_censor_mark",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "silt_scribe_wet_margin",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "dexterity",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "lantern_fish",
+    "name": "enemy.lantern_fish.name",
+    "max_hp": 30,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "lantern_fish_false_light",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "lantern_fish_glass_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "lantern_fish_lumen_shell",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      }
+    ],
+    "role": "minion"
+  },
+  {
+    "id": "rusted_diver",
+    "name": "enemy.rusted_diver.name",
+    "max_hp": 46,
+    "starting_block": 5,
+    "actions": [
+      {
+        "id": "rusted_diver_anchor_drop",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
+      },
+      {
+        "id": "rusted_diver_pressure_suit",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "rusted_diver_crushing_grip",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "defender"
   }
 ]

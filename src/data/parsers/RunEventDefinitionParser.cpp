@@ -23,6 +23,8 @@ RunEventEffectType parseEffectType(const std::string& value, const std::filesyst
     if (value == "lose_stress") return RunEventEffectType::LoseStress;
     if (value == "lose_hp") return RunEventEffectType::LoseHp;
     if (value == "heal_all") return RunEventEffectType::HealAll;
+    if (value == "set_flag") return RunEventEffectType::SetFlag;
+    if (value == "clear_flag") return RunEventEffectType::ClearFlag;
     if (value == "skip") return RunEventEffectType::Skip;
 
     throw std::runtime_error(sourcePath.string() + ": Unknown run event effect type '" + value + "'");
@@ -59,6 +61,8 @@ RunEventChoiceRequirements parseRequirements(const Json& json, const std::filesy
     requirements.minGold = std::max(0, requirementsReader.optionalInt("min_gold", 0));
     requirements.minHp = std::max(0, requirementsReader.optionalInt("min_hp", 0));
     requirements.minDeckSize = std::max(0, requirementsReader.optionalInt("min_deck_size", 0));
+    requirements.minStress = std::max(0, requirementsReader.optionalInt("min_stress", 0));
+    requirements.maxStress = std::max(0, requirementsReader.optionalInt("max_stress", 0));
     requirements.freeConsumableSlot =
         requirementsReader.optionalBool("free_consumable_slot", false) ||
         requirementsReader.optionalBool("requires_free_consumable_slot", false);
@@ -86,6 +90,27 @@ RunEventChoiceRequirements parseRequirements(const Json& json, const std::filesy
         "missing_card",
         "missing_cards"
     );
+    requirements.requiredTraitIds = optionalStringOrArray(
+        requirementsJson,
+        sourcePath,
+        "has_trait",
+        "has_traits"
+    );
+    requirements.forbiddenTraitIds = optionalStringOrArray(
+        requirementsJson,
+        sourcePath,
+        "missing_trait",
+        "missing_traits"
+    );
+    requirements.requiredEventFlags = optionalStringOrArray(
+        requirementsJson, sourcePath, "has_flag", "has_flags"
+    );
+    requirements.forbiddenEventFlags = optionalStringOrArray(
+        requirementsJson, sourcePath, "missing_flag", "missing_flags"
+    );
+    if (requirements.maxStress > 0 && requirements.minStress > requirements.maxStress) {
+        throw std::runtime_error(sourcePath.string() + ": min_stress must not exceed max_stress");
+    }
     return requirements;
 }
 
@@ -108,6 +133,8 @@ bool effectNeedsContentId(const RunEventEffectType type) {
         case RunEventEffectType::GainRelic:
         case RunEventEffectType::GainConsumable:
         case RunEventEffectType::RemoveCard:
+        case RunEventEffectType::SetFlag:
+        case RunEventEffectType::ClearFlag:
             return true;
 
         case RunEventEffectType::GainGold:
@@ -134,7 +161,7 @@ RunEventEffect parseEffect(const Json& json, const std::filesystem::path& source
     effect.amount = reader.optionalInt("amount", 0);
     effect.contentId = optionalContentId(
         reader,
-        {"content_id", "id", "card_id", "relic_id", "consumable_id"}
+        {"content_id", "id", "card_id", "relic_id", "consumable_id", "flag", "flag_id"}
     );
 
     if (effectNeedsContentId(effect.type) && effect.contentId.empty()) {
@@ -172,6 +199,7 @@ RunEventDefinition RunEventDefinitionParser::parse(
     definition.titleTextId = TextId(reader.requiredString("title"));
     definition.descriptionTextId = TextId(reader.requiredString("description"));
     definition.eventPoolIds = optionalStringOrArray(json, sourcePath, "event_pool_id", "event_pools");
+    definition.requirements = parseRequirements(json, sourcePath);
 
     const Json& choicesJson = reader.requiredArray("choices");
     for (const Json& choiceJson : choicesJson) {

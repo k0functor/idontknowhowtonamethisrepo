@@ -1,6 +1,8 @@
 #include "EffectSystem.hpp"
 
 #include "combat/CombatState.hpp"
+#include "combat/EffectScaling.hpp"
+#include "run/StressEconomyRules.hpp"
 #include "run/StressRules.hpp"
 
 #include <algorithm>
@@ -91,7 +93,11 @@ int discardRandomCardsFromHand(CombatState& state, const int amount, const Effec
 
         CardInstance discarded = std::move(cards[discardIndex]);
         cards.erase(cards.begin() + static_cast<std::ptrdiff_t>(discardIndex));
-        state.deck.discardPile.addTop(std::move(discarded));
+        if (discarded.temporary) {
+            state.deck.exhaustPile.addTop(std::move(discarded));
+        } else {
+            state.deck.discardPile.addTop(std::move(discarded));
+        }
         ++discardedCount;
     }
 
@@ -123,7 +129,7 @@ void logStressResolveOutcome(CombatState& state, const CombatEntity& entity, con
     }
 }
 
-void adjustStress(CombatState& state, const EntityId target, const int delta, Random* random) {
+StressRules::StressAdjustmentResult adjustStress(CombatState& state, const EntityId target, const int delta, Random* random) {
     CombatEntity& entity = state.entity(target);
     const StressRules::StressAdjustmentResult result = StressRules::applyDelta(entity, delta, random);
 
@@ -144,6 +150,43 @@ void adjustStress(CombatState& state, const EntityId target, const int delta, Ra
             );
         }
     }
+
+    return result;
+}
+
+bool spendStress(CombatState& state, const EntityId source, const int cost, Random* random) {
+    if (!state.hasEntity(source) || cost <= 0 || state.entity(source).stress < cost) {
+        return false;
+    }
+
+    adjustStress(state, source, -cost, random);
+    return true;
+}
+
+void addStressFromHpDamage(
+    CombatState& state,
+    const EntityId source,
+    const EntityId target,
+    const DamageResult& damage,
+    Random* random
+) {
+    if (damage.hpDamage <= 0 || !state.isEnemy(source) || !state.isPlayer(target)) {
+        return;
+    }
+
+    const int gainedStress = StressEconomyRules::stressFromHpDamage(damage.hpDamage);
+    if (gainedStress > 0) {
+        adjustStress(state, target, gainedStress, random);
+    }
+}
+
+int recoverCardsFromDiscard(CombatState& state, const int amount) {
+    int recovered = 0;
+    while (recovered < amount && !state.hand.full() && !state.deck.discardPile.empty()) {
+        state.hand.add(state.deck.discardPile.drawTop());
+        ++recovered;
+    }
+    return recovered;
 }
 
 }
@@ -199,14 +242,16 @@ void EffectSystem::applyEffect(
         switch (effect.type) {
             case EffectType::Damage:
                 for (const EntityId target : targets) {
-                    damageSystem_.dealDamage(
+                    const DamageResult damage = damageSystem_.dealDamage(
                         state,
                         context.source,
                         target,
-                        resolvedValue.actual,
+                        scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual),
                         context.cardDefinitionId,
-                        context.diceCorruption
+                        context.diceCorruption,
+                        context.usesActorStats
                     );
+                    addStressFromHpDamage(state, context.source, target, damage, context.random);
                 }
                 continue;
 
@@ -216,9 +261,10 @@ void EffectSystem::applyEffect(
                         state,
                         context.source,
                         target,
-                        resolvedValue.actual,
+                        scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual),
                         context.cardDefinitionId,
-                        context.diceCorruption
+                        context.diceCorruption,
+                        context.usesActorStats
                     );
                 }
                 continue;
@@ -233,7 +279,7 @@ void EffectSystem::applyEffect(
                         state,
                         target,
                         *effect.statusId,
-                        resolvedValue.actual,
+                        scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual),
                         context.source
                     );
 
@@ -245,7 +291,7 @@ void EffectSystem::applyEffect(
                         event.cardInstanceId = context.cardInstanceId;
                         event.cardDefinitionId = context.cardDefinitionId;
                         event.statusId = *effect.statusId;
-                        event.amount = resolvedValue.actual;
+                        event.amount = scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual);
                         event.turn = state.turn;
                         eventBus_->emit(event);
                     }
@@ -300,7 +346,9 @@ void EffectSystem::applyEffect(
 
             case EffectType::Heal:
                 for (const EntityId target : targets) {
-                    const int healed = state.entity(target).health.heal(resolvedValue.actual);
+                    const int healed = state.entity(target).health.heal(
+                        scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual)
+                    );
                     state.log.add(CombatLogEntryType::Heal, {{"amount", std::to_string(healed)}});
 
                     if (eventBus_ != nullptr && healed > 0) {
@@ -322,27 +370,44 @@ void EffectSystem::applyEffect(
                 drawSystem_.drawCards(
                     state.deck,
                     state.hand,
-                    static_cast<std::size_t>(resolvedValue.actual),
+                    static_cast<std::size_t>(scaledEffectAmount(state, effect, context.source, std::nullopt, resolvedValue.actual)),
                     *context.random
                 );
-                state.log.add(CombatLogEntryType::DrawCards, {{"amount", std::to_string(resolvedValue.actual)}});
+                state.log.add(CombatLogEntryType::DrawCards, {
+                    {"amount", std::to_string(scaledEffectAmount(state, effect, context.source, std::nullopt, resolvedValue.actual))}
+                });
                 continue;
+
+            case EffectType::RecoverCards: {
+                const int recovered = recoverCardsFromDiscard(
+                    state,
+                    scaledEffectAmount(state, effect, context.source, std::nullopt, resolvedValue.actual)
+                );
+                state.log.add(CombatLogEntryType::DrawCards, {{"amount", std::to_string(recovered)}});
+                continue;
+            }
 
             case EffectType::DiscardCards: {
                 const bool targetsPlayer = std::any_of(targets.begin(), targets.end(), [&state](const EntityId target) {
                     return state.isPlayer(target);
                 });
                 const int discarded = targetsPlayer
-                    ? discardRandomCardsFromHand(state, resolvedValue.actual, context)
+                    ? discardRandomCardsFromHand(
+                        state,
+                        scaledEffectAmount(state, effect, context.source, std::nullopt, resolvedValue.actual),
+                        context
+                    )
                     : 0;
                 state.log.add(CombatLogEntryType::DiscardCards, {{"amount", std::to_string(discarded)}});
                 continue;
             }
 
-            case EffectType::GainEnergy:
-                energySystem_.gain(state, context.source, resolvedValue.actual);
-                state.log.add(CombatLogEntryType::GainEnergy, {{"amount", std::to_string(resolvedValue.actual)}});
+            case EffectType::GainEnergy: {
+                const int energy = scaledEffectAmount(state, effect, context.source, std::nullopt, resolvedValue.actual);
+                energySystem_.gain(state, context.source, energy);
+                state.log.add(CombatLogEntryType::GainEnergy, {{"amount", std::to_string(energy)}});
                 continue;
+            }
 
             case EffectType::LoseEnergy: {
                 int lost = 0;
@@ -350,7 +415,11 @@ void EffectSystem::applyEffect(
                     if (!state.isPlayer(target)) {
                         continue;
                     }
-                    lost += energySystem_.lose(state, target, resolvedValue.actual);
+                    lost += energySystem_.lose(
+                        state,
+                        target,
+                        scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual)
+                    );
                 }
                 state.log.add(CombatLogEntryType::LoseEnergy, {{"amount", std::to_string(lost)}});
                 continue;
@@ -358,21 +427,99 @@ void EffectSystem::applyEffect(
 
             case EffectType::LoseHp:
                 for (const EntityId target : targets) {
-                    const int hpDamage = state.entity(target).health.takeDamage(resolvedValue.actual);
+                    const int hpDamage = state.entity(target).health.takeDamage(
+                        scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual)
+                    );
                     state.log.add(CombatLogEntryType::LoseHp, {{"amount", std::to_string(hpDamage)}});
                 }
                 continue;
 
             case EffectType::GainStress:
                 for (const EntityId target : targets) {
-                    adjustStress(state, target, resolvedValue.actual, context.random);
+                    adjustStress(
+                        state, target,
+                        scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual),
+                        context.random
+                    );
+                }
+                continue;
+
+            case EffectType::PrimeStressBreakdown:
+                if (!effect.statusId.has_value()) {
+                    throw std::runtime_error("prime_stress_breakdown effect requires a breakdown type");
+                }
+                for (const EntityId target : targets) {
+                    if (state.isPlayer(target)) {
+                        state.primeStressBreakdown(target, *effect.statusId);
+                    }
                 }
                 continue;
 
             case EffectType::LoseStress:
                 for (const EntityId target : targets) {
-                    adjustStress(state, target, -resolvedValue.actual, context.random);
+                    adjustStress(
+                        state, target,
+                        -scaledEffectAmount(state, effect, context.source, target, resolvedValue.actual),
+                        context.random
+                    );
                 }
+                continue;
+
+            case EffectType::SpendStressDamage:
+                if (!spendStress(state, context.source, resolvedValue.actual, context.random)) {
+                    continue;
+                }
+                for (const EntityId target : targets) {
+                    damageSystem_.dealDamage(
+                        state,
+                        context.source,
+                        target,
+                        effect.outputAmount,
+                        context.cardDefinitionId,
+                        context.diceCorruption,
+                        context.usesActorStats
+                    );
+                }
+                continue;
+
+            case EffectType::SpendStressBlock:
+                if (!spendStress(state, context.source, resolvedValue.actual, context.random)) {
+                    continue;
+                }
+                for (const EntityId target : targets) {
+                    blockSystem_.gainBlock(
+                        state,
+                        context.source,
+                        target,
+                        effect.outputAmount,
+                        context.cardDefinitionId,
+                        context.diceCorruption,
+                        context.usesActorStats
+                    );
+                }
+                continue;
+
+            case EffectType::SpendStressEnergy:
+                if (!spendStress(state, context.source, resolvedValue.actual, context.random)) {
+                    continue;
+                }
+                energySystem_.gain(state, context.source, effect.outputAmount);
+                state.log.add(CombatLogEntryType::GainEnergy, {{"amount", std::to_string(effect.outputAmount)}});
+                continue;
+
+            case EffectType::SpendStressDraw:
+                if (!spendStress(state, context.source, resolvedValue.actual, context.random)) {
+                    continue;
+                }
+                if (context.random != nullptr) {
+                    drawSystem_.drawCards(
+                        state.deck,
+                        state.hand,
+                        static_cast<std::size_t>(effect.outputAmount),
+                        *context.random
+                    );
+                }
+                state.log.add(CombatLogEntryType::DrawCards, {{"amount", std::to_string(effect.outputAmount)}});
                 continue;
 
         }

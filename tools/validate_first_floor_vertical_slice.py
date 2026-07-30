@@ -8,6 +8,7 @@ from collections import Counter, defaultdict, deque
 from pathlib import Path
 from typing import Any
 
+MAX_ENEMIES_PER_ENCOUNTER = 3
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 ACT_PATH = DATA_DIR / "run" / "acts" / "act1.json"
@@ -55,6 +56,17 @@ def collect_slots(layers: list[list[str]], min_layer: int, max_layer: int, used:
     return result
 
 
+def placement_rule_allows(candidate: tuple[int, int], placed: list[tuple[int, int]], config: dict[str, Any]) -> bool:
+    layer, _ = candidate
+    max_per_layer = int(config.get("max_per_layer", 0))
+    min_layer_gap = int(config.get("min_layer_gap", 0))
+    if max_per_layer > 0 and sum(1 for placed_layer, _ in placed if placed_layer == layer) >= max_per_layer:
+        return False
+    if min_layer_gap > 0 and any(abs(placed_layer - layer) < min_layer_gap for placed_layer, _ in placed):
+        return False
+    return True
+
+
 def place_specials(
     layers: list[list[str]],
     used: set[tuple[int, int]],
@@ -64,17 +76,28 @@ def place_specials(
     rng: Any,
     errors: list[str],
     label: str,
+    placement_config: dict[str, Any] | None = None,
 ) -> None:
     if count <= 0:
         return
     if count > len(candidates):
         errors.append(f"Act 1 cannot place {label}: requested {count}, candidates {len(candidates)}")
         return
+    placed: list[tuple[int, int]] = []
+    placement_config = placement_config or {}
     for _ in range(count):
-        choice_index = rng.randrange(len(candidates))
+        valid_indices = [
+            index for index, candidate in enumerate(candidates)
+            if placement_rule_allows(candidate, placed, placement_config)
+        ]
+        if not valid_indices:
+            errors.append(f"Act 1 cannot place {label}: placement rules are too strict")
+            return
+        choice_index = rng.choice(valid_indices)
         layer, index = candidates.pop(choice_index)
         layers[layer][index] = room_type
         used.add((layer, index))
+        placed.append((layer, index))
 
 
 def adjacent_target_indices(from_index: int, from_count: int, to_count: int) -> list[int]:
@@ -155,19 +178,19 @@ def generate_snapshot(seed: int, config: dict[str, Any], errors: list[str]) -> t
         item = config.get(key, {})
         if isinstance(item, dict):
             candidates = collect_slots(layers, int(item.get("min_layer", 1)), int(item.get("max_layer", pre_boss_layer - 1)), used)
-            place_specials(layers, used, candidates, int(item.get("count", 0)), room_type, rng, errors, key)
+            place_specials(layers, used, candidates, int(item.get("count", 0)), room_type, rng, errors, key, item)
 
     elites = config.get("elites", {})
     if isinstance(elites, dict):
         count = rng.randint(int(elites.get("min", 0)), int(elites.get("max", 0)))
         candidates = collect_slots(layers, int(elites.get("min_layer", 1)), int(elites.get("max_layer", pre_boss_layer - 1)), used)
-        place_specials(layers, used, candidates, count, "elite", rng, errors, "elites")
+        place_specials(layers, used, candidates, count, "elite", rng, errors, "elites", elites)
 
     fixed_events = config.get("events")
     if isinstance(fixed_events, dict):
         count = rng.randint(int(fixed_events.get("min", 0)), int(fixed_events.get("max", 0)))
         candidates = collect_slots(layers, int(fixed_events.get("min_layer", 1)), int(fixed_events.get("max_layer", pre_boss_layer - 1)), used)
-        place_specials(layers, used, candidates, count, "event", rng, errors, "events")
+        place_specials(layers, used, candidates, count, "event", rng, errors, "events", fixed_events)
 
     edges = connect_layers([len(layer) for layer in layers], rng, int(config.get("extra_connection_chance", 0)))
     return layers, edges
@@ -285,6 +308,8 @@ def validate_encounters(
             if not isinstance(enemies, list) or not enemies:
                 errors.append(f"Act 1 encounter '{encounter_id}' must contain at least one enemy")
             else:
+                if len(enemies) > MAX_ENEMIES_PER_ENCOUNTER:
+                    errors.append(f"{owner}: encounter '{encounter_id}' contains more than {MAX_ENEMIES_PER_ENCOUNTER} enemies")
                 for enemy_id in enemies:
                     if not isinstance(enemy_id, str) or enemy_id not in enemy_ids:
                         errors.append(f"Act 1 encounter '{encounter_id}' references unknown enemy '{enemy_id}'")

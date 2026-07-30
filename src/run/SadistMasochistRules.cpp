@@ -41,6 +41,8 @@ void handleEvent(CombatState& state, const GameEvent& event) {
     // These are one-turn combat states, not permanent scaling stacks.
     // Repeated Sadist -> Masochist hits refresh the engine instead of extending it
     // across future turns.
+    state.rememberStatusSeen(PleasureStatusId);
+    state.rememberStatusSeen(PainStatusId);
     sadist.statuses.set(PleasureStatusId, 1, sadist.id);
     masochist.statuses.set(PainStatusId, 1, sadist.id);
 

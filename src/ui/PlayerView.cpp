@@ -27,6 +27,18 @@ Color statusBorderColor(const StatusViewModel& status) {
     return Color{176, 184, 208, 255};
 }
 
+Color stressBandColor(const int bandIndex) {
+    switch (bandIndex) {
+        case 0: return Color{105, 178, 162, 255};
+        case 1: return Color{210, 190, 92, 255};
+        case 2: return Color{226, 150, 72, 255};
+        case 3: return Color{222, 92, 76, 255};
+        case 4: return Color{190, 62, 104, 255};
+        case 5: return Color{115, 42, 58, 255};
+        default: return Color{180, 150, 190, 255};
+    }
+}
+
 std::string statusChipText(const StatusViewModel& status) {
     std::string text = UiUtf8::truncateWithEllipsis(status.name, 8);
     if (status.amount > 0) {
@@ -184,13 +196,40 @@ void PlayerView::render(const Font* font, const bool hovered) const {
         DrawTextEx(*font, blockText.c_str(), Vector2{renderPosition.x + 14.f, renderPosition.y + 44.f}, 15.f, 1.f, Color{180, 220, 255, 255});
     }
 
+    float statusY = renderPosition.y + 84.f;
     if (model_.maxStress > 0) {
-        const std::string stressText = model_.stressLabel + ": " +
+        std::string stressText = model_.stressLabel + ": " +
             std::to_string(std::max(0, model_.stress)) + "/" + std::to_string(model_.maxStress);
-        DrawTextEx(*font, stressText.c_str(), Vector2{renderPosition.x + 14.f, renderPosition.y + 62.f}, 14.f, 1.f, Color{220, 185, 230, 255});
+        if (!model_.stressBandName.empty()) {
+            stressText += "  " + model_.stressBandName;
+        }
+
+        const Color stressColor = stressBandColor(model_.stressBandIndex);
+        DrawTextEx(
+            *font,
+            UiUtf8::truncateWithEllipsis(stressText, 34).c_str(),
+            Vector2{renderPosition.x + 14.f, renderPosition.y + 62.f},
+            13.f,
+            1.f,
+            stressColor
+        );
+
+        const Rectangle stressBack{renderPosition.x + 14.f, renderPosition.y + 79.f, size_.x - 28.f, 8.f};
+        const float stressRatio = static_cast<float>(std::clamp(model_.stress, 0, model_.maxStress)) /
+            static_cast<float>(std::max(1, model_.maxStress));
+        DrawRectangleRec(stressBack, Color{35, 32, 42, 255});
+        DrawRectangleRec(
+            Rectangle{stressBack.x, stressBack.y, stressBack.width * stressRatio, stressBack.height},
+            stressColor
+        );
+
+        for (const float thresholdRatio : {0.2f, 0.4f, 0.6f, 0.8f}) {
+            const int markerX = static_cast<int>(stressBack.x + stressBack.width * thresholdRatio);
+            DrawLine(markerX, static_cast<int>(stressBack.y), markerX, static_cast<int>(stressBack.y + stressBack.height), Color{238, 224, 236, 150});
+        }
+        statusY = renderPosition.y + 94.f;
     }
 
-    float statusY = renderPosition.y + 84.f;
     if (!model_.stressPowerDescription.empty()) {
         DrawTextEx(
             *font,
@@ -200,7 +239,18 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             1.f,
             Color{238, 198, 156, 255}
         );
-        statusY += 18.f;
+        statusY += 16.f;
+    }
+    if (!model_.stressBandRiskDescription.empty()) {
+        DrawTextEx(
+            *font,
+            UiUtf8::truncateWithEllipsis(model_.stressBandRiskDescription, 34).c_str(),
+            Vector2{renderPosition.x + 14.f, statusY},
+            11.f,
+            1.f,
+            Color{228, 174, 188, 255}
+        );
+        statusY += 15.f;
     }
     if (!model_.activeStanceName.empty()) {
         const Rectangle stanceBounds{renderPosition.x + 12.f, statusY, size_.x - 24.f, 30.f};

@@ -1,5 +1,6 @@
 #include "ContentValidator.hpp"
 
+#include "active_items/ActiveItemId.hpp"
 #include "cards/CardId.hpp"
 #include "cards/CardRarity.hpp"
 #include "cards/CardUpgrade.hpp"
@@ -12,6 +13,7 @@
 #include "localization/TextId.hpp"
 #include "relics/RelicId.hpp"
 #include "rewards/RewardPoolRules.hpp"
+#include "run/DifficultyId.hpp"
 #include "run/RunMapNode.hpp"
 #include "statuses/StatusId.hpp"
 
@@ -23,6 +25,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 namespace {
@@ -122,6 +125,32 @@ void validateTextReferenceList(
     }
 }
 
+
+void validateUnlockReward(
+    std::vector<std::string>& errors,
+    const ContentRegistry& content,
+    const std::string& owner,
+    const UnlockReward& reward
+) {
+    for (const std::string& archetypeId : reward.archetypeIds) {
+        if (!content.archetypes().contains(PlayableArchetypeId(archetypeId))) {
+            addError(errors, owner + " reward unlocks unknown archetype '" + archetypeId + "'");
+        }
+    }
+
+    for (const std::string& cardId : reward.cardIds) {
+        if (!content.cards().contains(CardId(cardId))) {
+            addError(errors, owner + " reward unlocks unknown card '" + cardId + "'");
+        }
+    }
+
+    for (const std::string& relicId : reward.relicIds) {
+        if (!content.relics().contains(RelicId(relicId))) {
+            addError(errors, owner + " reward unlocks unknown relic '" + relicId + "'");
+        }
+    }
+}
+
 void validateStatusReference(
     std::vector<std::string>& errors,
     const ContentRegistry& content,
@@ -139,9 +168,75 @@ void validateStatusReference(
         return;
     }
 
+    if (effect.type == EffectType::PrimeStressBreakdown) {
+        const std::string& type = *effect.statusId;
+        if (type != "discard" && type != "energy" && type != "status_cards" && type != "cost" && type != "frenzy") {
+            addError(errors, owner + " references invalid stress breakdown type '" + type + "'");
+        }
+        return;
+    }
+
     const StatusId statusId(*effect.statusId);
     if (!content.statuses().contains(statusId)) {
         addError(errors, owner + " references unknown status '" + *effect.statusId + "'");
+    }
+}
+
+void validateEnemyAiStatusList(
+    std::vector<std::string>& errors,
+    const ContentRegistry& content,
+    const std::string& owner,
+    const std::string& fieldName,
+    const std::vector<std::string>& statusIds
+) {
+    for (const std::string& statusId : statusIds) {
+        if (!content.statuses().contains(StatusId(statusId))) {
+            addError(
+                errors,
+                owner + " references unknown status '" + statusId +
+                    "' in AI condition '" + fieldName + "'"
+            );
+        }
+    }
+}
+
+void validateEnemyActionAi(
+    std::vector<std::string>& errors,
+    const ContentRegistry& content,
+    const std::string& owner,
+    const EnemyActionDefinition& action
+) {
+    const EnemyActionCondition& condition = action.condition;
+    validateEnemyAiStatusList(
+        errors, content, owner, "required_self_statuses", condition.requiredSelfStatuses
+    );
+    validateEnemyAiStatusList(
+        errors, content, owner, "forbidden_self_statuses", condition.forbiddenSelfStatuses
+    );
+    validateEnemyAiStatusList(
+        errors, content, owner, "required_player_statuses", condition.requiredPlayerStatuses
+    );
+    validateEnemyAiStatusList(
+        errors, content, owner, "forbidden_player_statuses", condition.forbiddenPlayerStatuses
+    );
+
+    for (const std::string& statusId : condition.requiredSelfStatuses) {
+        if (std::find(
+                condition.forbiddenSelfStatuses.begin(),
+                condition.forbiddenSelfStatuses.end(),
+                statusId
+            ) != condition.forbiddenSelfStatuses.end()) {
+            addError(errors, owner + " both requires and forbids self status '" + statusId + "'");
+        }
+    }
+    for (const std::string& statusId : condition.requiredPlayerStatuses) {
+        if (std::find(
+                condition.forbiddenPlayerStatuses.begin(),
+                condition.forbiddenPlayerStatuses.end(),
+                statusId
+            ) != condition.forbiddenPlayerStatuses.end()) {
+            addError(errors, owner + " both requires and forbids player status '" + statusId + "'");
+        }
     }
 }
 
@@ -153,6 +248,46 @@ void validateEffectList(
 ) {
     for (const EffectDefinition& effect : effects) {
         validateStatusReference(errors, content, owner, effect);
+
+        if (effect.scaling.statusId.has_value() &&
+            !content.statuses().contains(StatusId(*effect.scaling.statusId))) {
+            addError(errors, owner + " scaling references unknown status '" + *effect.scaling.statusId + "'");
+        }
+
+        if (effect.type == EffectType::RecoverCards && effect.target != EffectTarget::Self) {
+            addError(errors, owner + " has recover_cards with non-self target '" + toString(effect.target) + "'");
+        }
+
+        if (isStressConversionEffect(effect.type)) {
+            if (!effect.value.isFixed() ||
+                effect.value.minimumPossibleValue() <= 0 ||
+                effect.outputAmount <= 0) {
+                addError(errors, owner + " has an invalid stress conversion effect");
+            }
+
+            const bool damageTargetValid = effect.type != EffectType::SpendStressDamage ||
+                effect.target == EffectTarget::SingleEnemy ||
+                effect.target == EffectTarget::AllEnemies;
+            const bool selfTargetValid = effect.type == EffectType::SpendStressDamage ||
+                effect.target == EffectTarget::Self;
+            if (!damageTargetValid || !selfTargetValid) {
+                addError(errors, owner + " has stress conversion effect '" + toString(effect.type) +
+                    "' with invalid target '" + toString(effect.target) + "'");
+            }
+
+            if (!effect.scaling.empty()) {
+                addError(errors, owner + " has stress conversion effect with unsupported scaling");
+            }
+        }
+
+        if (effect.type == EffectType::PrimeStressBreakdown) {
+            if (!effect.statusId.has_value()) {
+                addError(errors, owner + " has prime_stress_breakdown without breakdown type");
+            }
+            if (effect.target != EffectTarget::RandomAlly && effect.target != EffectTarget::AllAllies && effect.target != EffectTarget::Self) {
+                addError(errors, owner + " has prime_stress_breakdown with invalid target '" + toString(effect.target) + "'");
+            }
+        }
 
         if (effect.type == EffectType::UseDrone) {
             if (effect.target != EffectTarget::Self) {
@@ -310,6 +445,15 @@ void validateRunEventEffect(
                 addError(errors, owner + " has remove_random_card event effect with a non-zero amount");
             }
             break;
+        case RunEventEffectType::SetFlag:
+        case RunEventEffectType::ClearFlag:
+            if (effect.contentId.empty()) {
+                addError(errors, owner + " has event flag effect without flag id");
+            }
+            if (effect.amount != 0) {
+                addError(errors, owner + " has event flag effect with a non-zero amount");
+            }
+            break;
         case RunEventEffectType::Skip:
             if (effect.amount != 0) {
                 addError(errors, owner + " has skip event effect with a non-zero amount");
@@ -333,8 +477,8 @@ int configuredLayerWidth(const RunMapGenerationConfig& config, const int layer) 
         : config.middleMaxNodes();
 }
 
-bool hasEncounterForType(const ContentRegistry& content, const RunMapNodeType nodeType) {
-    for (const EncounterDefinition* encounter : content.encounters().all()) {
+bool hasEncounterForType(const EncounterDatabase& encounters, const RunMapNodeType nodeType) {
+    for (const EncounterDefinition* encounter : encounters.all()) {
         if (encounter != nullptr && encounter->nodeType == nodeType) {
             return true;
         }
@@ -344,11 +488,11 @@ bool hasEncounterForType(const ContentRegistry& content, const RunMapNodeType no
 }
 
 bool hasEncounterEligibleOnLayer(
-    const ContentRegistry& content,
+    const EncounterDatabase& encounters,
     const RunMapNodeType nodeType,
     const int layer
 ) {
-    for (const EncounterDefinition* encounter : content.encounters().all()) {
+    for (const EncounterDefinition* encounter : encounters.all()) {
         if (encounter != nullptr &&
             encounter->nodeType == nodeType &&
             encounter->isAllowedOnLayer(layer)) {
@@ -360,13 +504,13 @@ bool hasEncounterEligibleOnLayer(
 }
 
 bool hasEncounterEligibleInLayerRange(
-    const ContentRegistry& content,
+    const EncounterDatabase& encounters,
     const RunMapNodeType nodeType,
     const int minLayer,
     const int maxLayer
 ) {
     for (int layer = minLayer; layer <= maxLayer; ++layer) {
-        if (hasEncounterEligibleOnLayer(content, nodeType, layer)) {
+        if (hasEncounterEligibleOnLayer(encounters, nodeType, layer)) {
             return true;
         }
     }
@@ -454,11 +598,13 @@ void validateCardUpgradeDefinition(
     validateEffectList(errors, content, owner + " upgraded definition", upgraded.effects);
 }
 
-void validateFirstFloorContent(
+void validateFloorContent(
     std::vector<std::string>& errors,
-    const ContentRegistry& content
+    const ContentRegistry& content,
+    const FloorDefinition& floor,
+    const RunMapGenerationConfig& config,
+    const EncounterDatabase& encounters
 ) {
-    const RunMapGenerationConfig& config = content.actOneMapGeneration();
     const int preBossLayer = config.layerCount() - 2;
     const int bossLayer = config.layerCount() - 1;
 
@@ -474,29 +620,29 @@ void validateFirstFloorContent(
         addError(errors, "Act '" + config.id() + "' must end with exactly one boss room");
     }
 
-    if (!hasEncounterForType(content, RunMapNodeType::Combat)) {
-        addError(errors, "Act '" + config.id() + "' needs at least one normal combat encounter");
-    } else if (!hasEncounterEligibleOnLayer(content, RunMapNodeType::Combat, 0)) {
+    if (!hasEncounterForType(encounters, RunMapNodeType::Combat)) {
+        addError(errors, "Floor '" + floor.id + "' / map '" + config.id() + "' needs at least one normal combat encounter");
+    } else if (!hasEncounterEligibleOnLayer(encounters, RunMapNodeType::Combat, 0)) {
         addError(errors, "Act '" + config.id() + "' has no normal combat encounter eligible for the start layer");
     }
 
     if (config.combatWeight() > 0) {
         const int lastRandomCombatLayer = std::max(0, preBossLayer - 1);
-        if (!hasEncounterEligibleInLayerRange(content, RunMapNodeType::Combat, 1, lastRandomCombatLayer)) {
+        if (!hasEncounterEligibleInLayerRange(encounters, RunMapNodeType::Combat, 1, lastRandomCombatLayer)) {
             addError(errors, "Act '" + config.id() + "' can generate normal combat rooms, but no normal encounter is eligible for middle layers");
         }
     }
 
     const bool canResolveEventsToCombat = config.questionMarkCombatChance() > 0 &&
         (config.eventWeight() > 0 || (config.hasFixedEvents() && config.events().maximum > 0));
-    if (canResolveEventsToCombat && !hasEncounterEligibleInLayerRange(content, RunMapNodeType::Combat, 1, preBossLayer - 1)) {
+    if (canResolveEventsToCombat && !hasEncounterEligibleInLayerRange(encounters, RunMapNodeType::Combat, 1, preBossLayer - 1)) {
         addError(errors, "Act '" + config.id() + "' event rooms can turn into combat, but no normal encounter is eligible for event layers");
     }
 
     if (config.elites().maximum > 0) {
-        if (!hasEncounterForType(content, RunMapNodeType::Elite)) {
+        if (!hasEncounterForType(encounters, RunMapNodeType::Elite)) {
             addError(errors, "Act '" + config.id() + "' can generate elite rooms, but the elite encounter pool is empty");
-        } else if (!hasEncounterEligibleInLayerRange(content, RunMapNodeType::Elite, config.elites().minLayer, config.elites().maxLayer)) {
+        } else if (!hasEncounterEligibleInLayerRange(encounters, RunMapNodeType::Elite, config.elites().minLayer, config.elites().maxLayer)) {
             addError(errors, "Act '" + config.id() + "' can generate elite rooms, but no elite encounter is eligible for configured elite layers");
         }
 
@@ -505,9 +651,9 @@ void validateFirstFloorContent(
         }
     }
 
-    if (!hasEncounterForType(content, RunMapNodeType::Boss)) {
+    if (!hasEncounterForType(encounters, RunMapNodeType::Boss)) {
         addError(errors, "Act '" + config.id() + "' needs at least one boss encounter");
-    } else if (!hasEncounterEligibleOnLayer(content, RunMapNodeType::Boss, bossLayer)) {
+    } else if (!hasEncounterEligibleOnLayer(encounters, RunMapNodeType::Boss, bossLayer)) {
         addError(errors, "Act '" + config.id() + "' has no boss encounter eligible for the boss layer");
     }
 
@@ -521,8 +667,8 @@ void validateFirstFloorContent(
 
     const bool canGenerateEventNodes = config.eventWeight() > 0 ||
         (config.hasFixedEvents() && config.events().maximum > 0);
-    if (canGenerateEventNodes && content.events().size() == 0) {
-        addError(errors, "Act '" + config.id() + "' can generate event rooms, but the event pool is empty");
+    if (canGenerateEventNodes && content.events().allForPool(floor.eventPoolId).empty()) {
+        addError(errors, "Floor '" + floor.id + "' / map '" + config.id() + "' can generate event rooms, but event pool '" + floor.eventPoolId + "' is empty");
     }
 
     if (config.chests().count > 0 && !hasRelicRewardCandidates(content)) {
@@ -623,16 +769,188 @@ void validateShopTuning(
 
 void validateMapGeneration(
     std::vector<std::string>& errors,
-    const ContentRegistry& content
+    const ContentRegistry& content,
+    const LocalizationManager* localization
 ) {
-    const RunMapGenerationConfig& config = content.actOneMapGeneration();
-    const bool canGenerateEventNodes =
-        config.eventWeight() > 0 ||
-        (config.hasFixedEvents() && config.events().maximum > 0);
-    const bool canResolveQuestionMarksToEvents = config.questionMarkCombatChance() < 100;
+    for (const ChallengeDefinition* challenge : content.challenges().all()) {
+        if (challenge == nullptr) {
+            continue;
+        }
 
-    if (canGenerateEventNodes && canResolveQuestionMarksToEvents && content.events().all().empty()) {
-        addError(errors, "Act '" + config.id() + "' can generate event nodes, but no run events are loaded");
+        const std::string owner = "Challenge '" + challenge->id + "'";
+        validateTextReference(errors, localization, owner, "name", challenge->nameTextId);
+        validateTextReference(errors, localization, owner, "description", challenge->descriptionTextId);
+        validateTextReference(errors, localization, owner, "goal", challenge->goalTextId);
+        validateTextReference(errors, localization, owner, "reward", challenge->rewardTextId);
+        validateTextReference(errors, localization, owner, "unlock_hint", challenge->unlockHintTextId);
+        validateUnlockReward(errors, content, owner, challenge->reward);
+
+        for (const std::string& archetypeId : challenge->requiredUnlockedArchetypeIds) {
+            if (!content.archetypes().contains(PlayableArchetypeId(archetypeId))) {
+                addError(errors, owner + " requires unknown unlocked archetype '" + archetypeId + "'");
+            }
+        }
+
+        for (const std::string& requiredChallengeId : challenge->requiredCompletedChallengeIds) {
+            if (!content.challenges().contains(requiredChallengeId)) {
+                addError(errors, owner + " requires unknown completed challenge '" + requiredChallengeId + "'");
+            }
+        }
+
+        if (challenge->startingArchetypeId.empty()) {
+            addError(errors, owner + " has empty starting archetype id");
+        } else if (!content.archetypes().contains(PlayableArchetypeId(challenge->startingArchetypeId))) {
+            addError(errors, owner + " references unknown starting archetype '" + challenge->startingArchetypeId + "'");
+        }
+
+        if (challenge->startingDifficultyId.empty()) {
+            addError(errors, owner + " has empty starting difficulty id");
+        } else if (!content.difficulties().contains(DifficultyId(challenge->startingDifficultyId))) {
+            addError(errors, owner + " references unknown starting difficulty '" + challenge->startingDifficultyId + "'");
+        }
+
+        if (!challenge->startingFloorId.empty() && !content.floors().contains(challenge->startingFloorId)) {
+            addError(errors, owner + " references unknown starting floor '" + challenge->startingFloorId + "'");
+        }
+
+        if (challenge->startingGoldOverride < -1) {
+            addError(errors, owner + " has starting gold below -1");
+        }
+
+        for (const std::string& cardId : challenge->fixedStartingDeckCardIds) {
+            if (!content.cards().contains(CardId(cardId))) {
+                addError(errors, owner + " fixed starting deck references unknown card '" + cardId + "'");
+            }
+        }
+
+        for (const std::string& relicId : challenge->fixedStartingRelicIds) {
+            if (!content.relics().contains(RelicId(relicId))) {
+                addError(errors, owner + " fixed starting relics reference unknown relic '" + relicId + "'");
+            }
+        }
+
+        for (const std::string& consumableId : challenge->fixedStartingConsumableIds) {
+            if (!content.consumables().contains(ConsumableId(consumableId))) {
+                addError(errors, owner + " fixed starting consumables reference unknown consumable '" + consumableId + "'");
+            }
+        }
+
+        const ChallengeCompletionCondition& completion = challenge->completion;
+        if (completion.type != "clear_floor" &&
+            completion.type != "clear_floor_without_shop" &&
+            completion.type != "clear_floor_with_elites" &&
+            completion.type != "clear_floor_with_archetype" &&
+            completion.type != "clear_floor_low_damage") {
+            addError(errors, owner + " has unknown completion type '" + completion.type + "'");
+        }
+
+        if (!completion.floorId.empty() && !content.floors().contains(completion.floorId)) {
+            addError(errors, owner + " references unknown completion floor '" + completion.floorId + "'");
+        }
+
+        if (!completion.archetypeId.empty() && !content.archetypes().contains(PlayableArchetypeId(completion.archetypeId))) {
+            addError(errors, owner + " references unknown completion archetype '" + completion.archetypeId + "'");
+        }
+
+        if (completion.minElitesKilled < 0 || completion.minBossesKilled < 0) {
+            addError(errors, owner + " has negative minimum kill counters");
+        }
+
+        if (completion.maxShopsVisited < -1 || completion.maxDamageTaken < -1) {
+            addError(errors, owner + " has invalid max counter below -1");
+        }
+    }
+
+
+
+    for (const AchievementDefinition* achievement : content.achievements().all()) {
+        if (achievement == nullptr) {
+            continue;
+        }
+
+        const std::string owner = "Achievement '" + achievement->id + "'";
+        validateTextReference(errors, localization, owner, "name", achievement->nameTextId);
+        validateTextReference(errors, localization, owner, "description", achievement->descriptionTextId);
+        validateTextReference(errors, localization, owner, "goal", achievement->goalTextId);
+        validateTextReference(errors, localization, owner, "reward", achievement->rewardTextId);
+        validateTextReference(errors, localization, owner, "unlock_hint", achievement->unlockHintTextId);
+        validateUnlockReward(errors, content, owner, achievement->reward);
+
+        for (const std::string& archetypeId : achievement->requiredUnlockedArchetypeIds) {
+            if (!content.archetypes().contains(PlayableArchetypeId(archetypeId))) {
+                addError(errors, owner + " requires unknown unlocked archetype '" + archetypeId + "'");
+            }
+        }
+
+        for (const std::string& requiredChallengeId : achievement->requiredCompletedChallengeIds) {
+            if (!content.challenges().contains(requiredChallengeId)) {
+                addError(errors, owner + " requires unknown completed challenge '" + requiredChallengeId + "'");
+            }
+        }
+
+        for (const std::string& requiredAchievementId : achievement->requiredCompletedAchievementIds) {
+            if (!content.achievements().contains(requiredAchievementId)) {
+                addError(errors, owner + " requires unknown completed achievement '" + requiredAchievementId + "'");
+            }
+            if (requiredAchievementId == achievement->id) {
+                addError(errors, owner + " cannot require itself");
+            }
+        }
+
+        const AchievementCompletionCondition& completion = achievement->completion;
+        if (completion.type != "clear_floor" &&
+            completion.type != "clear_floor_with_elites" &&
+            completion.type != "clear_floor_with_archetype" &&
+            completion.type != "clear_floor_low_damage" &&
+            completion.type != "complete_challenges" &&
+            completion.type != "complete_achievements" &&
+            completion.type != "win_runs" &&
+            completion.type != "lose_runs") {
+            addError(errors, owner + " has unknown completion type '" + completion.type + "'");
+        }
+
+        if (!completion.floorId.empty() && !content.floors().contains(completion.floorId)) {
+            addError(errors, owner + " references unknown completion floor '" + completion.floorId + "'");
+        }
+
+        if (!completion.archetypeId.empty() && !content.archetypes().contains(PlayableArchetypeId(completion.archetypeId))) {
+            addError(errors, owner + " references unknown completion archetype '" + completion.archetypeId + "'");
+        }
+
+        if (completion.minVictories < 0 ||
+            completion.minDefeats < 0 ||
+            completion.minCompletedChallenges < 0 ||
+            completion.minCompletedAchievements < 0 ||
+            completion.minElitesKilled < 0 ||
+            completion.minBossesKilled < 0 ||
+            completion.minEventsCompleted < 0 ||
+            completion.minRelics < 0 ||
+            completion.minGold < 0) {
+            addError(errors, owner + " has negative minimum counters");
+        }
+
+        if (completion.maxDamageTaken < -1) {
+            addError(errors, owner + " has invalid max damage below -1");
+        }
+    }
+
+    for (const FloorDefinition* floor : content.floors().all()) {
+        if (floor == nullptr || !floor->isImplemented) {
+            continue;
+        }
+
+        const RunMapGenerationConfig& config = content.mapGenerationForFloor(floor->id);
+        const bool canGenerateEventNodes =
+            config.eventWeight() > 0 ||
+            (config.hasFixedEvents() && config.events().maximum > 0);
+        const bool canResolveQuestionMarksToEvents = config.questionMarkCombatChance() < 100;
+
+        if (canGenerateEventNodes && canResolveQuestionMarksToEvents && content.events().allForPool(floor->eventPoolId).empty()) {
+            addError(
+                errors,
+                "Floor '" + floor->id + "' / map '" + config.id() + "' can generate event nodes, but event pool '" + floor->eventPoolId + "' is empty"
+            );
+        }
     }
 }
 
@@ -682,6 +1000,80 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
         validateEffectList(errors, content, owner, consumable->effects);
     }
 
+    for (const ActiveItemDefinition* item : content.activeItems().all()) {
+        if (item == nullptr) {
+            continue;
+        }
+
+        const std::string owner = "Active item '" + item->id.value + "'";
+        validateTextReference(errors, localization, owner, "name", item->nameTextId);
+        validateTextReference(errors, localization, owner, "description", item->descriptionTextId);
+        if (item->maxCharge <= 0) {
+            addError(errors, owner + " has non-positive max charge");
+        }
+        if (item->chargeCost <= 0 || item->chargeCost > item->maxCharge) {
+            addError(errors, owner + " has charge cost outside 1..max_charge");
+        }
+        if (item->shopPrice < 0) {
+            addError(errors, owner + " has negative shop price");
+        }
+        if (item->canAppearInShop && item->shopPrice <= 0) {
+            addError(errors, owner + " is shop eligible but has no positive shop price");
+        }
+        if (item->useContexts.empty()) {
+            addError(errors, owner + " has no use contexts");
+        }
+        if (item->effects.empty()) {
+            addError(errors, owner + " has no effects");
+        }
+        for (const ActiveItemEffectDefinition& effect : item->effects) {
+            if (effect.amount <= 0) {
+                addError(errors, owner + " has an effect with non-positive amount");
+            }
+            const auto hasContext = [&](const ActiveItemUseContext context) {
+                return std::find(item->useContexts.begin(), item->useContexts.end(), context) != item->useContexts.end();
+            };
+
+            switch (effect.type) {
+                case ActiveItemEffectType::RerollOffers:
+                    if (!hasContext(ActiveItemUseContext::Reward) &&
+                        !hasContext(ActiveItemUseContext::Shop) &&
+                        !hasContext(ActiveItemUseContext::Chest)) {
+                        addError(errors, owner + " reroll_offers effect requires reward, shop, or chest context");
+                    }
+                    break;
+                case ActiveItemEffectType::SkipEnemyTurn:
+                    if (!hasContext(ActiveItemUseContext::Combat)) {
+                        addError(errors, owner + " skip_enemy_turn effect requires combat context");
+                    }
+                    break;
+                case ActiveItemEffectType::StabilizeStress:
+                    if (!hasContext(ActiveItemUseContext::Combat)) {
+                        addError(errors, owner + " stabilize_stress effect requires combat context");
+                    }
+                    break;
+                case ActiveItemEffectType::CreateConsumable:
+                    if (item->useContexts.size() == 1 && hasContext(ActiveItemUseContext::Combat)) {
+                        addError(errors, owner + " create_consumable effect requires a non-combat context");
+                    }
+                    break;
+                case ActiveItemEffectType::RerollMapChoices:
+                    if (!hasContext(ActiveItemUseContext::Map)) {
+                        addError(errors, owner + " reroll_map_choices effect requires map context");
+                    }
+                    break;
+                case ActiveItemEffectType::CopyCard:
+                    if (!hasContext(ActiveItemUseContext::Reward) && !hasContext(ActiveItemUseContext::Shop)) {
+                        addError(errors, owner + " copy_card effect requires reward or shop context");
+                    }
+                    break;
+                case ActiveItemEffectType::HealParty:
+                case ActiveItemEffectType::GainGold:
+                    break;
+            }
+        }
+    }
+
     for (const DroneDefinition* drone : content.drones().all()) {
         if (drone == nullptr) {
             continue;
@@ -726,9 +1118,56 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
                 actionOwner,
                 action.effects
             );
+            validateEnemyActionAi(errors, content, actionOwner, action);
+        }
+
+        if (enemy->role == EnemyRole::Boss && enemy->phases.size() < 2) {
+            addError(errors, owner + " is a boss but has fewer than two phases");
+        }
+        if (enemy->role != EnemyRole::Boss && !enemy->phases.empty()) {
+            addError(errors, owner + " has boss phases but is not classified as a boss");
+        }
+
+        std::vector<std::string> phasedActionIds;
+        for (const EnemyPhaseDefinition& phase : enemy->phases) {
+            const std::string phaseOwner = owner + " phase '" + phase.id + "'";
+            validateTextReference(errors, localization, phaseOwner, "name", phase.nameTextId);
+            validateEffectList(errors, content, phaseOwner + " on-enter effects", phase.onEnterEffects);
+            validateEffectList(errors, content, phaseOwner + " player-turn effects", phase.playerTurnEffects);
+
+            for (const std::string& actionId : phase.actionIds) {
+                const bool knownAction = std::any_of(
+                    enemy->actions.begin(), enemy->actions.end(),
+                    [&actionId](const EnemyActionDefinition& action) { return action.id == actionId; }
+                );
+                if (!knownAction) {
+                    addError(errors, phaseOwner + " references unknown action '" + actionId + "'");
+                }
+                if (std::find(phasedActionIds.begin(), phasedActionIds.end(), actionId) == phasedActionIds.end()) {
+                    phasedActionIds.push_back(actionId);
+                }
+            }
+
+            for (const std::string& summonId : phase.summonEnemyIds) {
+                if (!content.enemies().contains(EnemyId(summonId))) {
+                    addError(errors, phaseOwner + " summons unknown enemy '" + summonId + "'");
+                    continue;
+                }
+                if (content.enemies().get(EnemyId(summonId)).role == EnemyRole::Boss) {
+                    addError(errors, phaseOwner + " must not summon another boss '" + summonId + "'");
+                }
+            }
+        }
+
+        for (const EnemyActionDefinition& action : enemy->actions) {
+            if (!enemy->phases.empty() &&
+                std::find(phasedActionIds.begin(), phasedActionIds.end(), action.id) == phasedActionIds.end()) {
+                addError(errors, owner + " action '" + action.id + "' is unreachable from every phase");
+            }
         }
     }
 
+    std::unordered_map<std::string, int> statusExclusiveGroupSizes;
     for (const StatusDefinition* status : content.statuses().all()) {
         if (status == nullptr) {
             continue;
@@ -738,18 +1177,66 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
         validateTextReference(errors, localization, owner, "name", status->nameTextId);
         validateTextReference(errors, localization, owner, "description", status->descriptionTextId);
 
-        if (!status->endTurnEffect.empty()) {
-            if (status->endTurnEffect != "poison_damage") {
-                addError(errors, owner + " has unknown end_turn_effect '" + status->endTurnEffect + "'");
-            }
+        if (!status->exclusiveGroup.empty()) {
+            ++statusExclusiveGroupSizes[status->exclusiveGroup];
+        }
 
+        for (std::size_t index = 0; index < status->modifiers.size(); ++index) {
+            const StatusModifierDefinition& modifier = status->modifiers[index];
+            const std::string modifierOwner = owner + " modifier[" + std::to_string(index) + "]";
             validateTextReference(
                 errors,
                 localization,
-                owner,
-                "end_turn_effect",
-                TextId("status.end_turn_effect." + status->endTurnEffect)
+                modifierOwner,
+                "description",
+                modifier.descriptionTextId
             );
+
+            switch (modifier.operation) {
+                case StatusModifierOperation::AddPerStack:
+                case StatusModifierOperation::AddFixed:
+                    if (modifier.addAmount == 0) {
+                        addError(errors, modifierOwner + " has a zero additive value");
+                    }
+                    break;
+
+                case StatusModifierOperation::MultiplyPerStack:
+                    if (modifier.multiplier == 0.0) {
+                        addError(errors, modifierOwner + " has a zero per-stack multiplier");
+                    }
+                    break;
+
+                case StatusModifierOperation::MultiplyFixed:
+                    if (modifier.multiplier <= 0.0) {
+                        addError(errors, modifierOwner + " has a non-positive fixed multiplier");
+                    }
+                    break;
+            }
+        }
+
+        for (std::size_t index = 0; index < status->triggers.size(); ++index) {
+            const StatusTriggerDefinition& trigger = status->triggers[index];
+            const std::string triggerOwner = owner + " trigger[" + std::to_string(index) + "]";
+            if (trigger.flatValue == 0 && trigger.valuePerStack == 0) {
+                addError(errors, triggerOwner + " has no effect value");
+            }
+            if (trigger.removeStacks < 0) {
+                addError(errors, triggerOwner + " removes a negative number of stacks");
+            }
+            if (trigger.logType != StatusTriggerLogType::None &&
+                trigger.effect != StatusTriggeredEffect::DamageHp) {
+                addError(errors, triggerOwner + " uses a damage log for a non-damage effect");
+            }
+        }
+
+        if (status->durationRule == StatusDurationRule::Custom && status->triggers.empty()) {
+            addError(errors, owner + " uses custom duration without any triggers");
+        }
+    }
+
+    for (const auto& [groupId, size] : statusExclusiveGroupSizes) {
+        if (size < 2) {
+            addError(errors, "Status exclusive group '" + groupId + "' contains fewer than two statuses");
         }
     }
 
@@ -767,6 +1254,15 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
             }
             if (trigger.cardType.has_value() && trigger.eventType != GameEventType::CardPlayed) {
                 addError(errors, owner + " trigger has card_type filter, but card_type is currently supported only for card_played events");
+            }
+            if (trigger.breakdownType.has_value() && trigger.eventType != GameEventType::StressBreakdownTriggered) {
+                addError(errors, owner + " trigger has breakdown_type filter outside stress_breakdown_triggered event");
+            }
+            if (trigger.minimumBreakdownSeverity > 0 && trigger.eventType != GameEventType::StressBreakdownTriggered) {
+                addError(errors, owner + " trigger has min_breakdown_severity outside stress_breakdown_triggered event");
+            }
+            if (trigger.minimumBreakdownSeverity < 0) {
+                addError(errors, owner + " trigger has negative min_breakdown_severity");
             }
             if (trigger.minimumAmount < 0) {
                 addError(errors, owner + " trigger has negative min_amount");
@@ -818,6 +1314,23 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
                 }
             }
 
+            if (choice.requirements.maxStress > 0 && choice.requirements.minStress > choice.requirements.maxStress) {
+                addError(errors, owner + " has min_stress greater than max_stress");
+            }
+            const auto validStressTrait = [](const std::string& traitId) {
+                return traitId == "stress_breakdown" || traitId == "stress_resolve";
+            };
+            for (const std::string& traitId : choice.requirements.requiredTraitIds) {
+                if (!validStressTrait(traitId)) {
+                    addError(errors, owner + " requires unknown trait '" + traitId + "'");
+                }
+            }
+            for (const std::string& traitId : choice.requirements.forbiddenTraitIds) {
+                if (!validStressTrait(traitId)) {
+                    addError(errors, owner + " forbids unknown trait '" + traitId + "'");
+                }
+            }
+
             for (std::size_t effectIndex = 0; effectIndex < choice.effects.size(); ++effectIndex) {
                 validateRunEventEffect(
                     errors,
@@ -829,14 +1342,110 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
         }
     }
 
-    for (const EncounterDefinition* encounter : content.encounters().all()) {
-        if (encounter == nullptr) {
+
+
+    for (const AchievementDefinition* achievement : content.achievements().all()) {
+        if (achievement == nullptr) {
             continue;
         }
 
-        for (const std::string& enemyId : encounter->enemyIds) {
-            if (!content.enemies().contains(EnemyId(enemyId))) {
-                addError(errors, "Encounter '" + encounter->id + "' references unknown enemy '" + enemyId + "'");
+        const std::string owner = "Achievement '" + achievement->id + "'";
+        validateTextReference(errors, localization, owner, "name", achievement->nameTextId);
+        validateTextReference(errors, localization, owner, "description", achievement->descriptionTextId);
+        validateTextReference(errors, localization, owner, "goal", achievement->goalTextId);
+        validateTextReference(errors, localization, owner, "reward", achievement->rewardTextId);
+        validateTextReference(errors, localization, owner, "unlock_hint", achievement->unlockHintTextId);
+        validateUnlockReward(errors, content, owner, achievement->reward);
+
+        for (const std::string& archetypeId : achievement->requiredUnlockedArchetypeIds) {
+            if (!content.archetypes().contains(PlayableArchetypeId(archetypeId))) {
+                addError(errors, owner + " requires unknown unlocked archetype '" + archetypeId + "'");
+            }
+        }
+
+        for (const std::string& requiredChallengeId : achievement->requiredCompletedChallengeIds) {
+            if (!content.challenges().contains(requiredChallengeId)) {
+                addError(errors, owner + " requires unknown completed challenge '" + requiredChallengeId + "'");
+            }
+        }
+
+        for (const std::string& requiredAchievementId : achievement->requiredCompletedAchievementIds) {
+            if (!content.achievements().contains(requiredAchievementId)) {
+                addError(errors, owner + " requires unknown completed achievement '" + requiredAchievementId + "'");
+            }
+            if (requiredAchievementId == achievement->id) {
+                addError(errors, owner + " cannot require itself");
+            }
+        }
+
+        const AchievementCompletionCondition& completion = achievement->completion;
+        if (completion.type != "clear_floor" &&
+            completion.type != "clear_floor_with_elites" &&
+            completion.type != "clear_floor_with_archetype" &&
+            completion.type != "clear_floor_low_damage" &&
+            completion.type != "complete_challenges" &&
+            completion.type != "complete_achievements" &&
+            completion.type != "win_runs" &&
+            completion.type != "lose_runs") {
+            addError(errors, owner + " has unknown completion type '" + completion.type + "'");
+        }
+
+        if (!completion.floorId.empty() && !content.floors().contains(completion.floorId)) {
+            addError(errors, owner + " references unknown completion floor '" + completion.floorId + "'");
+        }
+
+        if (!completion.archetypeId.empty() && !content.archetypes().contains(PlayableArchetypeId(completion.archetypeId))) {
+            addError(errors, owner + " references unknown completion archetype '" + completion.archetypeId + "'");
+        }
+
+        if (completion.minVictories < 0 ||
+            completion.minDefeats < 0 ||
+            completion.minCompletedChallenges < 0 ||
+            completion.minCompletedAchievements < 0 ||
+            completion.minElitesKilled < 0 ||
+            completion.minBossesKilled < 0 ||
+            completion.minEventsCompleted < 0 ||
+            completion.minRelics < 0 ||
+            completion.minGold < 0) {
+            addError(errors, owner + " has negative minimum counters");
+        }
+
+        if (completion.maxDamageTaken < -1) {
+            addError(errors, owner + " has invalid max damage below -1");
+        }
+    }
+
+    for (const FloorDefinition* floor : content.floors().all()) {
+        if (floor == nullptr) {
+            continue;
+        }
+
+        validateTextReference(errors, localization, "Floor '" + floor->id + "'", "name", TextId(floor->nameTextId));
+
+        if (!floor->isImplemented) {
+            continue;
+        }
+
+        const EncounterDatabase& encounters = content.encountersForFloor(floor->id);
+        for (const EncounterDefinition* encounter : encounters.all()) {
+            if (encounter == nullptr) {
+                continue;
+            }
+
+            if (encounter->enemyIds.empty()) {
+                addError(errors, "Floor '" + floor->id + "' encounter '" + encounter->id + "' has no enemies");
+            }
+            if (encounter->enemyIds.size() > EncounterDefinition::MaximumEnemyCount) {
+                addError(
+                    errors,
+                    "Floor '" + floor->id + "' encounter '" + encounter->id + "' exceeds the supported enemy limit of " +
+                    std::to_string(EncounterDefinition::MaximumEnemyCount)
+                );
+            }
+            for (const std::string& enemyId : encounter->enemyIds) {
+                if (!content.enemies().contains(EnemyId(enemyId))) {
+                    addError(errors, "Floor '" + floor->id + "' encounter '" + encounter->id + "' references unknown enemy '" + enemyId + "'");
+                }
             }
         }
     }
@@ -931,8 +1540,94 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
 
     validateRewardTuning(errors, content);
     validateShopTuning(errors, content);
-    validateMapGeneration(errors, content);
-    validateFirstFloorContent(errors, content);
+    validateMapGeneration(errors, content, localization);
+
+
+
+    for (const AchievementDefinition* achievement : content.achievements().all()) {
+        if (achievement == nullptr) {
+            continue;
+        }
+
+        const std::string owner = "Achievement '" + achievement->id + "'";
+        validateTextReference(errors, localization, owner, "name", achievement->nameTextId);
+        validateTextReference(errors, localization, owner, "description", achievement->descriptionTextId);
+        validateTextReference(errors, localization, owner, "goal", achievement->goalTextId);
+        validateTextReference(errors, localization, owner, "reward", achievement->rewardTextId);
+        validateTextReference(errors, localization, owner, "unlock_hint", achievement->unlockHintTextId);
+        validateUnlockReward(errors, content, owner, achievement->reward);
+
+        for (const std::string& archetypeId : achievement->requiredUnlockedArchetypeIds) {
+            if (!content.archetypes().contains(PlayableArchetypeId(archetypeId))) {
+                addError(errors, owner + " requires unknown unlocked archetype '" + archetypeId + "'");
+            }
+        }
+
+        for (const std::string& requiredChallengeId : achievement->requiredCompletedChallengeIds) {
+            if (!content.challenges().contains(requiredChallengeId)) {
+                addError(errors, owner + " requires unknown completed challenge '" + requiredChallengeId + "'");
+            }
+        }
+
+        for (const std::string& requiredAchievementId : achievement->requiredCompletedAchievementIds) {
+            if (!content.achievements().contains(requiredAchievementId)) {
+                addError(errors, owner + " requires unknown completed achievement '" + requiredAchievementId + "'");
+            }
+            if (requiredAchievementId == achievement->id) {
+                addError(errors, owner + " cannot require itself");
+            }
+        }
+
+        const AchievementCompletionCondition& completion = achievement->completion;
+        if (completion.type != "clear_floor" &&
+            completion.type != "clear_floor_with_elites" &&
+            completion.type != "clear_floor_with_archetype" &&
+            completion.type != "clear_floor_low_damage" &&
+            completion.type != "complete_challenges" &&
+            completion.type != "complete_achievements" &&
+            completion.type != "win_runs" &&
+            completion.type != "lose_runs") {
+            addError(errors, owner + " has unknown completion type '" + completion.type + "'");
+        }
+
+        if (!completion.floorId.empty() && !content.floors().contains(completion.floorId)) {
+            addError(errors, owner + " references unknown completion floor '" + completion.floorId + "'");
+        }
+
+        if (!completion.archetypeId.empty() && !content.archetypes().contains(PlayableArchetypeId(completion.archetypeId))) {
+            addError(errors, owner + " references unknown completion archetype '" + completion.archetypeId + "'");
+        }
+
+        if (completion.minVictories < 0 ||
+            completion.minDefeats < 0 ||
+            completion.minCompletedChallenges < 0 ||
+            completion.minCompletedAchievements < 0 ||
+            completion.minElitesKilled < 0 ||
+            completion.minBossesKilled < 0 ||
+            completion.minEventsCompleted < 0 ||
+            completion.minRelics < 0 ||
+            completion.minGold < 0) {
+            addError(errors, owner + " has negative minimum counters");
+        }
+
+        if (completion.maxDamageTaken < -1) {
+            addError(errors, owner + " has invalid max damage below -1");
+        }
+    }
+
+    for (const FloorDefinition* floor : content.floors().all()) {
+        if (floor == nullptr || !floor->isImplemented) {
+            continue;
+        }
+
+        validateFloorContent(
+            errors,
+            content,
+            *floor,
+            content.mapGenerationForFloor(floor->id),
+            content.encountersForFloor(floor->id)
+        );
+    }
 
     if (!errors.empty()) {
         throw std::runtime_error(joinErrors(errors));

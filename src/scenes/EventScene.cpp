@@ -12,12 +12,16 @@
 EventScene::EventScene(
     const UiFont& font,
     const LocalizationManager& localization,
+    const CardDatabase& cards,
+    const RelicDatabase& relics,
+    const ConsumableDatabase& consumables,
     const RunState& runState,
     const RunEventDefinition& event,
     std::function<void(const RunEventChoiceDefinition&)> onChoice
 )
     : font_(font),
       localization_(localization),
+      previewFormatter_(localization, cards, relics, consumables),
       runState_(runState),
       event_(event),
       onChoice_(std::move(onChoice)) {}
@@ -94,7 +98,10 @@ void EventScene::render() const {
 
         std::string description = choiceDescription(choice);
         if (!availability.available) {
-            description += "\n" + choiceUnavailableText(availability);
+            const std::string unavailableText = choiceUnavailableText(availability);
+            if (!unavailableText.empty()) {
+                description += "\n" + unavailableText;
+            }
         }
 
         const std::vector<std::string> paragraphs = BasicUi::wrapText(font_, description, 15.f, bounds.width - 44.f);
@@ -132,7 +139,7 @@ Rectangle EventScene::panelBounds() const {
 
 Rectangle EventScene::choiceBounds(const std::size_t index) const {
     const Rectangle panel = panelBounds();
-    const float height = 104.f;
+    const float height = 128.f;
     const float spacing = 14.f;
     const float total = static_cast<float>(event_.choices.size()) * height + static_cast<float>(event_.choices.size() - 1) * spacing;
     const float startY = panel.y + panel.height - total - 30.f;
@@ -144,11 +151,16 @@ RunEventChoiceAvailability EventScene::choiceAvailability(const RunEventChoiceDe
 }
 
 std::string EventScene::choiceDescription(const RunEventChoiceDefinition& choice) const {
-    if (!choice.descriptionTextId.value.empty()) {
-        return localization_.get(choice.descriptionTextId);
+    std::string description = !choice.descriptionTextId.value.empty()
+        ? localization_.get(choice.descriptionTextId)
+        : localization_.get(TextId("event.choice.no_effect"));
+
+    const std::string preview = previewFormatter_.describeChoice(choice);
+    if (!preview.empty()) {
+        description += "\n" + preview;
     }
 
-    return localization_.get(TextId("event.choice.no_effect"));
+    return description;
 }
 
 std::string EventScene::choiceUnavailableText(const RunEventChoiceAvailability& availability) const {
@@ -165,62 +177,8 @@ std::string EventScene::choiceUnavailableText(const RunEventChoiceAvailability& 
         } else {
             out << " ";
         }
-        out << blockReasonText(availability.reasons[i]);
+        out << previewFormatter_.describeBlockReason(availability.reasons[i]);
     }
 
     return out.str();
-}
-
-std::string EventScene::blockReasonText(const RunEventChoiceBlockReason& reason) const {
-    switch (reason.type) {
-        case RunEventChoiceBlockReasonType::NotEnoughGold:
-            return localization_.format(
-                TextId("event.choice.unavailable.gold"),
-                {{"current", std::to_string(reason.current)}, {"required", std::to_string(reason.required)}}
-            );
-
-        case RunEventChoiceBlockReasonType::NotEnoughHp:
-            return localization_.format(
-                TextId("event.choice.unavailable.hp"),
-                {{"current", std::to_string(reason.current)}, {"required", std::to_string(reason.required)}}
-            );
-
-        case RunEventChoiceBlockReasonType::NoFreeConsumableSlot:
-            return localization_.format(
-                TextId("event.choice.unavailable.consumable_slot"),
-                {{"current", std::to_string(reason.current)}, {"maximum", std::to_string(reason.required)}}
-            );
-
-        case RunEventChoiceBlockReasonType::NotEnoughCards:
-            return localization_.format(
-                TextId("event.choice.unavailable.deck_size"),
-                {{"current", std::to_string(reason.current)}, {"required", std::to_string(reason.required)}}
-            );
-
-        case RunEventChoiceBlockReasonType::MissingRequiredRelic:
-            return localization_.format(
-                TextId("event.choice.unavailable.required_relic"),
-                {{"id", reason.id}}
-            );
-
-        case RunEventChoiceBlockReasonType::HasForbiddenRelic:
-            return localization_.format(
-                TextId("event.choice.unavailable.forbidden_relic"),
-                {{"id", reason.id}}
-            );
-
-        case RunEventChoiceBlockReasonType::MissingRequiredCard:
-            return localization_.format(
-                TextId("event.choice.unavailable.required_card"),
-                {{"id", reason.id}}
-            );
-
-        case RunEventChoiceBlockReasonType::HasForbiddenCard:
-            return localization_.format(
-                TextId("event.choice.unavailable.forbidden_card"),
-                {{"id", reason.id}}
-            );
-    }
-
-    return localization_.get(TextId("event.choice.unavailable.unknown"));
 }

@@ -23,7 +23,8 @@ public:
         EntityId target,
         int rawBlock,
         const CardId& cardId,
-        DiceCorruption diceCorruption
+        DiceCorruption diceCorruption,
+        bool usesActorStats
     ) const;
 
     ModifiedValueRange previewBlock(
@@ -33,7 +34,8 @@ public:
         int rawMin,
         int rawMax,
         const CardId& cardId,
-        DiceCorruption diceCorruption
+        DiceCorruption diceCorruption,
+        bool usesActorStats
     ) const;
 
 private:

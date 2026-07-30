@@ -60,4 +60,14 @@ void RewardSystem::applyReward(
     for (const RelicRewardSelection& relic : selection.selectedRelics) {
         addRelicToRun(run, relic.relicId, relic.actorDefinitionId);
     }
+
+    if (!selection.selectedActiveItemId.empty() && selection.selectedActiveItemId != run.activeItem.itemId) {
+        const bool replaced = !run.activeItem.empty();
+        run.activeItem.itemId = selection.selectedActiveItemId;
+        run.activeItem.charge = 0;
+        ++run.stats.activeItemsGained;
+        if (replaced) {
+            ++run.stats.activeItemsReplaced;
+        }
+    }
 }

@@ -10,7 +10,8 @@ enum class RewardOptionType {
     Gold,
     CardChoice,
     Consumable,
-    Relic
+    Relic,
+    ActiveItem
 };
 
 struct RewardOption {
@@ -20,6 +21,7 @@ struct RewardOption {
     std::vector<CardRewardOption> cardOptions;
     std::string consumableId;
     std::string relicId;
+    std::string activeItemId;
 
     static RewardOption goldReward(int amount) {
         RewardOption option;
@@ -46,6 +48,13 @@ struct RewardOption {
         RewardOption option;
         option.type = RewardOptionType::Relic;
         option.relicId = std::move(id);
+        return option;
+    }
+
+    static RewardOption activeItem(std::string id) {
+        RewardOption option;
+        option.type = RewardOptionType::ActiveItem;
+        option.activeItemId = std::move(id);
         return option;
     }
 };

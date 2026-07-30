@@ -11,11 +11,17 @@ struct RunMapLayoutConfig {
     float nodeSpacingY = 170.f;
 };
 
+struct RunMapPlacementRules {
+    int maxPerLayer = 0;
+    int minLayerGap = 0;
+};
+
 struct RunMapSpecialNodeConfig {
     int count = 0;
     int minLayer = 1;
     int maxLayer = 1;
     bool fullLayer = false;
+    RunMapPlacementRules placement;
 };
 
 struct RunMapEliteConfig {
@@ -23,6 +29,7 @@ struct RunMapEliteConfig {
     int maximum = 2;
     int minLayer = 1;
     int maxLayer = 1;
+    RunMapPlacementRules placement;
 };
 
 struct RunMapEventConfig {
@@ -30,6 +37,7 @@ struct RunMapEventConfig {
     int maximum = 0;
     int minLayer = 1;
     int maxLayer = 1;
+    RunMapPlacementRules placement;
 };
 
 class RunMapGenerationConfig {
@@ -67,10 +75,10 @@ private:
     int eventWeight_ = 30;
     int extraConnectionChance_ = 35;
     int questionMarkCombatChance_ = 30;
-    RunMapSpecialNodeConfig shop_{1, 2, 8, false};
-    RunMapSpecialNodeConfig chests_{0, 1, 1, false};
-    RunMapEliteConfig elites_{1, 2, 3, 8};
-    RunMapEventConfig events_{0, 0, 1, 1};
+    RunMapSpecialNodeConfig shop_{1, 2, 8, false, RunMapPlacementRules{}};
+    RunMapSpecialNodeConfig chests_{0, 1, 1, false, RunMapPlacementRules{}};
+    RunMapEliteConfig elites_{1, 2, 3, 8, RunMapPlacementRules{}};
+    RunMapEventConfig events_{0, 0, 1, 1, RunMapPlacementRules{}};
     bool hasFixedEvents_ = false;
     RunMapLayoutConfig layout_;
 };

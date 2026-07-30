@@ -20,4 +20,5 @@ struct RunEventDefinition {
     TextId descriptionTextId;
     std::vector<RunEventChoiceDefinition> choices;
     std::vector<std::string> eventPoolIds;
+    RunEventChoiceRequirements requirements;
 };

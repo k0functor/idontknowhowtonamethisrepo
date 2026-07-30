@@ -2,34 +2,12 @@
 
 #include "combat/CombatState.hpp"
 #include "effects/EffectTarget.hpp"
-#include "localization/LocalizationManager.hpp"
-#include "localization/TextId.hpp"
-
-#include <iomanip>
 #include <optional>
-#include <sstream>
 #include <stdexcept>
 
-namespace {
-std::string compactDouble(const double value) {
-    std::ostringstream out;
-    out << std::fixed << std::setprecision(2) << value;
 
-    std::string result = out.str();
-    while (!result.empty() && result.back() == '0') {
-        result.pop_back();
-    }
-    if (!result.empty() && result.back() == '.') {
-        result.pop_back();
-    }
-
-    return result.empty() ? "0" : result;
-}
-}
-
-RelicSystem::RelicSystem(const RelicDatabase& database, const LocalizationManager& localization)
-    : database_(database),
-      localization_(localization) {}
+RelicSystem::RelicSystem(const RelicDatabase& database)
+    : database_(database) {}
 
 void RelicSystem::setRelics(const std::vector<std::string>& relicIds) {
     inventory_.setFromIds(relicIds);
@@ -53,85 +31,6 @@ RelicInventory& RelicSystem::inventory() {
 
 void RelicSystem::startCombat() {
     inventory_.resetCombatState();
-}
-
-void RelicSystem::collectModifiers(
-    const CombatState& state,
-    const ModifierContext& context,
-    std::vector<ValueModifier>& output
-) const {
-    if (!state.hasEntity(context.source)) {
-        return;
-    }
-
-    if (!state.isPlayer(context.source)) {
-        return;
-    }
-
-    const CombatEntity& source = state.entity(context.source);
-
-    for (const RelicInstance& instance : inventory_.all()) {
-        if (!instance.ownerActorDefinitionId.empty() && source.definitionId != instance.ownerActorDefinitionId) {
-            continue;
-        }
-
-        if (!database_.contains(instance.id)) {
-            continue;
-        }
-
-        const RelicDefinition& relic = database_.get(instance.id);
-
-        for (const RelicModifierDefinition& modifier : relic.modifiers) {
-            if (modifier.playerOnly && !state.isPlayer(context.source)) {
-                continue;
-            }
-
-            switch (modifier.type) {
-                case RelicModifierType::OutgoingDamageAdd:
-                    if (context.effectType == EffectType::Damage) {
-                        output.push_back({
-                            instance.id.value,
-                            localization_.format(TextId("modifier.relic.outgoing_damage_add"), {{"amount", std::to_string(modifier.amount)}}),
-                            ModifierOperation::Add,
-                            modifier.amount,
-                            1.0,
-                            modifier.priority
-                        });
-                    }
-                    break;
-
-                case RelicModifierType::OutgoingDamageMultiply:
-                    if (context.effectType == EffectType::Damage) {
-                        output.push_back({
-                            instance.id.value,
-                            localization_.format(TextId("modifier.relic.outgoing_damage_multiply"), {{"multiplier", compactDouble(modifier.multiplier)}}),
-                            ModifierOperation::Multiply,
-                            0,
-                            modifier.multiplier,
-                            modifier.priority
-                        });
-                    }
-                    break;
-
-                case RelicModifierType::BlockAdd:
-                    if (context.effectType == EffectType::Block) {
-                        output.push_back({
-                            instance.id.value,
-                            localization_.format(TextId("modifier.relic.block_add"), {{"amount", std::to_string(modifier.amount)}}),
-                            ModifierOperation::Add,
-                            modifier.amount,
-                            1.0,
-                            modifier.priority
-                        });
-                    }
-                    break;
-
-                case RelicModifierType::GoldRewardMultiply:
-                    // Reward modifiers are handled by RewardGenerator, not combat ModifierSystem.
-                    break;
-            }
-        }
-    }
 }
 
 void RelicSystem::handleEvent(
@@ -169,8 +68,6 @@ void RelicSystem::handleEvent(
             context.diceCorruption = DiceCorruption{};
             context.random = &random;
 
-            // For self-targeted relic effects, the source is enough. For explicit target
-            // effects, event.target remains available through context.explicitTarget.
             effectSystem.applyEffects(state, trigger.effects, context);
 
             ++instance.triggersThisCombat;
@@ -215,6 +112,14 @@ bool RelicSystem::triggerMatches(
     }
 
     if (trigger.cardType.has_value() && (!event.cardType.has_value() || event.cardType != *trigger.cardType)) {
+        return false;
+    }
+
+    if (trigger.breakdownType.has_value() && event.breakdownType != *trigger.breakdownType) {
+        return false;
+    }
+
+    if (trigger.minimumBreakdownSeverity > 0 && event.breakdownSeverity < trigger.minimumBreakdownSeverity) {
         return false;
     }
 

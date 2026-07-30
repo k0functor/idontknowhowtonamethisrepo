@@ -60,6 +60,7 @@ PlayCardResult CardPlaySystem::playCard(
     context.cardInstanceId = request.cardInstanceId;
     context.cardDefinitionId = definition.id;
     context.diceCorruption = definition.diceCorruption;
+    context.usesActorStats = true;
     context.random = &random;
 
     effectSystem_.applyEffects(state, definition.effects, context);
@@ -75,12 +76,15 @@ PlayCardResult CardPlaySystem::playCard(
         CardKeyword::Exhaust
     ) != definition.keywords.end();
 
-    if (exhaustByKeyword || removedCard->markedForExhaust) {
+    if (exhaustByKeyword || removedCard->markedForExhaust || removedCard->temporary) {
         state.deck.exhaustPile.addTop(std::move(*removedCard));
     } else {
         state.deck.discardPile.addTop(std::move(*removedCard));
     }
 
+    state.playedCardIds.push_back(definition.id.value);
+    ++state.telemetry.cardsPlayed;
+    state.telemetry.energySpentOnCards += energyCost;
     state.log.add(CombatLogEntryType::CardPlayed, {{"card", definition.id.value}});
 
     if (eventBus_ != nullptr) {

@@ -27,7 +27,8 @@ public:
         EntityId target,
         int rawDamage,
         const CardId& cardId,
-        DiceCorruption diceCorruption
+        DiceCorruption diceCorruption,
+        bool usesActorStats
     ) const;
 
     DamagePreview previewDamage(
@@ -37,7 +38,8 @@ public:
         int rawMin,
         int rawMax,
         const CardId& cardId,
-        DiceCorruption diceCorruption
+        DiceCorruption diceCorruption,
+        bool usesActorStats
     ) const;
 
     DamagePreview previewOutgoingDamage(
@@ -46,7 +48,8 @@ public:
         int rawMin,
         int rawMax,
         const CardId& cardId,
-        DiceCorruption diceCorruption
+        DiceCorruption diceCorruption,
+        bool usesActorStats
     ) const;
 
 private:

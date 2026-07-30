@@ -1,0 +1,483 @@
+{
+  "pools": {
+    "combat": [
+      {
+        "id": "act5_oathbound_soldier",
+        "enemies": [
+          "oathbound_soldier"
+        ],
+        "weight": 5,
+        "min_layer": 0,
+        "max_layer": 3
+      },
+      {
+        "id": "act5_crownless_supplicant",
+        "enemies": [
+          "crownless_supplicant"
+        ],
+        "weight": 5,
+        "min_layer": 0,
+        "max_layer": 3
+      },
+      {
+        "id": "act5_black_censer",
+        "enemies": [
+          "black_censer"
+        ],
+        "weight": 4,
+        "min_layer": 0,
+        "max_layer": 5
+      },
+      {
+        "id": "act5_marrow_scribe",
+        "enemies": [
+          "marrow_scribe"
+        ],
+        "weight": 4,
+        "min_layer": 1,
+        "max_layer": 6
+      },
+      {
+        "id": "act5_hollow_bannerman",
+        "enemies": [
+          "hollow_bannerman"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_chain_confessor",
+        "enemies": [
+          "chain_confessor"
+        ],
+        "weight": 3,
+        "min_layer": 2,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_grave_courtier",
+        "enemies": [
+          "grave_courtier"
+        ],
+        "weight": 3,
+        "min_layer": 1,
+        "max_layer": 7
+      },
+      {
+        "id": "act5_oath_eater",
+        "enemies": [
+          "oath_eater"
+        ],
+        "weight": 2,
+        "min_layer": 3,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_censer_and_supplicant",
+        "enemies": [
+          "black_censer",
+          "crownless_supplicant"
+        ],
+        "weight": 2,
+        "min_layer": 2,
+        "max_layer": 7
+      },
+      {
+        "id": "act5_scribe_and_soldier",
+        "enemies": [
+          "marrow_scribe",
+          "oathbound_soldier"
+        ],
+        "weight": 2,
+        "min_layer": 3,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_banner_and_courtier",
+        "enemies": [
+          "hollow_bannerman",
+          "grave_courtier"
+        ],
+        "weight": 2,
+        "min_layer": 4,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_confessor_and_censer",
+        "enemies": [
+          "chain_confessor",
+          "black_censer"
+        ],
+        "weight": 1,
+        "min_layer": 4,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_eater_and_supplicant",
+        "enemies": [
+          "oath_eater",
+          "crownless_supplicant"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_last_court_patrol",
+        "enemies": [
+          "oathbound_soldier",
+          "grave_courtier",
+          "black_censer"
+        ],
+        "weight": 1,
+        "min_layer": 8,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_soldier_and_banner",
+        "enemies": [
+          "oathbound_soldier",
+          "hollow_bannerman"
+        ],
+        "weight": 4,
+        "min_layer": 4,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_censer_courtier_pair",
+        "enemies": [
+          "black_censer",
+          "grave_courtier"
+        ],
+        "weight": 4,
+        "min_layer": 4,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_supplicant_marrow_chain",
+        "enemies": [
+          "crownless_supplicant",
+          "marrow_scribe",
+          "chain_confessor"
+        ],
+        "weight": 2,
+        "min_layer": 7,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_oath_eater_guard",
+        "enemies": [
+          "oath_eater",
+          "oathbound_soldier"
+        ],
+        "weight": 4,
+        "min_layer": 6,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_banner_censer_rite",
+        "enemies": [
+          "hollow_bannerman",
+          "black_censer",
+          "crownless_supplicant"
+        ],
+        "weight": 2,
+        "min_layer": 8,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_confessor_and_courtier",
+        "enemies": [
+          "chain_confessor",
+          "grave_courtier"
+        ],
+        "weight": 4,
+        "min_layer": 7,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_marrow_oath_scribe_line",
+        "enemies": [
+          "marrow_scribe",
+          "marrow_scribe",
+          "oathbound_soldier"
+        ],
+        "weight": 2,
+        "min_layer": 9,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_oath_eater_and_censer",
+        "enemies": [
+          "oath_eater",
+          "black_censer"
+        ],
+        "weight": 4,
+        "min_layer": 8,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_hollow_march",
+        "enemies": [
+          "hollow_bannerman",
+          "oathbound_soldier",
+          "grave_courtier"
+        ],
+        "weight": 2,
+        "min_layer": 10,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_last_tax_line",
+        "enemies": [
+          "chain_confessor",
+          "crownless_supplicant",
+          "black_censer"
+        ],
+        "weight": 3,
+        "min_layer": 9,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_court_blood_debt",
+        "enemies": [
+          "grave_courtier",
+          "oath_eater",
+          "marrow_scribe"
+        ],
+        "weight": 3,
+        "min_layer": 10,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_oath_wall",
+        "enemies": [
+          "oathbound_soldier",
+          "hollow_bannerman",
+          "chain_confessor"
+        ],
+        "weight": 3,
+        "min_layer": 11,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_crownless_procession",
+        "enemies": [
+          "crownless_supplicant",
+          "grave_courtier",
+          "hollow_bannerman"
+        ],
+        "weight": 3,
+        "min_layer": 11,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_black_censer_triage",
+        "enemies": [
+          "black_censer",
+          "chain_confessor",
+          "marrow_scribe"
+        ],
+        "weight": 3,
+        "min_layer": 12,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_oath_eater_court",
+        "enemies": [
+          "oath_eater",
+          "grave_courtier",
+          "crownless_supplicant"
+        ],
+        "weight": 2,
+        "min_layer": 13,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_final_bannerman_gate",
+        "enemies": [
+          "hollow_bannerman",
+          "oath_eater",
+          "black_censer"
+        ],
+        "weight": 1,
+        "min_layer": 15,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_chain_chapel_guard",
+        "enemies": [
+          "chain_confessor",
+          "oathbound_soldier",
+          "marrow_scribe"
+        ],
+        "weight": 2,
+        "min_layer": 15,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_throne_anteroom",
+        "enemies": [
+          "oath_eater",
+          "hollow_bannerman",
+          "chain_confessor"
+        ],
+        "weight": 1,
+        "min_layer": 16,
+        "max_layer": 17
+      }
+    ],
+    "elite": [
+      {
+        "id": "act5_royal_headsman",
+        "enemies": [
+          "royal_headsman"
+        ],
+        "weight": 4,
+        "min_layer": 3,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_reliquary_knight",
+        "enemies": [
+          "reliquary_knight"
+        ],
+        "weight": 4,
+        "min_layer": 3,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_choir_of_blades",
+        "enemies": [
+          "choir_of_blades"
+        ],
+        "weight": 3,
+        "min_layer": 3,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_false_saint",
+        "enemies": [
+          "false_saint"
+        ],
+        "weight": 3,
+        "min_layer": 4,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_iron_abbot",
+        "enemies": [
+          "iron_abbot"
+        ],
+        "weight": 3,
+        "min_layer": 4,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_headsman_and_scribe",
+        "enemies": [
+          "royal_headsman",
+          "marrow_scribe"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_abbot_and_censer",
+        "enemies": [
+          "iron_abbot",
+          "black_censer"
+        ],
+        "weight": 1,
+        "min_layer": 5,
+        "max_layer": 17
+      },
+      {
+        "id": "act5_headsman_and_banner",
+        "enemies": [
+          "royal_headsman",
+          "hollow_bannerman"
+        ],
+        "weight": 3,
+        "min_layer": 5,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_reliquary_knight_and_scribe",
+        "enemies": [
+          "reliquary_knight",
+          "marrow_scribe"
+        ],
+        "weight": 3,
+        "min_layer": 6,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_choir_and_supplicants",
+        "enemies": [
+          "choir_of_blades",
+          "crownless_supplicant",
+          "crownless_supplicant"
+        ],
+        "weight": 2,
+        "min_layer": 7,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_false_saint_and_confessor",
+        "enemies": [
+          "false_saint",
+          "chain_confessor"
+        ],
+        "weight": 2,
+        "min_layer": 8,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_iron_abbot_and_eater",
+        "enemies": [
+          "iron_abbot",
+          "oath_eater"
+        ],
+        "weight": 2,
+        "min_layer": 9,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_reliquary_and_censer",
+        "enemies": [
+          "reliquary_knight",
+          "black_censer",
+          "grave_courtier"
+        ],
+        "weight": 1,
+        "min_layer": 12,
+        "max_layer": 16
+      },
+      {
+        "id": "act5_headsman_court",
+        "enemies": [
+          "royal_headsman",
+          "grave_courtier",
+          "hollow_bannerman"
+        ],
+        "weight": 1,
+        "min_layer": 13,
+        "max_layer": 16
+      }
+    ],
+    "boss": [
+      {
+        "id": "act5_the_oath_buried_king",
+        "enemies": [
+          "the_oath_buried_king"
+        ],
+        "weight": 1,
+        "min_layer": 19,
+        "max_layer": 19
+      }
+    ]
+  }
+}

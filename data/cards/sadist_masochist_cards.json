@@ -663,7 +663,13 @@
         "target": "single_enemy",
         "value": {
           "type": "fixed",
-          "amount": 6
+          "amount": 5
+        },
+        "scaling": {
+          "status": "vulnerable",
+          "status_owner": "target",
+          "bonus_per_status_stack": 1,
+          "maximum_bonus": 3
         }
       },
       {
@@ -671,17 +677,23 @@
         "target": "single_enemy",
         "value": {
           "type": "fixed",
-          "amount": 6
+          "amount": 5
+        },
+        "scaling": {
+          "status": "vulnerable",
+          "status_owner": "target",
+          "bonus_per_status_stack": 1,
+          "maximum_bonus": 3
         }
       },
       {
         "type": "apply_status",
         "target": "single_enemy",
-        "status": "vulnerable",
         "value": {
           "type": "fixed",
           "amount": 1
-        }
+        },
+        "status": "vulnerable"
       }
     ],
     "upgrade": {
@@ -691,7 +703,13 @@
           "target": "single_enemy",
           "value": {
             "type": "fixed",
-            "amount": 8
+            "amount": 7
+          },
+          "scaling": {
+            "status": "vulnerable",
+            "status_owner": "target",
+            "bonus_per_status_stack": 1,
+            "maximum_bonus": 4
           }
         },
         {
@@ -699,7 +717,13 @@
           "target": "single_enemy",
           "value": {
             "type": "fixed",
-            "amount": 8
+            "amount": 7
+          },
+          "scaling": {
+            "status": "vulnerable",
+            "status_owner": "target",
+            "bonus_per_status_stack": 1,
+            "maximum_bonus": 4
           }
         },
         {
@@ -1084,23 +1108,23 @@
       {
         "type": "apply_status",
         "target": "self",
-        "status": "strength",
         "value": {
           "type": "fixed",
           "amount": 1
-        }
+        },
+        "status": "strength"
       },
       {
         "type": "apply_status",
         "target": "self",
-        "status": "dexterity",
         "value": {
           "type": "fixed",
           "amount": 1
-        }
+        },
+        "status": "dexterity"
       },
       {
-        "type": "draw_cards",
+        "type": "recover_cards",
         "target": "self",
         "value": {
           "type": "fixed",
@@ -1132,11 +1156,11 @@
           "status": "dexterity"
         },
         {
-          "type": "draw_cards",
+          "type": "recover_cards",
           "target": "self",
           "value": {
             "type": "fixed",
-            "amount": 1
+            "amount": 2
           }
         }
       ]

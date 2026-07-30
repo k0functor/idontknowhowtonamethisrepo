@@ -1,0 +1,175 @@
+[
+  {
+    "id": "first_boss_felled",
+    "name": "achievement.first_boss_felled.name",
+    "description": "achievement.first_boss_felled.description",
+    "goal": "achievement.first_boss_felled.goal",
+    "reward": "achievement.reward.unlock_replicant_monk",
+    "unlock_hint": "achievement.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 10,
+    "completion": {
+      "type": "clear_floor",
+      "floor_id": "floor1",
+      "min_bosses_killed": 1
+    },
+    "rewards": {
+      "unlock_archetypes": [
+        "replicant",
+        "monk"
+      ]
+    }
+  },
+  {
+    "id": "archive_survivor",
+    "name": "achievement.archive_survivor.name",
+    "description": "achievement.archive_survivor.description",
+    "goal": "achievement.archive_survivor.goal",
+    "reward": "achievement.reward.unlock_merchant_psychopath",
+    "unlock_hint": "achievement.archive_survivor.unlock_hint",
+    "is_available": true,
+    "selection_order": 20,
+    "required_completed_achievements": [
+      "first_boss_felled"
+    ],
+    "completion": {
+      "type": "clear_floor",
+      "floor_id": "floor2",
+      "min_bosses_killed": 2
+    },
+    "rewards": {
+      "unlock_archetypes": [
+        "merchant",
+        "lost_psychopath"
+      ]
+    }
+  },
+  {
+    "id": "ashen_conservatory_survivor",
+    "name": "achievement.ashen_conservatory_survivor.name",
+    "description": "achievement.ashen_conservatory_survivor.description",
+    "goal": "achievement.ashen_conservatory_survivor.goal",
+    "reward": "achievement.reward.furnace_heart_and_sadist_masochist",
+    "unlock_hint": "achievement.ashen_conservatory_survivor.unlock_hint",
+    "is_available": true,
+    "selection_order": 30,
+    "required_completed_achievements": [
+      "archive_survivor"
+    ],
+    "completion": {
+      "type": "clear_floor",
+      "floor_id": "floor3",
+      "min_bosses_killed": 3
+    },
+    "rewards": {
+      "unlock_archetypes": [
+        "sadist_masochist"
+      ],
+      "unlock_relics": [
+        "furnace_heart"
+      ]
+    }
+  },
+  {
+    "id": "elite_appetite",
+    "name": "achievement.elite_appetite.name",
+    "description": "achievement.elite_appetite.description",
+    "goal": "achievement.elite_appetite.goal",
+    "reward": "achievement.reward.iron_nerves",
+    "unlock_hint": "achievement.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 40,
+    "completion": {
+      "type": "clear_floor_with_elites",
+      "floor_id": "floor2",
+      "min_elites_killed": 2,
+      "min_bosses_killed": 2
+    },
+    "rewards": {
+      "unlock_relics": [
+        "iron_nerves"
+      ]
+    }
+  },
+  {
+    "id": "careful_archive",
+    "name": "achievement.careful_archive.name",
+    "description": "achievement.careful_archive.description",
+    "goal": "achievement.careful_archive.goal",
+    "reward": "achievement.reward.empty_dock",
+    "unlock_hint": "achievement.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 50,
+    "completion": {
+      "type": "clear_floor_low_damage",
+      "floor_id": "floor2",
+      "max_damage_taken": 80,
+      "min_bosses_killed": 2
+    },
+    "rewards": {
+      "unlock_relics": [
+        "empty_dock"
+      ]
+    }
+  },
+  {
+    "id": "challenge_initiate",
+    "name": "achievement.challenge_initiate.name",
+    "description": "achievement.challenge_initiate.description",
+    "goal": "achievement.challenge_initiate.goal",
+    "reward": "achievement.reward.merchant_emergency_fund",
+    "unlock_hint": "achievement.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 60,
+    "completion": {
+      "type": "complete_challenges",
+      "min_completed_challenges": 1
+    },
+    "rewards": {
+      "unlock_cards": [
+        "merchant_emergency_fund"
+      ]
+    }
+  },
+  {
+    "id": "challenge_collector",
+    "name": "achievement.challenge_collector.name",
+    "description": "achievement.challenge_collector.description",
+    "goal": "achievement.challenge_collector.goal",
+    "reward": "achievement.reward.tattered_manual",
+    "unlock_hint": "achievement.challenge_collector.unlock_hint",
+    "is_available": true,
+    "selection_order": 70,
+    "required_completed_achievements": [
+      "challenge_initiate"
+    ],
+    "completion": {
+      "type": "complete_challenges",
+      "min_completed_challenges": 3
+    },
+    "rewards": {
+      "unlock_relics": [
+        "tattered_manual"
+      ]
+    }
+  },
+  {
+    "id": "three_bad_lessons",
+    "name": "achievement.three_bad_lessons.name",
+    "description": "achievement.three_bad_lessons.description",
+    "goal": "achievement.three_bad_lessons.goal",
+    "reward": "achievement.reward.lost_psychopath_steady_breath",
+    "unlock_hint": "achievement.unlock_hint.default",
+    "is_available": true,
+    "selection_order": 80,
+    "completion": {
+      "type": "lose_runs",
+      "min_defeats": 3
+    },
+    "rewards": {
+      "unlock_cards": [
+        "lost_psychopath_steady_breath"
+      ]
+    }
+  }
+]

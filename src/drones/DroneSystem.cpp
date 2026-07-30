@@ -35,7 +35,7 @@ void DroneSystem::summonDrone(
     CombatState& state,
     const std::string& droneId,
     const EntityId owner,
-    Random* random
+    Random* /*random*/
 ) const {
     if (droneId.empty()) {
         return;
@@ -171,7 +171,7 @@ void DroneSystem::applyDroneAction(
     const DroneSlot& slot,
     const DroneActionDefinition& action,
     Random* random,
-    const DroneActionKind kind
+    const DroneActionKind /*kind*/
 ) const {
     const EntityId owner = validOwnerOrFallback(state, slot.owner);
 
@@ -229,7 +229,8 @@ void DroneSystem::applyDroneEffect(
                     target,
                     damage,
                     baseContext.cardDefinitionId,
-                    baseContext.diceCorruption
+                    baseContext.diceCorruption,
+                    false
                 );
             }
             return;
@@ -242,7 +243,8 @@ void DroneSystem::applyDroneEffect(
                     target,
                     resolvedValue.actual,
                     baseContext.cardDefinitionId,
-                    baseContext.diceCorruption
+                    baseContext.diceCorruption,
+                    false
                 );
             }
             return;
@@ -300,13 +302,19 @@ void DroneSystem::applyDroneEffect(
             return;
 
         case EffectType::DiscardCards:
+        case EffectType::RecoverCards:
         case EffectType::GainStress:
+        case EffectType::SpendStressDamage:
+        case EffectType::SpendStressBlock:
+        case EffectType::SpendStressEnergy:
+        case EffectType::SpendStressDraw:
         case EffectType::LoseEnergy:
         case EffectType::LoseStress:
         case EffectType::LoseHp:
         case EffectType::EnterStance:
         case EffectType::SummonDrone:
         case EffectType::UseDrone:
+        case EffectType::PrimeStressBreakdown:
             throw std::runtime_error(
                 "Unsupported effect type in drone definition: '" + toString(effect.type) + "'"
             );

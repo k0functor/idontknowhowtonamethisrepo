@@ -100,8 +100,17 @@
   "enemy.action.candle_king_melted_crown.name": "Расплавленная корона",
   "enemy.action.candle_king_feeding_wick.name": "Питающийся фитиль",
   "enemy.action.candle_king_final_candle.name": "Последняя свеча",
-  "combat.log.stress_breakdown_discard": "{actor} сбрасывает карту «{card}» из-за срыва от стресса.",
+  "combat.log.stress_breakdown_discard": "{actor} сбрасывает карту «{card}» из-за высокого стресса.",
+  "combat.log.stress_breakdown_energy": "Из-за срыва {actor} теряет {amount} энергии.",
+  "combat.log.stress_breakdown_status_cards": "Навязчивые мысли добавляют {amount} статусных карт в руку персонажа {actor}.",
+  "combat.log.stress_breakdown_cost": "Из-за стресса карты персонажа {actor} стоят на {amount} энергии дороже в этом ходу.",
+  "combat.log.stress_breakdown_forced_card": "{actor} бесконтрольно разыгрывает карту «{card}».",
   "combat.log.monk_stance_shift_reward": "Смена стойки: +{energy} энергии, добор {draw} карт.",
   "combat.feedback.block": "Блок",
-  "combat.feedback.hp": "HP"
+  "combat.feedback.hp": "HP",
+  "combat.log.burn_damage": "Горение: {target} получает {amount} урона. Остаток горения: {remaining}",
+  "combat.log.stress_breakdown_prevented": "{actor} приходит в себя и предотвращает срыв от стресса.",
+  "combat.log.boss_phase_changed": "{boss} переходит в фазу «{phase}».",
+  "combat.log.boss_arena_effect": "Срабатывает правило арены босса {boss}: «{phase}».",
+  "combat.log.enemy_summoned": "Призвано подкрепление: {enemy}."
 }

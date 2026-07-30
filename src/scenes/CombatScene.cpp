@@ -1,6 +1,8 @@
 #include "CombatScene.hpp"
 #include "ui/VirtualViewport.hpp"
 
+#include "active_items/ActiveItemId.hpp"
+#include "active_items/ActiveItemSystem.hpp"
 #include "actors/PlayerActorDefinition.hpp"
 #include "actors/PlayerActorId.hpp"
 #include "cards/CardDefinition.hpp"
@@ -214,7 +216,8 @@ CombatScene::CombatScene(
     const LocalizationManager& localization,
     Random& random,
     const UiFont& uiFont,
-    const RunState& runState,
+    RunState& runState,
+    std::function<void(std::string)> onActiveItemUsed,
     std::function<void(const CombatResult&)> onCombatWon,
     std::function<void(const CombatResult&)> onCombatLost
 )
@@ -223,10 +226,11 @@ CombatScene::CombatScene(
       random_(random),
       uiFont_(uiFont),
       runState_(runState),
+      onActiveItemUsed_(std::move(onActiveItemUsed)),
       onCombatWon_(std::move(onCombatWon)),
       onCombatLost_(std::move(onCombatLost)),
-      modifierSystem_(localization_),
-      relicSystem_(content_.relics(), localization_),
+      modifierSystem_(localization_, content_.statuses()),
+      relicSystem_(content_.relics()),
       damageSystem_(modifierSystem_, &eventBus_),
       blockSystem_(modifierSystem_, &eventBus_),
       statusSystem_(content_.statuses(), &eventBus_),
@@ -253,6 +257,7 @@ CombatScene::CombatScene(
           droneSystem_,
           &eventBus_
       ),
+      bossPhaseSystem_(content_.enemies(), effectSystem_),
       cardPlaySystem_(
           content_.cards(),
           validator_,
@@ -268,15 +273,17 @@ CombatScene::CombatScene(
           blockSystem_
       ),
       enemyMoveSelector_(modifierSystem_),
-      playerTurnSystem_(drawSystem_, content_.cards()),
+      playerTurnSystem_(drawSystem_, content_.cards(), &eventBus_, &effectSystem_),
       enemyTurnSystem_(enemyMoveSelector_, effectSystem_),
       turnSystem_(
           content_.enemies(),
           playerTurnSystem_,
           enemyTurnSystem_,
           enemyMoveSelector_,
+          bossPhaseSystem_,
           statusSystem_,
           droneSystem_,
+          combatController_,
           5,
           &eventBus_
       ),
@@ -290,11 +297,11 @@ CombatScene::CombatScene(
           content_.statuses(),
           content_.drones(),
           content_.cards(),
+          content_.enemies(),
           cardViewModelBuilder_
       ),
       inspectModelBuilder_(content_, localization_) {
     relicSystem_.setRelics(runState_);
-    modifierSystem_.addProvider(relicSystem_);
     eventBus_.subscribe([this](const GameEvent& event) {
         relicSystem_.handleEvent(state_, event, effectSystem_, random_);
 
@@ -340,7 +347,9 @@ void CombatScene::update(const float deltaSeconds) {
     updatePlayedCardAnimations(deltaSeconds);
     updateCombatFeedbackAnimations(deltaSeconds);
     updateEnemyAttackAnimations(deltaSeconds);
+    updateGroupImpactAnimations(deltaSeconds);
     updateEnemyDeathAnimations(deltaSeconds);
+    sanitizeTargetSelection();
 
     const bool wasResolvingEndTurn = pendingEndTurnResolution_;
     if (pendingEndTurnResolution_ && playedCardAnimations_.empty()) {
@@ -395,6 +404,16 @@ void CombatScene::update(const float deltaSeconds) {
             onCombatLost_(finalResult_);
         }
 
+        return;
+    }
+
+    if (state_.pendingForcedCardPlay.has_value() && playedCardAnimations_.empty()) {
+        resolvePendingForcedCardPlay();
+        if (viewModelDirty_) {
+            rebuildViewModel(std::nullopt);
+            viewModelDirty_ = false;
+        }
+        finishCombatIfNeeded();
         return;
     }
 
@@ -526,6 +545,11 @@ void CombatScene::update(const float deltaSeconds) {
         return;
     }
 
+    if (handleActiveItemInput()) {
+        viewModelDirty_ = true;
+        return;
+    }
+
     handleKeyboardCombatInput();
 
     if (relicInspectModal_.isOpen()) {
@@ -605,7 +629,33 @@ void CombatScene::update(const float deltaSeconds) {
 
 void CombatScene::render() const {
     view_.render(uiFont_.available() ? &uiFont_.font() : nullptr);
+    if (skipNextEnemyTurn_ && !combatFinished_) {
+        BasicUi::drawCenteredTextFitted(
+            uiFont_,
+            localization_.get(TextId("active_item.hint.hourglass_armed")),
+            Rectangle{static_cast<float>(VirtualViewport::width()) * 0.5f - 170.f, 92.f, 340.f, 28.f},
+            18.f,
+            13.f,
+            Color{222, 194, 125, 255}
+        );
+    }
+    const bool breakdownGuardArmed = std::any_of(
+        state_.players.begin(),
+        state_.players.end(),
+        [this](const CombatEntity& player) { return player.isAlive() && state_.hasStressBreakdownGuard(player.id); }
+    );
+    if (breakdownGuardArmed && !combatFinished_) {
+        BasicUi::drawCenteredTextFitted(
+            uiFont_,
+            localization_.get(TextId("active_item.hint.breakdown_guard_armed")),
+            Rectangle{static_cast<float>(VirtualViewport::width()) * 0.5f - 190.f, 120.f, 380.f, 28.f},
+            18.f,
+            13.f,
+            Color{164, 220, 204, 255}
+        );
+    }
     renderCombatFeedbackAnimations();
+    renderGroupImpactAnimations();
 
     if (!combatFinished_) {
         renderPileButtons();
@@ -712,7 +762,7 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         }
 
         statusSystem_.applyStatus(state_, *target, statusId, amount);
-        turnSystem_.refreshEnemyIntentValues(state_);
+        turnSystem_.refreshEnemyIntentValues(state_, random_);
         viewModelDirty_ = true;
         output = localization_.format(
             TextId("debug.status_applied"),
@@ -878,6 +928,7 @@ void CombatScene::initializeCombat() {
     playedCardAnimations_.clear();
     enemyAttackAnimations_.clear();
     enemyDeathAnimations_.clear();
+    encounteredEnemyIds_.clear();
     pileOverlayMode_ = PileOverlayMode::None;
     pileOverlayScrollOffset_ = 0.f;
     relicInspectModal_.close();
@@ -892,6 +943,8 @@ void CombatScene::initializeCombat() {
     rewardAccepted_ = false;
 
     state_.resources.clearActorEnergy();
+    state_.enemyHpMultiplier = runState_.enemyHpMultiplier;
+    state_.enemyDamageMultiplier = runState_.enemyDamageMultiplier;
     // Sadist/Masochist has one shared hand and two separate energy pools.
     // The same hand is played in a fixed subturn order: Sadist, then
     // Masochist, then the enemies.
@@ -912,12 +965,12 @@ void CombatScene::initializeCombat() {
     playerId_ = state_.players.front().id;
     combatConsumableIds_ = runState_.consumableIds;
 
-    const std::vector<std::string> encounterEnemyIds = enemyIdsForNode(
+    encounteredEnemyIds_ = enemyIdsForNode(
         runState_,
         content_.encountersForFloor(runState_.currentFloorId),
         random_
     );
-    for (const std::string& enemyId : encounterEnemyIds) {
+    for (const std::string& enemyId : encounteredEnemyIds_) {
         addEnemyToCombat(
             state_,
             entityIds_,
@@ -1061,6 +1114,7 @@ void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) 
     }
 
     applyEnemyAttackVisuals(model);
+    applyGroupImpactVisuals(model);
     applyCombatFeedbackVisuals(model);
     applyEnemyDeathVisuals(model);
 
@@ -1303,6 +1357,32 @@ std::vector<DroneSlotViewModel> CombatScene::buildDroneSlotViewModels() const {
     return result;
 }
 
+bool CombatScene::resolvePendingForcedCardPlay() {
+    if (!state_.pendingForcedCardPlay.has_value()) {
+        return false;
+    }
+
+    const ForcedCardPlay request = *state_.pendingForcedCardPlay;
+    state_.pendingForcedCardPlay.reset();
+
+    if (!state_.hand.contains(request.cardInstanceId) || !state_.hasEntity(request.source)) {
+        return false;
+    }
+
+    std::optional<EntityId> target = request.target;
+    if (!target.has_value() || !state_.hasEntity(*target) || !state_.entity(*target).isAlive()) {
+        const std::vector<EntityId> enemies = state_.aliveEnemyIds();
+        if (enemies.empty()) {
+            return false;
+        }
+        target = enemies.front();
+    }
+
+    selectedCardId_ = request.cardInstanceId;
+    playSelectedCardOn(*target);
+    return true;
+}
+
 void CombatScene::playSelectedCardOn(const EntityId target) {
     pendingConsumableIndex_.reset();
 
@@ -1312,6 +1392,8 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 
     const CardInstanceId playedCardId = *selectedCardId_;
     const EntityId source = sourceForCard(playedCardId);
+    const bool groupImpact = cardAffectsAllEnemies(playedCardId);
+    const std::vector<EntityId> groupImpactTargets = groupImpact ? state_.aliveEnemyIds() : std::vector<EntityId>{};
     std::optional<PlayedCardAnimation> pendingAnimation;
     if (state_.hand.contains(playedCardId)) {
         CardViewModel model = cardViewModelBuilder_.build(state_, playedCardId, source, target);
@@ -1336,8 +1418,13 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
 
     if (!result.played) {
         state_.log.add(CombatLogEntryType::CannotPlayCard, {{"reason", result.reason}});
-    } else if (pendingAnimation.has_value()) {
-        playedCardAnimations_.push_back(std::move(*pendingAnimation));
+    } else {
+        if (pendingAnimation.has_value()) {
+            playedCardAnimations_.push_back(std::move(*pendingAnimation));
+        }
+        if (groupImpactTargets.size() > 1) {
+            enqueueGroupImpactAnimation(groupImpactTargets);
+        }
     }
 
     selectedCardId_.reset();
@@ -1350,7 +1437,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
     if (result.played) {
         finalResult_ = combatController_.updateAfterAction(state_);
         if (finalResult_.outcome == CombatOutcome::Ongoing) {
-            turnSystem_.refreshEnemyIntentValues(state_);
+            turnSystem_.refreshEnemyIntentValues(state_, random_);
         }
     }
 
@@ -1579,6 +1666,103 @@ void CombatScene::enqueueEndTurnDiscardAnimations() {
     }
 }
 
+bool CombatScene::handleActiveItemInput() {
+    if (!IsKeyPressed(KEY_SPACE) || state_.phase != CombatPhase::PlayerTurn || runState_.activeItem.empty()) {
+        return false;
+    }
+
+    const ActiveItemId itemId(runState_.activeItem.itemId);
+    if (!content_.activeItems().contains(itemId)) {
+        return false;
+    }
+
+    const ActiveItemDefinition& definition = content_.activeItems().get(itemId);
+    const bool skipsEnemyTurn = ActiveItemSystem::hasEffect(definition, ActiveItemEffectType::SkipEnemyTurn);
+    const bool stabilizesStress = ActiveItemSystem::hasEffect(definition, ActiveItemEffectType::StabilizeStress);
+    if (!skipsEnemyTurn && !stabilizesStress) {
+        return false;
+    }
+
+    if (!ActiveItemSystem::canUse(runState_.activeItem, definition, ActiveItemUseContext::Combat)) {
+        if (onActiveItemUsed_) {
+            onActiveItemUsed_(localization_.format(
+                TextId("active_item.feedback.not_charged"),
+                {{"charge", std::to_string(runState_.activeItem.charge)}, {"cost", std::to_string(definition.chargeCost)}}
+            ));
+        }
+        return true;
+    }
+
+    if (skipsEnemyTurn) {
+        if (skipNextEnemyTurn_) {
+            if (onActiveItemUsed_) {
+                onActiveItemUsed_(localization_.get(TextId("active_item.feedback.enemy_turn_already_skipped")));
+            }
+            return true;
+        }
+
+        if (!ActiveItemSystem::spendCharge(runState_, definition, ActiveItemUseContext::Combat)) {
+            return true;
+        }
+
+        skipNextEnemyTurn_ = true;
+        if (onActiveItemUsed_) {
+            onActiveItemUsed_(localization_.format(
+                TextId("active_item.feedback.enemy_turn_skipped"),
+                {{"item", localization_.get(definition.nameTextId)}}
+            ));
+        }
+        return true;
+    }
+
+    CombatEntity* target = nullptr;
+    for (CombatEntity& player : state_.players) {
+        if (!player.isAlive()) {
+            continue;
+        }
+        if (target == nullptr || player.stress > target->stress) {
+            target = &player;
+        }
+    }
+    if (target == nullptr) {
+        return true;
+    }
+
+    int stressReduction = 0;
+    for (const ActiveItemEffectDefinition& effect : definition.effects) {
+        if (effect.type == ActiveItemEffectType::StabilizeStress) {
+            stressReduction += effect.amount;
+        }
+    }
+
+    const bool alreadyGuarded = state_.hasStressBreakdownGuard(target->id);
+    const int beforeStress = target->stress;
+    if (beforeStress <= 0 && alreadyGuarded) {
+        if (onActiveItemUsed_) {
+            onActiveItemUsed_(localization_.get(TextId("active_item.feedback.stress_already_stable")));
+        }
+        return true;
+    }
+
+    target->stress = std::max(0, target->stress - stressReduction);
+    state_.armStressBreakdownGuard(target->id);
+    if (!ActiveItemSystem::spendCharge(runState_, definition, ActiveItemUseContext::Combat)) {
+        return true;
+    }
+
+    if (onActiveItemUsed_) {
+        onActiveItemUsed_(localization_.format(
+            TextId("active_item.feedback.stress_stabilized"),
+            {
+                {"item", localization_.get(definition.nameTextId)},
+                {"amount", std::to_string(beforeStress - target->stress)}
+            }
+        ));
+    }
+    viewModelDirty_ = true;
+    return true;
+}
+
 bool CombatScene::endPlayerTurnWillDiscardHand() const {
     if (state_.phase != CombatPhase::PlayerTurn) {
         return false;
@@ -1606,7 +1790,8 @@ void CombatScene::resolvePendingEndTurn() {
     pendingEndTurnResolution_ = false;
     visuallyDiscardingCardIds_.clear();
 
-    turnSystem_.endPlayerTurn(state_, random_);
+    turnSystem_.endPlayerTurn(state_, random_, skipNextEnemyTurn_);
+    skipNextEnemyTurn_ = false;
     finalResult_ = combatController_.updateAfterAction(state_);
     viewModelDirty_ = true;
 }
@@ -1634,7 +1819,7 @@ void CombatScene::endPlayerTurn() {
 
     if (!endPlayerTurnWillDiscardHand()) {
         visuallyDiscardingCardIds_.clear();
-        turnSystem_.endPlayerTurn(state_, random_);
+        turnSystem_.endPlayerTurn(state_, random_, skipNextEnemyTurn_);
         finalResult_ = combatController_.updateAfterAction(state_);
         viewModelDirty_ = true;
         return;
@@ -1731,6 +1916,182 @@ void CombatScene::applyEnemyAttackVisuals(CombatViewModel& model) const {
         player.renderOffset.x += shake.x;
         player.renderOffset.y += shake.y;
         break;
+    }
+}
+
+void CombatScene::enqueueGroupImpactAnimation(std::vector<EntityId> targetIds) {
+    targetIds.erase(
+        std::remove_if(
+            targetIds.begin(),
+            targetIds.end(),
+            [this](const EntityId targetId) {
+                return !state_.hasEntity(targetId) || !state_.isEnemy(targetId);
+            }
+        ),
+        targetIds.end()
+    );
+
+    if (targetIds.size() < 2) {
+        return;
+    }
+
+    groupImpactAnimations_.push_back(GroupImpactAnimation{std::move(targetIds), 0.f});
+    viewModelDirty_ = true;
+}
+
+void CombatScene::updateGroupImpactAnimations(const float deltaSeconds) {
+    const float safeDelta = std::max(0.f, deltaSeconds);
+    for (GroupImpactAnimation& animation : groupImpactAnimations_) {
+        animation.elapsedSeconds += safeDelta;
+    }
+
+    const std::size_t previousSize = groupImpactAnimations_.size();
+    groupImpactAnimations_.erase(
+        std::remove_if(
+            groupImpactAnimations_.begin(),
+            groupImpactAnimations_.end(),
+            [](const GroupImpactAnimation& animation) {
+                return animation.elapsedSeconds >= 0.56f;
+            }
+        ),
+        groupImpactAnimations_.end()
+    );
+
+    if (!groupImpactAnimations_.empty() || groupImpactAnimations_.size() != previousSize) {
+        viewModelDirty_ = true;
+    }
+}
+
+void CombatScene::applyGroupImpactVisuals(CombatViewModel& model) const {
+    constexpr float duration = 0.56f;
+    constexpr float pi = 3.14159265358979323846f;
+
+    for (const GroupImpactAnimation& animation : groupImpactAnimations_) {
+        const float progress = std::clamp(animation.elapsedSeconds / duration, 0.f, 1.f);
+        const float pulse = std::sin(progress * pi);
+        const float centerIndex = static_cast<float>(animation.targetIds.size() - 1) * 0.5f;
+
+        for (std::size_t targetIndex = 0; targetIndex < animation.targetIds.size(); ++targetIndex) {
+            for (EnemyViewModel& enemy : model.enemies) {
+                if (enemy.entityId != animation.targetIds[targetIndex]) {
+                    continue;
+                }
+
+                const float direction = static_cast<float>(targetIndex) - centerIndex;
+                enemy.renderOffset.x += direction * 7.f * pulse;
+                enemy.renderOffset.y -= 10.f * pulse;
+                break;
+            }
+        }
+    }
+}
+
+void CombatScene::renderGroupImpactAnimations() const {
+    constexpr float duration = 0.56f;
+    constexpr float pi = 3.14159265358979323846f;
+
+    for (const GroupImpactAnimation& animation : groupImpactAnimations_) {
+        const float progress = std::clamp(animation.elapsedSeconds / duration, 0.f, 1.f);
+        const float pulse = std::sin(progress * pi);
+        const float opacity = (1.f - progress) * 0.82f;
+        std::vector<Vector2> centers;
+        centers.reserve(animation.targetIds.size());
+
+        for (const EntityId targetId : animation.targetIds) {
+            const std::optional<Rectangle> bounds = view_.enemyBounds(targetId);
+            if (!bounds.has_value()) {
+                continue;
+            }
+
+            const Rectangle ring{
+                bounds->x - 10.f * pulse,
+                bounds->y - 10.f * pulse,
+                bounds->width + 20.f * pulse,
+                bounds->height + 20.f * pulse
+            };
+            DrawRectangleRoundedLinesEx(
+                ring,
+                0.08f,
+                8,
+                3.f + 2.f * pulse,
+                colorWithAlpha(Color{255, 116, 92, 255}, opacity)
+            );
+            centers.push_back(rectangleCenter(*bounds));
+        }
+
+        for (std::size_t i = 1; i < centers.size(); ++i) {
+            DrawLineEx(
+                centers[i - 1],
+                centers[i],
+                3.f + 3.f * pulse,
+                colorWithAlpha(Color{255, 155, 92, 255}, opacity * 0.72f)
+            );
+        }
+    }
+}
+
+bool CombatScene::cardAffectsAllEnemies(const CardInstanceId cardInstanceId) const {
+    if (!state_.hand.contains(cardInstanceId)) {
+        return false;
+    }
+
+    const CardInstance& instance = state_.hand.get(cardInstanceId);
+    const CardDefinition definition = CardUpgrade::effectiveDefinition(
+        content_.cards().get(instance.definitionId),
+        instance.upgraded
+    );
+    return std::any_of(
+        definition.effects.begin(),
+        definition.effects.end(),
+        [](const EffectDefinition& effect) {
+            return effect.target == EffectTarget::AllEnemies;
+        }
+    );
+}
+
+bool CombatScene::consumableAffectsAllEnemies(const std::size_t index) const {
+    if (index >= combatConsumableIds_.size()) {
+        return false;
+    }
+
+    const ConsumableId consumableId(combatConsumableIds_[index]);
+    if (!content_.consumables().contains(consumableId)) {
+        return false;
+    }
+
+    const ConsumableDefinition& definition = content_.consumables().get(consumableId);
+    return std::any_of(
+        definition.effects.begin(),
+        definition.effects.end(),
+        [](const EffectDefinition& effect) {
+            return effect.target == EffectTarget::AllEnemies;
+        }
+    );
+}
+
+void CombatScene::sanitizeTargetSelection() {
+    const auto isAliveEntity = [this](const std::optional<EntityId> id) {
+        return id.has_value() && state_.hasEntity(*id) && state_.entity(*id).isAlive();
+    };
+
+    bool changed = false;
+    if (keyboardTargetId_.has_value() && !isAliveEntity(keyboardTargetId_)) {
+        keyboardTargetId_.reset();
+        changed = true;
+    }
+    if (lastPreviewTarget_.has_value() && !isAliveEntity(lastPreviewTarget_)) {
+        lastPreviewTarget_.reset();
+        changed = true;
+    }
+
+    if (selectedCardId_.has_value()) {
+        const std::optional<EntityId> before = keyboardTargetId_;
+        ensureKeyboardTargetForSelectedCard();
+        changed = changed || before != keyboardTargetId_;
+    }
+
+    if (changed) {
+        viewModelDirty_ = true;
     }
 }
 
@@ -2087,6 +2448,12 @@ void CombatScene::finishCombatIfNeeded() {
     }
 
     finalResult_ = combatController_.buildResult(state_);
+    for (const CombatEntity& enemy : state_.enemies) {
+        if (std::find(encounteredEnemyIds_.begin(), encounteredEnemyIds_.end(), enemy.definitionId) == encounteredEnemyIds_.end()) {
+            encounteredEnemyIds_.push_back(enemy.definitionId);
+        }
+    }
+    finalResult_.encounteredEnemyIds = encounteredEnemyIds_;
     finalResult_.remainingConsumableIds = combatConsumableIds_;
     startDeathAnimationsForNewlyDeadEnemies();
 

@@ -1,0 +1,1739 @@
+[
+  {
+    "id": "ash_gardener",
+    "name": "enemy.ash_gardener.name",
+    "max_hp": 46,
+    "starting_block": 4,
+    "actions": [
+      {
+        "id": "ash_gardener_pruning_hook",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
+      },
+      {
+        "id": "ash_gardener_fertilize_ashes",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      },
+      {
+        "id": "ash_gardener_smoldering_soil",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "glass_pollen_moth",
+    "name": "enemy.glass_pollen_moth.name",
+    "max_hp": 34,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "glass_pollen_moth_wing_dust",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "glass_pollen_moth_needle_bite",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "glass_pollen_moth_choking_bloom",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "poison"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "energy"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "thorn_halberdier",
+    "name": "enemy.thorn_halberdier.name",
+    "max_hp": 54,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "thorn_halberdier_barbed_wall",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      },
+      {
+        "id": "thorn_halberdier_hooking_thrust",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 11
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "thorn_halberdier_blood_garden",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "furnace_orchid",
+    "name": "enemy.furnace_orchid.name",
+    "max_hp": 40,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "furnace_orchid_heat_burst",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "furnace_orchid_spark_spores",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "furnace_orchid_feed_the_core",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
+      }
+    ],
+    "role": "striker"
+  },
+  {
+    "id": "bellows_imp",
+    "name": "enemy.bellows_imp.name",
+    "max_hp": 33,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "bellows_imp_coal_spit",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2
+      },
+      {
+        "id": "bellows_imp_fan_the_flames",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2
+        }
+      },
+      {
+        "id": "bellows_imp_smoke_screen",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "status_cards"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "minion"
+  },
+  {
+    "id": "seed_butcher",
+    "name": "enemy.seed_butcher.name",
+    "max_hp": 50,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "seed_butcher_cleave_pod",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "seed_butcher_harvest_mark",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "seed_butcher_meat_mulch",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "wax_root",
+    "name": "enemy.wax_root.name",
+    "max_hp": 56,
+    "starting_block": 10,
+    "actions": [
+      {
+        "id": "wax_root_binding_sap",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "wax_root_candle_bark",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "wax_root_slow_crush",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "green_fire_acolyte",
+    "name": "enemy.green_fire_acolyte.name",
+    "max_hp": 44,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "green_fire_acolyte_litany",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_enemies",
+            "status": "strength",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          },
+          {
+            "type": "block",
+            "target": "all_enemies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          },
+          {
+            "type": "prime_stress_breakdown",
+            "target": "all_allies",
+            "status": "cost"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "min_alive_enemies": 2,
+          "any_other_enemy_hp_below_percent": 90
+        }
+      },
+      {
+        "id": "green_fire_acolyte_saint_spark",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "green_fire_acolyte_scorch_prayer",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "furnace_saint",
+    "name": "enemy.furnace_saint.name",
+    "max_hp": 96,
+    "starting_block": 8,
+    "actions": [
+      {
+        "id": "furnace_saint_open_the_choir",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "furnace_saint_red_benediction",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "furnace_saint_censer_crash",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "furnace_saint_collective_fever",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "thorn_executioner",
+    "name": "enemy.thorn_executioner.name",
+    "max_hp": 88,
+    "starting_block": 12,
+    "actions": [
+      {
+        "id": "thorn_executioner_briar_sentence",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "thorn_executioner_crown_of_hooks",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "thorn_executioner_triple_pruning",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            },
+            "repeat_count": 3
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "bruiser"
+  },
+  {
+    "id": "glass_arbiter",
+    "name": "enemy.glass_arbiter.name",
+    "max_hp": 82,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "glass_arbiter_refraction",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "glass_arbiter_cut_the_image",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            },
+            "repeat_count": 3
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "glass_arbiter_blind_verdict",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "controller"
+  },
+  {
+    "id": "pollen_librarian",
+    "name": "enemy.pollen_librarian.name",
+    "max_hp": 78,
+    "starting_block": 6,
+    "actions": [
+      {
+        "id": "pollen_librarian_index_of_rot",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            },
+            "status": "poison"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "pollen_librarian_annotated_sting",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 8,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "pollen_librarian_archive_shell",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 15
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "support"
+  },
+  {
+    "id": "root_titan",
+    "name": "enemy.root_titan.name",
+    "max_hp": 110,
+    "starting_block": 18,
+    "actions": [
+      {
+        "id": "root_titan_old_growth",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          },
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 7
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
+      },
+      {
+        "id": "root_titan_crushing_ring",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "root_titan_buried_grip",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "defender"
+  },
+  {
+    "id": "queen_of_cinders",
+    "name": "enemy.queen_of_cinders.name",
+    "max_hp": 205,
+    "starting_block": 0,
+    "actions": [
+      {
+        "id": "queen_of_cinders_royal_ignition",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "queen_of_cinders_ember_scepter",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 10
+            },
+            "repeat_count": 2
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "queen_of_cinders_ashen_guard",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 22
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "queen_of_cinders_black_sun",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 13
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "weak"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "ember_throne",
+        "name": "enemy.phase.queen_of_cinders.ember_throne",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "queen_of_cinders_royal_ignition",
+          "queen_of_cinders_ashen_guard"
+        ]
+      },
+      {
+        "id": "black_coronation",
+        "name": "enemy.phase.queen_of_cinders.black_coronation",
+        "activate_below_hp_percent": 64,
+        "action_ids": [
+          "queen_of_cinders_ember_scepter",
+          "queen_of_cinders_black_sun",
+          "queen_of_cinders_ashen_guard"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 20
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "burn"
+          }
+        ],
+        "summon_enemy_ids": [
+          "bellows_imp"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "cinder_eclipse",
+        "name": "enemy.phase.queen_of_cinders.cinder_eclipse",
+        "activate_below_hp_percent": 28,
+        "action_ids": [
+          "queen_of_cinders_black_sun",
+          "queen_of_cinders_ember_scepter",
+          "queen_of_cinders_royal_ignition"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "burn"
+          }
+        ],
+        "summon_enemy_ids": [
+          "ash_gardener"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  },
+  {
+    "id": "saint_of_green_fire",
+    "name": "enemy.saint_of_green_fire.name",
+    "max_hp": 190,
+    "starting_block": 12,
+    "actions": [
+      {
+        "id": "saint_of_green_fire_kindled_sermon",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "saint_of_green_fire_halo_cut",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 15
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 0,
+        "max_consecutive_uses": 2,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      },
+      {
+        "id": "saint_of_green_fire_breath_of_resin",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "poison"
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "saint_of_green_fire_final_psalm",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 16
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "required_player_statuses": [
+            "vulnerable"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "kindled_sermon",
+        "name": "enemy.phase.saint_of_green_fire.kindled_sermon",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "saint_of_green_fire_kindled_sermon",
+          "saint_of_green_fire_halo_cut"
+        ]
+      },
+      {
+        "id": "resin_halo",
+        "name": "enemy.phase.saint_of_green_fire.resin_halo",
+        "activate_below_hp_percent": 63,
+        "action_ids": [
+          "saint_of_green_fire_breath_of_resin",
+          "saint_of_green_fire_halo_cut",
+          "saint_of_green_fire_kindled_sermon"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 18
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "poison"
+          }
+        ],
+        "summon_enemy_ids": [
+          "green_fire_acolyte"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "final_psalm",
+        "name": "enemy.phase.saint_of_green_fire.final_psalm",
+        "activate_below_hp_percent": 27,
+        "action_ids": [
+          "saint_of_green_fire_final_psalm",
+          "saint_of_green_fire_breath_of_resin",
+          "saint_of_green_fire_halo_cut"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "burn"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "glass_pollen_moth"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  },
+  {
+    "id": "grafted_sun",
+    "name": "enemy.grafted_sun.name",
+    "max_hp": 220,
+    "starting_block": 16,
+    "actions": [
+      {
+        "id": "grafted_sun_photosynthesis_of_bone",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 12
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "weight": 5,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "self_hp_below_percent": 70
+        }
+      },
+      {
+        "id": "grafted_sun_rootflare",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 11
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "burn"
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "grafted_sun_blooming_gravity",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "vulnerable"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "vulnerable",
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "grafted_sun_noon_execution",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 27
+            }
+          }
+        ],
+        "weight": 8,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "any_player_hp_below_percent": 70,
+          "required_player_statuses": [
+            "weak"
+          ]
+        }
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "rooted_noon",
+        "name": "enemy.phase.grafted_sun.rooted_noon",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "grafted_sun_rootflare",
+          "grafted_sun_photosynthesis_of_bone"
+        ]
+      },
+      {
+        "id": "bone_bloom",
+        "name": "enemy.phase.grafted_sun.bone_bloom",
+        "activate_below_hp_percent": 66,
+        "action_ids": [
+          "grafted_sun_blooming_gravity",
+          "grafted_sun_rootflare",
+          "grafted_sun_photosynthesis_of_bone"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 22
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "dexterity"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            }
+          }
+        ],
+        "summon_enemy_ids": [
+          "wax_root"
+        ],
+        "maximum_alive_enemies": 3
+      },
+      {
+        "id": "white_noon",
+        "name": "enemy.phase.grafted_sun.white_noon",
+        "activate_below_hp_percent": 30,
+        "action_ids": [
+          "grafted_sun_noon_execution",
+          "grafted_sun_rootflare",
+          "grafted_sun_blooming_gravity"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "heal",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            },
+            "status": "burn"
+          }
+        ],
+        "summon_enemy_ids": [
+          "furnace_orchid"
+        ],
+        "maximum_alive_enemies": 3
+      }
+    ]
+  }
+]

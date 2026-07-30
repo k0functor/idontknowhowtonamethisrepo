@@ -4,28 +4,93 @@
     "name": "status.strength.name",
     "description": "status.strength.description",
     "type": "buff",
-    "duration_rule": "persistent_combat"
+    "duration_rule": "persistent_combat",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "source",
+        "operation": "add_per_stack",
+        "value": 1,
+        "priority": 100,
+        "description": "modifier.status.strength.outgoing_damage_add"
+      }
+    ]
   },
   {
     "id": "dexterity",
     "name": "status.dexterity.name",
     "description": "status.dexterity.description",
     "type": "buff",
-    "duration_rule": "persistent_combat"
+    "duration_rule": "persistent_combat",
+    "modifiers": [
+      {
+        "effect_type": "block",
+        "entity": "source",
+        "operation": "add_per_stack",
+        "value": 1,
+        "priority": 100,
+        "description": "modifier.status.dexterity.block_add"
+      }
+    ]
+  },
+  {
+    "id": "ferocity",
+    "name": "status.ferocity.name",
+    "description": "status.ferocity.description",
+    "type": "buff",
+    "duration_rule": "persistent_combat",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "source",
+        "operation": "multiply_per_stack",
+        "value": 0.05,
+        "priority": 145,
+        "description": "modifier.status.ferocity.outgoing_damage_increase"
+      }
+    ]
   },
   {
     "id": "sadist_pleasure",
     "name": "status.sadist_pleasure.name",
     "description": "status.sadist_pleasure.description",
     "type": "buff",
-    "duration_rule": "decrease_end_of_owner_turn"
+    "duration_rule": "decrease_end_of_owner_turn",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "source",
+        "operation": "multiply_fixed",
+        "value": 1.2,
+        "priority": 155,
+        "description": "modifier.status.sadist_pleasure.outgoing_damage_increase"
+      }
+    ]
   },
   {
     "id": "masochist_pain",
     "name": "status.masochist_pain.name",
     "description": "status.masochist_pain.description",
     "type": "buff",
-    "duration_rule": "decrease_end_of_owner_turn"
+    "duration_rule": "decrease_end_of_owner_turn",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "source",
+        "operation": "add_fixed",
+        "value": 2,
+        "priority": 110,
+        "description": "modifier.status.masochist_pain.outgoing_damage_add"
+      },
+      {
+        "effect_type": "block",
+        "entity": "target",
+        "operation": "add_fixed",
+        "value": 2,
+        "priority": 85,
+        "description": "modifier.status.masochist_pain.block_received_add"
+      }
+    ]
   },
   {
     "id": "free_next_card",
@@ -39,14 +104,34 @@
     "name": "status.weak.name",
     "description": "status.weak.description",
     "type": "debuff",
-    "duration_rule": "decrease_end_of_owner_turn"
+    "duration_rule": "decrease_end_of_owner_turn",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "source",
+        "operation": "multiply_fixed",
+        "value": 0.75,
+        "priority": 200,
+        "description": "modifier.status.weak.outgoing_damage_reduce"
+      }
+    ]
   },
   {
     "id": "vulnerable",
     "name": "status.vulnerable.name",
     "description": "status.vulnerable.description",
     "type": "debuff",
-    "duration_rule": "decrease_end_of_owner_turn"
+    "duration_rule": "decrease_end_of_owner_turn",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "target",
+        "operation": "multiply_fixed",
+        "value": 1.5,
+        "priority": 300,
+        "description": "modifier.status.vulnerable.incoming_damage_increase"
+      }
+    ]
   },
   {
     "id": "drone_mark",
@@ -61,35 +146,100 @@
     "description": "status.poison.description",
     "type": "debuff",
     "duration_rule": "custom",
-    "end_turn_effect": "poison_damage",
-    "decrease_after_trigger": true
+    "triggers": [
+      {
+        "event": "end_owner_turn",
+        "effect": "damage_hp",
+        "value_per_stack": 1,
+        "remove_stacks": 1,
+        "log": "poison_damage"
+      }
+    ]
   },
   {
     "id": "burn",
     "name": "status.burn.name",
     "description": "status.burn.description",
     "type": "debuff",
-    "duration_rule": "custom"
+    "duration_rule": "custom",
+    "triggers": [
+      {
+        "event": "end_owner_turn",
+        "effect": "damage_hp",
+        "value_per_stack": 1,
+        "remove_stacks": 1,
+        "log": "burn_damage"
+      }
+    ]
   },
   {
     "id": "stance_flame",
     "name": "status.stance_flame.name",
     "description": "status.stance_flame.description",
     "type": "buff",
-    "duration_rule": "persistent_combat"
+    "duration_rule": "persistent_combat",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "source",
+        "operation": "multiply_fixed",
+        "value": 1.25,
+        "priority": 150,
+        "description": "modifier.status.stance_flame.outgoing_damage_increase"
+      },
+      {
+        "effect_type": "damage",
+        "entity": "target",
+        "operation": "multiply_fixed",
+        "value": 1.25,
+        "priority": 250,
+        "description": "modifier.status.stance_flame.incoming_damage_increase"
+      }
+    ],
+    "exclusive_group": "monk_stance"
   },
   {
     "id": "stance_ash",
     "name": "status.stance_ash.name",
     "description": "status.stance_ash.description",
     "type": "buff",
-    "duration_rule": "persistent_combat"
+    "duration_rule": "persistent_combat",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "source",
+        "operation": "multiply_fixed",
+        "value": 0.85,
+        "priority": 150,
+        "description": "modifier.status.stance_ash.outgoing_damage_reduce"
+      },
+      {
+        "effect_type": "block",
+        "entity": "source",
+        "operation": "add_fixed",
+        "value": 2,
+        "priority": 90,
+        "description": "modifier.status.stance_ash.block_add"
+      }
+    ],
+    "exclusive_group": "monk_stance"
   },
   {
     "id": "stance_smoke",
     "name": "status.stance_smoke.name",
     "description": "status.stance_smoke.description",
     "type": "buff",
-    "duration_rule": "persistent_combat"
+    "duration_rule": "persistent_combat",
+    "modifiers": [
+      {
+        "effect_type": "damage",
+        "entity": "target",
+        "operation": "multiply_fixed",
+        "value": 0.75,
+        "priority": 250,
+        "description": "modifier.status.stance_smoke.incoming_damage_reduce"
+      }
+    ],
+    "exclusive_group": "monk_stance"
   }
 ]

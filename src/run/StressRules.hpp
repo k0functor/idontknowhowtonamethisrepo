@@ -6,12 +6,81 @@
 #include <string>
 
 namespace StressRules {
+inline constexpr int CalmThreshold = 0;
+inline constexpr int TenseThreshold = 40;
+inline constexpr int PressuredThreshold = 80;
+inline constexpr int PanickedThreshold = 120;
+inline constexpr int BreakingThreshold = 160;
 inline constexpr int ResolveThreshold = 100;
 inline constexpr int MaximumStress = 200;
 inline constexpr double PositiveResolveChance = 0.30;
 
 inline constexpr const char* BreakdownTraitId = "stress_breakdown";
 inline constexpr const char* ResolveTraitId = "stress_resolve";
+
+enum class StressBand {
+    Calm,
+    Tense,
+    Pressured,
+    Panicked,
+    Breaking,
+    Collapsed
+};
+
+inline StressBand bandForStress(const int stress) {
+    if (stress >= MaximumStress) {
+        return StressBand::Collapsed;
+    }
+    if (stress >= BreakingThreshold) {
+        return StressBand::Breaking;
+    }
+    if (stress >= PanickedThreshold) {
+        return StressBand::Panicked;
+    }
+    if (stress >= PressuredThreshold) {
+        return StressBand::Pressured;
+    }
+    if (stress >= TenseThreshold) {
+        return StressBand::Tense;
+    }
+    return StressBand::Calm;
+}
+
+inline int minimumForBand(const StressBand band) {
+    switch (band) {
+        case StressBand::Calm: return CalmThreshold;
+        case StressBand::Tense: return TenseThreshold;
+        case StressBand::Pressured: return PressuredThreshold;
+        case StressBand::Panicked: return PanickedThreshold;
+        case StressBand::Breaking: return BreakingThreshold;
+        case StressBand::Collapsed: return MaximumStress;
+    }
+    return CalmThreshold;
+}
+
+inline int nextBandThreshold(const int stress) {
+    switch (bandForStress(stress)) {
+        case StressBand::Calm: return TenseThreshold;
+        case StressBand::Tense: return PressuredThreshold;
+        case StressBand::Pressured: return PanickedThreshold;
+        case StressBand::Panicked: return BreakingThreshold;
+        case StressBand::Breaking: return MaximumStress;
+        case StressBand::Collapsed: return 0;
+    }
+    return 0;
+}
+
+inline const char* bandLocalizationSuffix(const StressBand band) {
+    switch (band) {
+        case StressBand::Calm: return "calm";
+        case StressBand::Tense: return "tense";
+        case StressBand::Pressured: return "pressured";
+        case StressBand::Panicked: return "panicked";
+        case StressBand::Breaking: return "breaking";
+        case StressBand::Collapsed: return "collapsed";
+    }
+    return "calm";
+}
 
 enum class ResolveOutcome {
     None,
@@ -23,6 +92,9 @@ struct StressAdjustmentResult {
     int before = 0;
     int after = 0;
     int applied = 0;
+    StressBand beforeBand = StressBand::Calm;
+    StressBand afterBand = StressBand::Calm;
+    bool bandChanged = false;
     bool resolveCheckTriggered = false;
     ResolveOutcome resolveOutcome = ResolveOutcome::None;
     bool collapsed = false;
@@ -64,9 +136,12 @@ StressAdjustmentResult applyDelta(ActorState& actor, const int delta, Random* ra
 
     StressAdjustmentResult result;
     result.before = actor.stress;
+    result.beforeBand = bandForStress(actor.stress);
 
     actor.stress = std::clamp(actor.stress + delta, 0, actor.maxStress);
     result.after = actor.stress;
+    result.afterBand = bandForStress(actor.stress);
+    result.bandChanged = result.beforeBand != result.afterBand;
     result.applied = result.after - result.before;
 
     if (actor.stress < ResolveThreshold) {

@@ -6,11 +6,11 @@
 #include <utility>
 
 CombatOutcome CombatController::checkOutcome(const CombatState& state) const {
-    if (state.aliveEnemyIds().empty()) {
+    if (state.aliveEnemyCount() == 0) {
         return CombatOutcome::Victory;
     }
 
-    if (state.alivePlayerIds().empty()) {
+    if (state.alivePlayerCount() == 0) {
         return CombatOutcome::Defeat;
     }
 
@@ -21,9 +21,37 @@ CombatResult CombatController::buildResult(const CombatState& state) const {
     CombatResult result;
     result.outcome = checkOutcome(state);
     result.turnsTaken = state.turn;
+    result.telemetry = state.telemetry;
+
+    auto appendStatusId = [&result](const std::string& statusId) {
+        if (statusId.empty()) {
+            return;
+        }
+
+        if (std::find(result.statusIdsSeen.begin(), result.statusIdsSeen.end(), statusId) == result.statusIdsSeen.end()) {
+            result.statusIdsSeen.push_back(statusId);
+        }
+    };
+
+    auto appendStatusIds = [&appendStatusId](const StatusContainer& statuses) {
+        for (const auto& [statusId, amount] : statuses.all()) {
+            if (amount <= 0) {
+                continue;
+            }
+
+            appendStatusId(statusId);
+        }
+    };
+
+    for (const std::string& statusId : state.seenStatusIds) {
+        appendStatusId(statusId);
+    }
+
+    result.playedCardIds = state.playedCardIds;
 
     result.actorStates.reserve(state.players.size());
     for (const CombatEntity& player : state.players) {
+        appendStatusIds(player.statuses);
         result.playerHpRemaining += player.health.current();
         result.playerHpMaximum += player.health.maximum();
         RunActorState actorState;
@@ -39,6 +67,7 @@ CombatResult CombatController::buildResult(const CombatState& state) const {
     }
 
     for (const CombatEntity& enemy : state.enemies) {
+        appendStatusIds(enemy.statuses);
         if (!enemy.isAlive()) {
             ++result.enemiesKilled;
             result.killedEnemyIds.push_back(enemy.definitionId);
@@ -49,6 +78,7 @@ CombatResult CombatController::buildResult(const CombatState& state) const {
 }
 
 CombatResult CombatController::updateAfterAction(CombatState& state) const {
+    state.pruneEnemyIntents();
     const CombatOutcome outcome = checkOutcome(state);
     applyOutcomeToState(state, outcome);
     return buildResult(state);

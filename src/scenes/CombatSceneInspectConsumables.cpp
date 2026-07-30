@@ -686,6 +686,8 @@ void CombatScene::tryUseConsumable(const std::size_t index, const std::optional<
     }
 
     const std::string consumableId = combatConsumableIds_[index];
+    const bool groupImpact = consumableAffectsAllEnemies(index);
+    const std::vector<EntityId> groupImpactTargets = groupImpact ? state_.aliveEnemyIds() : std::vector<EntityId>{};
     const std::optional<EntityId> explicitTarget = target.has_value() ? target : std::optional<EntityId>{primaryPlayerId()};
     if (consumableSystem_.useConsumable(
             state_,
@@ -696,6 +698,9 @@ void CombatScene::tryUseConsumable(const std::size_t index, const std::optional<
             random_
         )) {
         combatConsumableIds_.erase(combatConsumableIds_.begin() + static_cast<std::ptrdiff_t>(index));
+        if (groupImpactTargets.size() > 1) {
+            enqueueGroupImpactAnimation(groupImpactTargets);
+        }
         selectedCardId_.reset();
         draggedCardId_.reset();
         keyboardTargetId_.reset();
@@ -705,7 +710,7 @@ void CombatScene::tryUseConsumable(const std::size_t index, const std::optional<
         lastPreviewTarget_.reset();
         finalResult_ = combatController_.updateAfterAction(state_);
         if (finalResult_.outcome == CombatOutcome::Ongoing) {
-            turnSystem_.refreshEnemyIntentValues(state_);
+            turnSystem_.refreshEnemyIntentValues(state_, random_);
         }
         viewModelDirty_ = true;
     }

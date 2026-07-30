@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+MAX_ENEMIES_PER_ENCOUNTER = 3
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 FLOORS_PATH = DATA_DIR / "run" / "floors.json"
@@ -238,11 +239,19 @@ def validate_encounter_path(errors: list[str], owner: str, floor: dict[str, Any]
 
     enemy_ids = load_enemy_ids()
     seen_encounters: set[str] = set()
+    boss_minimum = int(floor.get("boss_encounter_min", 3))
+    if boss_minimum < 1:
+        errors.append(error(owner, "boss_encounter_min must be at least 1"))
+        boss_minimum = 1
+    minimum_pool_sizes = {"combat": 10, "elite": 5, "boss": boss_minimum}
     for pool_name in NODE_POOLS:
         pool = data["pools"].get(pool_name)
         if not isinstance(pool, list) or not pool:
             errors.append(error(owner, f"encounter pool '{pool_name}' must be a non-empty array"))
             continue
+        minimum_size = minimum_pool_sizes[pool_name]
+        if len(pool) < minimum_size:
+            errors.append(error(owner, f"encounter pool '{pool_name}' has only {len(pool)} encounter(s), expected at least {minimum_size}"))
         for index, encounter in enumerate(pool):
             encounter_owner = f"{owner}.{pool_name}[{index}]"
             if not isinstance(encounter, dict):
@@ -260,6 +269,8 @@ def validate_encounter_path(errors: list[str], owner: str, floor: dict[str, Any]
             if not isinstance(enemies, list) or not enemies:
                 errors.append(error(encounter_owner, "enemies must be a non-empty array"))
             else:
+                if len(enemies) > MAX_ENEMIES_PER_ENCOUNTER:
+                    errors.append(error(encounter_owner, f"enemies must contain at most {MAX_ENEMIES_PER_ENCOUNTER} entries"))
                 for enemy_id in enemies:
                     if not isinstance(enemy_id, str) or not enemy_id:
                         errors.append(error(encounter_owner, "enemy ids must be non-empty strings"))

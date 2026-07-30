@@ -1,12 +1,14 @@
 #include "RewardScene.hpp"
 #include "ui/VirtualViewport.hpp"
 
+#include "active_items/ActiveItemSystem.hpp"
 #include "cards/CardDefinition.hpp"
 #include "cards/CardDescriptionFormatter.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "consumables/ConsumableId.hpp"
 #include "inspect/InspectPanelModel.hpp"
 #include "relics/RelicDefinition.hpp"
+#include "ui/ActiveItemComparisonView.hpp"
 #include "ui/BasicUi.hpp"
 #include "ui/CardViewModelFactory.hpp"
 #include "ui/CardVisualInstance.hpp"
@@ -25,9 +27,12 @@ RewardScene::RewardScene(
     const CardDatabase& cards,
     const RelicDatabase& relics,
     const ConsumableDatabase& consumables,
+    const ActiveItemDatabase& activeItems,
     const PlayerActorDatabase& actors,
     const RunState& runState,
     RewardState reward,
+    std::function<bool(RewardState&, const RewardSelection&)> onReroll,
+    std::function<bool(const CardId&)> onCopyCard,
     std::function<void(RewardSelection)> onContinue
 )
     : font_(font),
@@ -35,13 +40,21 @@ RewardScene::RewardScene(
       cards_(cards),
       relics_(relics),
       consumables_(consumables),
+      activeItems_(activeItems),
       actors_(actors),
       runState_(runState),
       reward_(std::move(reward)),
+      onReroll_(std::move(onReroll)),
+      onCopyCard_(std::move(onCopyCard)),
       onContinue_(std::move(onContinue)) {}
 
 void RewardScene::update(float) {
     const Vector2 mouse = GetMousePosition();
+
+    if (activeItemChoiceOpen_) {
+        updateActiveItemChoice(mouse);
+        return;
+    }
 
     if (relicOwnerChoiceOpen_) {
         updateRelicOwnerChoice(mouse);
@@ -50,6 +63,15 @@ void RewardScene::update(float) {
 
     if (cardChoiceOpen_) {
         updateCardChoice(mouse);
+        return;
+    }
+
+    if (IsKeyPressed(KEY_SPACE)) {
+        if (copyCardHintVisible() && onCopyCard_) {
+            (void)onCopyCard_(CardId{});
+        } else if (onReroll_) {
+            (void)onReroll_(reward_, selection_);
+        }
         return;
     }
 
@@ -84,17 +106,9 @@ void RewardScene::render() const {
         Color{240, 240, 250, 255}
     );
 
-    const Rectangle panel{VirtualViewport::width() * 0.5f - 310.f, 150.f, 620.f, 430.f};
+    const Rectangle panel{VirtualViewport::width() * 0.5f - 310.f, 138.f, 620.f, 388.f};
     DrawRectangleRounded(panel, 0.06f, 12, Color{31, 34, 44, 255});
     DrawRectangleRoundedLinesEx(panel, 0.06f, 12, 2.f, Color{120, 130, 160, 255});
-
-    BasicUi::drawText(
-        font_,
-        rewardHint(),
-        Vector2{panel.x + 30.f, panel.y + 54.f},
-        20.f,
-        Color{190, 196, 215, 255}
-    );
 
     if (reward_.options.empty()) {
         BasicUi::drawCenteredText(
@@ -113,18 +127,14 @@ void RewardScene::render() const {
             DrawRectangleRounded(row, 0.08f, 10, hovered ? Color{53, 58, 75, 255} : Color{40, 43, 56, 255});
             DrawRectangleRoundedLinesEx(row, 0.08f, 10, 2.f, hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
 
-            BasicUi::drawTextFitted(font_, optionTitle(option), Vector2{row.x + 22.f, row.y + 10.f}, row.width - 44.f, 25.f, 18.f, Color{245, 245, 250, 255});
-
-            const std::string description = optionDescription(option);
-            if (!description.empty()) {
-                BasicUi::drawText(
-                    font_,
-                    description,
-                    Vector2{row.x + 22.f, row.y + 42.f},
-                    18.f,
-                    Color{190, 198, 220, 255}
-                );
-            }
+            BasicUi::drawCenteredTextFitted(
+                font_,
+                optionTitle(option),
+                Rectangle{row.x + 18.f, row.y + 8.f, row.width - 36.f, row.height - 16.f},
+                23.f,
+                16.f,
+                Color{245, 245, 250, 255}
+            );
         }
 
         for (std::size_t i = 0; i < reward_.options.size(); ++i) {
@@ -146,15 +156,19 @@ void RewardScene::render() const {
     if (relicOwnerChoiceOpen_) {
         renderRelicOwnerChoice();
     }
+
+    if (activeItemChoiceOpen_) {
+        renderActiveItemChoice();
+    }
 }
 
 Rectangle RewardScene::rewardOptionBounds(const std::size_t index) const {
-    const Rectangle panel{VirtualViewport::width() * 0.5f - 310.f, 150.f, 620.f, 430.f};
-    return Rectangle{panel.x + 35.f, panel.y + 92.f + static_cast<float>(index) * 76.f, panel.width - 70.f, 58.f};
+    const Rectangle panel{VirtualViewport::width() * 0.5f - 310.f, 138.f, 620.f, 388.f};
+    return Rectangle{panel.x + 35.f, panel.y + 38.f + static_cast<float>(index) * 68.f, panel.width - 70.f, 54.f};
 }
 
 Rectangle RewardScene::continueButtonBounds() const {
-    return Rectangle{VirtualViewport::width() * 0.5f - 170.f, 610.f, 340.f, 52.f};
+    return Rectangle{VirtualViewport::width() * 0.5f - 170.f, 552.f, 340.f, 50.f};
 }
 
 Rectangle RewardScene::cardChoiceModalBounds() const {
@@ -203,6 +217,22 @@ Rectangle RewardScene::relicOwnerCancelButtonBounds() const {
     return Rectangle{panel.x + panel.width * 0.5f - 120.f, panel.y + panel.height - 58.f, 240.f, 44.f};
 }
 
+Rectangle RewardScene::activeItemModalBounds() const {
+    const float width = std::min(900.f, static_cast<float>(VirtualViewport::width()) - 72.f);
+    const float height = std::min(570.f, static_cast<float>(VirtualViewport::height()) - 72.f);
+    return Rectangle{VirtualViewport::width() * 0.5f - width * 0.5f, VirtualViewport::height() * 0.5f - height * 0.5f, width, height};
+}
+
+Rectangle RewardScene::activeItemKeepButtonBounds() const {
+    const Rectangle panel = activeItemModalBounds();
+    return Rectangle{panel.x + 54.f, panel.y + panel.height - 64.f, 250.f, 46.f};
+}
+
+Rectangle RewardScene::activeItemEquipButtonBounds() const {
+    const Rectangle panel = activeItemModalBounds();
+    return Rectangle{panel.x + panel.width - 304.f, panel.y + panel.height - 64.f, 250.f, 46.f};
+}
+
 void RewardScene::moveRelicOwnerSelection(const int delta) {
     if (runState_.actorStates.empty()) {
         selectedRelicOwnerIndex_.reset();
@@ -249,7 +279,64 @@ void RewardScene::takeOption(const std::size_t index) {
             selection_.selectedRelics.push_back(RelicRewardSelection{option.relicId, defaultRelicOwnerId()});
             reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
             break;
+
+        case RewardOptionType::ActiveItem:
+            if (option.activeItemId.empty() || !activeItems_.contains(ActiveItemId(option.activeItemId))) {
+                reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
+                break;
+            }
+            openActiveItemChoice(index);
+            break;
     }
+}
+
+void RewardScene::updateActiveItemChoice(const Vector2 mouse) {
+    if (IsKeyPressed(KEY_ESCAPE) ||
+        (BasicUi::contains(activeItemKeepButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+        closeActiveItemChoice();
+        return;
+    }
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_KP_ENTER) ||
+        (BasicUi::contains(activeItemEquipButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+        confirmActiveItemChoice();
+    }
+}
+
+void RewardScene::renderActiveItemChoice() const {
+    if (!activeItemChoiceOpen_ || !activeItemOptionIndex_.has_value() || *activeItemOptionIndex_ >= reward_.options.size()) {
+        return;
+    }
+    const RewardOption& option = reward_.options[*activeItemOptionIndex_];
+    const Rectangle panel = activeItemModalBounds();
+    const Vector2 mouse = GetMousePosition();
+    DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 145});
+    DrawRectangleRounded(panel, 0.05f, 14, Color{25, 27, 38, 252});
+    DrawRectangleRoundedLinesEx(panel, 0.05f, 14, 3.f, Color{238, 196, 86, 255});
+    BasicUi::drawCenteredText(font_, localization_.get(TextId("active_item.compare.title")), Rectangle{panel.x + 24.f, panel.y + 18.f, panel.width - 48.f, 38.f}, 29.f, Color{255, 235, 175, 255});
+    ActiveItemComparisonView::render(font_, localization_, activeItems_, runState_, option.activeItemId, Rectangle{panel.x + 42.f, panel.y + 72.f, panel.width - 84.f, panel.height - 162.f});
+    BasicUi::drawButton(font_, activeItemKeepButtonBounds(), localization_.get(TextId("active_item.compare.keep")), mouse);
+    BasicUi::drawButton(font_, activeItemEquipButtonBounds(), localization_.get(TextId("active_item.compare.equip")), mouse);
+}
+
+void RewardScene::openActiveItemChoice(const std::size_t index) {
+    activeItemOptionIndex_ = index;
+    activeItemChoiceOpen_ = true;
+}
+
+void RewardScene::closeActiveItemChoice() {
+    activeItemChoiceOpen_ = false;
+    activeItemOptionIndex_.reset();
+}
+
+void RewardScene::confirmActiveItemChoice() {
+    if (!activeItemOptionIndex_.has_value() || *activeItemOptionIndex_ >= reward_.options.size()) {
+        closeActiveItemChoice();
+        return;
+    }
+    const std::size_t index = *activeItemOptionIndex_;
+    selection_.selectedActiveItemId = reward_.options[index].activeItemId;
+    reward_.options.erase(reward_.options.begin() + static_cast<std::ptrdiff_t>(index));
+    closeActiveItemChoice();
 }
 
 void RewardScene::updateRelicOwnerChoice(const Vector2 mouse) {
@@ -469,6 +556,15 @@ void RewardScene::updateCardChoice(const Vector2 mouse) {
         return;
     }
 
+    if (IsKeyPressed(KEY_SPACE) && onCopyCard_) {
+        if (selectedCardIndex_.has_value() && *selectedCardIndex_ < option->cardOptions.size()) {
+            (void)onCopyCard_(option->cardOptions[*selectedCardIndex_].cardId);
+        } else {
+            (void)onCopyCard_(CardId{});
+        }
+        return;
+    }
+
     if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         return;
     }
@@ -530,8 +626,28 @@ void RewardScene::renderCardChoice() const {
         CardVisualInstance::renderStatic(model, font_.available() ? &font_.font() : nullptr, transform);
     }
 
+    if (copyCardHintVisible()) {
+        BasicUi::drawCenteredTextFitted(
+            font_,
+            localization_.get(TextId("active_item.hint.copy_selected")),
+            Rectangle{panel.x + 180.f, panel.y + panel.height - 74.f, panel.width - 360.f, 30.f},
+            16.f,
+            12.f,
+            Color{196, 176, 235, 255}
+        );
+    }
+
     BasicUi::drawButton(font_, cancelButtonBounds(), localization_.get(TextId("reward.cancel")), mouse);
     BasicUi::drawButton(font_, confirmButtonBounds(), localization_.get(TextId("reward.confirm")), mouse, selectedCardIndex_.has_value());
+}
+
+bool RewardScene::copyCardHintVisible() const {
+    if (!onCopyCard_ || runState_.activeItem.empty()) {
+        return false;
+    }
+    const ActiveItemId id(runState_.activeItem.itemId);
+    return activeItems_.contains(id) &&
+        ActiveItemSystem::hasEffect(activeItems_.get(id), ActiveItemEffectType::CopyCard);
 }
 
 void RewardScene::renderRelicInspect(const RewardOption& option, const Rectangle row) const {
@@ -595,27 +711,12 @@ std::string RewardScene::optionTitle(const RewardOption& option) const {
             );
         case RewardOptionType::Relic:
             return localization_.format(TextId("reward.take_relic"), {{"relic", relicName(option.relicId)}});
+        case RewardOptionType::ActiveItem:
+            return localization_.format(TextId("reward.take_active_item"), {{"item", activeItemName(option.activeItemId)}});
     }
     return {};
 }
 
-std::string RewardScene::optionDescription(const RewardOption& option) const {
-    switch (option.type) {
-        case RewardOptionType::Gold:
-            return localization_.get(TextId("reward.gold_description"));
-        case RewardOptionType::CardChoice:
-            return localization_.format(
-                TextId("reward.card_choice_description"),
-                {{"count", std::to_string(option.cardOptions.size())}}
-            );
-        case RewardOptionType::Consumable:
-            return consumableDescription(option.consumableId);
-        case RewardOptionType::Relic:
-            return {};
-    }
-
-    return {};
-}
 
 std::string RewardScene::cardName(const CardId& cardId) const {
     return localization_.get(cards_.get(cardId).nameTextId);
@@ -658,6 +759,13 @@ std::string RewardScene::consumableDescription(const std::string& consumableId) 
     return localization_.get(consumables_.get(ConsumableId(consumableId)).descriptionTextId);
 }
 
+std::string RewardScene::activeItemName(const std::string& activeItemId) const {
+    if (activeItemId.empty() || !activeItems_.contains(ActiveItemId(activeItemId))) {
+        return activeItemId;
+    }
+    return localization_.get(activeItems_.get(ActiveItemId(activeItemId)).nameTextId);
+}
+
 std::string RewardScene::rewardTitle() const {
     if (reward_.sourceNodeType == RunMapNodeType::Chest) {
         return localization_.get(TextId("reward.chest_title"));
@@ -668,16 +776,4 @@ std::string RewardScene::rewardTitle() const {
     }
 
     return localization_.get(TextId("reward.title"));
-}
-
-std::string RewardScene::rewardHint() const {
-    if (reward_.sourceNodeType == RunMapNodeType::Chest) {
-        return localization_.get(TextId("reward.chest_optional_hint"));
-    }
-
-    if (reward_.sourceNodeType == RunMapNodeType::Boss) {
-        return localization_.get(TextId("reward.boss_optional_hint"));
-    }
-
-    return localization_.get(TextId("reward.optional_hint"));
 }

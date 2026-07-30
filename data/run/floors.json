@@ -21,12 +21,55 @@
       "is_implemented": true,
       "name_text_id": "floor.floor2.name",
       "theme_id": "flooded_archive",
-      "next_floor_id": "",
+      "next_floor_id": "floor3",
       "map_config_id": "act2",
       "map_config_path": "acts/act2.json",
       "encounter_table_id": "act2",
       "encounter_table_path": "../encounters/act2_encounters.json",
       "event_pool_id": "act2"
+    },
+    {
+      "id": "floor3",
+      "index": 3,
+      "act": 3,
+      "is_implemented": true,
+      "name_text_id": "floor.floor3.name",
+      "theme_id": "ashen_conservatory",
+      "next_floor_id": "floor4",
+      "map_config_id": "act3",
+      "map_config_path": "acts/act3.json",
+      "encounter_table_id": "act3",
+      "encounter_table_path": "../encounters/act3_encounters.json",
+      "event_pool_id": "act3"
+    },
+    {
+      "id": "floor4",
+      "index": 4,
+      "act": 4,
+      "is_implemented": true,
+      "name_text_id": "floor.floor4.name",
+      "theme_id": "broken_observatory",
+      "next_floor_id": "floor5",
+      "map_config_id": "act4",
+      "map_config_path": "acts/act4.json",
+      "encounter_table_id": "act4",
+      "encounter_table_path": "../encounters/act4_encounters.json",
+      "event_pool_id": "act4"
+    },
+    {
+      "id": "floor5",
+      "index": 5,
+      "act": 5,
+      "is_implemented": true,
+      "name_text_id": "floor.floor5.name",
+      "theme_id": "last_oath_throne",
+      "next_floor_id": "",
+      "map_config_id": "act5",
+      "map_config_path": "acts/act5.json",
+      "encounter_table_id": "act5",
+      "encounter_table_path": "../encounters/act5_encounters.json",
+      "event_pool_id": "act5",
+      "boss_encounter_min": 1
     }
   ]
 }

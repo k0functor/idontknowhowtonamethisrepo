@@ -4,6 +4,7 @@
 #include "data/JsonLoader.hpp"
 #include "data/JsonReader.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 
@@ -29,6 +30,7 @@ NodeRewardTuning parseNodeTuning(const Json& json, const std::filesystem::path& 
     result.cardChoices = reader.optionalInt("card_choices", result.offerCards ? 3 : 0);
     result.guaranteedRelic = reader.optionalBool("guaranteed_relic", false);
     result.consumableChancePercent = reader.optionalInt("consumable_chance_percent", 0);
+    result.activeItemChancePercent = reader.optionalInt("active_item_chance_percent", 0);
 
     const std::string minimumCardRarity = reader.optionalString("minimum_card_rarity", "");
     if (!minimumCardRarity.empty()) {
@@ -46,19 +48,22 @@ NodeRewardTuning parseNodeTuning(const Json& json, const std::filesystem::path& 
     if (result.consumableChancePercent < 0 || result.consumableChancePercent > 100) {
         throw std::runtime_error(filePath.string() + ": consumable_chance_percent must be between 0 and 100");
     }
+    if (result.activeItemChancePercent < 0 || result.activeItemChancePercent > 100) {
+        throw std::runtime_error(filePath.string() + ": active_item_chance_percent must be between 0 and 100");
+    }
 
     return result;
 }
 }
 
 RewardTuning::RewardTuning() {
-    combat_ = NodeRewardTuning{18, true, 3, false, 30, std::nullopt};
-    elite_ = NodeRewardTuning{35, true, 3, true, 45, std::nullopt};
-    boss_ = NodeRewardTuning{75, true, 3, true, 0, CardRarity::Uncommon};
-    chest_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
-    event_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
-    shop_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
-    rest_ = NodeRewardTuning{0, false, 0, false, 0, std::nullopt};
+    combat_ = NodeRewardTuning{18, true, 3, false, 30, 0, std::nullopt};
+    elite_ = NodeRewardTuning{35, true, 3, true, 45, 35, std::nullopt};
+    boss_ = NodeRewardTuning{75, true, 3, true, 0, 20, CardRarity::Uncommon};
+    chest_ = NodeRewardTuning{0, false, 0, false, 0, 0, std::nullopt};
+    event_ = NodeRewardTuning{0, false, 0, false, 0, 0, std::nullopt};
+    shop_ = NodeRewardTuning{0, false, 0, false, 0, 0, std::nullopt};
+    rest_ = NodeRewardTuning{0, false, 0, false, 0, 0, std::nullopt};
 }
 
 void RewardTuning::loadFromFile(const std::filesystem::path& filePath) {
@@ -68,6 +73,16 @@ void RewardTuning::loadFromFile(const std::filesystem::path& filePath) {
     merchantGoldMultiplier_ = reader.optionalDouble("merchant_gold_multiplier", merchantGoldMultiplier_);
     if (merchantGoldMultiplier_ < 0.0) {
         throw std::runtime_error(filePath.string() + ": merchant_gold_multiplier must not be negative");
+    }
+
+    groupGoldBonusPercentPerExtraEnemy_ = reader.optionalInt(
+        "group_gold_bonus_percent_per_extra_enemy",
+        groupGoldBonusPercentPerExtraEnemy_
+    );
+    if (groupGoldBonusPercentPerExtraEnemy_ < 0 || groupGoldBonusPercentPerExtraEnemy_ > 100) {
+        throw std::runtime_error(
+            filePath.string() + ": group_gold_bonus_percent_per_extra_enemy must be between 0 and 100"
+        );
     }
 
     const Json& nodes = reader.requiredObject("nodes");
@@ -110,4 +125,9 @@ NodeRewardTuning& RewardTuning::mutableNode(const RunMapNodeType nodeType) {
 
 double RewardTuning::merchantGoldMultiplier() const {
     return merchantGoldMultiplier_;
+}
+
+double RewardTuning::groupGoldMultiplier(const int enemyCount) const {
+    const int extraEnemies = std::max(0, enemyCount - 1);
+    return 1.0 + static_cast<double>(extraEnemies * groupGoldBonusPercentPerExtraEnemy_) / 100.0;
 }

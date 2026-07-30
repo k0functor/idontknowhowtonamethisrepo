@@ -1,0 +1,62 @@
+{
+  "id": "act5",
+  "layer_node_counts": [
+    1,
+    5,
+    6,
+    6,
+    6,
+    5,
+    6,
+    6,
+    5,
+    5,
+    5,
+    4,
+    5,
+    4,
+    4,
+    4,
+    4,
+    3,
+    3,
+    1
+  ],
+  "event_weight": 30,
+  "combat_weight": 70,
+  "shop": {
+    "count": 1,
+    "min_layer": 2,
+    "max_layer": 15
+  },
+  "chests": {
+    "count": 1,
+    "min_layer": 3,
+    "max_layer": 15,
+    "full_layer": false
+  },
+  "elites": {
+    "min": 3,
+    "max": 5,
+    "min_layer": 3,
+    "max_layer": 16,
+    "max_per_layer": 1,
+    "min_layer_gap": 1
+  },
+  "layout": {
+    "start_x": 70.0,
+    "layer_step_x": 260.0,
+    "center_y": 500.0,
+    "node_spacing_y": 92.0
+  },
+  "extra_connection_chance": 24,
+  "question_mark_combat_chance": 34,
+  "events": {
+    "min": 7,
+    "max": 10,
+    "min_layer": 2,
+    "max_layer": 16,
+    "max_per_layer": 2,
+    "min_layer_gap": 0
+  }
+}

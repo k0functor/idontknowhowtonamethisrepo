@@ -298,6 +298,7 @@ std::vector<std::pair<std::string, std::string>> RunDefeatScene::statRows() cons
         {localization_.get(TextId("run_defeat.chests_label")), number(run_.stats.chestsOpened)},
         {localization_.get(TextId("run_defeat.rests_label")), number(run_.stats.restsUsed)},
         {localization_.get(TextId("run_defeat.rest_heals_label")), number(run_.stats.restHealsUsed)},
+        {localization_.get(TextId("run_defeat.rest_calms_label")), number(run_.stats.restCalmsUsed)},
         {localization_.get(TextId("run_defeat.rest_upgrades_label")), number(run_.stats.restUpgradesUsed)},
         {localization_.get(TextId("run_defeat.rest_skips_label")), number(run_.stats.restSkips)},
         {localization_.get(TextId("run_defeat.gold_gained_label")), number(run_.stats.goldGained)},
