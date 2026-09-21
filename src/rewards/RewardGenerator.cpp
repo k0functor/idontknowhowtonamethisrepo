@@ -6,6 +6,7 @@
 #include "consumables/ConsumableDefinition.hpp"
 #include "relics/RelicDefinition.hpp"
 #include "rewards/RewardOption.hpp"
+#include "rewards/CardRewardQuality.hpp"
 #include "rewards/RewardPoolRules.hpp"
 #include "run/RunCardEligibility.hpp"
 
@@ -57,6 +58,7 @@ RewardState RewardGenerator::generateCombatReward(
     const NodeRewardTuning& nodeTuning = tuning.node(context.nodeType);
     const int baseGold = nodeTuning.gold;
     int gold = static_cast<int>(static_cast<float>(baseGold) * context.run.goldRewardMultiplier);
+    gold = static_cast<int>(static_cast<double>(gold) * tuning.floorGoldMultiplier(context.run.currentFloorIndex));
     gold = static_cast<int>(static_cast<double>(gold) * tuning.groupGoldMultiplier(context.enemyCount));
     gold = static_cast<int>(static_cast<double>(gold) * relicGoldMultiplier(context, relics));
 
@@ -80,16 +82,27 @@ RewardState RewardGenerator::generateCombatReward(
         }
 
         if (!candidates.empty()) {
+            std::vector<const CardDefinition*> deck;
+            deck.reserve(context.run.deckCardIds.size());
+            for (const CardId& cardId : context.run.deckCardIds) {
+                if (cards.contains(cardId)) {
+                    deck.push_back(&cards.get(cardId));
+                }
+            }
+
             const int optionCount = std::min<int>(cardRewardCount(context, tuning), static_cast<int>(candidates.size()));
+            const std::vector<const CardDefinition*> pickedCards = CardRewardQuality::chooseOffers(
+                std::move(candidates),
+                deck,
+                optionCount,
+                random
+            );
             std::vector<CardRewardOption> cardOptions;
-            cardOptions.reserve(static_cast<std::size_t>(optionCount));
-
-            for (int i = 0; i < optionCount; ++i) {
-                const int pickedIndex = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
-                const CardDefinition* picked = candidates[static_cast<std::size_t>(pickedIndex)];
-
-                cardOptions.push_back(CardRewardOption{picked->id});
-                candidates.erase(candidates.begin() + pickedIndex);
+            cardOptions.reserve(pickedCards.size());
+            for (const CardDefinition* picked : pickedCards) {
+                if (picked != nullptr) {
+                    cardOptions.push_back(CardRewardOption{picked->id});
+                }
             }
 
             if (!cardOptions.empty()) {
@@ -208,7 +221,7 @@ std::optional<RelicId> RewardGenerator::chooseRelicReward(
             continue;
         }
 
-        if (!RewardPoolRules::canAppearAsRelicReward(*relic)) {
+        if (!RewardPoolRules::canAppearAsRelicReward(*relic, context.run.archetypeMechanicId)) {
             continue;
         }
 

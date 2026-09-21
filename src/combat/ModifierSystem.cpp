@@ -73,6 +73,7 @@ ModifiedValueRange ModifierSystem::modifyRange(
 
     for (const ModifierBreakdownEntry& entry : maxValue.breakdown) {
         result.modifierLabels.push_back(entry.sourceId);
+        result.modifierDescriptions.push_back(entry.description);
     }
 
     return result;

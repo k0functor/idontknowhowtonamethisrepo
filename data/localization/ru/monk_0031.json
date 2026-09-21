@@ -1,0 +1,17 @@
+{
+  "card.monk_cinder_crossing.name": "Переход через угли",
+  "card.monk_cinder_crossing.description": "Наносит {damage} урона. В Стойке Пламени получает +{bonus_if_status} урона. Войдите в Стойку Пепла.",
+  "card.monk_ashen_passage.name": "Пепельный переход",
+  "card.monk_ashen_passage.description": "Даёт {block} защиты. В Стойке Пепла даёт ещё {bonus_if_status} защиты. Войдите в Стойку Дыма.",
+  "card.monk_smoke_ignition.name": "Дымное возгорание",
+  "card.monk_smoke_ignition.description": "Наносит {damage} урона всем врагам. В Стойке Дыма получает +{bonus_if_status} урона. Войдите в Стойку Пламени.",
+  "card.monk_three_aspects.name": "Три аспекта",
+  "card.monk_three_aspects.description": "Наносит 5 урона (+7 в Пламени). Даёт 5 защиты (+7 в Пепле). Добирает 1 карту (+1 в Дыме). Изгоняется.",
+  "card.monk_three_aspects.upgrade.description": "Наносит 6 урона (+9 в Пламени). Даёт 6 защиты (+9 в Пепле). Добирает 1 карту (+2 в Дыме). Изгоняется.",
+  "card.monk_still_point.name": "Неподвижная точка",
+  "card.monk_still_point.description": "Пламя: получите 2 силы. Пепел: получите 12 защиты. Дым: доберите 2 карты. Сохраняется. Изгоняется.",
+  "card.monk_still_point.upgrade.description": "Пламя: получите 3 силы. Пепел: получите 16 защиты. Дым: доберите 3 карты. Сохраняется. Изгоняется.",
+  "card.monk_wheel_without_end.name": "Колесо без конца",
+  "card.monk_wheel_without_end.description": "Войдите последовательно в Стойки Пламени, Пепла и Дыма. Каждая настоящая смена стойки даёт обычную награду за смену. Изгоняется.",
+  "card.monk_wheel_without_end.upgrade.description": "Войдите последовательно в Стойки Пламени, Пепла и Дыма. Каждая настоящая смена стойки даёт обычную награду за смену. Сохраняется. Изгоняется."
+}

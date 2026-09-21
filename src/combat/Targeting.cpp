@@ -40,6 +40,16 @@ std::vector<EntityId> aliveAlliesExceptSource(const CombatState& state, const En
     return allies;
 }
 
+std::vector<EntityId> singleTargetOrThrow(
+    std::vector<EntityId> candidates,
+    const char* missingTargetMessage
+) {
+    if (candidates.size() <= 1u) {
+        return candidates;
+    }
+    throw std::runtime_error(missingTargetMessage);
+}
+
 std::optional<EntityId> explicitEnemyTarget(const CombatState& state, const EffectContext& context) {
     if (context.explicitEnemyTarget.has_value() && isAliveEnemy(state, *context.explicitEnemyTarget)) {
         return context.explicitEnemyTarget;
@@ -85,20 +95,16 @@ std::vector<EntityId> Targeting::resolveTargets(
 
             // A card can contain several effects or repeated hits for the same
             // explicitly selected enemy. If an earlier effect killed that enemy,
-            // the remaining effects must harmlessly miss instead of aborting the
-            // whole game. The absence of any explicit selection is still a caller
-            // error and remains fatal.
-            if (context.explicitEnemyTarget.has_value()) {
+            // the remaining effects harmlessly miss instead of jumping to another
+            // target and changing the player's decision after the card was played.
+            if (context.explicitEnemyTarget.has_value() || context.explicitTarget.has_value()) {
                 return {};
             }
 
-            if (context.explicitTarget.has_value() &&
-                state.hasEntity(*context.explicitTarget) &&
-                state.isEnemy(*context.explicitTarget)) {
-                return {};
-            }
-
-            throw std::runtime_error("SingleEnemy effect requires explicit enemy target");
+            return singleTargetOrThrow(
+                state.aliveEnemyIds(),
+                "SingleEnemy effect requires an explicit target while several enemies are alive"
+            );
         }
 
         case EffectTarget::AllEnemies:
@@ -118,10 +124,18 @@ std::vector<EntityId> Targeting::resolveTargets(
                 return {*targetId};
             }
 
-            // Mixed cards such as Sadist -> Masochist + enemy strike choose the
-            // enemy as the primary UI target. In that case the ally side is
-            // unambiguous for the current two-actor party: the other living actor.
-            return aliveAlliesExceptSource(state, context.source);
+            if (context.explicitAllyTarget.has_value() ||
+                (context.explicitTarget.has_value() && state.hasEntity(*context.explicitTarget) && state.isPlayer(*context.explicitTarget))) {
+                return {};
+            }
+
+            // Mixed two-actor cards may choose an enemy as their primary UI target.
+            // Auto-target the only other living player, but never silently turn a
+            // single-ally effect into party-wide support when more actors exist.
+            return singleTargetOrThrow(
+                aliveAlliesExceptSource(state, context.source),
+                "Ally effect requires an explicit target while several allies are available"
+            );
         }
 
         case EffectTarget::AllAllies:
@@ -137,4 +151,30 @@ std::vector<EntityId> Targeting::resolveTargets(
     }
 
     throw std::runtime_error("Unknown effect target");
+}
+
+bool Targeting::isValidResolvedTarget(
+    const CombatState& state,
+    const EffectTarget target,
+    const EntityId candidate,
+    const EntityId source
+) {
+    if (!state.hasEntity(candidate) || !state.entity(candidate).isAlive()) {
+        return false;
+    }
+
+    switch (target) {
+        case EffectTarget::Self:
+            return candidate == source;
+        case EffectTarget::SingleEnemy:
+        case EffectTarget::AllEnemies:
+        case EffectTarget::RandomEnemy:
+            return state.isEnemy(candidate);
+        case EffectTarget::Ally:
+        case EffectTarget::RandomAlly:
+            return state.isPlayer(candidate) && candidate != source;
+        case EffectTarget::AllAllies:
+            return state.isPlayer(candidate);
+    }
+    return false;
 }

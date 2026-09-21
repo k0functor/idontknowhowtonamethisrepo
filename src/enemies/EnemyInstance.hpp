@@ -14,5 +14,6 @@ inline CombatEntity makeEnemyEntity(
     entity.nameTextId = definition.nameTextId;
     entity.health = Health(definition.maxHp);
     entity.block = definition.startingBlock;
+    entity.boss = definition.role == EnemyRole::Boss;
     return entity;
 }

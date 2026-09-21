@@ -237,6 +237,38 @@ function Invoke-ReleasePackageValidator {
     )
 }
 
+function Invoke-ContestReadinessValidator {
+    param([string]$ProjectRoot)
+
+    $validatorPath = Join-Path $ProjectRoot "tools/validate_contest_readiness.py"
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if ($null -eq $python) {
+        throw "Python 3 is required to validate contest readiness"
+    }
+
+    Invoke-CheckedCommand -FilePath $python.Source -Arguments @($validatorPath)
+}
+
+function Invoke-PackagedSmokeTest {
+    param(
+        [string]$PackageDir,
+        [string]$ExecutableName
+    )
+
+    Push-Location $PackageDir
+    try {
+        Invoke-CheckedCommand -FilePath (Join-Path $PackageDir $ExecutableName) -Arguments @("--smoke-test")
+    } finally {
+        Pop-Location
+        foreach ($runtimeDir in @("saves", "logs")) {
+            $path = Join-Path $PackageDir $runtimeDir
+            if (Test-Path $path) {
+                Remove-Item $path -Recurse -Force
+            }
+        }
+    }
+}
+
 function Write-PackageReadme {
     param(
         [string]$PackageDir,
@@ -276,6 +308,9 @@ $zipPath = Join-Path $distRoot "$PackageName.zip"
 
 Push-Location $projectRoot
 try {
+    Write-Step "Validating contest readiness"
+    Invoke-ContestReadinessValidator -ProjectRoot $projectRoot
+
     if (-not $SkipBuild) {
         Write-Step "Configuring CMake preset '$ConfigurePreset'"
         Invoke-CheckedCommand -FilePath "cmake" -Arguments @(
@@ -318,6 +353,9 @@ try {
     Assert-StaticRuntimeDependencies -ExePath $exePath
     Write-Step "Writing README.txt"
     Write-PackageReadme -PackageDir $packageDir -ExecutableName $ExecutableName
+
+    Write-Step "Smoke-starting packaged executable"
+    Invoke-PackagedSmokeTest -PackageDir $packageDir -ExecutableName $ExecutableName
 
     Write-Step "Validating package directory"
     Invoke-ReleasePackageValidator -ProjectRoot $projectRoot -PackagePath $packageDir -ExecutableName $ExecutableName

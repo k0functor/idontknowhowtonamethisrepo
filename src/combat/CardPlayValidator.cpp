@@ -2,6 +2,7 @@
 
 #include "cards/CardKeyword.hpp"
 #include "combat/CardCost.hpp"
+#include "combat/CardStressCost.hpp"
 
 #include <algorithm>
 #include <optional>
@@ -72,13 +73,7 @@ CardPlayValidationResult CardPlayValidator::validate(
         return invalidResult(CardPlayFailureReason::NotEnoughEnergy, "Not enough energy");
     }
 
-    int requiredStress = 0;
-    for (const EffectDefinition& effect : definition.effects) {
-        if (isStressConversionEffect(effect.type) && effect.value.isFixed()) {
-            requiredStress += effect.value.fixedAmount() * std::max(1, effect.repeatCount);
-        }
-    }
-
+    const int requiredStress = CardStressCost::totalCost(definition);
     if (sourceEntity.stress < requiredStress) {
         return invalidResult(CardPlayFailureReason::NotEnoughStress, "Not enough stress");
     }

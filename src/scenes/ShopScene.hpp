@@ -44,30 +44,11 @@ public:
     void render() const override;
 
 private:
-    Rectangle panelBounds() const;
-    Rectangle offerBounds(std::size_t index) const;
-    Rectangle cardOffersAreaBounds() const;
-    Rectangle otherOffersAreaBounds() const;
-    Rectangle cardOfferVisualBounds(Rectangle cell) const;
-    std::size_t cardOfferColumnCount() const;
-    float cardOfferCellHeight() const;
-    float merchantRestCardScale() const;
-    float merchantRestCardGap(float cellWidth, std::size_t cardCount) const;
-    Rectangle leaveButtonBounds() const;
-    Rectangle removeModeBounds() const;
-    Rectangle removeCardBounds(std::size_t visibleIndex) const;
-    Rectangle removeCancelButtonBounds(Rectangle modal) const;
-    Rectangle purchaseConfirmationBounds() const;
-    Rectangle purchaseConfirmButtonBounds(Rectangle modal) const;
-    Rectangle purchaseCancelButtonBounds(Rectangle modal) const;
-    Rectangle relicOwnerModalBounds() const;
-    Rectangle relicOwnerOptionBounds(std::size_t index) const;
-    Rectangle relicOwnerCancelButtonBounds() const;
 
     void moveRelicOwnerSelection(int delta);
-    Rectangle hoverDescriptionBounds(Vector2 mouse, float height) const;
 
     void updateShop(Vector2 mouse);
+    bool pendingPurchaseIsActiveItem() const;
     void updatePurchaseConfirmation(Vector2 mouse);
     void updateRelicOwnerChoice(Vector2 mouse);
     void updateRemoveMode(Vector2 mouse);
@@ -94,9 +75,6 @@ private:
     std::string offerKind(const ShopOffer& offer) const;
     std::string offerStatus(const ShopOffer& offer) const;
     Color offerStatusColor(const ShopOffer& offer) const;
-    std::size_t cardOfferOrdinal(std::size_t offerIndex) const;
-    std::size_t textOfferOrdinal(std::size_t offerIndex) const;
-    std::size_t visibleRemoveCardCount() const;
     bool isDeckIndexUpgraded(std::size_t deckIndex) const;
     CardViewModel cardViewModel(CardId cardId, CardInstanceId instanceId, bool upgraded, bool playable, bool selected) const;
     std::string cardName(const CardId& cardId) const;

@@ -109,6 +109,9 @@ std::string EventOutcomeScene::outcomeLine(const RunEventOutcomeEntry& entry) co
         case RunEventOutcomeType::CardRemoved:
             return localization_.format(TextId("event.outcome.card_removed"), {{"name", cardName(entry.contentId)}});
 
+        case RunEventOutcomeType::CardUpgraded:
+            return localization_.format(TextId("event.outcome.card_upgraded"), {{"name", cardName(entry.contentId)}});
+
         case RunEventOutcomeType::RelicGained:
             return localization_.format(TextId("event.outcome.relic_gained"), {{"name", relicName(entry.contentId)}});
 

@@ -19,6 +19,15 @@ struct RelicTriggerDefinition {
     // Optional event filters. Empty filters match every event of eventType.
     std::optional<std::string> statusId;
     std::optional<CardType> cardType;
+    std::optional<CardType> previousCardType;
+
+    // Exact 1-based position of the played card in the current player turn.
+    // 0 disables this condition.
+    int cardNumberThisTurn = 0;
+
+    // Optional owner-side state filters for build-around relics.
+    std::optional<std::string> ownerStatusId;
+    int minimumDrones = 0;
     std::optional<std::string> breakdownType;
     int minimumBreakdownSeverity = 0;
     std::string sourceSide = "any";

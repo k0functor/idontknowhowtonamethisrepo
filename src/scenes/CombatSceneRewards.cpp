@@ -1,4 +1,5 @@
 #include "CombatScene.hpp"
+#include "CombatSceneLayout.hpp"
 #include "ui/VirtualViewport.hpp"
 
 #include "cards/CardDescriptionFormatter.hpp"
@@ -49,13 +50,13 @@ void CombatScene::updateRewardModalInput(const Vector2 mousePosition) {
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         for (std::size_t i = 0; i < reward_->options.size(); ++i) {
-            if (BasicUi::contains(rewardOptionRowBounds(i), mousePosition)) {
+            if (BasicUi::contains(CombatSceneLayout::rewardOptionRowBounds(i), mousePosition)) {
                 takeRewardOption(i);
                 return;
             }
         }
 
-        if (BasicUi::contains(rewardContinueButtonBounds(), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::rewardContinueButtonBounds(), mousePosition)) {
             rewardAccepted_ = true;
             onRewardAccepted_(*reward_, rewardSelection_);
             return;
@@ -112,7 +113,7 @@ void CombatScene::renderRewardModal() const {
     }
 
     const Vector2 mouse = GetMousePosition();
-    const Rectangle panel = rewardModalBounds();
+    const Rectangle panel = CombatSceneLayout::rewardModalBounds();
 
     DrawRectangleRounded(panel, 0.045f, 14, Color{29, 31, 42, 248});
     DrawRectangleRoundedLinesEx(panel, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
@@ -144,7 +145,7 @@ void CombatScene::renderRewardModal() const {
     } else {
         for (std::size_t i = 0; i < reward_->options.size(); ++i) {
             const RewardOption& option = reward_->options[i];
-            const Rectangle row = rewardOptionRowBounds(i);
+            const Rectangle row = CombatSceneLayout::rewardOptionRowBounds(i);
             const bool hovered = BasicUi::contains(row, mouse);
 
             const Color fill = hovered ? Color{55, 59, 78, 255} : Color{41, 44, 58, 255};
@@ -175,7 +176,7 @@ void CombatScene::renderRewardModal() const {
 
         for (std::size_t i = 0; i < reward_->options.size(); ++i) {
             const RewardOption& option = reward_->options[i];
-            const Rectangle row = rewardOptionRowBounds(i);
+            const Rectangle row = CombatSceneLayout::rewardOptionRowBounds(i);
             if (option.type == RewardOptionType::Relic && BasicUi::contains(row, mouse)) {
                 renderRewardRelicInspect(option, row);
                 break;
@@ -185,7 +186,7 @@ void CombatScene::renderRewardModal() const {
 
     BasicUi::drawButton(
         uiFont_,
-        rewardContinueButtonBounds(),
+        CombatSceneLayout::rewardContinueButtonBounds(),
         localizedOrFallback(TextId("reward.continue"), "Continue"),
         mouse
     );
@@ -236,7 +237,7 @@ void CombatScene::renderRewardCardChoiceModal() const {
     }
 
     const Vector2 mouse = GetMousePosition();
-    const Rectangle panel = rewardCardChoiceModalBounds();
+    const Rectangle panel = CombatSceneLayout::rewardCardChoiceModalBounds();
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 95});
     DrawRectangleRounded(panel, 0.045f, 14, Color{25, 27, 38, 252});
@@ -251,7 +252,7 @@ void CombatScene::renderRewardCardChoiceModal() const {
     );
 
     for (std::size_t i = 0; i < option->cardOptions.size(); ++i) {
-        const Rectangle bounds = rewardCardChoiceOptionBounds(i);
+        const Rectangle bounds = CombatSceneLayout::rewardCardChoiceOptionBounds(activeRewardCardOptionCount(), i);
         const bool selected = selectedRewardCardIndex_.has_value() && *selectedRewardCardIndex_ == i;
         const CardId& cardId = option->cardOptions[i].cardId;
         if (!content_.cards().contains(cardId)) {
@@ -272,14 +273,14 @@ void CombatScene::renderRewardCardChoiceModal() const {
 
     BasicUi::drawButton(
         uiFont_,
-        rewardCardChoiceCancelBounds(),
+        CombatSceneLayout::rewardCardChoiceCancelBounds(),
         localizedOrFallback(TextId("reward.cancel"), "Cancel"),
         mouse
     );
 
     BasicUi::drawButton(
         uiFont_,
-        rewardCardChoiceConfirmBounds(),
+        CombatSceneLayout::rewardCardChoiceConfirmBounds(),
         localizedOrFallback(TextId("reward.confirm"), "Confirm"),
         mouse,
         selectedRewardCardIndex_.has_value()
@@ -303,97 +304,22 @@ void CombatScene::updateRewardCardChoiceInput(const Vector2 mousePosition) {
     }
 
     for (std::size_t i = 0; i < option->cardOptions.size(); ++i) {
-        if (BasicUi::contains(rewardCardChoiceOptionBounds(i), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::rewardCardChoiceOptionBounds(activeRewardCardOptionCount(), i), mousePosition)) {
             selectedRewardCardIndex_ = i;
             return;
         }
     }
 
-    if (BasicUi::contains(rewardCardChoiceCancelBounds(), mousePosition)) {
+    if (BasicUi::contains(CombatSceneLayout::rewardCardChoiceCancelBounds(), mousePosition)) {
         closeRewardCardChoice();
         return;
     }
 
     if (selectedRewardCardIndex_.has_value() &&
-        BasicUi::contains(rewardCardChoiceConfirmBounds(), mousePosition)) {
+        BasicUi::contains(CombatSceneLayout::rewardCardChoiceConfirmBounds(), mousePosition)) {
         confirmRewardCardChoice();
         return;
     }
-}
-
-Rectangle CombatScene::rewardModalBounds() const {
-    const float width = std::min(620.f, static_cast<float>(VirtualViewport::width()) - 72.f);
-    const float height = std::min(460.f, static_cast<float>(VirtualViewport::height()) - 72.f);
-
-    return Rectangle{
-        static_cast<float>(VirtualViewport::width()) * 0.5f - width * 0.5f,
-        static_cast<float>(VirtualViewport::height()) * 0.5f - height * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle CombatScene::rewardOptionRowBounds(const std::size_t index) const {
-    const Rectangle panel = rewardModalBounds();
-    return Rectangle{
-        panel.x + 38.f,
-        panel.y + 112.f + static_cast<float>(index) * 78.f,
-        panel.width - 76.f,
-        62.f
-    };
-}
-
-Rectangle CombatScene::rewardContinueButtonBounds() const {
-    const Rectangle panel = rewardModalBounds();
-    return Rectangle{panel.x + panel.width * 0.5f - 160.f, panel.y + panel.height - 68.f, 320.f, 50.f};
-}
-
-Rectangle CombatScene::rewardCardChoiceModalBounds() const {
-    const float width = std::min(1040.f, static_cast<float>(VirtualViewport::width()) - 72.f);
-    const float height = std::min(560.f, static_cast<float>(VirtualViewport::height()) - 72.f);
-
-    return Rectangle{
-        static_cast<float>(VirtualViewport::width()) * 0.5f - width * 0.5f,
-        static_cast<float>(VirtualViewport::height()) * 0.5f - height * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle CombatScene::rewardCardChoiceOptionBounds(const std::size_t index) const {
-    const Rectangle panel = rewardCardChoiceModalBounds();
-    const RewardOption* option = activeRewardOption();
-    const std::size_t optionCount = option != nullptr
-        ? std::min<std::size_t>(3, option->cardOptions.size())
-        : 0;
-
-    const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
-    const float cardWidth = cardSize.x + 18.f;
-    const float cardHeight = cardSize.y + 26.f;
-    if (optionCount == 0) {
-        return Rectangle{panel.x + 40.f, panel.y + 100.f, cardWidth, cardHeight};
-    }
-
-    const float spacing = 34.f;
-    const float totalWidth = cardWidth * static_cast<float>(optionCount) + spacing * static_cast<float>(optionCount - 1);
-    const float startX = panel.x + panel.width * 0.5f - totalWidth * 0.5f;
-
-    return Rectangle{
-        startX + static_cast<float>(index) * (cardWidth + spacing),
-        panel.y + 90.f,
-        cardWidth,
-        cardHeight
-    };
-}
-
-Rectangle CombatScene::rewardCardChoiceCancelBounds() const {
-    const Rectangle panel = rewardCardChoiceModalBounds();
-    return Rectangle{panel.x + panel.width * 0.5f - 250.f, panel.y + panel.height - 66.f, 220.f, 48.f};
-}
-
-Rectangle CombatScene::rewardCardChoiceConfirmBounds() const {
-    const Rectangle panel = rewardCardChoiceModalBounds();
-    return Rectangle{panel.x + panel.width * 0.5f + 30.f, panel.y + panel.height - 66.f, 220.f, 48.f};
 }
 
 void CombatScene::openRewardCardChoice(const std::size_t optionIndex) {
@@ -468,6 +394,11 @@ void CombatScene::takeRewardOption(const std::size_t optionIndex) {
             reward_->options.erase(reward_->options.begin() + static_cast<std::ptrdiff_t>(optionIndex));
             break;
     }
+}
+
+std::size_t CombatScene::activeRewardCardOptionCount() const {
+    const RewardOption* option = activeRewardOption();
+    return option != nullptr ? option->cardOptions.size() : 0u;
 }
 
 const RewardOption* CombatScene::activeRewardOption() const {

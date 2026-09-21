@@ -8,6 +8,7 @@ enum class RunEventOutcomeType {
     GoldLost,
     CardGained,
     CardRemoved,
+    CardUpgraded,
     RelicGained,
     ConsumableGained,
     StressGained,

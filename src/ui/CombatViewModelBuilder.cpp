@@ -156,6 +156,26 @@ std::string intentLabel(
     return base + " " + value;
 }
 
+int intentDangerLevel(const EnemyIntent& intent, const int referenceHp) {
+    if (intent.type != EnemyIntentType::Attack || referenceHp <= 0) {
+        return 0;
+    }
+
+    const int hitCount = std::max(1, intent.hitCount);
+    const int maximumDamage = std::max(0, intent.valueMax) * hitCount;
+    if (maximumDamage >= referenceHp) {
+        return 3;
+    }
+    if (maximumDamage * 2 >= referenceHp) {
+        return 2;
+    }
+    if (maximumDamage * 4 >= referenceHp) {
+        return 1;
+    }
+
+    return 0;
+}
+
 std::string statusName(
     const LocalizationManager& localization,
     const StatusDatabase& statuses,
@@ -423,6 +443,22 @@ std::string localizedTextIdVariable(
     return variableOrFallback(entry, fallbackVariable);
 }
 
+std::string localizedEntityVariable(
+    const LocalizationManager& localization,
+    const CombatLogEntry& entry,
+    const std::string& prefix
+) {
+    const std::string localizedName = localizedTextIdVariable(
+        localization,
+        entry,
+        prefix + "_text_id",
+        prefix
+    );
+    return localizedName.empty()
+        ? localized(localization, "combat.log.unknown_entity")
+        : localizedName;
+}
+
 CombatLogEntry::Variables actorLogVariables(
     const LocalizationManager& localization,
     const CombatLogEntry& entry
@@ -656,14 +692,27 @@ std::string localizeLogEntry(
             return localizedFormat(localization, "combat.log.enemy_summoned", variables);
         }
 
-        case CombatLogEntryType::DamageDealt:
-            return localizedFormat(localization, "combat.log.damage_detail", entry.variables);
+        case CombatLogEntryType::DamageDealt: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["source"] = localizedEntityVariable(localization, entry, "source");
+            variables["target"] = localizedEntityVariable(localization, entry, "target");
+            return localizedFormat(localization, "combat.log.damage_compact", variables);
+        }
 
-        case CombatLogEntryType::BlockGained:
-            return localizedFormat(localization, "combat.log.block_detail", entry.variables);
+        case CombatLogEntryType::BlockGained: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["target"] = localizedEntityVariable(localization, entry, "target");
+            if (!variables.contains("modified")) {
+                variables["modified"] = variableOrFallback(entry, "amount", "0");
+            }
+            return localizedFormat(localization, "combat.log.block_compact", variables);
+        }
 
-        case CombatLogEntryType::Heal:
-            return localizedFormat(localization, "combat.log.heal", entry.variables);
+        case CombatLogEntryType::Heal: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["target"] = localizedEntityVariable(localization, entry, "target");
+            return localizedFormat(localization, "combat.log.heal_compact", variables);
+        }
 
         case CombatLogEntryType::DrawCards:
             return localizedFormat(localization, "combat.log.draw_cards", entry.variables);
@@ -683,7 +732,12 @@ std::string localizeLogEntry(
         case CombatLogEntryType::StatusApplied: {
             CombatLogEntry::Variables variables = entry.variables;
             variables["status"] = statusName(localization, statuses, variableOrFallback(entry, "status"));
-            variables["target"] = localizedTextIdVariable(localization, entry, "target_text_id", "target");
+            variables["target"] = localizedEntityVariable(localization, entry, "target");
+            const std::string source = variableOrFallback(entry, "source_text_id");
+            if (!source.empty()) {
+                variables["source"] = localizedEntityVariable(localization, entry, "source");
+                return localizedFormat(localization, "combat.log.status_applied_from", variables);
+            }
             return localizedFormat(localization, "combat.log.status_applied", variables);
         }
 
@@ -699,11 +753,17 @@ std::string localizeLogEntry(
             return localizedFormat(localization, "combat.log.burn_damage", variables);
         }
 
-        case CombatLogEntryType::GainStress:
-            return localizedFormat(localization, "combat.log.gain_stress", entry.variables);
+        case CombatLogEntryType::GainStress: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["target"] = localizedEntityVariable(localization, entry, "target");
+            return localizedFormat(localization, "combat.log.gain_stress_compact", variables);
+        }
 
-        case CombatLogEntryType::LoseStress:
-            return localizedFormat(localization, "combat.log.lose_stress", entry.variables);
+        case CombatLogEntryType::LoseStress: {
+            CombatLogEntry::Variables variables = entry.variables;
+            variables["target"] = localizedEntityVariable(localization, entry, "target");
+            return localizedFormat(localization, "combat.log.lose_stress_compact", variables);
+        }
 
         case CombatLogEntryType::StressResolve:
             return localizedFormat(localization, "combat.log.stress_resolve", actorLogVariables(localization, entry));
@@ -784,6 +844,118 @@ std::string localizeLogEntry(
     }
 
     return entry.text;
+}
+
+bool isCompactJournalEntry(const CombatLogEntryType type) {
+    switch (type) {
+        case CombatLogEntryType::PlayerTurnStarted:
+        case CombatLogEntryType::PlayerTurnEnded:
+        case CombatLogEntryType::EnemyTurnStarted:
+        case CombatLogEntryType::EnemyTurnEnded:
+        case CombatLogEntryType::ActivePlayerActor:
+            return false;
+        default:
+            return true;
+    }
+}
+
+CombatJournalTone journalToneFor(const CombatLogEntryType type) {
+    switch (type) {
+        case CombatLogEntryType::DamageDealt:
+        case CombatLogEntryType::LoseHp:
+        case CombatLogEntryType::PoisonDamage:
+        case CombatLogEntryType::BurnDamage:
+            return CombatJournalTone::Damage;
+
+        case CombatLogEntryType::BlockGained:
+        case CombatLogEntryType::Heal:
+            return CombatJournalTone::Defense;
+
+        case CombatLogEntryType::StatusApplied:
+            return CombatJournalTone::Status;
+
+        case CombatLogEntryType::GainStress:
+        case CombatLogEntryType::LoseStress:
+        case CombatLogEntryType::StressResolve:
+        case CombatLogEntryType::StressBreakdown:
+        case CombatLogEntryType::StressBreakdownPrevented:
+        case CombatLogEntryType::StressCollapse:
+        case CombatLogEntryType::StressBreakdownDiscard:
+        case CombatLogEntryType::StressBreakdownEnergy:
+        case CombatLogEntryType::StressBreakdownStatusCards:
+        case CombatLogEntryType::StressBreakdownCost:
+        case CombatLogEntryType::StressBreakdownForcedCard:
+            return CombatJournalTone::Stress;
+
+        case CombatLogEntryType::DrawCards:
+        case CombatLogEntryType::DiscardCards:
+        case CombatLogEntryType::GainEnergy:
+        case CombatLogEntryType::LoseEnergy:
+        case CombatLogEntryType::UsedConsumable:
+        case CombatLogEntryType::DroneSummoned:
+        case CombatLogEntryType::DroneAction:
+        case CombatLogEntryType::DroneConsumed:
+            return CombatJournalTone::Resource;
+
+        case CombatLogEntryType::CombatWon:
+        case CombatLogEntryType::CombatLost:
+        case CombatLogEntryType::BossPhaseChanged:
+        case CombatLogEntryType::BossArenaEffect:
+        case CombatLogEntryType::EnemySummoned:
+        case CombatLogEntryType::RelicTriggered:
+            return CombatJournalTone::Important;
+
+        default:
+            return CombatJournalTone::Neutral;
+    }
+}
+
+std::string journalDetail(
+    const LocalizationManager& localization,
+    const CardDatabase& cards,
+    const CombatLogEntry& entry
+) {
+    CombatLogEntry::Variables variables = entry.variables;
+    const std::string cardId = variableOrFallback(entry, "card");
+    if (!cardId.empty()) {
+        variables["card"] = cardName(localization, cards, cardId);
+    }
+
+    switch (entry.type) {
+        case CombatLogEntryType::DamageDealt:
+            if (variableOrFallback(entry, "modifiers").empty()) {
+                return localizedFormat(localization, "combat.log.damage_breakdown", variables);
+            }
+            return localizedFormat(localization, "combat.log.damage_breakdown_modified", variables);
+
+        case CombatLogEntryType::BlockGained:
+            if (!variables.contains("raw") || !variables.contains("modified")) {
+                return {};
+            }
+            if (variableOrFallback(entry, "modifiers").empty()) {
+                return localizedFormat(localization, "combat.log.block_breakdown", variables);
+            }
+            return localizedFormat(localization, "combat.log.block_breakdown_modified", variables);
+
+        case CombatLogEntryType::GainStress:
+        case CombatLogEntryType::LoseStress:
+            if (variables.contains("before") && variables.contains("after")) {
+                if (variableOrFallback(entry, "reason") == "card_cost" && !cardId.empty()) {
+                    return localizedFormat(localization, "combat.log.stress_transition_card", variables);
+                }
+                return localizedFormat(localization, "combat.log.stress_transition", variables);
+            }
+            return {};
+
+        case CombatLogEntryType::Heal:
+            if (!cardId.empty()) {
+                return localizedFormat(localization, "combat.log.caused_by_card", variables);
+            }
+            return {};
+
+        default:
+            return {};
+    }
 }
 }
 
@@ -970,6 +1142,16 @@ CombatViewModel CombatViewModelBuilder::build(
         );
     }
 
+    int lowestLivingPlayerHp = 0;
+    for (const CombatEntity& player : state.players) {
+        if (!player.isAlive()) {
+            continue;
+        }
+        if (lowestLivingPlayerHp == 0 || player.health.current() < lowestLivingPlayerHp) {
+            lowestLivingPlayerHp = player.health.current();
+        }
+    }
+
     std::unordered_map<std::uint64_t, EnemyIntent> intentsByEnemy;
     intentsByEnemy.reserve(state.enemyIntents.size());
     for (const EnemyIntentState& intentState : state.enemyIntents) {
@@ -1005,6 +1187,18 @@ CombatViewModel CombatViewModelBuilder::build(
 
             const EnemyIntentPresentation presentation = summarizeEnemyIntent(enemyModel.intent);
             enemyModel.intentAffectsMultipleTargets = presentation.affectsMultipleTargets;
+            enemyModel.intentDangerLevel = intentDangerLevel(enemyModel.intent, lowestLivingPlayerHp);
+
+            if (enemyModel.intent.type == EnemyIntentType::Attack && enemyModel.alive) {
+                const int hitCount = std::max(1, enemyModel.intent.hitCount);
+                model.incomingDamageMin += std::max(0, enemyModel.intent.valueMin) * hitCount;
+                model.incomingDamageMax += std::max(0, enemyModel.intent.valueMax) * hitCount;
+                ++model.attackingEnemyCount;
+                if (presentation.affectsAllPlayers) {
+                    ++model.partyWideThreatCount;
+                }
+            }
+
             if (presentation.affectsAllPlayers && presentation.affectsEnemyTeam) {
                 enemyModel.intentScopeLabel = localized(localization_, "ui.intent_scope.party_and_team");
             } else if (presentation.affectsAllPlayers) {
@@ -1021,7 +1215,25 @@ CombatViewModel CombatViewModelBuilder::build(
         model.enemies.push_back(std::move(enemyModel));
     }
 
-    model.recentLogEntries = recentLogEntries(state, 6);
+    if (model.attackingEnemyCount > 0) {
+        model.incomingDamageLabel = localizedFormat(
+            localization_,
+            "ui.threat.incoming_damage",
+            {{"damage", numericRangeText(model.incomingDamageMin, model.incomingDamageMax)}}
+        );
+    } else {
+        model.incomingDamageLabel = localized(localization_, "ui.threat.no_attacks");
+    }
+
+    if (model.partyWideThreatCount > 0) {
+        model.partyWideThreatLabel = localizedFormat(
+            localization_,
+            "ui.threat.party_wide",
+            {{"count", std::to_string(model.partyWideThreatCount)}}
+        );
+    }
+
+    model.recentJournalEntries = recentJournalEntries(state, 7);
     return model;
 }
 
@@ -1085,21 +1297,38 @@ std::vector<StatusViewModel> CombatViewModelBuilder::buildStatuses(
     return result;
 }
 
-std::vector<std::string> CombatViewModelBuilder::recentLogEntries(
+std::vector<CombatJournalEntryViewModel> CombatViewModelBuilder::recentJournalEntries(
     const CombatState& state,
     const std::size_t maxCount
 ) const {
     const std::vector<CombatLogEntry>& entries = state.log.entries();
-    const auto begin = entries.size() <= maxCount
-        ? entries.begin()
-        : entries.end() - static_cast<std::ptrdiff_t>(maxCount);
+    std::vector<CombatJournalEntryViewModel> reversed;
+    reversed.reserve(std::min(maxCount, entries.size()));
 
-    std::vector<std::string> result;
-    result.reserve(static_cast<std::size_t>(std::distance(begin, entries.end())));
+    for (auto iterator = entries.rbegin(); iterator != entries.rend() && reversed.size() < maxCount; ++iterator) {
+        if (!isCompactJournalEntry(iterator->type)) {
+            continue;
+        }
 
-    for (auto iterator = begin; iterator != entries.end(); ++iterator) {
-        result.push_back(localizeLogEntry(localization_, statusDatabase_, droneDatabase_, cardDatabase_, *iterator));
+        const std::string text = localizeLogEntry(
+            localization_,
+            statusDatabase_,
+            droneDatabase_,
+            cardDatabase_,
+            *iterator
+        );
+        if (text.empty()) {
+            continue;
+        }
+
+        CombatJournalEntryViewModel model;
+        model.sequence = iterator->sequence;
+        model.tone = journalToneFor(iterator->type);
+        model.text = text;
+        model.detail = journalDetail(localization_, cardDatabase_, *iterator);
+        reversed.push_back(std::move(model));
     }
 
-    return result;
+    std::reverse(reversed.begin(), reversed.end());
+    return reversed;
 }

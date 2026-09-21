@@ -59,5 +59,6 @@
       "active_item_chance_percent": 0
     }
   },
-  "group_gold_bonus_percent_per_extra_enemy": 20
+  "group_gold_bonus_percent_per_extra_enemy": 20,
+  "gold_growth_percent_per_floor": 8
 }

@@ -46,7 +46,13 @@ Run the packaging script from PowerShell inside the same MSYS2 UCRT64 environmen
 pwsh -File tools/package_windows_release.ps1
 ```
 
-The script forces static GNU runtime linkage, disables debug tools in the packaged config, rejects non-system DLL dependencies, and validates both the staging directory and final ZIP. Local files under `saves/`, logs, symbols, source files, and developer settings are never distributable runtime content. The game creates `saves/settings.json` on first launch from the safe defaults in `config/app.json`.
+The script runs the contest-readiness gate, forces static GNU runtime linkage, disables debug tools in the packaged config, rejects non-system DLL dependencies, validates the staging directory and final ZIP, and smoke-starts the packaged executable with `--smoke-test`. Local files under `saves/`, logs, symbols, source files, and developer settings are never distributable runtime content. The game creates `saves/settings.json` on first launch from the safe defaults in `config/app.json`.
+
+Before packaging, the source tree can be checked independently:
+
+```bash
+python tools/validate_contest_readiness.py
+```
 
 A package can also be checked independently:
 
@@ -195,6 +201,19 @@ The command writes `reports/balance_simulation.json` and
 compares starter-deck output with weighted enemy action pressure and is meant to
 identify outliers before manual playtesting, not replace playtests.
 
+Approximate complete-run simulation is available separately:
+
+```powershell
+cmake --build build/core-tests --target simulate_full_runs
+```
+
+It writes `reports/full_run_simulation.json` and `.csv`, follows one sampled path
+through all five floors, and models combat attrition, card/relic progression,
+shops, rests, events, stress, gold, and deaths. The default `attrition_scale` is
+a calibration parameter for converting static encounter pressure into full-run
+attrition; compare it with real telemetry instead of treating the reported win
+rate as literal player win rate.
+
 Completed runs are appended locally to
 `saves/telemetry/run_history.jsonl`. No network requests are made. Summarize the
 file with:
@@ -202,6 +221,18 @@ file with:
 ```powershell
 cmake --build build/core-tests --target report_run_telemetry
 ```
+
+Active play time is tracked separately from settings/debug pauses. Room, floor,
+and phase timings survive save/load and are written into the same local run
+telemetry record. Aggregate pacing with:
+
+```powershell
+cmake --build build/core-tests --target report_run_pacing
+```
+
+The report at `reports/run_pacing_summary.json` includes average run duration,
+per-floor duration, time spent in combat/rewards/events/shops/rests, room-type
+averages, and the slowest concrete map nodes seen in playtests.
 
 ## Balance targets
 

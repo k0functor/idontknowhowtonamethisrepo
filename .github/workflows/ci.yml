@@ -88,14 +88,7 @@ jobs:
         run: ctest --test-dir build/ci-app-${{ matrix.build_type }} --output-on-failure
 
       - name: Smoke-start executable
-        run: |
-          set +e
-          timeout 5s xvfb-run -a build/ci-app-${{ matrix.build_type }}/bin/i_dont_know_how_to_name_this_game
-          status=$?
-          set -e
-          if [ "$status" -ne 124 ]; then
-            exit "$status"
-          fi
+        run: xvfb-run -a build/ci-app-${{ matrix.build_type }}/bin/i_dont_know_how_to_name_this_game --smoke-test
 
   windows-package:
     name: Windows portable package

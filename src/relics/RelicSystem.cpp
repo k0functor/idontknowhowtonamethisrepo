@@ -47,6 +47,8 @@ void RelicSystem::handleEvent(
         const std::optional<EntityId> owner = ownerSource(state, instance);
         const RelicDefinition& relic = database_.get(instance.id);
 
+        prepareCardTracking(state, event, instance, owner);
+
         for (const RelicTriggerDefinition& trigger : relic.triggers) {
             if (!triggerMatches(state, trigger, event, instance, owner)) {
                 continue;
@@ -75,7 +77,38 @@ void RelicSystem::handleEvent(
 
             state.log.add(CombatLogEntryType::RelicTriggered, {{"relic", instance.id.value}});
         }
+
+        if (event.type == GameEventType::CardPlayed && event.cardType.has_value()) {
+            const bool relevantSource = event.source.has_value() && state.isPlayer(*event.source) &&
+                (!owner.has_value() || *event.source == *owner);
+            if (relevantSource) {
+                instance.previousCardType = event.cardType;
+            }
+        }
     }
+}
+
+void RelicSystem::prepareCardTracking(
+    const CombatState& state,
+    const GameEvent& event,
+    RelicInstance& instance,
+    const std::optional<EntityId> owner
+) const {
+    if (event.type != GameEventType::CardPlayed || !event.source.has_value() || !state.isPlayer(*event.source)) {
+        return;
+    }
+
+    if (owner.has_value() && *event.source != *owner) {
+        return;
+    }
+
+    if (instance.trackedCardTurn != event.turn) {
+        instance.trackedCardTurn = event.turn;
+        instance.cardsPlayedThisTurn = 0;
+        instance.previousCardType.reset();
+    }
+
+    ++instance.cardsPlayedThisTurn;
 }
 
 bool RelicSystem::triggerMatches(
@@ -115,6 +148,25 @@ bool RelicSystem::triggerMatches(
         return false;
     }
 
+    if (trigger.previousCardType.has_value() && instance.previousCardType != trigger.previousCardType) {
+        return false;
+    }
+
+    if (trigger.cardNumberThisTurn > 0 && instance.cardsPlayedThisTurn != trigger.cardNumberThisTurn) {
+        return false;
+    }
+
+    if (trigger.ownerStatusId.has_value()) {
+        const std::optional<EntityId> entity = conditionOwner(state, event, owner);
+        if (!entity.has_value() || !state.entity(*entity).statuses.has(*trigger.ownerStatusId)) {
+            return false;
+        }
+    }
+
+    if (trigger.minimumDrones > 0 && droneCountForOwner(state, owner) < trigger.minimumDrones) {
+        return false;
+    }
+
     if (trigger.breakdownType.has_value() && event.breakdownType != *trigger.breakdownType) {
         return false;
     }
@@ -136,6 +188,40 @@ bool RelicSystem::triggerMatches(
     }
 
     return true;
+}
+
+std::optional<EntityId> RelicSystem::conditionOwner(
+    const CombatState& state,
+    const GameEvent& event,
+    const std::optional<EntityId> owner
+) const {
+    if (owner.has_value()) {
+        return owner;
+    }
+
+    if (event.source.has_value() && state.isPlayer(*event.source)) {
+        return event.source;
+    }
+
+    const std::vector<EntityId> alivePlayers = state.alivePlayerIds();
+    if (!alivePlayers.empty()) {
+        return alivePlayers.front();
+    }
+
+    return std::nullopt;
+}
+
+int RelicSystem::droneCountForOwner(
+    const CombatState& state,
+    const std::optional<EntityId> owner
+) const {
+    int count = 0;
+    for (const DroneSlot& slot : state.droneSlots) {
+        if (!owner.has_value() || slot.owner == *owner) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 std::optional<EntityId> RelicSystem::ownerSource(const CombatState& state, const RelicInstance& instance) const {

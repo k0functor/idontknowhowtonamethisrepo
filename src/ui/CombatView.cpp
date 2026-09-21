@@ -1,6 +1,7 @@
 #include "CombatView.hpp"
 #include "ui/VirtualViewport.hpp"
 
+#include "ui/UiTheme.hpp"
 #include "ui/Utf8.hpp"
 
 #include <algorithm>
@@ -9,6 +10,26 @@
 namespace {
 constexpr float minContentWidth = 960.f;
 constexpr float maxContentWidth = 1520.f;
+
+UiTheme::Tone journalUiTone(const CombatJournalTone tone) {
+    switch (tone) {
+        case CombatJournalTone::Damage:
+            return UiTheme::Tone::Danger;
+        case CombatJournalTone::Defense:
+            return UiTheme::Tone::Positive;
+        case CombatJournalTone::Status:
+            return UiTheme::Tone::Info;
+        case CombatJournalTone::Stress:
+            return UiTheme::Tone::Warning;
+        case CombatJournalTone::Resource:
+            return UiTheme::Tone::Accent;
+        case CombatJournalTone::Important:
+            return UiTheme::Tone::Primary;
+        case CombatJournalTone::Neutral:
+            return UiTheme::Tone::Neutral;
+    }
+    return UiTheme::Tone::Neutral;
+}
 
 }
 
@@ -125,38 +146,49 @@ void CombatView::render(const Font* font) const {
     const int screenWidth = VirtualViewport::width();
     const int screenHeight = VirtualViewport::height();
 
-    DrawRectangle(0, 0, screenWidth, screenHeight, Color{20, 20, 24, 255});
-    DrawRectangle(0, 0, screenWidth, 72, Color{26, 28, 36, 255});
+    DrawRectangle(0, 0, screenWidth, screenHeight, UiTheme::canvas);
+    DrawRectangle(0, 0, screenWidth, 72, UiTheme::topBar);
 
     const Rectangle battlefield = battlefieldBounds();
     const Rectangle handArea = handBounds();
-    DrawRectangleLinesEx(battlefield, 1.f, Color{56, 58, 70, 255});
-    DrawRectangleLinesEx(handArea, 1.f, Color{56, 58, 70, 255});
+    DrawRectangleLinesEx(battlefield, 1.f, UiTheme::borderSoft);
+    DrawRectangleLinesEx(handArea, 1.f, UiTheme::borderSoft);
 
     const Rectangle endTurnBounds = endTurnButtonBounds();
     const Color endTurnColor = model_.canEndTurn
-        ? (hoveredEndTurnButton_ ? Color{210, 170, 80, 255} : Color{160, 120, 50, 255})
-        : Color{70, 70, 76, 255};
-    DrawRectangleRounded(endTurnBounds, 0.18f, 8, endTurnColor);
-    DrawRectangleRoundedLinesEx(endTurnBounds, 0.18f, 8, 2.f, Color{235, 220, 180, 255});
+        ? (hoveredEndTurnButton_
+            ? UiTheme::toneHoverFill(UiTheme::Tone::Accent)
+            : UiTheme::toneFill(UiTheme::Tone::Accent))
+        : UiTheme::toneFill(UiTheme::Tone::Disabled);
+    const Color endTurnBorder = model_.canEndTurn
+        ? UiTheme::toneBorder(UiTheme::Tone::Accent)
+        : UiTheme::toneBorder(UiTheme::Tone::Disabled);
+    DrawRectangleRounded(endTurnBounds, UiTheme::controlRoundness, 8, endTurnColor);
+    DrawRectangleRoundedLinesEx(
+        endTurnBounds,
+        UiTheme::controlRoundness,
+        8,
+        UiTheme::borderThickness,
+        endTurnBorder
+    );
 
     if (font != nullptr) {
-        DrawTextEx(*font, model_.endTurnLabel.c_str(), Vector2{endTurnBounds.x + 24.f, endTurnBounds.y + 18.f}, 18.f, 1.f, WHITE);
+        DrawTextEx(*font, model_.endTurnLabel.c_str(), Vector2{endTurnBounds.x + 24.f, endTurnBounds.y + 18.f}, 18.f, 1.f, model_.canEndTurn ? UiTheme::toneText(UiTheme::Tone::Accent) : UiTheme::textMuted);
 
         if (!model_.keyboardHintLabel.empty()) {
-            DrawTextEx(*font, model_.keyboardHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 34.f}, 14.f, 1.f, Color{168, 176, 198, 255});
+            DrawTextEx(*font, model_.keyboardHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 34.f}, 14.f, 1.f, UiTheme::textMuted);
         }
 
         if (!model_.targetHintLabel.empty()) {
-            DrawTextEx(*font, model_.targetHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 16.f}, 14.f, 1.f, Color{150, 235, 180, 255});
+            DrawTextEx(*font, model_.targetHintLabel.c_str(), Vector2{handArea.x + 14.f, handArea.y - 16.f}, 14.f, 1.f, UiTheme::toneText(UiTheme::Tone::Positive));
         }
 
         if (!model_.turnOrderLabel.empty()) {
-            DrawTextEx(*font, model_.turnOrderLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 180.f, battlefield.y + 10.f}, 16.f, 1.f, Color{255, 224, 150, 255});
+            DrawTextEx(*font, model_.turnOrderLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 180.f, battlefield.y + 10.f}, 16.f, 1.f, UiTheme::toneText(UiTheme::Tone::Accent));
         }
 
         if (!model_.activeActorLabel.empty()) {
-            DrawTextEx(*font, model_.activeActorLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 120.f, battlefield.y + 32.f}, 16.f, 1.f, Color{180, 230, 255, 255});
+            DrawTextEx(*font, model_.activeActorLabel.c_str(), Vector2{battlefield.x + battlefield.width * 0.5f - 120.f, battlefield.y + 32.f}, 16.f, 1.f, UiTheme::toneText(UiTheme::Tone::Info));
         }
 
         if (model_.showTopRelics) {
@@ -164,15 +196,15 @@ void CombatView::render(const Font* font) const {
                 const RelicViewModel& relic = model_.relics[i];
                 const Rectangle bounds = relicBounds(i);
                 const bool hovered = hoveredRelicIndex_.has_value() && *hoveredRelicIndex_ == i;
-                const Color fill = hovered ? Color{95, 72, 38, 255} : Color{70, 58, 35, 255};
-                const Color border = hovered ? Color{255, 225, 120, 255} : Color{230, 190, 90, 255};
+                const Color fill = hovered ? UiTheme::toneHoverFill(UiTheme::Tone::Accent) : UiTheme::toneFill(UiTheme::Tone::Accent);
+                const Color border = hovered ? UiTheme::toneText(UiTheme::Tone::Accent) : UiTheme::toneBorder(UiTheme::Tone::Accent);
 
                 DrawRectangleRounded(bounds, 0.22f, 6, fill);
                 DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
                 const std::string relicText = relic.ownerName.empty()
                     ? relic.name
                     : relic.ownerName + ": " + relic.name;
-                DrawTextEx(*font, UiUtf8::truncateWithEllipsis(relicText, 18).c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{230, 220, 180, 255});
+                DrawTextEx(*font, UiUtf8::truncateWithEllipsis(relicText, 18).c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, UiTheme::toneText(UiTheme::Tone::Accent));
             }
         }
 
@@ -181,24 +213,72 @@ void CombatView::render(const Font* font) const {
             const Rectangle bounds = consumableBounds(i);
             const bool hovered = hoveredConsumableIndex_.has_value() && *hoveredConsumableIndex_ == i;
             const Color fill = !consumable.filled
-                ? Color{38, 40, 48, 255}
-                : (hovered ? Color{50, 82, 104, 255} : Color{38, 62, 82, 255});
-            const Color border = hovered ? Color{130, 220, 255, 255} : Color{105, 150, 190, 255};
+                ? UiTheme::toneFill(UiTheme::Tone::Disabled)
+                : (hovered ? UiTheme::toneHoverFill(UiTheme::Tone::Info) : UiTheme::toneFill(UiTheme::Tone::Info));
+            const Color border = hovered ? UiTheme::toneText(UiTheme::Tone::Info) : UiTheme::toneBorder(UiTheme::Tone::Info);
 
             DrawRectangleRounded(bounds, 0.22f, 6, fill);
             DrawRectangleRoundedLinesEx(bounds, 0.22f, 6, hovered ? 2.5f : 1.5f, border);
 
             const std::string text = consumable.filled ? UiUtf8::truncateWithEllipsis(consumable.name, 12) : model_.emptyLabel;
-            DrawTextEx(*font, text.c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, Color{220, 235, 245, 255});
+            DrawTextEx(*font, text.c_str(), Vector2{bounds.x + 8.f, bounds.y + 5.f}, 13.f, 1.f, UiTheme::toneText(UiTheme::Tone::Info));
         }
 
-        float logY = battlefield.y + 10.f;
-        const float logX = battlefield.x + 14.f;
-        for (const std::string& entry : model_.recentLogEntries) {
-            DrawTextEx(*font, entry.c_str(), Vector2{logX, logY}, 13.f, 1.f, Color{190, 190, 200, 255});
-            logY += 18.f;
+        if (!model_.recentJournalEntries.empty()) {
+            const float journalX = battlefield.x + 10.f;
+            const float journalY = battlefield.y + 8.f;
+            const float journalWidth = std::clamp(battlefield.width * 0.31f, 300.f, 430.f);
+            float journalHeight = 12.f;
+            for (const CombatJournalEntryViewModel& entry : model_.recentJournalEntries) {
+                journalHeight += entry.detail.empty() ? 24.f : 38.f;
+            }
+            journalHeight = std::min(journalHeight, battlefield.height - 16.f);
+
+            const Rectangle journalBounds{journalX, journalY, journalWidth, journalHeight};
+            DrawRectangleRounded(journalBounds, 0.06f, 8, UiTheme::withAlpha(UiTheme::panel, 0.88f));
+            DrawRectangleRoundedLinesEx(journalBounds, 0.06f, 8, 1.f, UiTheme::borderSoft);
+
+            float entryY = journalY + 8.f;
+            for (const CombatJournalEntryViewModel& entry : model_.recentJournalEntries) {
+                const UiTheme::Tone tone = journalUiTone(entry.tone);
+                const float entryHeight = entry.detail.empty() ? 22.f : 36.f;
+                if (entryY + entryHeight > journalY + journalHeight - 4.f) {
+                    break;
+                }
+
+                DrawRectangle(
+                    static_cast<int>(journalX + 5.f),
+                    static_cast<int>(entryY + 2.f),
+                    3,
+                    static_cast<int>(entryHeight - 4.f),
+                    UiTheme::toneBorder(tone)
+                );
+                const std::string title = UiUtf8::truncateWithEllipsis(entry.text, 52);
+                DrawTextEx(
+                    *font,
+                    title.c_str(),
+                    Vector2{journalX + 14.f, entryY + 1.f},
+                    13.f,
+                    1.f,
+                    UiTheme::toneText(tone)
+                );
+                if (!entry.detail.empty()) {
+                    const std::string detail = UiUtf8::truncateWithEllipsis(entry.detail, 66);
+                    DrawTextEx(
+                        *font,
+                        detail.c_str(),
+                        Vector2{journalX + 14.f, entryY + 17.f},
+                        11.f,
+                        1.f,
+                        UiTheme::textMuted
+                    );
+                }
+                entryY += entryHeight;
+            }
         }
     }
+
+    renderThreatSummary(font);
 
     for (const PlayerView& playerView : playerViews_) {
         const bool hovered = hoveredPlayerId_.has_value() && playerView.model().entityId == *hoveredPlayerId_;
@@ -376,6 +456,69 @@ void CombatView::layoutEnemies() {
     }
 }
 
+void CombatView::renderThreatSummary(const Font* font) const {
+    if (font == nullptr || model_.incomingDamageLabel.empty()) {
+        return;
+    }
+
+    const Rectangle battlefield = battlefieldBounds();
+    constexpr float height = 30.f;
+    constexpr float gap = 8.f;
+    const float partyWidth = model_.partyWideThreatLabel.empty() ? 0.f : 142.f;
+    const float damageWidth = 174.f;
+    const float totalWidth = damageWidth + (partyWidth > 0.f ? gap + partyWidth : 0.f);
+    float x = battlefield.x + battlefield.width - totalWidth - 14.f;
+    const float y = battlefield.y + 10.f;
+
+    const UiTheme::Tone damageTone = model_.attackingEnemyCount > 0
+        ? UiTheme::Tone::Danger
+        : UiTheme::Tone::Positive;
+    const Rectangle damageBounds{x, y, damageWidth, height};
+    DrawRectangleRounded(damageBounds, UiTheme::chipRoundness, 8, UiTheme::toneFill(damageTone));
+    DrawRectangleRoundedLinesEx(
+        damageBounds,
+        UiTheme::chipRoundness,
+        8,
+        1.5f,
+        UiTheme::toneBorder(damageTone)
+    );
+    const std::string damageText = UiUtf8::truncateWithEllipsis(model_.incomingDamageLabel, 24);
+    const Vector2 damageSize = MeasureTextEx(*font, damageText.c_str(), 13.f, 1.f);
+    DrawTextEx(
+        *font,
+        damageText.c_str(),
+        Vector2{damageBounds.x + (damageBounds.width - damageSize.x) * 0.5f, damageBounds.y + 7.f},
+        13.f,
+        1.f,
+        UiTheme::toneText(damageTone)
+    );
+
+    if (partyWidth <= 0.f) {
+        return;
+    }
+
+    x += damageWidth + gap;
+    const Rectangle partyBounds{x, y, partyWidth, height};
+    DrawRectangleRounded(partyBounds, UiTheme::chipRoundness, 8, UiTheme::toneFill(UiTheme::Tone::Warning));
+    DrawRectangleRoundedLinesEx(
+        partyBounds,
+        UiTheme::chipRoundness,
+        8,
+        1.5f,
+        UiTheme::toneBorder(UiTheme::Tone::Warning)
+    );
+    const std::string partyText = UiUtf8::truncateWithEllipsis(model_.partyWideThreatLabel, 20);
+    const Vector2 partySize = MeasureTextEx(*font, partyText.c_str(), 12.f, 1.f);
+    DrawTextEx(
+        *font,
+        partyText.c_str(),
+        Vector2{partyBounds.x + (partyBounds.width - partySize.x) * 0.5f, partyBounds.y + 8.f},
+        12.f,
+        1.f,
+        UiTheme::toneText(UiTheme::Tone::Warning)
+    );
+}
+
 void CombatView::renderDronePanel(const Font* font) const {
     if (model_.droneSlots.empty() || font == nullptr) {
         return;
@@ -388,22 +531,22 @@ void CombatView::renderDronePanel(const Font* font) const {
     const float x = content.x + content.width * 0.5f - totalWidth * 0.5f;
     const float y = 82.f;
 
-    DrawTextEx(*font, model_.droneSlotsLabel.c_str(), Vector2{x, y - 22.f}, 14.f, 1.f, Color{170, 220, 230, 255});
+    DrawTextEx(*font, model_.droneSlotsLabel.c_str(), Vector2{x, y - 22.f}, 14.f, 1.f, UiTheme::toneText(UiTheme::Tone::Info));
 
     for (std::size_t i = 0; i < model_.droneSlots.size(); ++i) {
         const DroneSlotViewModel& slot = model_.droneSlots[i];
         const Rectangle bounds = droneSlotBounds(i);
         const bool hovered = hoveredDroneSlotIndex_.has_value() && *hoveredDroneSlotIndex_ == i;
         const Color fill = slot.filled
-            ? (hovered ? Color{48, 88, 102, 255} : Color{38, 68, 78, 255})
-            : (hovered ? Color{46, 48, 58, 255} : Color{34, 36, 44, 255});
+            ? (hovered ? UiTheme::toneHoverFill(UiTheme::Tone::Info) : UiTheme::toneFill(UiTheme::Tone::Info))
+            : (hovered ? UiTheme::toneHoverFill(UiTheme::Tone::Neutral) : UiTheme::panelInset);
         const Color border = hovered
-            ? Color{255, 235, 145, 255}
-            : (slot.cardActivationAvailable ? Color{120, 220, 235, 255} : Color{85, 95, 110, 255});
-        const Color nameColor = Color{220, 245, 250, 255};
+            ? UiTheme::toneText(UiTheme::Tone::Accent)
+            : (slot.cardActivationAvailable ? UiTheme::toneBorder(UiTheme::Tone::Info) : UiTheme::border);
+        const Color nameColor = UiTheme::toneText(UiTheme::Tone::Info);
         const Color stateColor = slot.cardActivationAvailable
-            ? Color{150, 235, 205, 255}
-            : Color{160, 166, 176, 255};
+            ? UiTheme::toneText(UiTheme::Tone::Positive)
+            : UiTheme::textMuted;
 
         DrawRectangleRounded(bounds, 0.18f, 8, fill);
         DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, hovered ? 3.f : 2.f, border);
@@ -433,7 +576,18 @@ void CombatView::renderCardTooltip(const Font* font) const {
         }
     );
 
-    if (cardIterator == model_.handCards.end() || cardIterator->playable || cardIterator->unplayableReason.empty()) {
+    if (cardIterator == model_.handCards.end()) {
+        return;
+    }
+
+    std::vector<std::string> lines;
+    if (!cardIterator->stressPreviewLabel.empty()) {
+        lines.push_back(cardIterator->stressPreviewLabel);
+    }
+    if (!cardIterator->playable && !cardIterator->unplayableReason.empty()) {
+        lines.push_back(cardIterator->unplayableReason);
+    }
+    if (lines.empty()) {
         return;
     }
 
@@ -442,13 +596,16 @@ void CombatView::renderCardTooltip(const Font* font) const {
         return;
     }
 
-    const std::string text = cardIterator->unplayableReason;
-    constexpr float fontSize = 16.f;
-    constexpr float paddingX = 12.f;
-    constexpr float paddingY = 8.f;
-    const Vector2 textSize = MeasureTextEx(*font, text.c_str(), fontSize, 1.f);
-    const float width = std::min(360.f, std::max(160.f, textSize.x + paddingX * 2.f));
-    const float height = textSize.y + paddingY * 2.f;
+    constexpr float fontSize = 15.f;
+    constexpr float lineHeight = 20.f;
+    constexpr float paddingX = 14.f;
+    constexpr float paddingY = 10.f;
+    float measuredWidth = 0.f;
+    for (const std::string& line : lines) {
+        measuredWidth = std::max(measuredWidth, MeasureTextEx(*font, line.c_str(), fontSize, 1.f).x);
+    }
+    const float width = std::clamp(measuredWidth + paddingX * 2.f, 220.f, 560.f);
+    const float height = paddingY * 2.f + lineHeight * static_cast<float>(lines.size());
 
     Rectangle bounds{
         center->x - width * 0.5f,
@@ -461,9 +618,26 @@ void CombatView::renderCardTooltip(const Font* font) const {
     bounds.x = std::clamp(bounds.x, content.x + 8.f, content.x + content.width - bounds.width - 8.f);
     bounds.y = std::max(80.f, bounds.y);
 
-    DrawRectangleRounded(bounds, 0.18f, 8, Color{28, 24, 28, 238});
-    DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, 2.f, Color{255, 190, 160, 255});
-    DrawTextEx(*font, text.c_str(), Vector2{bounds.x + paddingX, bounds.y + paddingY}, fontSize, 1.f, Color{255, 220, 205, 255});
+    UiTheme::Tone tone = UiTheme::Tone::Info;
+    if (!cardIterator->playable) {
+        tone = UiTheme::Tone::Danger;
+    } else if (cardIterator->previewRequiresTarget) {
+        tone = UiTheme::Tone::Warning;
+    }
+
+    DrawRectangleRounded(bounds, 0.12f, 8, UiTheme::toneFill(tone));
+    DrawRectangleRoundedLinesEx(bounds, 0.12f, 8, 2.f, UiTheme::toneBorder(tone));
+    for (std::size_t index = 0; index < lines.size(); ++index) {
+        const std::string visible = UiUtf8::truncateWithEllipsis(lines[index], 72);
+        DrawTextEx(
+            *font,
+            visible.c_str(),
+            Vector2{bounds.x + paddingX, bounds.y + paddingY + lineHeight * static_cast<float>(index)},
+            fontSize,
+            1.f,
+            UiTheme::toneText(tone)
+        );
+    }
 }
 
 Rectangle CombatView::contentBounds() const {

@@ -47,5 +47,14 @@
   "event.choice.requirement.forbidden_event_flag": "доступно только до другого выбора",
   "event.choice.requirement.required_event_flag": "требуется предыдущая встреча",
   "event.choice.unavailable.forbidden_event_flag": "этот вариант уже недоступен после предыдущего выбора",
-  "event.choice.unavailable.required_event_flag": "требуется предыдущая встреча в этой цепочке"
+  "event.choice.unavailable.required_event_flag": "требуется предыдущая встреча в этой цепочке",
+  "event.choice.requirement.run_mechanic": "подходящая механика архетипа",
+  "event.choice.unavailable.run_mechanic": "доступно только подходящему архетипу",
+  "event.choice.effect.upgrade_random_card": "улучшить случайную карту",
+  "event.choice.requirement.max_deck_size": "не больше {required} карт в колоде",
+  "event.choice.requirement.min_missing_hp": "минимум {required} потерянных HP отряда",
+  "event.choice.requirement.min_upgraded_cards": "минимум {required} улучшенных карт",
+  "event.choice.unavailable.deck_size_max": "карт в колоде {current}, требуется не больше {required}",
+  "event.choice.unavailable.missing_hp": "потеряно HP отряда {current}/{required}",
+  "event.choice.unavailable.upgraded_cards": "улучшенных карт {current}/{required}"
 }

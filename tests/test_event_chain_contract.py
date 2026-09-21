@@ -10,6 +10,7 @@ def main():
       'mapmaker':['chain_mapmaker_first_mark','chain_mapmaker_crossroads','chain_mapmaker_vault'],
       'traveler':['chain_traveler_wound','chain_traveler_return','chain_traveler_last_camp'],
       'bell':['chain_bell_buried','chain_bell_tower','chain_bell_last_chime'],
+      'confession':['rusted_confessional','furnace_confessional','dead_king_confession'],
     }
     assert len(events)==97, f'expected 97 events, got {len(events)}'
     for name, ids in chains.items():
@@ -38,6 +39,6 @@ def main():
                 assert run.get(f'event.{eid}.title')
                 assert run.get(f'event.{eid}.description')
         assert req.get('event.choice.unavailable.required_event_flag')
-    print('Event chain contract passed: 3 chains, 9 events, persistent save flags')
+    print('Event chain contract passed: 4 chains, 12 events, persistent save flags')
     return 0
 if __name__=='__main__': raise SystemExit(main())

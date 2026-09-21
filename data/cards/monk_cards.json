@@ -906,6 +906,7 @@
     "name": "card.monk_ash_mirror.name",
     "description": "card.monk_ash_mirror.description",
     "rarity": "uncommon",
+    "stress_cost": 10,
     "energy_cost": 1,
     "gold_cost": 105,
     "type": "skill",
@@ -935,6 +936,7 @@
       }
     ],
     "upgrade": {
+      "stress_cost": 6,
       "effects": [
         {
           "type": "block",
@@ -1069,6 +1071,481 @@
             "type": "fixed",
             "amount": 15
           }
+        }
+      ]
+    }
+  },
+  {
+    "id": "monk_cinder_crossing",
+    "name": "card.monk_cinder_crossing.name",
+    "description": "card.monk_cinder_crossing.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 110,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        },
+        "scaling": {
+          "status": "stance_flame",
+          "status_owner": "source",
+          "bonus_if_status_present": 6,
+          "maximum_bonus": 6
+        }
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_ash"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 13
+          },
+          "scaling": {
+            "status": "stance_flame",
+            "status_owner": "source",
+            "bonus_if_status_present": 7,
+            "maximum_bonus": 7
+          }
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_ash"
+        }
+      ]
+    }
+  },
+  {
+    "id": "monk_ashen_passage",
+    "name": "card.monk_ashen_passage.name",
+    "description": "card.monk_ashen_passage.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 110,
+    "type": "skill",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 10
+        },
+        "scaling": {
+          "status": "stance_ash",
+          "status_owner": "source",
+          "bonus_if_status_present": 7,
+          "maximum_bonus": 7
+        }
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_smoke"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 13
+          },
+          "scaling": {
+            "status": "stance_ash",
+            "status_owner": "source",
+            "bonus_if_status_present": 8,
+            "maximum_bonus": 8
+          }
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_smoke"
+        }
+      ]
+    }
+  },
+  {
+    "id": "monk_smoke_ignition",
+    "name": "card.monk_smoke_ignition.name",
+    "description": "card.monk_smoke_ignition.description",
+    "rarity": "uncommon",
+    "energy_cost": 2,
+    "gold_cost": 110,
+    "type": "attack",
+    "owner_actor": "monk",
+    "effects": [
+      {
+        "type": "damage",
+        "target": "all_enemies",
+        "value": {
+          "type": "fixed",
+          "amount": 6
+        },
+        "scaling": {
+          "status": "stance_smoke",
+          "status_owner": "source",
+          "bonus_if_status_present": 4,
+          "maximum_bonus": 4
+        }
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_flame"
+      }
+    ],
+    "upgrade": {
+      "effects": [
+        {
+          "type": "damage",
+          "target": "all_enemies",
+          "value": {
+            "type": "fixed",
+            "amount": 8
+          },
+          "scaling": {
+            "status": "stance_smoke",
+            "status_owner": "source",
+            "bonus_if_status_present": 5,
+            "maximum_bonus": 5
+          }
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_flame"
+        }
+      ]
+    }
+  },
+  {
+    "id": "monk_three_aspects",
+    "name": "card.monk_three_aspects.name",
+    "description": "card.monk_three_aspects.description",
+    "rarity": "rare",
+    "energy_cost": 1,
+    "gold_cost": 155,
+    "type": "skill",
+    "owner_actor": "monk",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "damage",
+        "target": "single_enemy",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        },
+        "scaling": {
+          "status": "stance_flame",
+          "status_owner": "source",
+          "bonus_if_status_present": 7,
+          "maximum_bonus": 7
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 5
+        },
+        "scaling": {
+          "status": "stance_ash",
+          "status_owner": "source",
+          "bonus_if_status_present": 7,
+          "maximum_bonus": 7
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "scaling": {
+          "status": "stance_smoke",
+          "status_owner": "source",
+          "bonus_if_status_present": 1,
+          "maximum_bonus": 1
+        }
+      }
+    ],
+    "upgrade": {
+      "description": "card.monk_three_aspects.upgrade.description",
+      "effects": [
+        {
+          "type": "damage",
+          "target": "single_enemy",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          },
+          "scaling": {
+            "status": "stance_flame",
+            "status_owner": "source",
+            "bonus_if_status_present": 9,
+            "maximum_bonus": 9
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 6
+          },
+          "scaling": {
+            "status": "stance_ash",
+            "status_owner": "source",
+            "bonus_if_status_present": 9,
+            "maximum_bonus": 9
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "scaling": {
+            "status": "stance_smoke",
+            "status_owner": "source",
+            "bonus_if_status_present": 2,
+            "maximum_bonus": 2
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "monk_still_point",
+    "name": "card.monk_still_point.name",
+    "description": "card.monk_still_point.description",
+    "rarity": "rare",
+    "energy_cost": 0,
+    "gold_cost": 155,
+    "type": "skill",
+    "owner_actor": "monk",
+    "keywords": [
+      "retain",
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "apply_status",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 0
+        },
+        "status": "strength",
+        "scaling": {
+          "status": "stance_flame",
+          "status_owner": "source",
+          "bonus_if_status_present": 2,
+          "maximum_bonus": 2
+        }
+      },
+      {
+        "type": "block",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 0
+        },
+        "scaling": {
+          "status": "stance_ash",
+          "status_owner": "source",
+          "bonus_if_status_present": 12,
+          "maximum_bonus": 12
+        }
+      },
+      {
+        "type": "draw_cards",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 0
+        },
+        "scaling": {
+          "status": "stance_smoke",
+          "status_owner": "source",
+          "bonus_if_status_present": 2,
+          "maximum_bonus": 2
+        }
+      }
+    ],
+    "upgrade": {
+      "description": "card.monk_still_point.upgrade.description",
+      "effects": [
+        {
+          "type": "apply_status",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 0
+          },
+          "status": "strength",
+          "scaling": {
+            "status": "stance_flame",
+            "status_owner": "source",
+            "bonus_if_status_present": 3,
+            "maximum_bonus": 3
+          }
+        },
+        {
+          "type": "block",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 0
+          },
+          "scaling": {
+            "status": "stance_ash",
+            "status_owner": "source",
+            "bonus_if_status_present": 16,
+            "maximum_bonus": 16
+          }
+        },
+        {
+          "type": "draw_cards",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 0
+          },
+          "scaling": {
+            "status": "stance_smoke",
+            "status_owner": "source",
+            "bonus_if_status_present": 3,
+            "maximum_bonus": 3
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "monk_wheel_without_end",
+    "name": "card.monk_wheel_without_end.name",
+    "description": "card.monk_wheel_without_end.description",
+    "rarity": "rare",
+    "energy_cost": 3,
+    "gold_cost": 155,
+    "type": "skill",
+    "owner_actor": "monk",
+    "keywords": [
+      "exhaust"
+    ],
+    "effects": [
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_flame"
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_ash"
+      },
+      {
+        "type": "enter_stance",
+        "target": "self",
+        "value": {
+          "type": "fixed",
+          "amount": 1
+        },
+        "status": "stance_smoke"
+      }
+    ],
+    "upgrade": {
+      "description": "card.monk_wheel_without_end.upgrade.description",
+      "keywords": [
+        "retain",
+        "exhaust"
+      ],
+      "effects": [
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_flame"
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_ash"
+        },
+        {
+          "type": "enter_stance",
+          "target": "self",
+          "value": {
+            "type": "fixed",
+            "amount": 1
+          },
+          "status": "stance_smoke"
         }
       ]
     }

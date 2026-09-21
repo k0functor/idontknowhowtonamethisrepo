@@ -16,6 +16,7 @@ struct CardUpgradeDefinition {
     std::optional<TextId> nameTextId;
     std::optional<TextId> descriptionTextId;
     std::optional<int> energyCost;
+    std::optional<int> stressCost;
     std::optional<int> goldCost;
     std::optional<std::vector<CardKeyword>> keywords;
     std::optional<DiceCorruption> diceCorruption;
@@ -34,6 +35,7 @@ struct CardDefinition {
     CardType type = CardType::Attack;
 
     int energyCost = 0;
+    int stressCost = 0;
     int goldCost = 0;
 
     // Empty means: playable by the current active player actor.

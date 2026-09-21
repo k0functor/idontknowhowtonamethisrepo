@@ -17,7 +17,7 @@
         ],
         "weight": 5,
         "min_layer": 0,
-        "max_layer": 4
+        "max_layer": 2
       },
       {
         "id": "act2_mirror_eel",
@@ -26,7 +26,7 @@
         ],
         "weight": 5,
         "min_layer": 0,
-        "max_layer": 7
+        "max_layer": 2
       },
       {
         "id": "act2_tide_apprentice",
@@ -35,7 +35,7 @@
         ],
         "weight": 4,
         "min_layer": 1,
-        "max_layer": 7
+        "max_layer": 3
       },
       {
         "id": "act2_barnacle_guard",
@@ -44,7 +44,7 @@
         ],
         "weight": 4,
         "min_layer": 2,
-        "max_layer": 7
+        "max_layer": 3
       },
       {
         "id": "act2_leech_and_cantor",
@@ -80,7 +80,8 @@
         "id": "act2_cantor_and_eel",
         "enemies": [
           "drowned_cantor",
-          "mirror_eel"
+          "mirror_eel",
+          "brine_leech"
         ],
         "weight": 1,
         "min_layer": 3,
@@ -111,8 +112,7 @@
         "id": "act2_mirror_guard_detail",
         "enemies": [
           "mirror_eel",
-          "barnacle_guard",
-          "tide_apprentice"
+          "barnacle_guard"
         ],
         "weight": 1,
         "min_layer": 5,
@@ -125,7 +125,7 @@
         ],
         "weight": 4,
         "min_layer": 0,
-        "max_layer": 3
+        "max_layer": 2
       },
       {
         "id": "act2_silt_scribe",
@@ -134,7 +134,7 @@
         ],
         "weight": 4,
         "min_layer": 1,
-        "max_layer": 5
+        "max_layer": 3
       },
       {
         "id": "act2_lantern_fish",
@@ -143,7 +143,7 @@
         ],
         "weight": 4,
         "min_layer": 1,
-        "max_layer": 5
+        "max_layer": 3
       },
       {
         "id": "act2_rusted_diver",
@@ -152,7 +152,7 @@
         ],
         "weight": 3,
         "min_layer": 2,
-        "max_layer": 7
+        "max_layer": 4
       },
       {
         "id": "act2_moth_and_scribe",
@@ -229,7 +229,7 @@
         "id": "act2_abbot_and_leech",
         "enemies": [
           "drowned_abbot",
-          "brine_leech"
+          "ink_moth"
         ],
         "weight": 1,
         "min_layer": 5,
@@ -238,7 +238,8 @@
       {
         "id": "act2_drowned_cartographer",
         "enemies": [
-          "drowned_cartographer"
+          "drowned_cartographer",
+          "brine_leech"
         ],
         "weight": 4,
         "min_layer": 2,
@@ -247,7 +248,8 @@
       {
         "id": "act2_saltglass_matron",
         "enemies": [
-          "saltglass_matron"
+          "saltglass_matron",
+          "silt_scribe"
         ],
         "weight": 4,
         "min_layer": 2,
@@ -256,7 +258,8 @@
       {
         "id": "act2_tidebound_jailer",
         "enemies": [
-          "tidebound_jailer"
+          "tidebound_jailer",
+          "lantern_fish"
         ],
         "weight": 4,
         "min_layer": 2,
@@ -266,7 +269,7 @@
         "id": "act2_cartographer_and_eel",
         "enemies": [
           "drowned_cartographer",
-          "mirror_eel"
+          "silt_scribe"
         ],
         "weight": 1,
         "min_layer": 5,
@@ -296,10 +299,10 @@
         "id": "act2_executioner_and_lantern",
         "enemies": [
           "mirror_executioner",
-          "lantern_fish"
+          "drowned_cantor"
         ],
         "weight": 1,
-        "min_layer": 5,
+        "min_layer": 6,
         "max_layer": 7
       }
     ],

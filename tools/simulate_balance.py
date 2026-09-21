@@ -36,11 +36,34 @@ def weighted_mean(values: list[tuple[float, int]]) -> float:
     return sum(value * max(1, weight) for value, weight in values) / total_weight
 
 
-def target_range(floor_config: dict[str, Any], pool: str) -> tuple[float, float]:
+def target_range(
+    floor_config: dict[str, Any],
+    pool: str,
+    encounter: dict[str, Any] | None = None,
+) -> tuple[float, float]:
     raw = floor_config.get(f"{pool}_hp_loss_target", [0.0, float("inf")])
     if not isinstance(raw, list) or len(raw) != 2:
         return 0.0, float("inf")
-    return float(raw[0]), float(raw[1])
+    end_target = (float(raw[0]), float(raw[1]))
+    start_raw = floor_config.get(f"{pool}_hp_loss_start_target")
+    if encounter is None or not isinstance(start_raw, list) or len(start_raw) != 2:
+        return end_target
+    last_regular_layer = floor_config.get("last_regular_layer")
+    if not isinstance(last_regular_layer, int) or isinstance(last_regular_layer, bool) or last_regular_layer <= 0:
+        return end_target
+    min_layer = encounter.get("min_layer", 0)
+    max_layer = encounter.get("max_layer", min_layer)
+    if not isinstance(min_layer, int) or isinstance(min_layer, bool):
+        min_layer = 0
+    if not isinstance(max_layer, int) or isinstance(max_layer, bool):
+        max_layer = min_layer
+    midpoint = 0.5 * (max(0, min_layer) + max(0, max_layer))
+    progress = min(1.0, max(0.0, midpoint / float(last_regular_layer)))
+    start_target = (float(start_raw[0]), float(start_raw[1]))
+    return (
+        start_target[0] + (end_target[0] - start_target[0]) * progress,
+        start_target[1] + (end_target[1] - start_target[1]) * progress,
+    )
 
 
 def target_status(value: float, target: tuple[float, float]) -> str:
@@ -85,7 +108,7 @@ def value_expected(value: Any) -> float:
 
 
 def effect_repeat(effect: dict[str, Any]) -> int:
-    repeat = effect.get("repeat", 1)
+    repeat = effect.get("repeat_count", effect.get("repeat", 1))
     return repeat if isinstance(repeat, int) and not isinstance(repeat, bool) and repeat > 0 else 1
 
 
@@ -98,8 +121,8 @@ def estimated_scaling_bonus(effect: dict[str, Any]) -> float:
     # a modest, reachable synergy state rather than assuming every condition is perfect.
     bonus = 0.0
     if isinstance(scaling.get("status"), str):
-        bonus += float(scaling.get("bonus_if_status_present", 0)) * 0.55
-        bonus += float(scaling.get("bonus_per_status_stack", 0)) * 2.0
+        bonus += float(scaling.get("bonus_if_status_present", scaling.get("bonus_if_present", 0))) * 0.55
+        bonus += float(scaling.get("bonus_per_status_stack", scaling.get("bonus_per_stack", 0))) * 2.0
     bonus += float(scaling.get("bonus_per_card_in_hand", 0)) * 4.0
     bonus += float(scaling.get("bonus_per_card_in_discard", 0)) * 4.0
     maximum = scaling.get("maximum_bonus", -1)
@@ -123,7 +146,7 @@ def effect_metrics(effect: dict[str, Any]) -> dict[str, float]:
         metrics["block"] += amount * multiplier
     elif effect_type == "apply_status":
         status = effect.get("status")
-        if status == "poison":
+        if status in {"poison", "burn"}:
             metrics["damage"] += amount * 2.0
         elif status in {"strength", "onslaught"}:
             metrics["scaling"] += amount * 2.5
@@ -172,9 +195,37 @@ def has_keyword(card: dict[str, Any], keyword: str) -> bool:
     return keyword in card.get("keywords", [])
 
 
+def effect_amount(effect: dict[str, Any]) -> float:
+    return (value_expected(effect.get("value")) + estimated_scaling_bonus(effect)) * effect_repeat(effect)
+
+
+def trigger_effects(relic: dict[str, Any], event: str) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for trigger in relic.get("triggers", []):
+        if not isinstance(trigger, dict) or trigger.get("event") != event:
+            continue
+        for effect in trigger.get("effects", []):
+            if isinstance(effect, dict):
+                result.append(effect)
+    return result
+
+
+def action_metrics(action: dict[str, Any] | None) -> dict[str, float]:
+    result: dict[str, float] = defaultdict(float)
+    if not isinstance(action, dict):
+        return {}
+    for effect in action.get("effects", []):
+        if isinstance(effect, dict):
+            for key, value in effect_metrics(effect).items():
+                result[key] += value
+    return dict(result)
+
+
 def simulate_starter_deck(
     archetype: dict[str, Any],
     cards: dict[str, dict[str, Any]],
+    relics: dict[str, dict[str, Any]],
+    drones: dict[str, dict[str, Any]],
     samples: int,
     turns: int,
     seed: int,
@@ -182,6 +233,7 @@ def simulate_starter_deck(
     rng = random.Random(seed)
     totals: dict[str, list[float]] = defaultdict(list)
     deck_ids = [card_id for card_id in archetype.get("starting_deck", []) if card_id in cards]
+    starting_relics = [relics[relic_id] for relic_id in archetype.get("starting_relics", []) if relic_id in relics]
 
     for _ in range(samples):
         draw = list(deck_ids)
@@ -189,7 +241,66 @@ def simulate_starter_deck(
         discard: list[str] = []
         exhaust: list[str] = []
         hand: list[str] = []
+        drone_slots: list[str] = []
         damage = block = cards_played = energy_spent = 0.0
+        strength = dexterity = 0
+        stance = ""
+        combat_start_draw = 0
+        turn_start_draw = 0
+        attack_draw_available = False
+        poison_draw_available = False
+
+        def draw_cards(count: int) -> None:
+            nonlocal draw, discard
+            for _draw_index in range(max(0, count)):
+                if len(hand) >= 10:
+                    return
+                if not draw:
+                    draw = discard
+                    discard = []
+                    rng.shuffle(draw)
+                if not draw:
+                    return
+                hand.append(draw.pop())
+
+        def add_drone(drone_id: str) -> None:
+            if drone_id not in drones:
+                return
+            if len(drone_slots) >= 3:
+                drone_slots.pop(0)
+            drone_slots.append(drone_id)
+
+        for relic in starting_relics:
+            for effect in trigger_effects(relic, "combat_started"):
+                effect_type = effect.get("type")
+                amount = int(effect_amount(effect))
+                if effect_type == "apply_status" and effect.get("target") == "self":
+                    if effect.get("status") == "strength":
+                        strength += amount
+                    elif effect.get("status") == "dexterity":
+                        dexterity += amount
+                elif effect_type in {"draw", "draw_cards"}:
+                    combat_start_draw += amount
+                elif effect_type == "summon_drone" and isinstance(effect.get("status"), str):
+                    add_drone(str(effect["status"]))
+
+            for effect in trigger_effects(relic, "turn_started"):
+                if effect.get("type") in {"draw", "draw_cards"}:
+                    turn_start_draw += int(effect_amount(effect))
+
+            for trigger in relic.get("triggers", []):
+                if not isinstance(trigger, dict):
+                    continue
+                if trigger.get("event") == "card_played" and trigger.get("card_type") == "attack":
+                    attack_draw_available = attack_draw_available or any(
+                        isinstance(effect, dict) and effect.get("type") in {"draw", "draw_cards"}
+                        for effect in trigger.get("effects", [])
+                    )
+                if trigger.get("event") == "status_applied" and trigger.get("status") == "poison":
+                    poison_draw_available = poison_draw_available or any(
+                        isinstance(effect, dict) and effect.get("type") in {"draw", "draw_cards"}
+                        for effect in trigger.get("effects", [])
+                    )
 
         innate = [card_id for card_id in list(draw) if has_keyword(cards[card_id], "innate")]
         for card_id in innate:
@@ -197,22 +308,79 @@ def simulate_starter_deck(
                 break
             draw.remove(card_id)
             hand.append(card_id)
-        while len(hand) < 5 and draw:
-            hand.append(draw.pop())
+        draw_cards(5 - len(hand) + combat_start_draw)
 
         for turn in range(turns):
             if turn > 0:
-                while len(hand) < 5:
-                    if not draw:
-                        draw = discard
-                        discard = []
-                        rng.shuffle(draw)
-                    if not draw:
-                        break
-                    hand.append(draw.pop())
+                draw_cards(5 - len(hand))
+            draw_cards(turn_start_draw)
 
-            energy = 3
+            actor_count = max(1, len(archetype.get("actors", [])))
+            energy = 3 * actor_count
+            stance_changed = False
             retained: list[str] = []
+
+            def resolved_card_metrics(card: dict[str, Any]) -> dict[str, float]:
+                result: dict[str, float] = defaultdict(float)
+                for effect in card.get("effects", []):
+                    if not isinstance(effect, dict):
+                        continue
+                    amount = effect_amount(effect)
+                    effect_type = effect.get("type")
+                    repeat = effect_repeat(effect)
+                    if effect_type in {"damage", "spend_stress_damage"}:
+                        value = amount + strength * repeat
+                        if stance == "stance_flame":
+                            value *= 1.25
+                        if effect.get("target") == "all_enemies":
+                            value *= 1.6
+                        result["damage"] += value
+                    elif effect_type in {"block", "spend_stress_block"}:
+                        value = amount + dexterity * repeat
+                        if stance == "stance_ash":
+                            value += 2.0 * repeat
+                        if effect.get("target") in {"all_allies", "all_players"}:
+                            value *= 1.5
+                        result["block"] += value
+                    elif effect_type == "apply_status" and effect.get("status") == "poison":
+                        result["damage"] += amount * 2.0
+                    elif effect_type in {"draw", "draw_cards", "spend_stress_draw"}:
+                        result["draw"] += amount
+                    elif effect_type in {"gain_energy", "spend_stress_energy"}:
+                        result["energy"] += amount
+                    elif effect_type == "summon_drone":
+                        drone_id = effect.get("status")
+                        definition = drones.get(drone_id) if isinstance(drone_id, str) else None
+                        passive = action_metrics(definition.get("passive") if isinstance(definition, dict) else None)
+                        remaining_turns = turns - turn
+                        result["damage"] += passive.get("damage", 0.0) * remaining_turns
+                        result["block"] += passive.get("block", 0.0) * remaining_turns
+                    elif effect_type == "use_drone" and drone_slots:
+                        definition = drones.get(drone_slots[0])
+                        active = action_metrics(definition.get("active") if isinstance(definition, dict) else None)
+                        result["damage"] += active.get("damage", 0.0)
+                        result["block"] += active.get("block", 0.0)
+                    elif effect_type == "enter_stance" and not stance_changed:
+                        next_stance = effect.get("status")
+                        if next_stance == "stance_flame":
+                            result["scaling"] += 4.0
+                        elif next_stance == "stance_ash":
+                            result["scaling"] += 3.5
+                        elif next_stance == "stance_smoke":
+                            result["control"] += 3.0
+                return dict(result)
+
+            def dynamic_utility(card: dict[str, Any]) -> float:
+                metrics = resolved_card_metrics(card)
+                return (
+                    metrics.get("damage", 0.0)
+                    + 0.9 * metrics.get("block", 0.0)
+                    + metrics.get("scaling", 0.0)
+                    + metrics.get("control", 0.0)
+                    + 2.0 * metrics.get("draw", 0.0)
+                    + 4.0 * metrics.get("energy", 0.0)
+                )
+
             while True:
                 candidates: list[tuple[float, int, str]] = []
                 for index, card_id in enumerate(hand):
@@ -220,29 +388,82 @@ def simulate_starter_deck(
                     cost = card.get("energy_cost", 0)
                     if not isinstance(cost, int) or isinstance(cost, bool) or cost < 0 or cost > energy:
                         continue
-                    utility = card_utility(card)
-                    denominator = max(1, cost)
-                    candidates.append((utility / denominator, index, card_id))
+                    utility = dynamic_utility(card)
+                    candidates.append((utility / max(1, cost), index, card_id))
                 if not candidates:
                     break
                 candidates.sort(reverse=True)
                 _, index, card_id = candidates[0]
                 card = cards[card_id]
-                utility = card_utility(card)
-                if utility <= 0.0:
+                if dynamic_utility(card) <= 0.0:
                     break
                 cost = int(card.get("energy_cost", 0))
                 energy -= cost
                 energy_spent += cost
                 cards_played += 1
-                metrics = card_metrics(card)
-                damage += metrics.get("damage", 0.0)
-                block += metrics.get("block", 0.0)
                 hand.pop(index)
+
+                if card.get("type") == "attack" and attack_draw_available:
+                    draw_cards(1)
+                    attack_draw_available = False
+
+                for effect in card.get("effects", []):
+                    if not isinstance(effect, dict):
+                        continue
+                    amount = effect_amount(effect)
+                    effect_type = effect.get("type")
+                    repeat = effect_repeat(effect)
+                    if effect_type in {"damage", "spend_stress_damage"}:
+                        value = amount + strength * repeat
+                        if stance == "stance_flame":
+                            value *= 1.25
+                        if effect.get("target") == "all_enemies":
+                            value *= 1.6
+                        damage += value
+                    elif effect_type in {"block", "spend_stress_block"}:
+                        value = amount + dexterity * repeat
+                        if stance == "stance_ash":
+                            value += 2.0 * repeat
+                        if effect.get("target") in {"all_allies", "all_players"}:
+                            value *= 1.5
+                        block += value
+                    elif effect_type == "apply_status":
+                        status = effect.get("status")
+                        if effect.get("target") == "self" and status == "strength":
+                            strength += int(amount)
+                        elif effect.get("target") == "self" and status == "dexterity":
+                            dexterity += int(amount)
+                        elif status == "poison":
+                            damage += amount * 2.0
+                            if poison_draw_available:
+                                draw_cards(1)
+                                poison_draw_available = False
+                    elif effect_type in {"draw", "draw_cards", "spend_stress_draw"}:
+                        draw_cards(int(amount))
+                    elif effect_type in {"gain_energy", "spend_stress_energy"}:
+                        energy += int(amount)
+                    elif effect_type == "summon_drone" and isinstance(effect.get("status"), str):
+                        add_drone(str(effect["status"]))
+                    elif effect_type == "use_drone" and drone_slots:
+                        drone_id = drone_slots.pop(0)
+                        definition = drones.get(drone_id)
+                        active = action_metrics(definition.get("active") if isinstance(definition, dict) else None)
+                        damage += active.get("damage", 0.0)
+                        block += active.get("block", 0.0)
+                    elif effect_type == "enter_stance" and isinstance(effect.get("status"), str):
+                        stance = str(effect["status"])
+                        stance_changed = True
+
                 if has_keyword(card, "exhaust"):
                     exhaust.append(card_id)
                 else:
                     discard.append(card_id)
+
+            for drone_id in drone_slots:
+                definition = drones.get(drone_id)
+                passive = action_metrics(definition.get("passive") if isinstance(definition, dict) else None)
+                damage += passive.get("damage", 0.0)
+                block += passive.get("block", 0.0)
 
             for card_id in hand:
                 card = cards[card_id]
@@ -319,12 +540,23 @@ def simulate_enemy(
     cooldowns: dict[str, int] = defaultdict(int)
     last_id = ""
     consecutive = 0
-    player_statuses: set[str] = set()
-    enemy_statuses: set[str] = set()
+    player_statuses: dict[str, int] = defaultdict(int)
+    enemy_statuses: dict[str, int] = defaultdict(int)
     totals: dict[str, float] = defaultdict(float)
     max_spike = 0.0
 
     for turn in range(1, turns + 1):
+        for damage_status in ("poison", "burn"):
+            if player_statuses[damage_status] > 0:
+                status_damage = float(player_statuses[damage_status])
+                totals["damage"] += status_damage
+                max_spike = max(max_spike, status_damage)
+                player_statuses[damage_status] = max(0, player_statuses[damage_status] - 1)
+        if player_statuses["weak"] > 0:
+            totals["offense_penalty"] += 0.25
+            player_statuses["weak"] -= 1
+        if player_statuses["vulnerable"] > 0:
+            player_statuses["vulnerable"] -= 1
         actions = enemy_action_pool(enemy, turn, turns)
         phase = enemy_phase_for_turn(enemy, turn, turns)
         if phase is not None:
@@ -337,6 +569,8 @@ def simulate_enemy(
         for action_id in list(cooldowns):
             cooldowns[action_id] = max(0, cooldowns[action_id] - 1)
         eligible: list[dict[str, Any]] = []
+        player_status_set = {status for status, stacks in player_statuses.items() if stacks > 0}
+        enemy_status_set = {status for status, stacks in enemy_statuses.items() if stacks > 0}
         for action in actions:
             action_id = str(action.get("id", ""))
             if cooldowns[action_id] > 0:
@@ -344,7 +578,7 @@ def simulate_enemy(
             max_consecutive = action.get("max_consecutive_uses", 10**9)
             if action_id == last_id and isinstance(max_consecutive, int) and consecutive >= max_consecutive:
                 continue
-            if action_allowed(action, player_statuses, enemy_statuses, turn, alive):
+            if action_allowed(action, player_status_set, enemy_status_set, turn, alive):
                 eligible.append(action)
         if not eligible:
             eligible = actions
@@ -364,20 +598,35 @@ def simulate_enemy(
             if not isinstance(effect, dict):
                 continue
             metrics = effect_metrics(effect)
-            turn_damage += metrics.get("damage", 0.0)
-            totals["block"] += metrics.get("block", 0.0)
+            effect_type = effect.get("type")
+            repeat = effect_repeat(effect)
+            if effect_type in {"damage", "spend_stress_damage"}:
+                effect_damage = metrics.get("damage", 0.0)
+                effect_damage += enemy_statuses["strength"] * repeat
+                if player_statuses["vulnerable"] > 0:
+                    effect_damage *= 1.5
+                turn_damage += effect_damage
+            elif effect_type != "apply_status":
+                totals["damage"] += metrics.get("damage", 0.0)
+            block_value = metrics.get("block", 0.0)
+            if effect_type in {"block", "spend_stress_block"}:
+                block_value += enemy_statuses["dexterity"] * repeat
+            totals["block"] += block_value
+            totals["heal"] += metrics.get("heal", 0.0)
             totals["stress"] += metrics.get("stress", 0.0)
             totals["energy_loss"] += metrics.get("energy_loss", 0.0)
-            if effect.get("type") == "apply_status":
+            if effect_type == "apply_status":
                 status = effect.get("status")
                 target = effect.get("target")
+                amount = max(1, int(effect_amount(effect)))
                 if isinstance(status, str):
                     if target in {"self", "all_enemies", "random_enemy"}:
-                        enemy_statuses.add(status)
+                        enemy_statuses[status] += amount
                     else:
-                        player_statuses.add(status)
+                        player_statuses[status] += amount
         totals["damage"] += turn_damage
         max_spike = max(max_spike, turn_damage)
+
 
     totals["max_spike"] = max_spike
     return dict(totals)
@@ -420,8 +669,10 @@ def simulate_encounter(
                     totals[key] += value
         values["incoming_damage_per_turn"].append(totals["damage"] / turns)
         values["enemy_block_per_turn"].append(totals["block"] / turns)
+        values["enemy_heal_per_turn"].append(totals["heal"] / turns)
         values["stress_per_turn"].append(totals["stress"] / turns)
         values["energy_loss_per_turn"].append(totals["energy_loss"] / turns)
+        values["player_offense_penalty"].append(min(0.5, totals["offense_penalty"] / turns))
         values["maximum_turn_spike"].append(spike)
     result = {key: round(mean(items), 3) for key, items in values.items()}
     result["total_hp"] = round(total_hp, 3)
@@ -441,24 +692,42 @@ def main() -> int:
     balance_targets = load_balance_targets()
     cards = {item["id"]: item for item in load_list("cards") if isinstance(item.get("id"), str)}
     enemies = {item["id"]: item for item in load_list("enemies") if isinstance(item.get("id"), str)}
+    relics = {item["id"]: item for item in load_list("relics") if isinstance(item.get("id"), str)}
+    drones = {item["id"]: item for item in load_list("drones") if isinstance(item.get("id"), str)}
     archetypes_root = load_json(DATA / "archetypes" / "playable_archetypes.json")
     archetypes = [item for item in archetypes_root if isinstance(item, dict) and item.get("is_available", True)]
 
     archetype_reports: list[dict[str, Any]] = []
     for index, archetype in enumerate(archetypes):
-        metrics = simulate_starter_deck(archetype, cards, args.samples, args.turns, args.seed + index * 100003)
+        metrics = simulate_starter_deck(archetype, cards, relics, drones, args.samples, args.turns, args.seed + index * 100003)
         archetype_reports.append({"archetype_id": archetype["id"], **metrics})
 
-    average_damage = mean(report["damage_per_turn"] for report in archetype_reports) if archetype_reports else 0.0
-    average_block = mean(report["block_per_turn"] for report in archetype_reports) if archetype_reports else 0.0
+    single_actor_ids = {
+        str(archetype.get("id"))
+        for archetype in archetypes
+        if len(archetype.get("actors", [])) == 1
+    }
+    floor_baseline_reports = [report for report in archetype_reports if report["archetype_id"] in single_actor_ids]
+    if not floor_baseline_reports:
+        floor_baseline_reports = archetype_reports
+    average_damage = mean(report["damage_per_turn"] for report in floor_baseline_reports) if floor_baseline_reports else 0.0
+    average_block = mean(report["block_per_turn"] for report in floor_baseline_reports) if floor_baseline_reports else 0.0
     starter_target = balance_targets.get("starter_deck", {})
-    target_combined_output = float(starter_target.get("target_combined_output", 22.0))
-    warning_deviation = float(starter_target.get("warning_deviation_percent", 32.0))
+    default_target = float(starter_target.get("target_combined_output", 22.0))
+    target_multipliers = starter_target.get("archetype_target_multipliers", {})
+    warning_deviation = float(starter_target.get("warning_deviation_percent", 18.0))
     starter_deck_flags: list[dict[str, Any]] = []
     for report in archetype_reports:
         combined = report["damage_per_turn"] + 0.85 * report["block_per_turn"]
+        multiplier = 1.0
+        if isinstance(target_multipliers, dict):
+            raw_multiplier = target_multipliers.get(report["archetype_id"], 1.0)
+            if isinstance(raw_multiplier, (int, float)) and not isinstance(raw_multiplier, bool) and raw_multiplier > 0:
+                multiplier = float(raw_multiplier)
+        target_combined_output = default_target * multiplier
         deviation = 0.0 if target_combined_output <= 0 else 100.0 * (combined - target_combined_output) / target_combined_output
         report["combined_output"] = round(combined, 3)
+        report["target_combined_output"] = round(target_combined_output, 3)
         report["target_deviation_percent"] = round(deviation, 3)
         if abs(deviation) > warning_deviation:
             starter_deck_flags.append({
@@ -475,11 +744,18 @@ def main() -> int:
         floor_config = floor_configs.get(floor_id, {}) if isinstance(floor_configs, dict) else {}
         offense_multiplier = float(floor_config.get("offense_multiplier", 1.0))
         defense_multiplier = float(floor_config.get("defense_multiplier", 1.0))
-        projected_damage = average_damage * offense_multiplier
-        projected_block = average_block * defense_multiplier
-        turns_to_kill = metrics["total_hp"] / projected_damage if projected_damage > 0 else math.inf
+        energy_efficiency = max(0.65, 1.0 - 0.12 * metrics["energy_loss_per_turn"])
+        projected_damage = average_damage * offense_multiplier * energy_efficiency
+        projected_damage *= max(0.5, 1.0 - metrics["player_offense_penalty"])
+        projected_block = average_block * defense_multiplier * energy_efficiency
+        defensive_drag = 0.55 * metrics["enemy_block_per_turn"] + 0.7 * metrics["enemy_heal_per_turn"]
+        effective_player_damage = max(
+            projected_damage * 0.55,
+            projected_damage - defensive_drag,
+        )
+        turns_to_kill = metrics["total_hp"] / effective_player_damage
         expected_hp_loss = max(0.0, metrics["incoming_damage_per_turn"] - projected_block) * turns_to_kill
-        target = target_range(floor_config, pool)
+        target = target_range(floor_config, pool, encounter)
         status = target_status(expected_hp_loss, target)
         report = {
             "floor_id": floor_id,
@@ -536,6 +812,7 @@ def main() -> int:
         "turns": args.turns,
         "seed": args.seed,
         "progression_targets": balance_targets,
+        "floor_baseline_archetypes": sorted(report["archetype_id"] for report in floor_baseline_reports),
         "starter_decks": archetype_reports,
         "starter_deck_flags": starter_deck_flags,
         "floor_aggregates": floor_aggregates,
@@ -550,8 +827,8 @@ def main() -> int:
 
     fields = [
         "floor_id", "pool", "encounter_id", "enemy_count", "total_hp",
-        "incoming_damage_per_turn", "enemy_block_per_turn", "stress_per_turn",
-        "energy_loss_per_turn", "maximum_turn_spike", "projected_player_damage_per_turn",
+        "incoming_damage_per_turn", "enemy_block_per_turn", "enemy_heal_per_turn", "stress_per_turn",
+        "energy_loss_per_turn", "player_offense_penalty", "maximum_turn_spike", "projected_player_damage_per_turn",
         "projected_player_block_per_turn", "estimated_turns_to_kill", "estimated_hp_loss",
         "hp_loss_target_min", "hp_loss_target_max", "target_status", "weight", "min_layer", "max_layer",
     ]

@@ -13,7 +13,7 @@
 #include <vector>
 
 namespace {
-constexpr int profileSaveVersion = 8;
+constexpr int profileSaveVersion = 9;
 constexpr int minimumSupportedProfileSaveVersion = 1;
 
 void throwProfileIoError(const std::filesystem::path& path, const std::string& message) {
@@ -271,6 +271,7 @@ Json profileToJson(const ProfileData& profile) {
     json["discovered_consumables"] = normalizedStringList(profile.discoveredConsumableIds);
     json["completed_challenges"] = normalizedStringList(profile.completedChallengeIds);
     json["completed_achievements"] = normalizedStringList(profile.completedAchievementIds);
+    json["onboarding_hints_seen"] = normalizedStringList(profile.seenOnboardingHintIds);
     json["progress_log"] = progressLogToJson(profile.progressLog);
     json["card_play_counts"] = countListToJson(profile.cardPlayCounts);
     json["relic_pick_counts"] = countListToJson(profile.relicPickCounts);
@@ -299,6 +300,7 @@ ProfileData profileFromJson(const Json& json, const std::filesystem::path& path)
     profile.discoveredConsumableIds = normalizedStringList(reader.optionalStringArray("discovered_consumables"));
     profile.completedChallengeIds = normalizedStringList(reader.optionalStringArray("completed_challenges"));
     profile.completedAchievementIds = normalizedStringList(reader.optionalStringArray("completed_achievements"));
+    profile.seenOnboardingHintIds = normalizedStringList(reader.optionalStringArray("onboarding_hints_seen"));
     profile.progressLog = reader.has("progress_log")
         ? progressLogFromJson(reader.requiredArray("progress_log"), path)
         : std::vector<ProfileProgressEntry>{};

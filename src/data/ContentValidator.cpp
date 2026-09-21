@@ -445,6 +445,11 @@ void validateRunEventEffect(
                 addError(errors, owner + " has remove_random_card event effect with a non-zero amount");
             }
             break;
+        case RunEventEffectType::UpgradeRandomCard:
+            if (effect.amount != 0) {
+                addError(errors, owner + " has upgrade_random_card event effect with a non-zero amount");
+            }
+            break;
         case RunEventEffectType::SetFlag:
         case RunEventEffectType::ClearFlag:
             if (effect.contentId.empty()) {
@@ -1254,6 +1259,21 @@ void validateContent(const ContentRegistry& content, const LocalizationManager* 
             }
             if (trigger.cardType.has_value() && trigger.eventType != GameEventType::CardPlayed) {
                 addError(errors, owner + " trigger has card_type filter, but card_type is currently supported only for card_played events");
+            }
+            if (trigger.previousCardType.has_value() && trigger.eventType != GameEventType::CardPlayed) {
+                addError(errors, owner + " trigger has previous_card_type filter outside card_played event");
+            }
+            if (trigger.cardNumberThisTurn > 0 && trigger.eventType != GameEventType::CardPlayed) {
+                addError(errors, owner + " trigger has card_number_this_turn outside card_played event");
+            }
+            if (trigger.cardNumberThisTurn < 0) {
+                addError(errors, owner + " trigger has negative card_number_this_turn");
+            }
+            if (trigger.ownerStatusId.has_value() && !content.statuses().contains(StatusId(*trigger.ownerStatusId))) {
+                addError(errors, owner + " trigger references unknown owner status '" + *trigger.ownerStatusId + "'");
+            }
+            if (trigger.minimumDrones < 0) {
+                addError(errors, owner + " trigger has negative min_drones");
             }
             if (trigger.breakdownType.has_value() && trigger.eventType != GameEventType::StressBreakdownTriggered) {
                 addError(errors, owner + " trigger has breakdown_type filter outside stress_breakdown_triggered event");

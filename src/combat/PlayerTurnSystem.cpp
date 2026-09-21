@@ -167,9 +167,6 @@ void PlayerTurnSystem::applyStartOfTurnTraitEffects(CombatState& state, Random& 
         const bool hasResolve = StressRules::hasTrait(playerSnapshot, StressRules::ResolveTraitId);
 
         if (!StressPsychopathRules::appliesTo(playerSnapshot.definitionId)) {
-            if (hasBreakdown) {
-                discardRandomCards(state, 1, random, playerSnapshot);
-            }
             continue;
         }
 

@@ -372,5 +372,21 @@
   "inspect.enemy.intent_detail": "Details",
   "inspect.enemy.no_details.description": "This enemy currently has no visible intent details or statuses.",
   "inspect.enemy.no_details.name": "No visible effects",
-  "inspect.enemy.normal.name": "Normal enemy"
+  "inspect.enemy.normal.name": "Normal enemy",
+  "enemy.the_last_regent.name": "The Last Regent",
+  "enemy.action.the_last_regent_scepter_sentence.name": "Scepter Sentence",
+  "enemy.action.the_last_regent_empty_decree.name": "Empty Decree",
+  "enemy.action.the_last_regent_crown_tithe.name": "Crown Tithe",
+  "enemy.action.the_last_regent_claim_the_throne.name": "Claim the Throne",
+  "enemy.phase.the_last_regent.vacant_throne": "Vacant Throne",
+  "enemy.phase.the_last_regent.seized_crown": "Seized Crown",
+  "enemy.phase.the_last_regent.no_successor": "No Successor",
+  "enemy.choir_of_chains.name": "Choir of Chains",
+  "enemy.action.choir_of_chains_iron_refrain.name": "Iron Refrain",
+  "enemy.action.choir_of_chains_count_the_breaths.name": "Count the Breaths",
+  "enemy.action.choir_of_chains_bind_the_hand.name": "Bind the Hand",
+  "enemy.action.choir_of_chains_hold_the_note.name": "Hold the Note",
+  "enemy.phase.choir_of_chains.measured_hymn": "Measured Hymn",
+  "enemy.phase.choir_of_chains.iron_refrain": "Iron Refrain",
+  "enemy.phase.choir_of_chains.final_cadence": "Final Cadence"
 }

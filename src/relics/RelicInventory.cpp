@@ -10,15 +10,23 @@ void RelicInventory::clear() {
 void RelicInventory::resetCombatState() {
     for (RelicInstance& relic : relics_) {
         relic.triggersThisCombat = 0;
+        relic.trackedCardTurn = 0;
+        relic.cardsPlayedThisTurn = 0;
+        relic.previousCardType.reset();
     }
 }
 
 void RelicInventory::add(RelicId id) {
-    relics_.push_back(RelicInstance{std::move(id), {}});
+    RelicInstance relic;
+    relic.id = std::move(id);
+    relics_.push_back(std::move(relic));
 }
 
 void RelicInventory::add(RelicId id, std::string ownerActorDefinitionId) {
-    relics_.push_back(RelicInstance{std::move(id), std::move(ownerActorDefinitionId)});
+    RelicInstance relic;
+    relic.id = std::move(id);
+    relic.ownerActorDefinitionId = std::move(ownerActorDefinitionId);
+    relics_.push_back(std::move(relic));
 }
 
 void RelicInventory::setFromIds(const std::vector<std::string>& ids) {

@@ -145,7 +145,7 @@ ActiveItemRerollResult ActiveItemRerollSystem::rerollReward(
                     if (relic != nullptr &&
                         relic->id.value != oldId &&
                         !reservedRelics.contains(relic->id.value) &&
-                        RewardPoolRules::canAppearAsRelicReward(*relic)) {
+                        RewardPoolRules::canAppearAsRelicReward(*relic, run.archetypeMechanicId)) {
                         candidates.push_back(relic);
                     }
                 }
@@ -244,7 +244,7 @@ ActiveItemRerollResult ActiveItemRerollSystem::rerollShop(
                     if (relic != nullptr &&
                         !oldRelics.contains(relic->id.value) &&
                         !reservedRelics.contains(relic->id.value) &&
-                        RewardPoolRules::canAppearInShop(*relic)) {
+                        RewardPoolRules::canAppearInShop(*relic, run.archetypeMechanicId)) {
                         candidates.push_back(relic);
                     }
                 }

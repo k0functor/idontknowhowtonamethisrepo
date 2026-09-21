@@ -2,7 +2,38 @@
 
 #include "combat/CombatState.hpp"
 
+#include <sstream>
 #include <string>
+
+namespace {
+void addEntityVariables(
+    CombatLogEntry::Variables& variables,
+    const CombatState& state,
+    const EntityId entityId,
+    const std::string& prefix
+) {
+    if (!state.hasEntity(entityId)) {
+        return;
+    }
+    const CombatEntity& entity = state.entity(entityId);
+    variables[prefix] = entity.definitionId.empty() ? std::to_string(entityId.value) : entity.definitionId;
+    variables[prefix + "_text_id"] = entity.nameTextId.value;
+}
+
+std::string modifierTrace(const ModifiedValue& modified) {
+    std::ostringstream output;
+    for (const ModifierBreakdownEntry& entry : modified.breakdown) {
+        if (entry.before == entry.after) {
+            continue;
+        }
+        if (output.tellp() > 0) {
+            output << "; ";
+        }
+        output << entry.description << " " << entry.before << "->" << entry.after;
+    }
+    return output.str();
+}
+}
 
 BlockSystem::BlockSystem(const ModifierSystem& modifierSystem, const GameEventBus* eventBus)
     : modifierSystem_(modifierSystem),
@@ -37,13 +68,16 @@ BlockResult BlockSystem::gainBlock(
         state.telemetry.blockGainedByPlayers += modified.modified;
     }
 
-    state.log.add(
-        CombatLogEntryType::BlockGained,
-        {
-            {"raw", std::to_string(rawBlock)},
-            {"modified", std::to_string(modified.modified)}
-        }
-    );
+    CombatLogEntry::Variables logVariables{
+        {"raw", std::to_string(rawBlock)},
+        {"modified", std::to_string(modified.modified)},
+        {"amount", std::to_string(modified.modified)},
+        {"card", cardId.value},
+        {"modifiers", modifierTrace(modified)}
+    };
+    addEntityVariables(logVariables, state, source, "source");
+    addEntityVariables(logVariables, state, target, "target");
+    state.log.add(CombatLogEntryType::BlockGained, std::move(logVariables));
 
     if (eventBus_ != nullptr) {
         GameEvent event;

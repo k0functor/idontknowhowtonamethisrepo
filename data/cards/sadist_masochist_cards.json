@@ -1,6 +1,7 @@
 [
   {
     "id": "sadist_basic_strike",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_basic_strike.name",
     "description": "card.sadist_basic_strike.description",
     "rarity": "starter",
@@ -33,6 +34,7 @@
   },
   {
     "id": "sadist_basic_defend",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_basic_defend.name",
     "description": "card.sadist_basic_defend.description",
     "rarity": "starter",
@@ -65,6 +67,7 @@
   },
   {
     "id": "masochist_basic_strike",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_basic_strike.name",
     "description": "card.masochist_basic_strike.description",
     "rarity": "starter",
@@ -97,6 +100,7 @@
   },
   {
     "id": "masochist_basic_defend",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_basic_defend.name",
     "description": "card.masochist_basic_defend.description",
     "rarity": "starter",
@@ -129,6 +133,7 @@
   },
   {
     "id": "sadist_clean_cut",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_clean_cut.name",
     "description": "card.sadist_clean_cut.description",
     "rarity": "common",
@@ -161,6 +166,7 @@
   },
   {
     "id": "sadist_teasing_blade",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_teasing_blade.name",
     "description": "card.sadist_teasing_blade.description",
     "rarity": "common",
@@ -211,6 +217,7 @@
   },
   {
     "id": "sadist_order_to_bleed",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_order_to_bleed.name",
     "description": "card.sadist_order_to_bleed.description",
     "rarity": "common",
@@ -261,6 +268,7 @@
   },
   {
     "id": "sadist_hook_pull",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_hook_pull.name",
     "description": "card.sadist_hook_pull.description",
     "rarity": "common",
@@ -311,6 +319,7 @@
   },
   {
     "id": "sadist_cruel_rhythm",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_cruel_rhythm.name",
     "description": "card.sadist_cruel_rhythm.description",
     "rarity": "common",
@@ -361,6 +370,7 @@
   },
   {
     "id": "sadist_needled_mercy",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_needled_mercy.name",
     "description": "card.sadist_needled_mercy.description",
     "rarity": "common",
@@ -414,6 +424,7 @@
   },
   {
     "id": "sadist_red_lesson",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_red_lesson.name",
     "description": "card.sadist_red_lesson.description",
     "rarity": "uncommon",
@@ -466,6 +477,7 @@
   },
   {
     "id": "sadist_open_wound",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_open_wound.name",
     "description": "card.sadist_open_wound.description",
     "rarity": "uncommon",
@@ -516,6 +528,7 @@
   },
   {
     "id": "sadist_pain_tax",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_pain_tax.name",
     "description": "card.sadist_pain_tax.description",
     "rarity": "uncommon",
@@ -564,6 +577,7 @@
   },
   {
     "id": "sadist_laughter",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_laughter.name",
     "description": "card.sadist_laughter.description",
     "rarity": "uncommon",
@@ -616,6 +630,7 @@
   },
   {
     "id": "sadist_carving_arc",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_carving_arc.name",
     "description": "card.sadist_carving_arc.description",
     "rarity": "rare",
@@ -651,6 +666,7 @@
   },
   {
     "id": "sadist_symphony_of_knives",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_symphony_of_knives.name",
     "description": "card.sadist_symphony_of_knives.description",
     "rarity": "rare",
@@ -741,6 +757,7 @@
   },
   {
     "id": "sadist_commanding_smile",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_commanding_smile.name",
     "description": "card.sadist_commanding_smile.description",
     "rarity": "rare",
@@ -796,6 +813,7 @@
   },
   {
     "id": "sadist_wicked_bargain",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_wicked_bargain.name",
     "description": "card.sadist_wicked_bargain.description",
     "rarity": "rare",
@@ -865,6 +883,7 @@
   },
   {
     "id": "sadist_final_instruction",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_final_instruction.name",
     "description": "card.sadist_final_instruction.description",
     "rarity": "rare",
@@ -918,6 +937,7 @@
   },
   {
     "id": "masochist_endure",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_endure.name",
     "description": "card.masochist_endure.description",
     "rarity": "common",
@@ -950,6 +970,7 @@
   },
   {
     "id": "masochist_invitation",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_invitation.name",
     "description": "card.masochist_invitation.description",
     "rarity": "common",
@@ -1000,6 +1021,7 @@
   },
   {
     "id": "masochist_sweet_agony",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_sweet_agony.name",
     "description": "card.masochist_sweet_agony.description",
     "rarity": "common",
@@ -1048,6 +1070,7 @@
   },
   {
     "id": "masochist_breathe_through",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_breathe_through.name",
     "description": "card.masochist_breathe_through.description",
     "rarity": "uncommon",
@@ -1098,6 +1121,7 @@
   },
   {
     "id": "masochist_blood_smile",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_blood_smile.name",
     "description": "card.masochist_blood_smile.description",
     "rarity": "rare",
@@ -1169,6 +1193,7 @@
   },
   {
     "id": "sadist_blood_lesson",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_blood_lesson.name",
     "description": "card.sadist_blood_lesson.description",
     "rarity": "starter",
@@ -1217,6 +1242,7 @@
   },
   {
     "id": "sadist_twist_blade",
+    "card_pool": "sadist_masochist",
     "name": "card.sadist_twist_blade.name",
     "description": "card.sadist_twist_blade.description",
     "rarity": "common",
@@ -1253,6 +1279,7 @@
   },
   {
     "id": "masochist_grin",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_grin.name",
     "description": "card.masochist_grin.description",
     "rarity": "starter",
@@ -1317,6 +1344,7 @@
   },
   {
     "id": "masochist_invite_pain",
+    "card_pool": "sadist_masochist",
     "name": "card.masochist_invite_pain.name",
     "description": "card.masochist_invite_pain.description",
     "rarity": "common",
@@ -1367,6 +1395,7 @@
   },
   {
     "id": "shared_violent_rhythm",
+    "card_pool": "sadist_masochist",
     "name": "card.shared_violent_rhythm.name",
     "description": "card.shared_violent_rhythm.description",
     "rarity": "starter",

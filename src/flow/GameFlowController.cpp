@@ -29,6 +29,7 @@
 #include "scenes/FloorCompleteScene.hpp"
 #include "run/RunCompletion.hpp"
 #include "run/RunRelicOwnership.hpp"
+#include "run/RunPacingTracker.hpp"
 #include "scenes/MainMenuScene.hpp"
 #include "scenes/MerchantRestScene.hpp"
 #include "scenes/ProfileHubScene.hpp"
@@ -42,6 +43,7 @@
 #include "scenes/ShopScene.hpp"
 #include "scenes/SplashScene.hpp"
 #include "shop/ShopTuning.hpp"
+#include "shop/ShopGenerator.hpp"
 #include "statuses/StatusDefinition.hpp"
 #include "telemetry/RunTelemetryWriter.hpp"
 #include "ui/BasicUi.hpp"
@@ -62,158 +64,6 @@
 #include <raylib.h>
 
 namespace {
-
-template <typename T>
-void pickUniqueRandom(std::vector<const T*>& candidates, const int count, Random& random, std::vector<const T*>& out) {
-    for (int i = 0; i < count && !candidates.empty(); ++i) {
-        const int index = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
-        out.push_back(candidates[static_cast<std::size_t>(index)]);
-        candidates.erase(candidates.begin() + index);
-    }
-}
-
-std::string joinChallengeProgressParts(const std::vector<std::string>& parts) {
-    std::string result;
-    for (std::size_t index = 0; index < parts.size(); ++index) {
-        if (index > 0) {
-            result += "; ";
-        }
-        result += parts[index];
-    }
-    return result;
-}
-
-ShopState createShopState(
-    const RunState& run,
-    const CardDatabase& cards,
-    const RelicDatabase& relics,
-    const ConsumableDatabase& consumables,
-    const ActiveItemDatabase& activeItems,
-    const ShopTuning& tuning,
-    Random& random
-) {
-    ShopState shop;
-    shop.cardRemovalPrice = tuning.cardRemovalPrice();
-
-    std::vector<const CardDefinition*> cardCandidates;
-    for (const CardDefinition* card : cards.all()) {
-        if (card != nullptr && RewardPoolRules::canAppearInShop(*card) && runCanReceiveCard(run, *card)) {
-            cardCandidates.push_back(card);
-        }
-    }
-
-    std::vector<const CardDefinition*> pickedCards;
-    pickUniqueRandom(cardCandidates, tuning.cardOfferCount(), random, pickedCards);
-    for (const CardDefinition* card : pickedCards) {
-        ShopOffer offer;
-        offer.type = ShopOfferType::Card;
-        offer.contentId = card->id.value;
-        offer.price = std::max(tuning.minimumCardPrice(), card->goldCost);
-        shop.offers.push_back(offer);
-    }
-
-    std::vector<const RelicDefinition*> relicCandidates;
-    for (const RelicDefinition* relic : relics.all()) {
-        if (relic == nullptr) {
-            continue;
-        }
-
-        if (!RewardPoolRules::canAppearInShop(*relic)) {
-            continue;
-        }
-
-        const bool alreadyOwned = std::find(run.relicIds.begin(), run.relicIds.end(), relic->id.value) != run.relicIds.end();
-        if (!alreadyOwned) {
-            relicCandidates.push_back(relic);
-        }
-    }
-
-    std::vector<const RelicDefinition*> pickedRelics;
-    pickUniqueRandom(relicCandidates, tuning.relicOfferCount(), random, pickedRelics);
-    for (const RelicDefinition* relic : pickedRelics) {
-        ShopOffer offer;
-        offer.type = ShopOfferType::Relic;
-        offer.contentId = relic->id.value;
-        offer.price = tuning.relicPrice(relic->rarity);
-        shop.offers.push_back(offer);
-    }
-
-    std::vector<const ConsumableDefinition*> consumableCandidates;
-    for (const ConsumableDefinition* consumable : consumables.all()) {
-        if (consumable != nullptr) {
-            consumableCandidates.push_back(consumable);
-        }
-    }
-
-    std::vector<const ConsumableDefinition*> pickedConsumables;
-    pickUniqueRandom(consumableCandidates, tuning.consumableOfferCount(), random, pickedConsumables);
-    for (const ConsumableDefinition* consumable : pickedConsumables) {
-        ShopOffer offer;
-        offer.type = ShopOfferType::Consumable;
-        offer.contentId = consumable->id.value;
-        offer.price = std::max(tuning.minimumConsumablePrice(), consumable->goldCost);
-        shop.offers.push_back(offer);
-    }
-
-    if (tuning.activeItemOfferChancePercent() > 0 &&
-        random.chance(static_cast<double>(tuning.activeItemOfferChancePercent()) / 100.0)) {
-        const std::optional<ActiveItemId> activeItem = ActiveItemAcquisitionSystem::chooseShopOffer(
-            activeItems,
-            run.activeItem.itemId,
-            random
-        );
-        if (activeItem.has_value()) {
-            const ActiveItemDefinition& definition = activeItems.get(*activeItem);
-            ShopOffer offer;
-            offer.type = ShopOfferType::ActiveItem;
-            offer.contentId = definition.id.value;
-            offer.price = definition.shopPrice;
-            shop.offers.push_back(offer);
-        }
-    }
-
-    ShopOffer removal;
-    removal.type = ShopOfferType::CardRemoval;
-    removal.price = shop.cardRemovalPrice;
-    shop.offers.push_back(removal);
-
-    return shop;
-}
-
-
-ShopState createMerchantRestState(
-    const RunState& run,
-    const CardDatabase& cards,
-    const ShopTuning& tuning,
-    Random& random
-) {
-    ShopState state;
-    state.mode = ShopStateMode::MerchantRest;
-    state.maxCardPurchases = tuning.merchantRestMaxCardPurchases();
-    state.cardPurchasesMade = 0;
-
-    std::vector<const CardDefinition*> candidates;
-    for (const CardDefinition* card : cards.all()) {
-        if (card != nullptr &&
-            RewardPoolRules::canAppearAsCardReward(*card) &&
-            runCanReceiveArchetypeRewardCard(run, *card)) {
-            candidates.push_back(card);
-        }
-    }
-
-    std::vector<const CardDefinition*> pickedCards;
-    pickUniqueRandom(candidates, tuning.merchantRestCardOfferCount(), random, pickedCards);
-    for (const CardDefinition* card : pickedCards) {
-        ShopOffer offer;
-        offer.type = ShopOfferType::Card;
-        offer.contentId = card->id.value;
-        const double scaledPrice = static_cast<double>(card->goldCost) * tuning.merchantRestCardPriceMultiplier();
-        offer.price = std::max(tuning.minimumCardPrice(), static_cast<int>(scaledPrice + 0.5));
-        state.offers.push_back(offer);
-    }
-
-    return state;
-}
 
 Rectangle inGameSettingsButtonBounds() {
     constexpr float width = 170.f;
@@ -264,6 +114,17 @@ int parseIntOr(const std::vector<std::string>& tokens, const std::size_t index, 
     } catch (...) {
         return fallback;
     }
+}
+
+std::string joinChallengeProgressParts(const std::vector<std::string>& parts) {
+    std::string result;
+    for (std::size_t index = 0; index < parts.size(); ++index) {
+        if (index > 0) {
+            result += "; ";
+        }
+        result += parts[index];
+    }
+    return result;
 }
 
 std::vector<std::string> splitLines(const std::string& text) {
@@ -370,6 +231,7 @@ GameFlowController::GameFlowController(
       userSettings_(userSettings),
       onUserSettingsChanged_(std::move(onUserSettingsChanged)),
       profileManager_(savesPath),
+      profileProgression_(content_, localization_, profileManager_),
       runSaveSystem_(savesPath) {
     if (!uiFont_.loadFromAssetsDirectory(assetsPath)) {
         std::cout << "UI font was not found. Put a Unicode font at assets/fonts/main.ttf.\n";
@@ -381,7 +243,7 @@ GameFlowController::GameFlowController(
 }
 
 void GameFlowController::update(const float deltaSeconds) {
-    updateProfileToasts(deltaSeconds);
+    profileProgression_.update(deltaSeconds);
 
     if (debugPanelEnabled() && IsKeyPressed(KEY_F1)) {
         toggleDebugPanel();
@@ -416,6 +278,10 @@ void GameFlowController::update(const float deltaSeconds) {
     if (handleActiveItemShortcut()) {
         executePendingTransition();
         return;
+    }
+
+    if (runController_.hasActiveRun()) {
+        RunPacingTracker::tick(runController_.run(), deltaSeconds);
     }
 
     sceneManager_.update(deltaSeconds);
@@ -616,7 +482,7 @@ bool GameFlowController::handleActiveItemShortcut() {
 
     const ActiveItemId itemId(run.activeItem.itemId);
     if (!content_.activeItems().contains(itemId)) {
-        pushProfileToast(localization_.get(TextId("active_item.feedback.unknown")));
+        profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.unknown")));
         return true;
     }
 
@@ -633,7 +499,7 @@ bool GameFlowController::handleActiveItemShortcut() {
 
     if (ActiveItemSystem::hasEffect(definition, ActiveItemEffectType::CreateConsumable)) {
         if (!ActiveItemSystem::canUse(run.activeItem, definition, *context)) {
-            pushProfileToast(localization_.format(
+            profileProgression_.pushToast(localization_.format(
                 TextId("active_item.feedback.not_charged"),
                 {{"charge", std::to_string(run.activeItem.charge)}, {"cost", std::to_string(definition.chargeCost)}}
             ));
@@ -646,7 +512,7 @@ bool GameFlowController::handleActiveItemShortcut() {
             runController_.random()
         );
         if (!created.has_value()) {
-            pushProfileToast(localization_.get(TextId("active_item.feedback.consumables_full")));
+            profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.consumables_full")));
             return true;
         }
         if (!ActiveItemSystem::spendCharge(run, definition, *context)) {
@@ -656,7 +522,7 @@ bool GameFlowController::handleActiveItemShortcut() {
         const std::string consumableName = content_.consumables().contains(ConsumableId(*created))
             ? localization_.get(content_.consumables().get(ConsumableId(*created)).nameTextId)
             : *created;
-        pushProfileToast(localization_.format(
+        profileProgression_.pushToast(localization_.format(
             TextId("active_item.feedback.created_consumable"),
             {{"item", localization_.get(definition.nameTextId)}, {"consumable", consumableName}}
         ));
@@ -665,7 +531,7 @@ bool GameFlowController::handleActiveItemShortcut() {
 
     if (ActiveItemSystem::hasEffect(definition, ActiveItemEffectType::RerollMapChoices)) {
         if (!ActiveItemSystem::canUse(run.activeItem, definition, *context)) {
-            pushProfileToast(localization_.format(
+            profileProgression_.pushToast(localization_.format(
                 TextId("active_item.feedback.not_charged"),
                 {{"charge", std::to_string(run.activeItem.charge)}, {"cost", std::to_string(definition.chargeCost)}}
             ));
@@ -673,14 +539,14 @@ bool GameFlowController::handleActiveItemShortcut() {
         }
         const int changed = ActiveItemContextSystem::rerollAvailableMapNodes(run, runController_.random());
         if (changed <= 0) {
-            pushProfileToast(localization_.get(TextId("active_item.feedback.no_map_choices")));
+            profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.no_map_choices")));
             return true;
         }
         if (!ActiveItemSystem::spendCharge(run, definition, *context)) {
             return true;
         }
         saveActiveRun();
-        pushProfileToast(localization_.format(
+        profileProgression_.pushToast(localization_.format(
             TextId("active_item.feedback.map_rerolled"),
             {{"item", localization_.get(definition.nameTextId)}, {"count", std::to_string(changed)}}
         ));
@@ -690,14 +556,14 @@ bool GameFlowController::handleActiveItemShortcut() {
 
     const ActiveItemUseResult result = ActiveItemSystem::use(run, definition, *context);
     if (result.status == ActiveItemUseStatus::NotEnoughCharge) {
-        pushProfileToast(localization_.format(
+        profileProgression_.pushToast(localization_.format(
             TextId("active_item.feedback.not_charged"),
             {{"charge", std::to_string(run.activeItem.charge)}, {"cost", std::to_string(definition.chargeCost)}}
         ));
         return true;
     }
     if (result.status == ActiveItemUseStatus::NoEffect) {
-        pushProfileToast(localization_.get(TextId("active_item.feedback.no_effect")));
+        profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.no_effect")));
         return true;
     }
     if (!result.used()) {
@@ -705,7 +571,7 @@ bool GameFlowController::handleActiveItemShortcut() {
     }
 
     saveActiveRun();
-    pushProfileToast(localization_.format(
+    profileProgression_.pushToast(localization_.format(
         TextId("active_item.feedback.used"),
         {{"item", localization_.get(definition.nameTextId)}}
     ));
@@ -728,7 +594,7 @@ bool GameFlowController::rerollRewardWithActiveItem(
     }
 
     if (!selection.empty()) {
-        pushProfileToast(localization_.get(TextId("active_item.feedback.reward_selection_locked")));
+        profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.reward_selection_locked")));
         return false;
     }
 
@@ -747,7 +613,7 @@ bool GameFlowController::rerollRewardWithActiveItem(
     }
 
     if (!ActiveItemSystem::canUse(run.activeItem, definition, context)) {
-        pushProfileToast(localization_.format(
+        profileProgression_.pushToast(localization_.format(
             TextId("active_item.feedback.not_charged"),
             {{"charge", std::to_string(run.activeItem.charge)}, {"cost", std::to_string(definition.chargeCost)}}
         ));
@@ -765,7 +631,7 @@ bool GameFlowController::rerollRewardWithActiveItem(
         runController_.random()
     );
     if (!reroll.changed()) {
-        pushProfileToast(localization_.get(TextId("active_item.feedback.no_effect")));
+        profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.no_effect")));
         return false;
     }
 
@@ -780,7 +646,7 @@ bool GameFlowController::rerollRewardWithActiveItem(
         runController_.setPendingCombatReward(nodeId, reward);
     }
     saveActiveRun();
-    pushProfileToast(localization_.format(
+    profileProgression_.pushToast(localization_.format(
         TextId("active_item.feedback.rerolled_reward"),
         {{"item", localization_.get(definition.nameTextId)}, {"count", std::to_string(reroll.totalChanged())}}
     ));
@@ -809,7 +675,7 @@ bool GameFlowController::rerollShopWithActiveItem(ShopState& shop) {
     }
 
     if (!ActiveItemSystem::canUse(run.activeItem, definition, ActiveItemUseContext::Shop)) {
-        pushProfileToast(localization_.format(
+        profileProgression_.pushToast(localization_.format(
             TextId("active_item.feedback.not_charged"),
             {{"charge", std::to_string(run.activeItem.charge)}, {"cost", std::to_string(definition.chargeCost)}}
         ));
@@ -830,7 +696,7 @@ bool GameFlowController::rerollShopWithActiveItem(ShopState& shop) {
         runController_.random()
     );
     if (!reroll.changed()) {
-        pushProfileToast(localization_.get(TextId("active_item.feedback.no_effect")));
+        profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.no_effect")));
         return false;
     }
 
@@ -840,7 +706,7 @@ bool GameFlowController::rerollShopWithActiveItem(ShopState& shop) {
 
     runController_.setPendingShop(pending.nodeId, shop);
     saveActiveRun();
-    pushProfileToast(localization_.format(
+    profileProgression_.pushToast(localization_.format(
         TextId("active_item.feedback.rerolled_shop"),
         {{"item", localization_.get(definition.nameTextId)}, {"count", std::to_string(reroll.totalChanged())}}
     ));
@@ -864,7 +730,7 @@ bool GameFlowController::copyCardWithActiveItem(
     if (!ActiveItemSystem::hasEffect(definition, ActiveItemEffectType::CopyCard) ||
         !ActiveItemSystem::canUse(run.activeItem, definition, context)) {
         if (ActiveItemSystem::hasEffect(definition, ActiveItemEffectType::CopyCard)) {
-            pushProfileToast(localization_.format(
+            profileProgression_.pushToast(localization_.format(
                 TextId("active_item.feedback.not_charged"),
                 {{"charge", std::to_string(run.activeItem.charge)}, {"cost", std::to_string(definition.chargeCost)}}
             ));
@@ -873,11 +739,11 @@ bool GameFlowController::copyCardWithActiveItem(
     }
 
     if (cardId.value.empty()) {
-        pushProfileToast(localization_.get(TextId("active_item.feedback.select_card")));
+        profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.select_card")));
         return false;
     }
     if (!ActiveItemContextSystem::copyCard(run, content_.cards(), cardId)) {
-        pushProfileToast(localization_.get(TextId("active_item.feedback.no_effect")));
+        profileProgression_.pushToast(localization_.get(TextId("active_item.feedback.no_effect")));
         return false;
     }
     if (!ActiveItemSystem::spendCharge(run, definition, context)) {
@@ -888,7 +754,7 @@ bool GameFlowController::copyCardWithActiveItem(
     const std::string cardName = content_.cards().contains(cardId)
         ? localization_.get(content_.cards().get(cardId).nameTextId)
         : cardId.value;
-    pushProfileToast(localization_.format(
+    profileProgression_.pushToast(localization_.format(
         TextId("active_item.feedback.card_copied"),
         {{"item", localization_.get(definition.nameTextId)}, {"card", cardName}}
     ));
@@ -900,14 +766,14 @@ void GameFlowController::renderActiveItemHud() const {
         return;
     }
 
-    const Rectangle panel{24.f, 88.f, 280.f, 66.f};
+    const Rectangle panel{24.f, 88.f, 360.f, 70.f};
     DrawRectangleRounded(panel, 0.16f, 8, Color{16, 19, 29, 225});
     DrawRectangleRoundedLinesEx(panel, 0.16f, 8, 1.5f, Color{104, 118, 164, 220});
 
     const RunState& run = runController_.run();
     if (run.activeItem.empty()) {
         BasicUi::drawText(uiFont_, localization_.get(TextId("active_item.slot.empty")), Vector2{panel.x + 12.f, panel.y + 10.f}, 18.f, Color{180, 186, 205, 255});
-        BasicUi::drawText(uiFont_, localization_.get(TextId("active_item.hint.space")), Vector2{panel.x + 12.f, panel.y + 37.f}, 14.f, Color{124, 132, 156, 255});
+        BasicUi::drawText(uiFont_, localization_.get(TextId("active_item.hint.space")), Vector2{panel.x + 12.f, panel.y + 40.f}, 14.f, Color{124, 132, 156, 255});
         return;
     }
 
@@ -920,7 +786,7 @@ void GameFlowController::renderActiveItemHud() const {
     const ActiveItemDefinition& definition = content_.activeItems().get(itemId);
     BasicUi::drawText(uiFont_, localization_.get(definition.nameTextId), Vector2{panel.x + 12.f, panel.y + 8.f}, 18.f, Color{235, 224, 185, 255});
 
-    const Rectangle bar{panel.x + 12.f, panel.y + 34.f, 184.f, 16.f};
+    const Rectangle bar{panel.x + 12.f, panel.y + 36.f, 206.f, 16.f};
     DrawRectangleRounded(bar, 0.35f, 8, Color{42, 47, 65, 255});
     const float ratio = definition.maxCharge > 0
         ? std::clamp(static_cast<float>(run.activeItem.charge) / static_cast<float>(definition.maxCharge), 0.f, 1.f)
@@ -930,14 +796,39 @@ void GameFlowController::renderActiveItemHud() const {
         fill.width *= ratio;
         DrawRectangleRounded(fill, 0.35f, 8, Color{151, 116, 218, 255});
     }
+    if (definition.maxCharge > 0) {
+        const float useMarkerX = bar.x + bar.width * std::clamp(
+            static_cast<float>(definition.chargeCost) / static_cast<float>(definition.maxCharge),
+            0.f,
+            1.f
+        );
+        DrawLineEx(Vector2{useMarkerX, bar.y - 3.f}, Vector2{useMarkerX, bar.y + bar.height + 3.f}, 2.f, Color{244, 213, 126, 255});
+    }
     BasicUi::drawText(
         uiFont_,
-        std::to_string(run.activeItem.charge) + "/" + std::to_string(definition.maxCharge),
-        Vector2{bar.x + 66.f, bar.y - 1.f},
+        std::to_string(run.activeItem.charge) + "/" + std::to_string(definition.maxCharge) +
+            "  (" + std::to_string(definition.chargeCost) + ")",
+        Vector2{bar.x + 58.f, bar.y - 1.f},
         14.f,
         Color{242, 242, 248, 255}
     );
-    BasicUi::drawText(uiFont_, localization_.get(TextId("active_item.hint.space")), Vector2{panel.x + 205.f, panel.y + 35.f}, 14.f, Color{170, 177, 202, 255});
+
+    const int roomsUntilReady = ActiveItemSystem::normalCombatRoomsUntilUsable(run.activeItem, definition);
+    std::string readiness;
+    Color readinessColor{170, 177, 202, 255};
+    if (roomsUntilReady == 0) {
+        readiness = localization_.get(TextId("active_item.charge.ready")) + "  " +
+            localization_.get(TextId("active_item.hint.space"));
+        readinessColor = Color{154, 222, 164, 255};
+    } else if (roomsUntilReady > 0) {
+        readiness = localization_.format(
+            TextId("active_item.charge.rooms_short"),
+            {{"count", std::to_string(roomsUntilReady)}}
+        );
+    } else {
+        readiness = localization_.get(TextId("active_item.charge.no_combat_gain"));
+    }
+    BasicUi::drawText(uiFont_, readiness, Vector2{panel.x + 232.f, panel.y + 37.f}, 14.f, readinessColor);
 }
 
 bool GameFlowController::debugPanelEnabled() const {
@@ -1417,7 +1308,7 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
                 run.deckCardIds.push_back(cardId);
                 ++run.stats.cardsAdded;
             }
-            unlockCardAndToast(cardId.value);
+            profileProgression_.unlockCardAndToast(cardId.value);
             saveActiveRun();
             output = localization_.format(
                 TextId("debug.card_added"),
@@ -1435,7 +1326,7 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
             if (std::find(run.relicIds.begin(), run.relicIds.end(), idOrAmount) == run.relicIds.end()) {
                 run.relicIds.push_back(idOrAmount);
             }
-            unlockRelicAndToast(idOrAmount);
+            profileProgression_.unlockRelicAndToast(idOrAmount);
             saveActiveRun();
             output = localization_.format(TextId("debug.relic_added"), {{"id", idOrAmount}});
             return true;
@@ -1466,7 +1357,7 @@ bool GameFlowController::executeRunDebugCommand(const std::vector<std::string>& 
                 return true;
             }
             run.consumableIds.push_back(idOrAmount);
-            discoverConsumableAndToast(idOrAmount);
+            profileProgression_.discoverConsumableAndToast(idOrAmount);
             saveActiveRun();
             output = localization_.format(TextId("debug.consumable_added"), {{"id", idOrAmount}});
             return true;
@@ -1756,7 +1647,7 @@ void GameFlowController::startChallengeRun(const std::string& challengeId) {
 
         runController_.run().challengeId = challenge.id;
         applyChallengeLoadout(challenge);
-        unlockProfileContentFromRunState(runController_.run());
+        profileProgression_.synchronizeRunContent(runController_.run());
         saveActiveRun();
         setRunMapScene();
     });
@@ -1993,6 +1884,7 @@ void GameFlowController::setFloorCompleteScene() {
         throw std::runtime_error("Cannot open floor completion scene: no active run");
     }
 
+    RunPacingTracker::finishFloor(runController_.run());
     runController_.run().phase = RunPhase::FloorComplete;
     const RunCompletionStatus completion = RunCompletion::evaluate(runController_.run(), content_.floors());
     const std::string nextFloorName = completion.nextFloorId.empty()
@@ -2137,11 +2029,17 @@ void GameFlowController::setCombatScene(const int nodeId) {
             runController_.run(),
             [this](std::string message) {
                 saveActiveRun();
-                pushProfileToast(std::move(message));
+                profileProgression_.pushToast(std::move(message));
+            },
+            [this](const std::string& hintId) {
+                return profileManager_.isSelectedOnboardingHintSeen(hintId);
+            },
+            [this](std::string hintId) {
+                profileManager_.markSelectedOnboardingHintSeen(hintId);
             },
             [this, nodeId](const CombatResult& result) {
-                discoverProfileContentFromCombatResult(result);
-                recordProfileStatsFromCombatResult(result);
+                profileProgression_.discoverCombatContent(result);
+                profileProgression_.recordCombatStats(result);
 
                 RewardState reward = runController_.completeCombatAndCreateReward(
                     nodeId,
@@ -2167,8 +2065,8 @@ void GameFlowController::setCombatScene(const int nodeId) {
                         return;
                     }
 
-                    discoverProfileContentFromCombatResult(result);
-                    recordProfileStatsFromCombatResult(result);
+                    profileProgression_.discoverCombatContent(result);
+                    profileProgression_.recordCombatStats(result);
                     runController_.recordCombatDefeat(result);
                     setRunDefeatScene();
                 });
@@ -2381,7 +2279,7 @@ void GameFlowController::continueRunInSlot(const std::size_t slotIndex) {
 
         saveSlotStatusMessage_.clear();
         runController_.restoreRun(loadResult.run);
-        unlockProfileContentFromRunState(runController_.run());
+        profileProgression_.synchronizeRunContent(runController_.run());
         selectedArchetypeId_.reset();
         selectedDifficultyId_.reset();
 
@@ -2501,7 +2399,7 @@ void GameFlowController::selectDifficulty(DifficultyId difficultyId) {
             startingFloor,
             runSeed
         );
-        unlockProfileContentFromRunState(runController_.run());
+        profileProgression_.synchronizeRunContent(runController_.run());
         saveActiveRun();
         setRunMapScene();
     });
@@ -2574,7 +2472,12 @@ void GameFlowController::startMapNode(const int nodeId) {
                 }
 
                 const FloorDefinition& floor = content_.floors().get(runController_.run().currentFloorId);
-                const RunEventDefinition& event = chooseAvailableRunEvent(content_.events().allForPool(floor.eventPoolId), runController_.run(), runController_.random());
+                const std::vector<const RunEventDefinition*> eventPool = content_.events().allForPool(floor.eventPoolId);
+                const RunEventDefinition& event = chooseAvailableRunEvent(
+                    eventPool,
+                    runController_.run(),
+                    runController_.random()
+                );
                 runController_.setPendingEvent(nodeId, event.id);
                 saveActiveRun();
                 setEventScene(nodeId, event);
@@ -2582,7 +2485,7 @@ void GameFlowController::startMapNode(const int nodeId) {
             }
 
             case RunMapNodeType::Shop: {
-                ShopState shopState = createShopState(
+                ShopState shopState = ShopGenerator::createShop(
                     runController_.run(),
                     content_.cards(),
                     content_.relics(),
@@ -2599,7 +2502,7 @@ void GameFlowController::startMapNode(const int nodeId) {
 
             case RunMapNodeType::Rest:
                 if (runController_.run().archetypeMechanicId == "merchant_progression") {
-                    ShopState merchantRest = createMerchantRestState(
+                    ShopState merchantRest = ShopGenerator::createMerchantRest(
                         runController_.run(),
                         content_.cards(),
                         content_.shopTuning(),
@@ -2678,7 +2581,7 @@ void GameFlowController::restSkip(const int nodeId) {
 bool GameFlowController::purchaseShopItem(const ShopPurchase& purchase) {
     const bool purchased = runController_.purchaseShopItem(purchase);
     if (purchased) {
-        unlockProfileContentFromShopPurchase(purchase);
+        profileProgression_.applyShopPurchase(purchase);
         saveActiveRun();
     }
     return purchased;
@@ -2743,7 +2646,13 @@ void GameFlowController::finishEvent(const int nodeId, const RunEventChoiceDefin
             return;
         }
 
-        unlockProfileContentFromEventOutcome(result);
+        profileProgression_.applyEventOutcome(result);
+
+        const std::string seenFlag = "event.seen." + eventId;
+        std::vector<std::string>& eventFlags = runController_.run().eventFlags;
+        if (std::find(eventFlags.begin(), eventFlags.end(), seenFlag) == eventFlags.end()) {
+            eventFlags.push_back(seenFlag);
+        }
 
         if (runController_.partyDefeated()) {
             setRunDefeatScene();
@@ -2767,7 +2676,7 @@ void GameFlowController::finishReward(const RewardState&, RewardSelection select
         const bool completedBoss = pendingReward.sourceNodeType == RunMapNodeType::Boss;
 
         runController_.applyReward(pendingReward, selection);
-        unlockProfileContentFromRewardSelection(selection);
+        profileProgression_.applyRewardSelection(selection);
         runController_.clearPendingRoom();
 
         if (completedBoss) {
@@ -2795,7 +2704,7 @@ void GameFlowController::finishChestReward(
 
         const RewardState reward = runController_.pendingRoom().reward;
         runController_.applyReward(reward, selection);
-        unlockProfileContentFromRewardSelection(selection);
+        profileProgression_.applyRewardSelection(selection);
         runController_.completeChestNode(nodeId);
         saveActiveRun();
         setRunMapScene();
@@ -2809,7 +2718,7 @@ void GameFlowController::finishFloorCompleteContinue() {
             return;
         }
 
-        grantFloorCompletionUnlocks(runController_.run());
+        profileProgression_.grantFloorCompletionUnlocks(runController_.run());
 
         if (advanceCompletedRunToNextFloor()) {
             setRunMapScene();
@@ -2826,7 +2735,7 @@ void GameFlowController::finishFloorCompleteContinue() {
 void GameFlowController::finishFloorCompleteMainMenu() {
     queueTransition([this]() {
         if (runController_.hasActiveRun() && runController_.isActCompleted()) {
-            grantFloorCompletionUnlocks(runController_.run());
+            profileProgression_.grantFloorCompletionUnlocks(runController_.run());
 
             if (completedRunCanContinueToNextFloor()) {
                 saveAndCloseCompletedRunForLater();
@@ -2856,7 +2765,7 @@ bool GameFlowController::advanceCompletedRunToNextFloor() {
         return false;
     }
 
-    unlockProfileContentFromRunState(runController_.run());
+    profileProgression_.synchronizeRunContent(runController_.run());
     saveActiveRun();
     return true;
 }
@@ -2925,10 +2834,10 @@ void GameFlowController::finishRun(const RunEndReason reason) {
         if (countsAsVictory || countsAsDefeat) {
             if (profileManager_.recordSelectedRunFinished(run, countsAsVictory)) {
                 if (countsAsVictory) {
-                    grantFloorCompletionUnlocks(run);
-                    completeEligibleChallenges(run);
+                    profileProgression_.grantFloorCompletionUnlocks(run);
+                } else {
+                    profileProgression_.completeEligibleAchievements(&run);
                 }
-                completeEligibleAchievements(&run);
             }
         }
     }
@@ -2954,283 +2863,9 @@ void GameFlowController::finishCompletedRunAndDeleteSave() {
     runController_.clearActiveRun();
 }
 
-void GameFlowController::recordProfileStatsFromCombatResult(const CombatResult& result) {
-    for (const std::string& cardId : result.playedCardIds) {
-        if (content_.cards().contains(CardId(cardId))) {
-            (void)profileManager_.recordSelectedCardPlayed(cardId);
-        }
-    }
-}
-
-void GameFlowController::discoverProfileContentFromCombatResult(const CombatResult& result) {
-    for (const std::string& enemyId : result.encounteredEnemyIds) {
-        if (content_.enemies().contains(EnemyId(enemyId))) {
-            discoverEnemyAndToast(enemyId);
-        }
-    }
-
-    for (const std::string& statusId : result.statusIdsSeen) {
-        if (content_.statuses().contains(StatusId(statusId))) {
-            discoverStatusAndToast(statusId);
-        }
-    }
-}
-
-void GameFlowController::unlockProfileContentFromRunState(const RunState& run) {
-    // Silent synchronization for active/loaded runs. Runtime rewards and encounters use
-    // the toast helpers below; this path is intentionally quiet to avoid flooding the
-    // player with the entire starting deck or an old save file.
-    for (const CardId& cardId : run.deckCardIds) {
-        if (content_.cards().contains(cardId)) {
-            profileManager_.unlockSelectedCard(cardId.value);
-        }
-    }
-
-    for (const std::string& relicId : run.relicIds) {
-        if (content_.relics().contains(RelicId(relicId))) {
-            profileManager_.unlockSelectedRelic(relicId);
-        }
-    }
-
-    for (const RunActorState& actor : run.actorStates) {
-        for (const std::string& relicId : actor.relicIds) {
-            if (content_.relics().contains(RelicId(relicId))) {
-                profileManager_.unlockSelectedRelic(relicId);
-            }
-        }
-    }
-
-    for (const std::string& consumableId : run.consumableIds) {
-        if (content_.consumables().contains(ConsumableId(consumableId))) {
-            profileManager_.discoverSelectedConsumable(consumableId);
-        }
-    }
-}
-
-void GameFlowController::unlockProfileContentFromRewardSelection(const RewardSelection& selection) {
-    for (const CardId& cardId : selection.selectedCardIds) {
-        if (content_.cards().contains(cardId)) {
-            unlockCardAndToast(cardId.value);
-        }
-    }
-
-    for (const std::string& consumableId : selection.selectedConsumableIds) {
-        if (content_.consumables().contains(ConsumableId(consumableId))) {
-            discoverConsumableAndToast(consumableId);
-        }
-    }
-
-    for (const std::string& relicId : selection.selectedRelicIds) {
-        if (content_.relics().contains(RelicId(relicId))) {
-            unlockRelicAndToast(relicId);
-            (void)profileManager_.recordSelectedRelicTaken(relicId);
-        }
-    }
-
-    for (const RelicRewardSelection& relic : selection.selectedRelics) {
-        if (content_.relics().contains(RelicId(relic.relicId))) {
-            unlockRelicAndToast(relic.relicId);
-            (void)profileManager_.recordSelectedRelicTaken(relic.relicId);
-        }
-    }
-}
-
-void GameFlowController::unlockProfileContentFromShopPurchase(const ShopPurchase& purchase) {
-    if (purchase.type == ShopOfferType::Card && content_.cards().contains(CardId(purchase.contentId))) {
-        unlockCardAndToast(purchase.contentId);
-        return;
-    }
-
-    if (purchase.type == ShopOfferType::Relic && content_.relics().contains(RelicId(purchase.contentId))) {
-        unlockRelicAndToast(purchase.contentId);
-        (void)profileManager_.recordSelectedRelicTaken(purchase.contentId);
-        return;
-    }
-
-    if (purchase.type == ShopOfferType::Consumable && content_.consumables().contains(ConsumableId(purchase.contentId))) {
-        discoverConsumableAndToast(purchase.contentId);
-    }
-}
-
-void GameFlowController::unlockProfileContentFromEventOutcome(const RunEventChoiceResult& result) {
-    for (const RunEventOutcomeEntry& outcome : result.outcomes) {
-        if (outcome.type == RunEventOutcomeType::CardGained && content_.cards().contains(CardId(outcome.contentId))) {
-            unlockCardAndToast(outcome.contentId);
-            continue;
-        }
-
-        if (outcome.type == RunEventOutcomeType::RelicGained && content_.relics().contains(RelicId(outcome.contentId))) {
-            unlockRelicAndToast(outcome.contentId);
-            (void)profileManager_.recordSelectedRelicTaken(outcome.contentId);
-            continue;
-        }
-
-        if (outcome.type == RunEventOutcomeType::ConsumableGained && content_.consumables().contains(ConsumableId(outcome.contentId))) {
-            discoverConsumableAndToast(outcome.contentId);
-        }
-    }
-}
-
-void GameFlowController::grantFloorCompletionUnlocks(const RunState& run) {
-    if (run.currentFloorId == "floor1") {
-        (void)unlockArchetypeAndToast("replicant");
-        (void)unlockArchetypeAndToast("monk");
-    }
-
-    if (run.currentFloorId == "floor2") {
-        (void)unlockArchetypeAndToast("merchant");
-        (void)unlockArchetypeAndToast("lost_psychopath");
-    }
-
-    if (run.currentFloorId == "floor3") {
-        (void)unlockArchetypeAndToast("sadist_masochist");
-    }
-
-    completeEligibleChallenges(run);
-    completeEligibleAchievements(&run);
-}
-
-bool GameFlowController::unlockArchetypeAndToast(const std::string& archetypeId) {
-    if (!content_.archetypes().contains(PlayableArchetypeId(archetypeId))) {
-        return false;
-    }
-
-    if (!profileManager_.unlockSelectedArchetype(archetypeId)) {
-        return false;
-    }
-
-    const PlayableArchetypeDefinition& archetype = content_.archetypes().get(PlayableArchetypeId(archetypeId));
-    pushProfileToast(localization_.format(
-        TextId("profile_toast.archetype_unlocked"),
-        {{"name", localization_.get(archetype.nameTextId)}}
-    ));
-    return true;
-}
-
-bool GameFlowController::unlockCardAndToast(const std::string& cardId) {
-    if (!content_.cards().contains(CardId(cardId))) {
-        return false;
-    }
-
-    if (!profileManager_.unlockSelectedCard(cardId)) {
-        return false;
-    }
-
-    const CardDefinition& card = content_.cards().get(CardId(cardId));
-    pushProfileToast(localization_.format(
-        TextId("profile_toast.card_unlocked"),
-        {{"name", localization_.get(card.nameTextId)}}
-    ));
-    return true;
-}
-
-bool GameFlowController::unlockRelicAndToast(const std::string& relicId) {
-    if (!content_.relics().contains(RelicId(relicId))) {
-        return false;
-    }
-
-    if (!profileManager_.unlockSelectedRelic(relicId)) {
-        return false;
-    }
-
-    const RelicDefinition& relic = content_.relics().get(RelicId(relicId));
-    pushProfileToast(localization_.format(
-        TextId("profile_toast.relic_unlocked"),
-        {{"name", localization_.get(relic.nameTextId)}}
-    ));
-    return true;
-}
-
-bool GameFlowController::discoverEnemyAndToast(const std::string& enemyId) {
-    if (!content_.enemies().contains(EnemyId(enemyId))) {
-        return false;
-    }
-
-    if (!profileManager_.discoverSelectedEnemy(enemyId)) {
-        return false;
-    }
-
-    const EnemyDefinition& enemy = content_.enemies().get(EnemyId(enemyId));
-    pushProfileToast(localization_.format(
-        TextId("profile_toast.enemy_discovered"),
-        {{"name", localization_.get(enemy.nameTextId)}}
-    ));
-    return true;
-}
-
-bool GameFlowController::discoverStatusAndToast(const std::string& statusId) {
-    if (!content_.statuses().contains(StatusId(statusId))) {
-        return false;
-    }
-
-    if (!profileManager_.discoverSelectedStatus(statusId)) {
-        return false;
-    }
-
-    const StatusDefinition& status = content_.statuses().get(StatusId(statusId));
-    pushProfileToast(localization_.format(
-        TextId("profile_toast.status_discovered"),
-        {{"name", localization_.get(status.nameTextId)}}
-    ));
-    return true;
-}
-
-bool GameFlowController::discoverConsumableAndToast(const std::string& consumableId) {
-    if (!content_.consumables().contains(ConsumableId(consumableId))) {
-        return false;
-    }
-
-    if (!profileManager_.discoverSelectedConsumable(consumableId)) {
-        return false;
-    }
-
-    const ConsumableDefinition& consumable = content_.consumables().get(ConsumableId(consumableId));
-    pushProfileToast(localization_.format(
-        TextId("profile_toast.consumable_discovered"),
-        {{"name", localization_.get(consumable.nameTextId)}}
-    ));
-    return true;
-}
-
-void GameFlowController::applyUnlockRewardAndToast(const UnlockReward& reward) {
-    for (const std::string& archetypeId : reward.archetypeIds) {
-        (void)unlockArchetypeAndToast(archetypeId);
-    }
-    for (const std::string& cardId : reward.cardIds) {
-        (void)unlockCardAndToast(cardId);
-    }
-    for (const std::string& relicId : reward.relicIds) {
-        (void)unlockRelicAndToast(relicId);
-    }
-}
-
-void GameFlowController::pushProfileToast(std::string message) {
-    if (message.empty()) {
-        return;
-    }
-
-    constexpr std::size_t maxToasts = 6u;
-    profileToasts_.push_back(ProfileToast{std::move(message), 4.8f});
-    if (profileToasts_.size() > maxToasts) {
-        profileToasts_.erase(profileToasts_.begin(), profileToasts_.begin() + static_cast<std::ptrdiff_t>(profileToasts_.size() - maxToasts));
-    }
-}
-
-void GameFlowController::updateProfileToasts(const float deltaSeconds) {
-    for (ProfileToast& toast : profileToasts_) {
-        toast.remainingSeconds -= deltaSeconds;
-    }
-
-    profileToasts_.erase(
-        std::remove_if(profileToasts_.begin(), profileToasts_.end(), [](const ProfileToast& toast) {
-            return toast.remainingSeconds <= 0.f;
-        }),
-        profileToasts_.end()
-    );
-}
-
 void GameFlowController::renderProfileToasts() const {
-    if (profileToasts_.empty()) {
+    const std::vector<ProfileToast>& toasts = profileProgression_.toasts();
+    if (toasts.empty()) {
         return;
     }
 
@@ -3240,9 +2875,9 @@ void GameFlowController::renderProfileToasts() const {
     const float x = static_cast<float>(VirtualViewport::width()) - width - 24.f;
     float y = 86.f;
 
-    const std::size_t first = profileToasts_.size() > 4u ? profileToasts_.size() - 4u : 0u;
-    for (std::size_t i = first; i < profileToasts_.size(); ++i) {
-        const ProfileToast& toast = profileToasts_[i];
+    const std::size_t first = toasts.size() > 4u ? toasts.size() - 4u : 0u;
+    for (std::size_t i = first; i < toasts.size(); ++i) {
+        const ProfileToast& toast = toasts[i];
         const unsigned char alpha = static_cast<unsigned char>(toast.remainingSeconds < 0.8f ? 175 : 235);
         const Rectangle bounds{x, y, width, height};
         DrawRectangleRounded(bounds, 0.16f, 8, Color{20, 23, 32, alpha});
@@ -3258,60 +2893,6 @@ void GameFlowController::renderProfileToasts() const {
         );
         y += height + gap;
     }
-}
-
-void GameFlowController::completeEligibleChallenges(const RunState& run) {
-    const ProfileData* profile = profileManager_.selectedProfile();
-    if (profile == nullptr) {
-        return;
-    }
-
-    const std::vector<std::string> completedIds = ChallengeEvaluator::findNewlyCompleted(
-        content_.challenges(),
-        *profile,
-        run
-    );
-    const std::vector<std::string> newlyCompleted = profileManager_.completeSelectedChallenges(completedIds);
-
-    for (const std::string& challengeId : newlyCompleted) {
-        if (!content_.challenges().contains(challengeId)) {
-            continue;
-        }
-        const ChallengeDefinition& challenge = content_.challenges().get(challengeId);
-        pushProfileToast(localization_.format(
-            TextId("profile_toast.challenge_completed"),
-            {{"name", localization_.get(challenge.nameTextId)}}
-        ));
-    }
-
-    applyUnlockRewardAndToast(UnlockEvaluator::collectChallengeRewards(content_.challenges(), newlyCompleted));
-}
-
-void GameFlowController::completeEligibleAchievements(const RunState* run) {
-    const ProfileData* profile = profileManager_.selectedProfile();
-    if (profile == nullptr) {
-        return;
-    }
-
-    const std::vector<std::string> completedIds = AchievementEvaluator::findNewlyCompleted(
-        content_.achievements(),
-        *profile,
-        run
-    );
-    const std::vector<std::string> newlyCompleted = profileManager_.completeSelectedAchievements(completedIds);
-
-    for (const std::string& achievementId : newlyCompleted) {
-        if (!content_.achievements().contains(achievementId)) {
-            continue;
-        }
-        const AchievementDefinition& achievement = content_.achievements().get(achievementId);
-        pushProfileToast(localization_.format(
-            TextId("profile_toast.achievement_completed"),
-            {{"name", localization_.get(achievement.nameTextId)}}
-        ));
-    }
-
-    applyUnlockRewardAndToast(UnlockEvaluator::collectAchievementRewards(content_.achievements(), newlyCompleted));
 }
 
 

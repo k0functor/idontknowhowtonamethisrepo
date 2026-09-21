@@ -3,6 +3,9 @@
 #include "cards/CardKeyword.hpp"
 #include "cards/CardUpgrade.hpp"
 #include "combat/CardCost.hpp"
+#include "combat/CardStressCost.hpp"
+#include "run/StressRules.hpp"
+#include "run/StressPsychopathRules.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -46,6 +49,30 @@ PlayCardResult CardPlaySystem::playCard(
     const int energyCost = CardCost::effectiveEnergyCost(state, request.source, definition);
     energySystem_.spend(state, request.source, energyCost);
     CardCost::consumeFreeNextCard(state, request.source, definition);
+
+    const int directStressCost = CardStressCost::directCost(definition);
+    if (directStressCost > 0) {
+        CombatEntity& sourceEntity = state.entity(request.source);
+        const StressRules::StressAdjustmentResult stressPayment =
+            StressRules::applyDelta(
+                sourceEntity,
+                -directStressCost,
+                &random,
+                StressPsychopathRules::appliesTo(sourceEntity.definitionId)
+            );
+        state.log.add(
+            CombatLogEntryType::LoseStress,
+            {
+                {"amount", std::to_string(-stressPayment.applied)},
+                {"before", std::to_string(sourceEntity.stress - stressPayment.applied)},
+                {"after", std::to_string(sourceEntity.stress)},
+                {"target", sourceEntity.definitionId.empty() ? std::to_string(request.source.value) : sourceEntity.definitionId},
+                {"target_text_id", sourceEntity.nameTextId.value},
+                {"card", definition.id.value},
+                {"reason", "card_cost"}
+            }
+        );
+    }
 
     EffectContext context;
     context.source = request.source;

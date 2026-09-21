@@ -9,6 +9,7 @@
 #include "combat/CombatResult.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
+#include "flow/ProfileProgressionService.hpp"
 #include "flow/SceneManager.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "profile/ProfileManager.hpp"
@@ -31,10 +32,6 @@
 #include <string>
 #include <vector>
 
-struct ProfileToast {
-    std::string text;
-    float remainingSeconds = 0.f;
-};
 
 class GameFlowController {
 public:
@@ -138,25 +135,7 @@ private:
     void finishRun(RunEndReason reason);
     RunEndReason completedRunEndReason(const RunState& run) const;
     RunEndReason defeatedRunEndReason(const RunState& run) const;
-    void grantFloorCompletionUnlocks(const RunState& run);
-    void recordProfileStatsFromCombatResult(const CombatResult& result);
-    void discoverProfileContentFromCombatResult(const CombatResult& result);
-    void unlockProfileContentFromRunState(const RunState& run);
-    void unlockProfileContentFromRewardSelection(const RewardSelection& selection);
-    void unlockProfileContentFromShopPurchase(const ShopPurchase& purchase);
-    void unlockProfileContentFromEventOutcome(const RunEventChoiceResult& result);
-    bool unlockArchetypeAndToast(const std::string& archetypeId);
-    bool unlockCardAndToast(const std::string& cardId);
-    bool unlockRelicAndToast(const std::string& relicId);
-    bool discoverEnemyAndToast(const std::string& enemyId);
-    bool discoverStatusAndToast(const std::string& statusId);
-    bool discoverConsumableAndToast(const std::string& consumableId);
-    void applyUnlockRewardAndToast(const UnlockReward& reward);
-    void pushProfileToast(std::string message);
-    void updateProfileToasts(float deltaSeconds);
     void renderProfileToasts() const;
-    void completeEligibleChallenges(const RunState& run);
-    void completeEligibleAchievements(const RunState* run);
     void finishRunDefeatToProfileHub();
     void finishRunDefeatToMainMenu();
     void finishDefeatedRunAndDeleteSave();
@@ -177,6 +156,7 @@ private:
     SceneManager sceneManager_;
     std::unique_ptr<Scene> settingsOverlay_;
     ProfileManager profileManager_;
+    ProfileProgressionService profileProgression_;
     RunController runController_;
     RunSaveSystem runSaveSystem_;
 
@@ -191,6 +171,5 @@ private:
     float debugBackspaceHeldSeconds_ = 0.f;
     float debugBackspaceRepeatSeconds_ = 0.f;
     std::vector<std::string> debugMessages_;
-    std::vector<ProfileToast> profileToasts_;
     std::string saveSlotStatusMessage_;
 };

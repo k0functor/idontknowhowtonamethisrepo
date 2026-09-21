@@ -14,7 +14,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 16
+              "amount": 18
             }
           }
         ],
@@ -62,7 +62,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 10
             }
           },
           {
@@ -102,7 +102,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 6
+              "amount": 7
             },
             "repeat_count": 2
           }
@@ -225,7 +225,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 11
+              "amount": 14
             }
           }
         ],
@@ -320,7 +320,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 13
+              "amount": 16
             }
           }
         ],
@@ -458,7 +458,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 15
+              "amount": 18
             }
           }
         ],
@@ -512,7 +512,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 10
             },
             "repeat_count": 2
           }
@@ -596,7 +596,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 12
+              "amount": 15
             }
           }
         ],
@@ -676,7 +676,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 18
+              "amount": 21
             }
           }
         ],
@@ -782,7 +782,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 24
+              "amount": 30
             }
           }
         ],
@@ -873,7 +873,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 10
+              "amount": 12
             },
             "repeat_count": 3
           }
@@ -923,7 +923,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "vulnerable"
           }
@@ -955,7 +955,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 7
+              "amount": 9
             },
             "repeat_count": 4
           }
@@ -979,7 +979,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           }
@@ -1037,7 +1037,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 19
+              "amount": 25
             }
           }
         ],
@@ -1068,7 +1068,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           }
@@ -1128,7 +1128,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 12
+              "amount": 17
             }
           }
         ],
@@ -1167,7 +1167,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           },
@@ -1209,7 +1209,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 26
+              "amount": 32
             }
           }
         ],
@@ -1217,7 +1217,6 @@
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
-          "any_player_hp_below_percent": 70,
           "required_player_statuses": [
             "vulnerable"
           ]
@@ -1246,7 +1245,7 @@
             "status": "weak"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1291,7 +1290,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 14
+              "amount": 19
             }
           },
           {
@@ -1317,7 +1316,8 @@
         "activate_below_hp_percent": 100,
         "action_ids": [
           "the_oath_buried_king_all_kneel",
-          "the_oath_buried_king_buried_oath"
+          "the_oath_buried_king_buried_oath",
+          "the_oath_buried_king_tax_the_living"
         ]
       },
       {
@@ -1416,6 +1416,387 @@
           "grave_courtier"
         ],
         "maximum_alive_enemies": 3
+      }
+    ]
+  },
+  {
+    "id": "the_last_regent",
+    "name": "enemy.the_last_regent.name",
+    "max_hp": 326,
+    "starting_block": 14,
+    "actions": [
+      {
+        "id": "the_last_regent_scepter_sentence",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 29
+            }
+          }
+        ],
+        "weight": 7,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "the_last_regent_empty_decree",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 1,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "the_last_regent_crown_tithe",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 17
+            }
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "the_last_regent_claim_the_throne",
+        "intent": "buff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 3
+            },
+            "status": "strength"
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 22
+            }
+          }
+        ],
+        "weight": 4,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "vacant_throne",
+        "name": "enemy.phase.the_last_regent.vacant_throne",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "the_last_regent_scepter_sentence",
+          "the_last_regent_empty_decree",
+          "the_last_regent_claim_the_throne"
+        ]
+      },
+      {
+        "id": "seized_crown",
+        "name": "enemy.phase.the_last_regent.seized_crown",
+        "activate_below_hp_percent": 62,
+        "action_ids": [
+          "the_last_regent_scepter_sentence",
+          "the_last_regent_crown_tithe",
+          "the_last_regent_claim_the_throne"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 5
+            }
+          }
+        ]
+      },
+      {
+        "id": "no_successor",
+        "name": "enemy.phase.the_last_regent.no_successor",
+        "activate_below_hp_percent": 28,
+        "action_ids": [
+          "the_last_regent_scepter_sentence",
+          "the_last_regent_crown_tithe",
+          "the_last_regent_empty_decree"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "choir_of_chains",
+    "name": "enemy.choir_of_chains.name",
+    "max_hp": 312,
+    "starting_block": 18,
+    "actions": [
+      {
+        "id": "choir_of_chains_iron_refrain",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 9
+            },
+            "repeat_count": 3
+          }
+        ],
+        "weight": 7,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "choir_of_chains_count_the_breaths",
+        "intent": "attack",
+        "effects": [
+          {
+            "type": "damage",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 14
+            }
+          },
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 6
+            }
+          }
+        ],
+        "weight": 6,
+        "cooldown": 1,
+        "max_consecutive_uses": 1
+      },
+      {
+        "id": "choir_of_chains_bind_the_hand",
+        "intent": "debuff",
+        "effects": [
+          {
+            "type": "apply_status",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "weak"
+          },
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ],
+        "weight": 3,
+        "cooldown": 2,
+        "max_consecutive_uses": 1,
+        "conditions": {
+          "forbidden_player_statuses": [
+            "weak"
+          ]
+        }
+      },
+      {
+        "id": "choir_of_chains_hold_the_note",
+        "intent": "block",
+        "effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 24
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "weight": 4,
+        "cooldown": 2,
+        "max_consecutive_uses": 1
+      }
+    ],
+    "role": "boss",
+    "phases": [
+      {
+        "id": "measured_hymn",
+        "name": "enemy.phase.choir_of_chains.measured_hymn",
+        "activate_below_hp_percent": 100,
+        "action_ids": [
+          "choir_of_chains_iron_refrain",
+          "choir_of_chains_count_the_breaths",
+          "choir_of_chains_hold_the_note"
+        ]
+      },
+      {
+        "id": "iron_refrain",
+        "name": "enemy.phase.choir_of_chains.iron_refrain",
+        "activate_below_hp_percent": 60,
+        "action_ids": [
+          "choir_of_chains_iron_refrain",
+          "choir_of_chains_count_the_breaths",
+          "choir_of_chains_bind_the_hand"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 20
+            }
+          },
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 2
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "lose_energy",
+            "target": "random_ally",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
+          }
+        ]
+      },
+      {
+        "id": "final_cadence",
+        "name": "enemy.phase.choir_of_chains.final_cadence",
+        "activate_below_hp_percent": 25,
+        "action_ids": [
+          "choir_of_chains_iron_refrain",
+          "choir_of_chains_count_the_breaths",
+          "choir_of_chains_bind_the_hand"
+        ],
+        "on_enter_effects": [
+          {
+            "type": "apply_status",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            },
+            "status": "strength"
+          }
+        ],
+        "player_turn_effects": [
+          {
+            "type": "gain_stress",
+            "target": "all_allies",
+            "value": {
+              "type": "fixed",
+              "amount": 8
+            }
+          }
+        ]
       }
     ]
   }

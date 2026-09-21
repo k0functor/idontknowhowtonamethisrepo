@@ -10,6 +10,7 @@ bool CardUpgradeDefinition::empty() const {
     return !nameTextId.has_value() &&
         !descriptionTextId.has_value() &&
         !energyCost.has_value() &&
+        !stressCost.has_value() &&
         !goldCost.has_value() &&
         !keywords.has_value() &&
         !diceCorruption.has_value() &&
@@ -26,6 +27,9 @@ void applyUpgradeOverride(CardDefinition& result, const CardUpgradeDefinition& u
     }
     if (upgrade.energyCost.has_value()) {
         result.energyCost = *upgrade.energyCost;
+    }
+    if (upgrade.stressCost.has_value()) {
+        result.stressCost = *upgrade.stressCost;
     }
     if (upgrade.goldCost.has_value()) {
         result.goldCost = *upgrade.goldCost;
@@ -73,6 +77,16 @@ std::string summary(const CardDefinition& base, const CardDefinition& upgraded, 
 
     if (base.energyCost != upgraded.energyCost) {
         result += localization.format(TextId("card.upgrade.summary.cost"), {{"before", std::to_string(base.energyCost)}, {"after", std::to_string(upgraded.energyCost)}});
+    }
+
+    if (base.stressCost != upgraded.stressCost) {
+        if (!result.empty()) {
+            result += "; ";
+        }
+        result += localization.format(
+            TextId("card.upgrade.summary.stress_cost"),
+            {{"before", std::to_string(base.stressCost)}, {"after", std::to_string(upgraded.stressCost)}}
+        );
     }
 
     if (base.effects.size() != upgraded.effects.size()) {

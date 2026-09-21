@@ -18,6 +18,7 @@ struct CombatEntity {
 
     Health health;
     int block = 0;
+    bool boss = false;
 
     int stress = 0;
     int maxStress = 200;

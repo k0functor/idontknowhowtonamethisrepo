@@ -75,6 +75,16 @@ void RewardTuning::loadFromFile(const std::filesystem::path& filePath) {
         throw std::runtime_error(filePath.string() + ": merchant_gold_multiplier must not be negative");
     }
 
+    goldGrowthPercentPerFloor_ = reader.optionalInt(
+        "gold_growth_percent_per_floor",
+        goldGrowthPercentPerFloor_
+    );
+    if (goldGrowthPercentPerFloor_ < 0 || goldGrowthPercentPerFloor_ > 100) {
+        throw std::runtime_error(
+            filePath.string() + ": gold_growth_percent_per_floor must be between 0 and 100"
+        );
+    }
+
     groupGoldBonusPercentPerExtraEnemy_ = reader.optionalInt(
         "group_gold_bonus_percent_per_extra_enemy",
         groupGoldBonusPercentPerExtraEnemy_
@@ -130,4 +140,8 @@ double RewardTuning::merchantGoldMultiplier() const {
 double RewardTuning::groupGoldMultiplier(const int enemyCount) const {
     const int extraEnemies = std::max(0, enemyCount - 1);
     return 1.0 + static_cast<double>(extraEnemies * groupGoldBonusPercentPerExtraEnemy_) / 100.0;
+}
+
+double RewardTuning::floorGoldMultiplier(const int floorIndex) const {
+    return 1.0 + static_cast<double>(std::max(0, floorIndex - 1) * goldGrowthPercentPerFloor_) / 100.0;
 }

@@ -235,6 +235,85 @@ void testAtomicSaveBackupFallbackRestoreAndDelete() {
     require(!std::filesystem::exists(saves.temporarySavePath(0)), "deleteRun left a temporary save behind");
 }
 
+void testPacingStateRoundTrip() {
+    RunState source = makeMapRun();
+    source.pacing.activeSeconds = 123.5f;
+    source.pacing.mapSeconds = 20.f;
+    source.pacing.combatSeconds = 80.f;
+    source.pacing.currentFloorSeconds = 45.f;
+    source.pacing.floorStartNodesCompleted = 3;
+    source.pacing.floorActive = true;
+    source.pacing.roomActive = true;
+    source.pacing.currentRoomNodeId = 7;
+    source.pacing.currentRoomType = RunMapNodeType::Combat;
+    source.pacing.currentRoomSeconds = 12.25f;
+    source.pacing.completedRooms.push_back(RunRoomTiming{"floor1", 1, 3, RunMapNodeType::Event, 8.5f});
+    source.pacing.completedFloors.push_back(RunFloorTiming{"floor1", 1, 68.f, 7});
+
+    const Json canonical = RunStateSerializer::toJson(source);
+    const RunState loaded = RunStateSerializer::fromJson(canonical, "pacing_round_trip.json");
+
+    require(loaded.pacing.activeSeconds == source.pacing.activeSeconds, "active pacing time was lost");
+    require(loaded.pacing.currentRoomNodeId == 7 && loaded.pacing.currentRoomSeconds == 12.25f,
+            "active room pacing state was lost");
+    require(loaded.pacing.completedRooms.size() == 1 && loaded.pacing.completedRooms.front().nodeId == 3,
+            "completed room pacing samples were lost");
+    require(loaded.pacing.completedFloors.size() == 1 && loaded.pacing.completedFloors.front().roomsCompleted == 7,
+            "completed floor pacing samples were lost");
+    require(RunStateSerializer::toJson(loaded) == canonical,
+            "pacing state must survive a canonical save round trip");
+}
+
+RunState makePendingRoomRun(const RunPendingRoomType type, const RunMapNodeType nodeType) {
+    RunState run = makeMapRun();
+    run.map.nodes.front().type = nodeType;
+    run.map.nodes.front().state = type == RunPendingRoomType::CombatReward
+        ? RunMapNodeState::Completed
+        : RunMapNodeState::Current;
+    run.pendingRoom.type = type;
+    run.pendingRoom.nodeId = run.map.nodes.front().id;
+
+    if (type == RunPendingRoomType::CombatReward || type == RunPendingRoomType::ChestReward) {
+        run.pendingRoom.reward.sourceNodeType = nodeType;
+        run.pendingRoom.reward.options = {RewardOption::goldReward(42)};
+    } else if (type == RunPendingRoomType::Shop) {
+        run.pendingRoom.shop.mode = ShopStateMode::Shop;
+        run.pendingRoom.shop.offers.push_back(ShopOffer{ShopOfferType::Card, "replicant_overclock", 55, false});
+    } else if (type == RunPendingRoomType::MerchantRest) {
+        run.pendingRoom.shop.mode = ShopStateMode::MerchantRest;
+        run.pendingRoom.shop.maxCardPurchases = 1;
+        run.pendingRoom.shop.merchantRestCardShopOpen = true;
+        run.pendingRoom.shop.offers.push_back(ShopOffer{ShopOfferType::Card, "replicant_overclock", 40, false});
+    } else if (type == RunPendingRoomType::Event) {
+        run.pendingRoom.eventId = "clockwork_confessional";
+    }
+    return run;
+}
+
+void testEveryPersistentRoomKindRoundTrips() {
+    struct Scenario {
+        RunPendingRoomType type;
+        RunMapNodeType nodeType;
+        const char* label;
+    };
+    const std::vector<Scenario> scenarios{
+        {RunPendingRoomType::CombatReward, RunMapNodeType::Elite, "combat reward"},
+        {RunPendingRoomType::ChestReward, RunMapNodeType::Chest, "chest reward"},
+        {RunPendingRoomType::Shop, RunMapNodeType::Shop, "shop"},
+        {RunPendingRoomType::MerchantRest, RunMapNodeType::Rest, "merchant rest"},
+        {RunPendingRoomType::Event, RunMapNodeType::Event, "event"}
+    };
+
+    for (const Scenario& scenario : scenarios) {
+        const RunState source = makePendingRoomRun(scenario.type, scenario.nodeType);
+        const Json canonical = RunStateSerializer::toJson(source);
+        const RunState loaded = RunStateSerializer::fromJson(canonical, std::string(scenario.label) + ".json");
+        require(loaded.pendingRoom.type == scenario.type, "pending room type changed during round trip");
+        require(loaded.pendingRoom.nodeId == source.pendingRoom.nodeId, "pending room node changed during round trip");
+        require(RunStateSerializer::toJson(loaded) == canonical, "pending room did not survive canonical round trip");
+    }
+}
+
 struct TestCase {
     const char* name;
     void (*function)();
@@ -247,6 +326,8 @@ int main() {
         {"pending room round trip", testPendingRoomRoundTrip},
         {"legacy migration", testLegacyCardAndUpgradeMigration},
         {"phase mismatch rejection", testPhaseMismatchIsRejected},
+        {"pacing round trip", testPacingStateRoundTrip},
+        {"all pending room kinds", testEveryPersistentRoomKindRoundTrips},
         {"backup fallback and restore", testAtomicSaveBackupFallbackRestoreAndDelete}
     };
 

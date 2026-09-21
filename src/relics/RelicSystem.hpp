@@ -31,6 +31,13 @@ public:
     );
 
 private:
+    void prepareCardTracking(
+        const CombatState& state,
+        const GameEvent& event,
+        RelicInstance& instance,
+        std::optional<EntityId> ownerSource
+    ) const;
+
     bool triggerMatches(
         const CombatState& state,
         const RelicTriggerDefinition& trigger,
@@ -40,6 +47,8 @@ private:
     ) const;
 
     std::optional<EntityId> ownerSource(const CombatState& state, const RelicInstance& instance) const;
+    std::optional<EntityId> conditionOwner(const CombatState& state, const GameEvent& event, std::optional<EntityId> ownerSource) const;
+    int droneCountForOwner(const CombatState& state, std::optional<EntityId> ownerSource) const;
     EntityId defaultPlayerSource(const CombatState& state) const;
 
 private:

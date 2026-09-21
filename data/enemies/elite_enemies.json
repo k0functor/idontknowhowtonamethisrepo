@@ -40,7 +40,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 7
             }
           }
         ],
@@ -323,7 +323,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 6
+              "amount": 7
             }
           },
           {
@@ -678,7 +678,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 7
+              "amount": 8
             }
           }
         ],

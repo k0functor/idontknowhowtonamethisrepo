@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -63,6 +65,7 @@ struct CombatLogEntry {
     CombatLogEntryType type = CombatLogEntryType::Text;
     Variables variables;
     std::string text;
+    std::uint64_t sequence = 0;
 
     static CombatLogEntry make(CombatLogEntryType type, Variables variables = {}) {
         CombatLogEntry entry;
@@ -89,5 +92,8 @@ public:
     const std::vector<CombatLogEntry>& entries() const;
 
 private:
+    static constexpr std::size_t maxEntries_ = 256u;
+
     std::vector<CombatLogEntry> entries_;
+    std::uint64_t nextSequence_ = 1u;
 };

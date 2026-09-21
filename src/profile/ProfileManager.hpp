@@ -53,6 +53,10 @@ public:
     bool isAchievementCompleted(const ProfileData& profile, const std::string& achievementId) const;
     bool isSelectedAchievementCompleted(const std::string& achievementId) const;
 
+    bool isOnboardingHintSeen(const ProfileData& profile, const std::string& hintId) const;
+    bool isSelectedOnboardingHintSeen(const std::string& hintId) const;
+    bool markSelectedOnboardingHintSeen(const std::string& hintId);
+
     bool unlockSelectedArchetype(const std::string& archetypeId);
     bool unlockSelectedArchetypes(const std::vector<std::string>& archetypeIds);
 

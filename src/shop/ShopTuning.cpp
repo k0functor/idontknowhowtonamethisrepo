@@ -2,6 +2,7 @@
 
 #include "data/JsonLoader.hpp"
 #include "data/JsonReader.hpp"
+#include "shop/ShopEconomy.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -28,6 +29,13 @@ void ShopTuning::loadFromFile(const std::filesystem::path& filePath) {
     merchantRestCardOfferCount_ = reader.optionalInt("merchant_rest_card_offers", merchantRestCardOfferCount_);
     merchantRestMaxCardPurchases_ = reader.optionalInt("merchant_rest_max_card_purchases", merchantRestMaxCardPurchases_);
     merchantRestCardPriceMultiplier_ = reader.optionalDouble("merchant_rest_card_price_multiplier", merchantRestCardPriceMultiplier_);
+    cardPriceGrowthPercentPerFloor_ = reader.optionalInt("card_price_growth_percent_per_floor", cardPriceGrowthPercentPerFloor_);
+    relicPriceGrowthPercentPerFloor_ = reader.optionalInt("relic_price_growth_percent_per_floor", relicPriceGrowthPercentPerFloor_);
+    consumablePriceGrowthPercentPerFloor_ = reader.optionalInt("consumable_price_growth_percent_per_floor", consumablePriceGrowthPercentPerFloor_);
+    cardRemovalPricePerFloor_ = reader.optionalInt("card_removal_price_per_floor", cardRemovalPricePerFloor_);
+    cardRemovalPricePerUse_ = reader.optionalInt("card_removal_price_per_use", cardRemovalPricePerUse_);
+    affordableCardOfferCount_ = reader.optionalInt("affordable_card_offers", affordableCardOfferCount_);
+    affordableCardPriceCapPercent_ = reader.optionalInt("affordable_card_price_cap_percent", affordableCardPriceCapPercent_);
 
     requireNonNegative(filePath, "card_offers", cardOfferCount_);
     requireNonNegative(filePath, "relic_offers", relicOfferCount_);
@@ -40,6 +48,15 @@ void ShopTuning::loadFromFile(const std::filesystem::path& filePath) {
     }
     requireNonNegative(filePath, "merchant_rest_card_offers", merchantRestCardOfferCount_);
     requireNonNegative(filePath, "merchant_rest_max_card_purchases", merchantRestMaxCardPurchases_);
+    requireNonNegative(filePath, "card_price_growth_percent_per_floor", cardPriceGrowthPercentPerFloor_);
+    requireNonNegative(filePath, "relic_price_growth_percent_per_floor", relicPriceGrowthPercentPerFloor_);
+    requireNonNegative(filePath, "consumable_price_growth_percent_per_floor", consumablePriceGrowthPercentPerFloor_);
+    requireNonNegative(filePath, "card_removal_price_per_floor", cardRemovalPricePerFloor_);
+    requireNonNegative(filePath, "card_removal_price_per_use", cardRemovalPricePerUse_);
+    requireNonNegative(filePath, "affordable_card_offers", affordableCardOfferCount_);
+    if (affordableCardPriceCapPercent_ < 1 || affordableCardPriceCapPercent_ > 100) {
+        throw std::runtime_error(filePath.string() + ": 'affordable_card_price_cap_percent' must be between 1 and 100");
+    }
     if (merchantRestCardPriceMultiplier_ < 0.0) {
         throw std::runtime_error(filePath.string() + ": 'merchant_rest_card_price_multiplier' must not be negative");
     }
@@ -75,6 +92,30 @@ int ShopTuning::consumableOfferCount() const {
 
 int ShopTuning::cardRemovalPrice() const {
     return cardRemovalPrice_;
+}
+
+int ShopTuning::cardRemovalPrice(const int floorIndex, const int previousRemovals) const {
+    return ShopEconomy::cardRemovalPrice(
+        cardRemovalPrice_,
+        floorIndex,
+        previousRemovals,
+        cardRemovalPricePerFloor_,
+        cardRemovalPricePerUse_
+    );
+}
+
+int ShopTuning::cardPrice(const int basePrice, const int floorIndex) const {
+    return std::max(
+        minimumCardPrice_,
+        ShopEconomy::scaledPrice(basePrice, floorIndex, cardPriceGrowthPercentPerFloor_)
+    );
+}
+
+int ShopTuning::consumablePrice(const int basePrice, const int floorIndex) const {
+    return std::max(
+        minimumConsumablePrice_,
+        ShopEconomy::scaledPrice(basePrice, floorIndex, consumablePriceGrowthPercentPerFloor_)
+    );
 }
 
 int ShopTuning::minimumCardPrice() const {
@@ -117,4 +158,20 @@ int ShopTuning::relicPrice(const RelicRarity rarity) const {
     }
 
     throw std::runtime_error("Unknown RelicRarity in ShopTuning::relicPrice");
+}
+
+int ShopTuning::relicPrice(const RelicRarity rarity, const int floorIndex) const {
+    return ShopEconomy::scaledPrice(
+        relicPrice(rarity),
+        floorIndex,
+        relicPriceGrowthPercentPerFloor_
+    );
+}
+
+int ShopTuning::affordableCardOfferCount() const {
+    return affordableCardOfferCount_;
+}
+
+int ShopTuning::affordableCardPriceCapPercent() const {
+    return affordableCardPriceCapPercent_;
 }

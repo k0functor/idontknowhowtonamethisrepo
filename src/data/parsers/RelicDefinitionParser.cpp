@@ -55,6 +55,14 @@ RelicTriggerDefinition parseTrigger(
     if (reader.has("card_type")) {
         trigger.cardType = cardTypeFromString(reader.requiredString("card_type"));
     }
+    if (reader.has("previous_card_type")) {
+        trigger.previousCardType = cardTypeFromString(reader.requiredString("previous_card_type"));
+    }
+    trigger.cardNumberThisTurn = reader.optionalInt("card_number_this_turn", 0);
+    if (reader.has("owner_status")) {
+        trigger.ownerStatusId = reader.requiredString("owner_status");
+    }
+    trigger.minimumDrones = reader.optionalInt("min_drones", 0);
     if (reader.has("breakdown_type")) {
         trigger.breakdownType = reader.requiredString("breakdown_type");
     }
@@ -66,6 +74,28 @@ RelicTriggerDefinition parseTrigger(
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() +
             "': relic trigger source_side must be one of: any, player, enemy"
+        );
+    }
+
+    if (trigger.cardNumberThisTurn < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': card_number_this_turn must not be negative"
+        );
+    }
+    if (trigger.minimumDrones < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': min_drones must not be negative"
+        );
+    }
+
+    if (trigger.previousCardType.has_value() && trigger.eventType != GameEventType::CardPlayed) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': previous_card_type requires card_played event"
+        );
+    }
+    if (trigger.cardNumberThisTurn > 0 && trigger.eventType != GameEventType::CardPlayed) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() + "': card_number_this_turn requires card_played event"
         );
     }
 

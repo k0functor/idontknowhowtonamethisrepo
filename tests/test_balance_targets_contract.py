@@ -13,6 +13,12 @@ ENCOUNTER_DIR = ROOT / "data" / "encounters"
 def main() -> int:
     targets = json.loads(TARGETS.read_text(encoding="utf-8"))
     assert targets["schema_version"] == 1
+    starter = targets["starter_deck"]
+    assert starter["warning_deviation_percent"] == 18.0
+    assert starter["archetype_target_multipliers"] == {
+        "merchant": 0.86,
+        "sadist_masochist": 2.25,
+    }
     assert set(targets["floors"]) == {f"floor{i}" for i in range(1, 6)}
     previous_offense = 0.0
     previous_defense = 0.0
@@ -25,6 +31,13 @@ def main() -> int:
         for pool in ("combat", "elite", "boss"):
             low, high = floor[f"{pool}_hp_loss_target"]
             assert 0 <= low < high
+        if floor_id in {"floor2", "floor3"}:
+            assert floor["last_regular_layer"] > 0
+            for pool in ("combat", "elite"):
+                start_low, start_high = floor[f"{pool}_hp_loss_start_target"]
+                end_low, end_high = floor[f"{pool}_hp_loss_target"]
+                assert 0 <= start_low <= end_low
+                assert start_high < end_high
 
     archetypes = json.loads(ARCHETYPES.read_text(encoding="utf-8"))
     decks = {item["id"]: item["starting_deck"] for item in archetypes}

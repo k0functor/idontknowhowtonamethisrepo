@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 struct DamagePreview {
     int rawMin = 0;
     int rawMax = 0;
@@ -12,4 +15,6 @@ struct DamagePreview {
 
     int hpDamageMin = 0;
     int hpDamageMax = 0;
+
+    std::vector<std::string> modifierLabels;
 };

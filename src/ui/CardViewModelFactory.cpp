@@ -20,6 +20,7 @@ CardViewModel buildStatic(
     model.name = localization.get(effectiveDefinition.nameTextId) + (upgraded ? "+" : "");
     model.description = descriptionFormatter.formatStaticDescription(effectiveDefinition);
     model.energyCost = effectiveDefinition.energyCost;
+    model.stressCost = effectiveDefinition.stressCost;
     model.type = effectiveDefinition.type;
     model.rarity = effectiveDefinition.rarity;
     model.playable = playable;

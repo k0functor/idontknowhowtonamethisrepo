@@ -20,6 +20,7 @@
 #include "combat/PlayerTurnSystem.hpp"
 #include "combat/Targeting.hpp"
 #include "combat/TurnSystem.hpp"
+#include "scenes/CombatOnboardingHints.hpp"
 #include "consumables/ConsumableSystem.hpp"
 #include "core/Random.hpp"
 #include "data/ContentRegistry.hpp"
@@ -64,6 +65,8 @@ public:
         const UiFont& uiFont,
         RunState& runState,
         std::function<void(std::string)> onActiveItemUsed,
+        std::function<bool(const std::string&)> isOnboardingHintSeen,
+        std::function<void(std::string)> onOnboardingHintSeen,
         std::function<void(const CombatResult&)> onCombatWon,
         std::function<void(const CombatResult&)> onCombatLost
     );
@@ -130,17 +133,10 @@ private:
     void closeCombatItemInspect();
     void updateCombatItemInspectInput(Vector2 mousePosition);
     void renderCombatItemInspectModal() const;
-    Rectangle combatItemInspectModalBounds() const;
-    Rectangle combatItemInspectCloseButtonBounds(Rectangle modal) const;
-    Rectangle combatItemInspectPreviousButtonBounds(Rectangle modal) const;
-    Rectangle combatItemInspectNextButtonBounds(Rectangle modal) const;
     void inspectPreviousItem();
     void inspectNextItem();
     std::optional<std::size_t> nextFilledConsumableIndex(std::size_t start, int direction) const;
 
-    Rectangle consumableConfirmationBounds() const;
-    Rectangle consumableConfirmButtonBounds(Rectangle modal) const;
-    Rectangle consumableCancelButtonBounds(Rectangle modal) const;
     void handleMouseReleased(Vector2 mousePosition);
     void playSelectedCardOn(EntityId target);
     bool resolvePendingForcedCardPlay();
@@ -208,9 +204,6 @@ private:
     void renderPlayedCardAnimations() const;
     CardTransform playedCardAnimationTransform(const PlayedCardAnimation& animation) const;
     CardTransform handDiscardAnimationTransform(const PlayedCardAnimation& animation) const;
-    Vector2 playedCardQueuePosition(std::size_t queueIndex) const;
-    Vector2 playedCardCenterPosition() const;
-    Vector2 discardPileCenterPosition() const;
 
     void endPlayerTurn();
 
@@ -223,7 +216,6 @@ private:
     void enqueueStatusFeedback(const GameEvent& event);
     void applyCombatFeedbackVisuals(CombatViewModel& model) const;
     void renderCombatFeedbackAnimations() const;
-    Vector2 feedbackAnchor(EntityId targetId) const;
     Rectangle feedbackTargetBounds(EntityId targetId) const;
     Color feedbackColor(CombatFeedbackKind kind, float opacity) const;
     void updateEnemyDeathAnimations(float deltaSeconds);
@@ -250,15 +242,6 @@ private:
     std::optional<EntityId> arrowTargetForCard(CardInstanceId cardInstanceId) const;
     void renderTargetingArrow() const;
 
-    Rectangle drawPileButtonBounds() const;
-    Rectangle discardPileButtonBounds() const;
-    Rectangle exhaustPileButtonBounds() const;
-    Rectangle energyBubbleBounds() const;
-    Rectangle pileOverlayBounds() const;
-    Rectangle pileOverlayGridBounds(Rectangle modal) const;
-    Rectangle pileOverlayCloseButtonBounds(Rectangle modal) const;
-    Rectangle pileOverlayCardBounds(Rectangle grid, std::size_t index, float scrollOffset) const;
-    float pileOverlayMaxScroll(Rectangle grid, std::size_t count) const;
     const std::vector<CardInstance>& activePileCards() const;
     std::string activePileTitle() const;
     void openPileOverlay(PileOverlayMode mode);
@@ -286,14 +269,7 @@ private:
     void renderRewardRelicInspect(const RewardOption& option, Rectangle row) const;
     void renderDefeatModal() const;
 
-    Rectangle rewardModalBounds() const;
-    Rectangle rewardOptionRowBounds(std::size_t index) const;
-    Rectangle rewardContinueButtonBounds() const;
 
-    Rectangle rewardCardChoiceModalBounds() const;
-    Rectangle rewardCardChoiceOptionBounds(std::size_t index) const;
-    Rectangle rewardCardChoiceCancelBounds() const;
-    Rectangle rewardCardChoiceConfirmBounds() const;
 
     void openRewardCardChoice(std::size_t optionIndex);
     void closeRewardCardChoice();
@@ -303,6 +279,7 @@ private:
     void updateRewardCardChoiceInput(Vector2 mousePosition);
     void renderRewardCardChoiceModal() const;
 
+    std::size_t activeRewardCardOptionCount() const;
     const RewardOption* activeRewardOption() const;
     RewardOption* activeRewardOption();
 
@@ -354,6 +331,7 @@ private:
     CardViewModelBuilder cardViewModelBuilder_;
     CombatViewModelBuilder combatViewModelBuilder_;
     InspectModelBuilder inspectModelBuilder_;
+    CombatOnboardingHints onboardingHints_;
 
     CombatState state_;
     CombatResult finalResult_;

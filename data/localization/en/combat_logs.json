@@ -112,5 +112,19 @@
   "combat.log.stress_breakdown_prevented": "{actor} steadies themselves and prevents a stress breakdown.",
   "combat.log.boss_phase_changed": "{boss} enters phase: {phase}.",
   "combat.log.boss_arena_effect": "The arena rule of {boss} triggers: {phase}.",
-  "combat.log.enemy_summoned": "Reinforcement summoned: {enemy}."
+  "combat.log.enemy_summoned": "Reinforcement summoned: {enemy}.",
+  "combat.log.unknown_entity": "Unknown",
+  "combat.log.damage_compact": "{source} → {target}: {hp} HP",
+  "combat.log.damage_breakdown": "Base {raw} → {modified}; blocked {blocked}",
+  "combat.log.damage_breakdown_modified": "Base {raw} → {modified}; blocked {blocked}. {modifiers}",
+  "combat.log.block_compact": "{target}: +{modified} block",
+  "combat.log.block_breakdown": "Base {raw} → {modified}",
+  "combat.log.block_breakdown_modified": "Base {raw} → {modified}. {modifiers}",
+  "combat.log.heal_compact": "{target}: +{amount} HP",
+  "combat.log.gain_stress_compact": "{target}: +{amount} stress",
+  "combat.log.lose_stress_compact": "{target}: −{amount} stress",
+  "combat.log.stress_transition": "Stress {before} → {after}",
+  "combat.log.stress_transition_card": "Stress {before} → {after}; card cost: {card}",
+  "combat.log.caused_by_card": "Card: {card}",
+  "combat.log.status_applied_from": "{source} → {target}: {status} +{amount}"
 }

@@ -35,7 +35,7 @@
         ],
         "weight": 4,
         "min_layer": 1,
-        "max_layer": 6
+        "max_layer": 5
       },
       {
         "id": "act5_hollow_bannerman",
@@ -44,7 +44,7 @@
         ],
         "weight": 3,
         "min_layer": 2,
-        "max_layer": 17
+        "max_layer": 5
       },
       {
         "id": "act5_chain_confessor",
@@ -53,7 +53,7 @@
         ],
         "weight": 3,
         "min_layer": 2,
-        "max_layer": 17
+        "max_layer": 5
       },
       {
         "id": "act5_grave_courtier",
@@ -62,7 +62,7 @@
         ],
         "weight": 3,
         "min_layer": 1,
-        "max_layer": 7
+        "max_layer": 5
       },
       {
         "id": "act5_oath_eater",
@@ -71,7 +71,7 @@
         ],
         "weight": 2,
         "min_layer": 3,
-        "max_layer": 17
+        "max_layer": 5
       },
       {
         "id": "act5_censer_and_supplicant",
@@ -96,7 +96,7 @@
       {
         "id": "act5_banner_and_courtier",
         "enemies": [
-          "hollow_bannerman",
+          "oathbound_soldier",
           "grave_courtier"
         ],
         "weight": 2,
@@ -106,7 +106,7 @@
       {
         "id": "act5_confessor_and_censer",
         "enemies": [
-          "chain_confessor",
+          "oathbound_soldier",
           "black_censer"
         ],
         "weight": 1,
@@ -116,8 +116,8 @@
       {
         "id": "act5_eater_and_supplicant",
         "enemies": [
-          "oath_eater",
-          "crownless_supplicant"
+          "oathbound_soldier",
+          "oath_eater"
         ],
         "weight": 1,
         "min_layer": 5,
@@ -126,9 +126,9 @@
       {
         "id": "act5_last_court_patrol",
         "enemies": [
-          "oathbound_soldier",
-          "grave_courtier",
-          "black_censer"
+          "black_censer",
+          "black_censer",
+          "chain_confessor"
         ],
         "weight": 1,
         "min_layer": 8,
@@ -147,8 +147,8 @@
       {
         "id": "act5_censer_courtier_pair",
         "enemies": [
-          "black_censer",
-          "grave_courtier"
+          "oathbound_soldier",
+          "crownless_supplicant"
         ],
         "weight": 4,
         "min_layer": 4,
@@ -178,9 +178,9 @@
       {
         "id": "act5_banner_censer_rite",
         "enemies": [
-          "hollow_bannerman",
           "black_censer",
-          "crownless_supplicant"
+          "chain_confessor",
+          "oath_eater"
         ],
         "weight": 2,
         "min_layer": 8,
@@ -189,6 +189,7 @@
       {
         "id": "act5_confessor_and_courtier",
         "enemies": [
+          "marrow_scribe",
           "chain_confessor",
           "grave_courtier"
         ],
@@ -210,8 +211,8 @@
       {
         "id": "act5_oath_eater_and_censer",
         "enemies": [
-          "oath_eater",
-          "black_censer"
+          "oathbound_soldier",
+          "oath_eater"
         ],
         "weight": 4,
         "min_layer": 8,
@@ -220,9 +221,9 @@
       {
         "id": "act5_hollow_march",
         "enemies": [
+          "crownless_supplicant",
           "hollow_bannerman",
-          "oathbound_soldier",
-          "grave_courtier"
+          "chain_confessor"
         ],
         "weight": 2,
         "min_layer": 10,
@@ -231,9 +232,9 @@
       {
         "id": "act5_last_tax_line",
         "enemies": [
-          "chain_confessor",
           "crownless_supplicant",
-          "black_censer"
+          "hollow_bannerman",
+          "chain_confessor"
         ],
         "weight": 3,
         "min_layer": 9,
@@ -242,9 +243,9 @@
       {
         "id": "act5_court_blood_debt",
         "enemies": [
+          "chain_confessor",
           "grave_courtier",
-          "oath_eater",
-          "marrow_scribe"
+          "oath_eater"
         ],
         "weight": 3,
         "min_layer": 10,
@@ -253,9 +254,9 @@
       {
         "id": "act5_oath_wall",
         "enemies": [
-          "oathbound_soldier",
           "hollow_bannerman",
-          "chain_confessor"
+          "chain_confessor",
+          "grave_courtier"
         ],
         "weight": 3,
         "min_layer": 11,
@@ -265,8 +266,8 @@
         "id": "act5_crownless_procession",
         "enemies": [
           "crownless_supplicant",
-          "grave_courtier",
-          "hollow_bannerman"
+          "chain_confessor",
+          "oath_eater"
         ],
         "weight": 3,
         "min_layer": 11,
@@ -277,7 +278,7 @@
         "enemies": [
           "black_censer",
           "chain_confessor",
-          "marrow_scribe"
+          "oath_eater"
         ],
         "weight": 3,
         "min_layer": 12,
@@ -286,9 +287,9 @@
       {
         "id": "act5_oath_eater_court",
         "enemies": [
-          "oath_eater",
-          "grave_courtier",
-          "crownless_supplicant"
+          "oathbound_soldier",
+          "marrow_scribe",
+          "marrow_scribe"
         ],
         "weight": 2,
         "min_layer": 13,
@@ -297,9 +298,9 @@
       {
         "id": "act5_final_bannerman_gate",
         "enemies": [
-          "hollow_bannerman",
-          "oath_eater",
-          "black_censer"
+          "oathbound_soldier",
+          "marrow_scribe",
+          "hollow_bannerman"
         ],
         "weight": 1,
         "min_layer": 15,
@@ -309,8 +310,8 @@
         "id": "act5_chain_chapel_guard",
         "enemies": [
           "chain_confessor",
-          "oathbound_soldier",
-          "marrow_scribe"
+          "marrow_scribe",
+          "crownless_supplicant"
         ],
         "weight": 2,
         "min_layer": 15,
@@ -319,9 +320,9 @@
       {
         "id": "act5_throne_anteroom",
         "enemies": [
-          "oath_eater",
-          "hollow_bannerman",
-          "chain_confessor"
+          "chain_confessor",
+          "grave_courtier",
+          "oath_eater"
         ],
         "weight": 1,
         "min_layer": 16,
@@ -332,7 +333,8 @@
       {
         "id": "act5_royal_headsman",
         "enemies": [
-          "royal_headsman"
+          "royal_headsman",
+          "oath_eater"
         ],
         "weight": 4,
         "min_layer": 3,
@@ -341,7 +343,8 @@
       {
         "id": "act5_reliquary_knight",
         "enemies": [
-          "reliquary_knight"
+          "reliquary_knight",
+          "black_censer"
         ],
         "weight": 4,
         "min_layer": 3,
@@ -350,7 +353,8 @@
       {
         "id": "act5_choir_of_blades",
         "enemies": [
-          "choir_of_blades"
+          "choir_of_blades",
+          "black_censer"
         ],
         "weight": 3,
         "min_layer": 3,
@@ -359,7 +363,8 @@
       {
         "id": "act5_false_saint",
         "enemies": [
-          "false_saint"
+          "false_saint",
+          "black_censer"
         ],
         "weight": 3,
         "min_layer": 4,
@@ -368,7 +373,9 @@
       {
         "id": "act5_iron_abbot",
         "enemies": [
-          "iron_abbot"
+          "iron_abbot",
+          "crownless_supplicant",
+          "grave_courtier"
         ],
         "weight": 3,
         "min_layer": 4,
@@ -388,6 +395,7 @@
         "id": "act5_abbot_and_censer",
         "enemies": [
           "iron_abbot",
+          "crownless_supplicant",
           "black_censer"
         ],
         "weight": 1,
@@ -418,8 +426,7 @@
         "id": "act5_choir_and_supplicants",
         "enemies": [
           "choir_of_blades",
-          "crownless_supplicant",
-          "crownless_supplicant"
+          "grave_courtier"
         ],
         "weight": 2,
         "min_layer": 7,
@@ -429,7 +436,7 @@
         "id": "act5_false_saint_and_confessor",
         "enemies": [
           "false_saint",
-          "chain_confessor"
+          "grave_courtier"
         ],
         "weight": 2,
         "min_layer": 8,
@@ -439,7 +446,8 @@
         "id": "act5_iron_abbot_and_eater",
         "enemies": [
           "iron_abbot",
-          "oath_eater"
+          "marrow_scribe",
+          "chain_confessor"
         ],
         "weight": 2,
         "min_layer": 9,
@@ -449,7 +457,6 @@
         "id": "act5_reliquary_and_censer",
         "enemies": [
           "reliquary_knight",
-          "black_censer",
           "grave_courtier"
         ],
         "weight": 1,
@@ -460,7 +467,6 @@
         "id": "act5_headsman_court",
         "enemies": [
           "royal_headsman",
-          "grave_courtier",
           "hollow_bannerman"
         ],
         "weight": 1,
@@ -473,6 +479,24 @@
         "id": "act5_the_oath_buried_king",
         "enemies": [
           "the_oath_buried_king"
+        ],
+        "weight": 1,
+        "min_layer": 19,
+        "max_layer": 19
+      },
+      {
+        "id": "act5_the_last_regent",
+        "enemies": [
+          "the_last_regent"
+        ],
+        "weight": 1,
+        "min_layer": 19,
+        "max_layer": 19
+      },
+      {
+        "id": "act5_choir_of_chains",
+        "enemies": [
+          "choir_of_chains"
         ],
         "weight": 1,
         "min_layer": 19,

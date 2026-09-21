@@ -10,6 +10,7 @@
 #include "combat/CardPlaySystem.hpp"
 #include "combat/CardPlayValidator.hpp"
 #include "combat/CardCost.hpp"
+#include "combat/CardStressCost.hpp"
 #include "combat/CombatState.hpp"
 #include "combat/DamageSystem.hpp"
 #include "combat/EffectResolver.hpp"
@@ -34,6 +35,8 @@
 #include "data/EnemyDatabase.hpp"
 #include "data/CardDatabase.hpp"
 #include "relics/RelicDatabase.hpp"
+#include "rewards/RewardPoolRules.hpp"
+#include "rewards/CardRewardQuality.hpp"
 #include "run/StressEconomyRules.hpp"
 #include "run/StressPsychopathRules.hpp"
 #include "run/StressRules.hpp"
@@ -44,6 +47,7 @@
 #include "localization/LocalizationManager.hpp"
 #include "statuses/StatusDatabase.hpp"
 #include "statuses/StatusSystem.hpp"
+#include "shop/ShopEconomy.hpp"
 #include "ui/EnemyIntentPresentation.hpp"
 
 #include <cstdint>
@@ -343,6 +347,12 @@ void testDamageAndBlockModifiers() {
     check(damageResult.blockedDamage == 5, "damage must consume the target's block");
     check(damageResult.hpDamage == 8, "remaining damage must reach HP");
     check(target.health.current() == 42, "target HP must reflect modified and blocked damage");
+    const CombatLogEntry& damageLog = state.log.entries().back();
+    check(damageLog.type == CombatLogEntryType::DamageDealt, "damage must create a structured journal entry");
+    check(damageLog.variables.contains("source_text_id") && damageLog.variables.contains("target_text_id"),
+          "damage journal entry must identify source and target");
+    check(damageLog.variables.contains("modifiers") && !damageLog.variables.at("modifiers").empty(),
+          "damage journal entry must explain modifier-driven value changes");
 
     const BlockResult blockResult = block.gainBlock(
         state,
@@ -355,6 +365,10 @@ void testDamageAndBlockModifiers() {
     );
     check(blockResult.modifiedBlock == 8, "dexterity must increase gained block");
     check(source.block == 8, "gained block must be stored on the target entity");
+    const CombatLogEntry& blockLog = state.log.entries().back();
+    check(blockLog.type == CombatLogEntryType::BlockGained, "block must create a structured journal entry");
+    check(blockLog.variables.contains("modifiers") && !blockLog.variables.at("modifiers").empty(),
+          "block journal entry must explain modifier-driven value changes");
 }
 
 
@@ -532,6 +546,163 @@ void testMultiEnemyTargeting() {
 }
 
 
+void testExplicitAndAutomaticSingleTargetSafety() {
+    CombatState state;
+    state.players.push_back(makeEntity(11, EntityType::Player, "player_a", 30));
+    state.players.push_back(makeEntity(12, EntityType::Player, "player_b", 30));
+    state.players.push_back(makeEntity(13, EntityType::Player, "player_c", 30));
+    state.enemies.push_back(makeEntity(21, EntityType::Enemy, "enemy_a", 10));
+    state.enemies.push_back(makeEntity(22, EntityType::Enemy, "enemy_b", 10));
+
+    Targeting targeting;
+    EffectContext context;
+    context.source = state.players[0].id;
+
+    bool missingEnemyTargetRejected = false;
+    try {
+        (void)targeting.resolveTargets(state, EffectTarget::SingleEnemy, context);
+    } catch (const std::runtime_error&) {
+        missingEnemyTargetRejected = true;
+    }
+    check(
+        missingEnemyTargetRejected,
+        "single-enemy effects must require a choice while several enemies are alive"
+    );
+
+    state.enemies[1].health.setCurrent(0);
+    const std::vector<EntityId> automaticEnemy = targeting.resolveTargets(
+        state,
+        EffectTarget::SingleEnemy,
+        context
+    );
+    check(
+        automaticEnemy.size() == 1u && automaticEnemy.front() == state.enemies[0].id,
+        "single-enemy effects must auto-target the only living enemy"
+    );
+
+    context.explicitEnemyTarget = state.enemies[0].id;
+    state.enemies[0].health.setCurrent(0);
+    check(
+        targeting.resolveTargets(state, EffectTarget::SingleEnemy, context).empty(),
+        "a selected enemy killed earlier in the effect chain must not be replaced by another target"
+    );
+
+    context.explicitEnemyTarget.reset();
+    state.enemies[0].health.setCurrent(10);
+    bool missingAllyTargetRejected = false;
+    try {
+        (void)targeting.resolveTargets(state, EffectTarget::Ally, context);
+    } catch (const std::runtime_error&) {
+        missingAllyTargetRejected = true;
+    }
+    check(
+        missingAllyTargetRejected,
+        "single-ally effects must not silently affect every available ally"
+    );
+
+    context.explicitAllyTarget = state.players[1].id;
+    const std::vector<EntityId> selectedAlly = targeting.resolveTargets(state, EffectTarget::Ally, context);
+    check(
+        selectedAlly.size() == 1u && selectedAlly.front() == state.players[1].id,
+        "single-ally effects must preserve the explicitly selected living ally"
+    );
+
+    state.players[1].health.setCurrent(0);
+    check(
+        targeting.resolveTargets(state, EffectTarget::Ally, context).empty(),
+        "a selected ally defeated earlier in the chain must make later effects miss"
+    );
+
+    context.explicitAllyTarget.reset();
+    const std::vector<EntityId> automaticAlly = targeting.resolveTargets(state, EffectTarget::Ally, context);
+    check(
+        automaticAlly.size() == 1u && automaticAlly.front() == state.players[2].id,
+        "single-ally effects may auto-target only when exactly one valid ally remains"
+    );
+}
+
+void testEffectChainSkipsTargetsKilledByReactions() {
+    LocalizationManager localization;
+    StatusDatabase statuses = makeStatusDatabase();
+    ModifierSystem modifiers(localization, statuses);
+    GameEventBus eventBus;
+    DamageSystem damageSystem(modifiers, &eventBus);
+    BlockSystem blockSystem(modifiers, &eventBus);
+    EnergySystem energySystem;
+    DrawSystem drawSystem;
+    EffectResolver resolver;
+    Targeting targeting;
+    StatusSystem statusSystem(statuses, &eventBus);
+    DroneDatabase drones;
+    DroneSystem droneSystem(
+        drones,
+        resolver,
+        targeting,
+        damageSystem,
+        blockSystem,
+        energySystem,
+        drawSystem,
+        statusSystem
+    );
+    EffectSystem effects(
+        resolver,
+        targeting,
+        damageSystem,
+        blockSystem,
+        energySystem,
+        drawSystem,
+        statusSystem,
+        droneSystem,
+        &eventBus
+    );
+
+    CombatState state;
+    state.players.push_back(makeEntity(31, EntityType::Player, "player", 30));
+    state.players.front().stress = 20;
+    state.enemies.push_back(makeEntity(41, EntityType::Enemy, "enemy_a", 10));
+    state.enemies.push_back(makeEntity(42, EntityType::Enemy, "enemy_b", 10));
+
+    int damageEvents = 0;
+    eventBus.subscribe([&](const GameEvent& event) {
+        if (event.type != GameEventType::DamageDealt) {
+            return;
+        }
+        ++damageEvents;
+        if (event.target == state.enemies[0].id) {
+            state.enemies[1].health.setCurrent(0);
+        }
+    });
+
+    EffectDefinition sweep;
+    sweep.type = EffectType::Damage;
+    sweep.target = EffectTarget::AllEnemies;
+    sweep.value = EffectValue::fixed(3);
+
+    EffectContext context;
+    context.source = state.players.front().id;
+    Random random(99u);
+    context.random = &random;
+    effects.applyEffect(state, sweep, context);
+
+    check(damageEvents == 1, "targets killed by a reaction must not receive later effects from a stale target snapshot");
+    check(state.enemies[0].health.current() == 7, "the first living group target must still receive damage");
+    check(state.enemies[1].health.current() == 0, "the reactively killed target must remain defeated without duplicate damage");
+
+    EffectDefinition stressStrike;
+    stressStrike.type = EffectType::SpendStressDamage;
+    stressStrike.target = EffectTarget::SingleEnemy;
+    stressStrike.value = EffectValue::fixed(5);
+    stressStrike.outputAmount = 12;
+    context.explicitEnemyTarget = state.enemies[1].id;
+    const int beforeStress = state.players.front().stress;
+    effects.applyEffect(state, stressStrike, context);
+    check(
+        state.players.front().stress == beforeStress,
+        "stress conversion effects must not spend their resource after the selected target has died"
+    );
+}
+
+
 void testConditionalEnemyAi() {
     LocalizationManager localization;
     StatusDatabase statuses = makeStatusDatabase();
@@ -636,8 +807,12 @@ void testConditionalEnemyAi() {
 void testActiveItemChargeAndUse() {
     ActiveItemDefinition item;
     item.id = ActiveItemId("field_kit");
-    item.maxCharge = 3;
+    item.maxCharge = 5;
     item.chargeCost = 3;
+    item.startingCharge = 1;
+    item.combatCharge = 1;
+    item.eliteCharge = 3;
+    item.bossCharge = 5;
     item.useContexts = {ActiveItemUseContext::Map};
     item.effects = {{ActiveItemEffectType::HealParty, 8}};
 
@@ -650,18 +825,26 @@ void testActiveItemChargeAndUse() {
 
     ActiveItemSystem::equip(run, item);
     check(run.activeItem.itemId == "field_kit", "equipping must fill the single active-item slot");
-    check(run.activeItem.charge == 0, "new active items must respect the initial charge");
+    check(run.activeItem.charge == 1, "new active items must use their data-driven starting charge");
+    check(
+        ActiveItemSystem::normalCombatRoomsUntilUsable(run.activeItem, item) == 2,
+        "charge forecasting must report how many normal combats remain before use"
+    );
 
     check(
         ActiveItemSystem::addCombatRoomCharge(run, item, RunMapNodeType::Combat) == 1,
-        "normal enemy rooms must grant one active-item charge"
+        "normal enemy rooms must use the item-specific charge rate"
     );
     check(
-        ActiveItemSystem::addCombatRoomCharge(run, item, RunMapNodeType::Elite) == 2,
-        "elite rooms must grant two active-item charges"
+        ActiveItemSystem::addCombatRoomCharge(run, item, RunMapNodeType::Elite) == 3,
+        "elite rooms must use the item-specific charge rate"
     );
-    check(run.activeItem.charge == 3, "active-item charge must clamp to max_charge");
-    check(run.stats.activeItemChargeGained == 3, "actual charge gain must be recorded in run stats");
+    check(run.activeItem.charge == 5, "active-item charge must clamp to max_charge");
+    check(run.stats.activeItemChargeGained == 4, "actual charge gain must be recorded in run stats");
+    check(
+        ActiveItemSystem::normalCombatRoomsUntilUsable(run.activeItem, item) == 0,
+        "fully usable items must report zero remaining rooms"
+    );
 
     check(
         !ActiveItemSystem::canUse(run.activeItem, item, ActiveItemUseContext::Shop),
@@ -669,15 +852,15 @@ void testActiveItemChargeAndUse() {
     );
 
     const ActiveItemUseResult result = ActiveItemSystem::use(run, item, ActiveItemUseContext::Map);
-    check(result.used(), "a fully charged item must be usable in an allowed context");
+    check(result.used(), "an item at its use threshold must be usable in an allowed context");
     check(run.actorStates[0].currentHp == 13, "field kit effect must heal living run actors");
-    check(run.activeItem.charge == 0, "using an item must spend its charge cost");
+    check(run.activeItem.charge == 2, "using an item must spend only charge_cost and preserve banked charge");
     check(run.stats.activeItemsUsed == 1, "successful item uses must be recorded");
 
-    const ActiveItemUseResult emptyCharge = ActiveItemSystem::use(run, item, ActiveItemUseContext::Map);
+    const ActiveItemUseResult insufficientCharge = ActiveItemSystem::use(run, item, ActiveItemUseContext::Map);
     check(
-        emptyCharge.status == ActiveItemUseStatus::NotEnoughCharge,
-        "an item without enough charge must not fire"
+        insufficientCharge.status == ActiveItemUseStatus::NotEnoughCharge,
+        "an item below its use threshold must not fire"
     );
 }
 
@@ -803,8 +986,9 @@ void testRerollDieOffers() {
 
     ActiveItemDefinition die;
     die.id = ActiveItemId("reroll_die");
-    die.maxCharge = 4;
+    die.maxCharge = 6;
     die.chargeCost = 4;
+    die.startingCharge = 2;
     die.useContexts = {ActiveItemUseContext::Reward, ActiveItemUseContext::Shop, ActiveItemUseContext::Chest};
     die.effects = {{ActiveItemEffectType::RerollOffers, 1}};
     ActiveItemSystem::equip(run, die, 4);
@@ -817,8 +1001,9 @@ void testActiveItemAcquisition() {
     ActiveItemDatabase items;
     ActiveItemDefinition fieldKit;
     fieldKit.id = ActiveItemId("field_kit");
-    fieldKit.maxCharge = 3;
+    fieldKit.maxCharge = 5;
     fieldKit.chargeCost = 3;
+    fieldKit.startingCharge = 1;
     fieldKit.shopPrice = 140;
     fieldKit.canAppearInRewards = true;
     fieldKit.canAppearInShop = true;
@@ -826,8 +1011,9 @@ void testActiveItemAcquisition() {
 
     ActiveItemDefinition die;
     die.id = ActiveItemId("reroll_die");
-    die.maxCharge = 4;
+    die.maxCharge = 6;
     die.chargeCost = 4;
+    die.startingCharge = 2;
     die.shopPrice = 180;
     die.canAppearInRewards = true;
     die.canAppearInShop = true;
@@ -841,7 +1027,7 @@ void testActiveItemAcquisition() {
     run.activeItem.itemId = "field_kit";
     run.activeItem.charge = 3;
     check(ActiveItemAcquisitionSystem::equipReplacement(run, items, ActiveItemId("reroll_die")), "replacement must equip a valid different item");
-    check(run.activeItem.itemId == "reroll_die" && run.activeItem.charge == 0, "replacement must reset active item charge");
+    check(run.activeItem.itemId == "reroll_die" && run.activeItem.charge == 2, "replacement must use the new item's starting charge");
     check(run.stats.activeItemsGained == 1 && run.stats.activeItemsReplaced == 1, "replacement must update active item statistics");
 }
 
@@ -1002,6 +1188,7 @@ void testStressCardPlayValidation() {
     card.id = instance.definitionId;
     card.ownerActorId = "lost_psychopath";
     card.energyCost = 0;
+    card.stressCost = 5;
     EffectDefinition conversion;
     conversion.type = EffectType::SpendStressEnergy;
     conversion.target = EffectTarget::Self;
@@ -1015,7 +1202,17 @@ void testStressCardPlayValidation() {
     check(!insufficient.valid && insufficient.failureReason == CardPlayFailureReason::NotEnoughStress,
           "repeated stress conversions must validate their full stress cost");
 
-    state.players.front().stress = 30;
+    check(CardStressCost::totalCost(card) == 35,
+          "direct card stress cost and conversion costs must be paid atomically");
+
+    state.players.front().stress = 34;
+    const CardPlayValidationResult directCostStillMissing =
+        validator.validate(state, card, instance, state.players.front().id);
+    check(!directCostStillMissing.valid &&
+              directCostStillMissing.failureReason == CardPlayFailureReason::NotEnoughStress,
+          "direct card stress cost must be included in validation");
+
+    state.players.front().stress = 35;
     const CardPlayValidationResult enough = validator.validate(state, card, instance, state.players.front().id);
     check(enough.valid, "a card must become playable when its full stress cost is available");
 }
@@ -1034,6 +1231,18 @@ void testStressEconomyRules() {
     check(effectTypeFromString("spend_stress_draw") == EffectType::SpendStressDraw, "stress draw conversion must parse");
     check(isStressConversionEffect(EffectType::SpendStressDamage), "stress damage must be classified as a conversion");
     check(!isStressConversionEffect(EffectType::GainStress), "ordinary stress gain must not be classified as a conversion");
+
+    RelicDefinition genericRelic;
+    genericRelic.mechanicId = "default";
+    check(RewardPoolRules::matchesRunMechanic(genericRelic, "stress_psychopath"),
+          "generic relics must remain available to every run mechanic");
+
+    RelicDefinition psychopathRelic;
+    psychopathRelic.mechanicId = "stress_psychopath";
+    check(RewardPoolRules::matchesRunMechanic(psychopathRelic, "stress_psychopath"),
+          "psychopath relics must be available to the psychopath");
+    check(!RewardPoolRules::matchesRunMechanic(psychopathRelic, "replicant_drones"),
+          "psychopath relics must not leak into ordinary stress economies");
 }
 
 void testStressBandsAndPsychopathEffects() {
@@ -1070,10 +1279,27 @@ void testStressBandsAndPsychopathEffects() {
     actor.stress = 99;
     actor.resolveCheckTriggered = false;
     actor.traitIds.clear();
-    const StressRules::StressAdjustmentResult resolveResult = StressRules::applyDelta(actor, 1, nullptr);
-    check(resolveResult.resolveCheckTriggered, "crossing 100 stress must trigger the resolve check");
+    const StressRules::StressAdjustmentResult resolveResult = StressRules::applyDelta(actor, 1, nullptr, true);
+    check(resolveResult.resolveCheckTriggered, "the psychopath crossing 100 stress must trigger the resolve check");
     check(resolveResult.resolveOutcome == StressRules::ResolveOutcome::Breakdown, "a resolve check without RNG must take the deterministic breakdown branch");
     check(StressRules::hasTrait(actor, StressRules::BreakdownTraitId), "breakdown outcome must add the breakdown trait");
+
+    CombatEntity ordinaryActor = makeEntity(100, EntityType::Player, "herbalist", 40);
+    ordinaryActor.stress = 99;
+    ordinaryActor.maxStress = StressRules::MaximumStress;
+    ordinaryActor.resolveCheckTriggered = true;
+    ordinaryActor.traitIds = {StressRules::BreakdownTraitId, StressRules::ResolveTraitId};
+    const StressRules::StressAdjustmentResult ordinaryResult =
+        StressRules::applyDelta(ordinaryActor, 1, nullptr, false);
+    check(!ordinaryResult.resolveCheckTriggered,
+          "ordinary characters must not receive the psychopath resolve check");
+    check(ordinaryResult.resolveOutcome == StressRules::ResolveOutcome::None,
+          "ordinary characters must not receive positive or negative stress traits");
+    check(!StressRules::hasTrait(ordinaryActor, StressRules::BreakdownTraitId) &&
+              !StressRules::hasTrait(ordinaryActor, StressRules::ResolveTraitId),
+          "legacy psychopath stress traits must be cleared from ordinary characters");
+    check(ordinaryActor.stress == 100 && ordinaryActor.isAlive(),
+          "ordinary characters must keep stress as a resource until the lethal cap");
 }
 
 void fillTestDeck(CombatState& state, CardDatabase& cards, const int count) {
@@ -1226,6 +1452,7 @@ void testStressBreakdownPrimingAndGuard() {
 
 void testStressEventRequirements() {
     RunState run;
+    run.archetypeMechanicId = "stress_psychopath";
     RunActorState actor;
     actor.definitionId = "lost_psychopath";
     actor.stress = 130;
@@ -1237,6 +1464,18 @@ void testStressEventRequirements() {
     available.requiredTraitIds.push_back(StressRules::BreakdownTraitId);
     check(evaluateRunEventChoiceRequirements(available, run).available,
           "stress events must unlock choices from stress thresholds and traits");
+
+    RunEventChoiceRequirements mechanicLocked;
+    mechanicLocked.requiredMechanicId = "stress_psychopath";
+    check(evaluateRunEventChoiceRequirements(mechanicLocked, run).available,
+          "psychopath events must be available to the matching run mechanic");
+    run.archetypeMechanicId = "herbalist_brews";
+    const RunEventChoiceAvailability wrongMechanic =
+        evaluateRunEventChoiceRequirements(mechanicLocked, run);
+    check(!wrongMechanic.available &&
+              wrongMechanic.reasons.front().type == RunEventChoiceBlockReasonType::WrongRunMechanic,
+          "psychopath events must not leak into ordinary stress economies");
+    run.archetypeMechanicId = "stress_psychopath";
 
     RunEventChoiceRequirements tooCalm;
     tooCalm.maxStress = 100;
@@ -1895,7 +2134,88 @@ void testEffectScalingAndDiscardRecovery() {
           "recover cards must respect the hand size limit without consuming discard cards");
 }
 
+void testCombatLogSequenceAndCapacity() {
+    CombatLog log;
+    for (int index = 0; index < 300; ++index) {
+        log.addText("entry " + std::to_string(index));
+    }
+
+    check(log.entries().size() == 256u, "combat log must keep a bounded recent history");
+    check(log.entries().front().sequence == 45u, "combat log must evict the oldest entries first");
+    check(log.entries().back().sequence == 300u, "combat log sequence must preserve event order");
+
+    log.clear();
+    log.addText("fresh");
+    check(log.entries().size() == 1u && log.entries().front().sequence == 1u,
+          "clearing the combat log must reset journal sequencing");
+}
+
+
+void testShopEconomyScaling() {
+    check(ShopEconomy::scaledPrice(100, 1, 5) == 100, "first-floor prices must use their base value");
+    check(ShopEconomy::scaledPrice(100, 3, 5) == 110, "floor price growth must be linear and predictable");
+    check(
+        ShopEconomy::cardRemovalPrice(75, 3, 2, 10, 25) == 145,
+        "card removal must scale with both floor and previous removals"
+    );
+    check(
+        ShopEconomy::affordableCardPriceCap(100, 80, 20) == 80,
+        "affordable card cap must preserve part of the player's gold"
+    );
+    check(
+        ShopEconomy::affordableCardPriceCap(15, 80, 20) == 15,
+        "affordability must not invent gold below the minimum card price"
+    );
+}
+
+void testCardRewardQuality() {
+    auto makeCard = [](const std::string& id, const EffectType type, const std::optional<std::string> status = std::nullopt) {
+        CardDefinition card;
+        card.id = CardId(id);
+        card.rarity = CardRarity::Common;
+        EffectDefinition effect;
+        effect.type = type;
+        effect.statusId = status;
+        card.effects.push_back(effect);
+        return card;
+    };
+
+    CardDefinition poisonSetup = makeCard("poison_setup", EffectType::ApplyStatus, std::string("poison"));
+    CardDefinition poisonPayoff = makeCard("poison_payoff", EffectType::Damage);
+    poisonPayoff.effects.front().scaling.statusId = "poison";
+    CardDefinition plainAttack = makeCard("plain_attack", EffectType::Damage);
+    CardDefinition block = makeCard("block", EffectType::Block);
+    CardDefinition heal = makeCard("heal", EffectType::Heal);
+    CardDefinition orphanDrone = makeCard("orphan_drone", EffectType::UseDrone);
+
+    const std::vector<const CardDefinition*> deck{&poisonSetup, &plainAttack, &plainAttack};
+    check(
+        CardRewardQuality::relevanceScore(poisonPayoff, deck) > CardRewardQuality::relevanceScore(orphanDrone, deck),
+        "a supported status payoff must outrank an unusable drone payoff"
+    );
+    check(
+        CardRewardQuality::relevanceScore(plainAttack, deck) < CardRewardQuality::relevanceScore(block, deck),
+        "duplicate attacks must be penalized when the deck lacks block"
+    );
+
+    Random random(42u);
+    const std::vector<const CardDefinition*> offers = CardRewardQuality::chooseOffers(
+        {&poisonPayoff, &plainAttack, &block, &heal, &orphanDrone},
+        deck,
+        3,
+        random
+    );
+    check(offers.size() == 3u, "quality generator must preserve the requested offer count");
+    check(offers.front()->id == poisonPayoff.id, "the first offer must represent the strongest existing synergy");
+    check(
+        std::any_of(offers.begin(), offers.end(), [&block](const CardDefinition* card) { return card != nullptr && card->id == block.id; }),
+        "a diverse offer must cover a missing defensive role"
+    );
+}
 int main() {
+    testCardRewardQuality();
+    testShopEconomyScaling();
+    testCombatLogSequenceAndCapacity();
     testEnemyDamageDifficultyMultiplier();
     testEffectScalingAndDiscardRecovery();
     testCardLifecycleAndOpeningHand();
@@ -1905,6 +2225,8 @@ int main() {
     testDamageOverTimeAndDurations();
     testMultiEnemyOutcomeAndIntentCleanup();
     testMultiEnemyTargeting();
+    testExplicitAndAutomaticSingleTargetSafety();
+    testEffectChainSkipsTargetsKilledByReactions();
     testEnemyRoles();
     testCombatTelemetryCounters();
     testBossPhaseTransitionsAndSummons();

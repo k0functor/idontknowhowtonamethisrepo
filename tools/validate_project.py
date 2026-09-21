@@ -102,6 +102,7 @@ RUN_EVENT_EFFECTS = {
     "gain_random_consumable",
     "remove_card",
     "remove_random_card",
+    "upgrade_random_card",
     "gain_stress",
     "lose_stress",
     "lose_hp",
@@ -133,7 +134,7 @@ CONTENT_RUN_EVENT_EFFECTS = {
     "set_flag": "flag",
     "clear_flag": "flag",
 }
-ZERO_AMOUNT_RUN_EVENT_EFFECTS = {"remove_random_card", "set_flag", "clear_flag", "skip"}
+ZERO_AMOUNT_RUN_EVENT_EFFECTS = {"remove_random_card", "upgrade_random_card", "set_flag", "clear_flag", "skip"}
 
 
 @dataclass
@@ -441,7 +442,9 @@ class ProjectValidator:
                         self.error(effect_owner, "scaling.status_owner requires scaling.status")
                     for field in (
                         "bonus_if_present",
+                        "bonus_if_status_present",
                         "bonus_per_stack",
+                        "bonus_per_status_stack",
                         "bonus_per_card_in_hand",
                         "bonus_per_card_in_discard",
                     ):
@@ -451,7 +454,9 @@ class ProjectValidator:
                         maximum_bonus = self.expect_int(effect_owner, "scaling.maximum_bonus", scaling.get("maximum_bonus"))
                         if maximum_bonus is not None and maximum_bonus < -1:
                             self.error(effect_owner, "scaling.maximum_bonus must be -1 or greater")
-                    if (scaling.get("bonus_if_present", 0) or scaling.get("bonus_per_stack", 0)) and not scaling_status:
+                    status_presence_bonus = scaling.get("bonus_if_status_present", scaling.get("bonus_if_present", 0))
+                    status_stack_bonus = scaling.get("bonus_per_status_stack", scaling.get("bonus_per_stack", 0))
+                    if (status_presence_bonus or status_stack_bonus) and not scaling_status:
                         self.error(effect_owner, "status-based scaling requires scaling.status")
                 if effect_type in STRESS_CONVERSION_TYPES:
                     self.error(effect_owner, "stress conversion effects do not support scaling")
@@ -701,6 +706,18 @@ class ProjectValidator:
                     self.expect_enum(trigger_owner, "card_type", trigger.get("card_type"), CARD_TYPES)
                     if trigger.get("event") != "card_played":
                         self.error(trigger_owner, "card_type filter is supported only for card_played")
+                if "previous_card_type" in trigger:
+                    self.expect_enum(trigger_owner, "previous_card_type", trigger.get("previous_card_type"), CARD_TYPES)
+                    if trigger.get("event") != "card_played":
+                        self.error(trigger_owner, "previous_card_type filter is supported only for card_played")
+                if "card_number_this_turn" in trigger:
+                    self.expect_int(trigger_owner, "card_number_this_turn", trigger.get("card_number_this_turn"), minimum=1)
+                    if trigger.get("event") != "card_played":
+                        self.error(trigger_owner, "card_number_this_turn is supported only for card_played")
+                if "owner_status" in trigger and trigger.get("owner_status") not in self.content.statuses:
+                    self.error(trigger_owner, f"references unknown owner status '{trigger.get('owner_status')}'")
+                if "min_drones" in trigger:
+                    self.expect_int(trigger_owner, "min_drones", trigger.get("min_drones"), minimum=1)
                 if trigger.get("source_side", "any") not in {"any", "player", "enemy"}:
                     self.error(trigger_owner, "source_side must be one of: any, player, enemy")
                 if "every_n_turns" in trigger:
@@ -981,7 +998,7 @@ class ProjectValidator:
                     for card_id in requirements.get(key, []):
                         if card_id not in self.content.cards:
                             self.error(choice_owner, f"{key} references unknown card '{card_id}'")
-                for numeric_key in ("min_gold", "min_hp", "min_deck_size", "min_stress", "max_stress"):
+                for numeric_key in ("min_gold", "min_hp", "min_deck_size", "max_deck_size", "min_missing_hp", "min_upgraded_cards", "min_stress", "max_stress"):
                     if numeric_key in requirements:
                         self.expect_int(choice_owner, numeric_key, requirements.get(numeric_key), minimum=0)
                 if (
@@ -990,6 +1007,13 @@ class ProjectValidator:
                     and requirements["min_stress"] > requirements["max_stress"]
                 ):
                     self.error(choice_owner, "min_stress must not exceed max_stress")
+                if (
+                    isinstance(requirements.get("min_deck_size"), int)
+                    and isinstance(requirements.get("max_deck_size"), int)
+                    and requirements["max_deck_size"] > 0
+                    and requirements["min_deck_size"] > requirements["max_deck_size"]
+                ):
+                    self.error(choice_owner, "min_deck_size must not exceed max_deck_size")
                 for key in ("has_trait", "missing_trait"):
                     trait_id = requirements.get(key)
                     if trait_id is not None:
@@ -1051,6 +1075,14 @@ class ProjectValidator:
             merchant_gold_multiplier = reward_data.get("merchant_gold_multiplier")
             if not isinstance(merchant_gold_multiplier, (int, float)) or isinstance(merchant_gold_multiplier, bool) or merchant_gold_multiplier < 1.0:
                 self.error("data/rewards/reward_tables.json", "merchant_gold_multiplier must be a number >= 1.0")
+            self.expect_int(
+                "data/rewards/reward_tables.json",
+                "gold_growth_percent_per_floor",
+                reward_data.get("gold_growth_percent_per_floor"),
+                minimum=0,
+            )
+            if isinstance(reward_data.get("gold_growth_percent_per_floor"), int) and reward_data["gold_growth_percent_per_floor"] > 100:
+                self.error("data/rewards/reward_tables.json", "gold_growth_percent_per_floor must be <= 100")
             nodes = reward_data.get("nodes")
             if not isinstance(nodes, dict):
                 self.error("data/rewards/reward_tables.json", "nodes must be an object")
@@ -1087,8 +1119,18 @@ class ProjectValidator:
                 "minimum_consumable_price",
                 "merchant_rest_card_offers",
                 "merchant_rest_max_card_purchases",
+                "card_price_growth_percent_per_floor",
+                "relic_price_growth_percent_per_floor",
+                "consumable_price_growth_percent_per_floor",
+                "card_removal_price_per_floor",
+                "card_removal_price_per_use",
+                "affordable_card_offers",
+                "affordable_card_price_cap_percent",
             ):
                 self.expect_int(owner, key, shop_data.get(key), minimum=0)
+            affordable_cap = shop_data.get("affordable_card_price_cap_percent")
+            if isinstance(affordable_cap, int) and not 1 <= affordable_cap <= 100:
+                self.error(owner, "affordable_card_price_cap_percent must be between 1 and 100")
             price_multiplier = shop_data.get("merchant_rest_card_price_multiplier")
             if not isinstance(price_multiplier, (int, float)) or isinstance(price_multiplier, bool) or price_multiplier < 0:
                 self.error(owner, "merchant_rest_card_price_multiplier must be a non-negative number")

@@ -55,6 +55,22 @@ void drawColumn(
         13.f,
         Color{175, 188, 219, 255}
     );
+    BasicUi::drawCenteredTextFitted(
+        font,
+        localization.format(
+            TextId("active_item.compare.recharge"),
+            {
+                {"starting", std::to_string(item.startingCharge)},
+                {"combat", std::to_string(item.combatCharge)},
+                {"elite", std::to_string(item.eliteCharge)},
+                {"boss", std::to_string(item.bossCharge)}
+            }
+        ),
+        Rectangle{bounds.x + 18.f, bounds.y + 86.f, bounds.width - 36.f, 24.f},
+        14.f,
+        11.f,
+        Color{146, 159, 191, 255}
+    );
 
     const std::vector<std::string> lines = BasicUi::wrapText(
         font,
@@ -62,7 +78,7 @@ void drawColumn(
         17.f,
         bounds.width - 38.f
     );
-    float y = bounds.y + 100.f;
+    float y = bounds.y + 122.f;
     for (const std::string& line : lines) {
         if (y > bounds.y + bounds.height - 28.f) {
             break;
@@ -90,5 +106,9 @@ void ActiveItemComparisonView::render(
     BasicUi::drawCenteredText(font, localization.get(TextId("active_item.compare.offered")), Rectangle{offered.x, bounds.y, offered.width, 28.f}, 18.f, Color{236, 209, 132, 255});
 
     drawColumn(font, localization, activeItems, run.activeItem.itemId, run.activeItem.charge, current, TextId("active_item.compare.empty"));
-    drawColumn(font, localization, activeItems, offeredItemId, 0, offered, TextId("active_item.compare.unavailable"));
+    int offeredStartingCharge = 0;
+    if (!offeredItemId.empty() && activeItems.contains(ActiveItemId(offeredItemId))) {
+        offeredStartingCharge = activeItems.get(ActiveItemId(offeredItemId)).startingCharge;
+    }
+    drawColumn(font, localization, activeItems, offeredItemId, offeredStartingCharge, offered, TextId("active_item.compare.unavailable"));
 }

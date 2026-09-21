@@ -1,4 +1,5 @@
 #include "CombatScene.hpp"
+#include "CombatSceneLayout.hpp"
 #include "ui/VirtualViewport.hpp"
 
 #include "cards/CardUpgrade.hpp"
@@ -9,115 +10,6 @@
 #include <cstddef>
 #include <string>
 #include <vector>
-
-Rectangle CombatScene::drawPileButtonBounds() const {
-    constexpr float width = 126.f;
-    constexpr float height = 34.f;
-    constexpr float margin = 24.f;
-    return Rectangle{
-        margin,
-        static_cast<float>(VirtualViewport::height()) - height - margin,
-        width,
-        height
-    };
-}
-
-Rectangle CombatScene::discardPileButtonBounds() const {
-    constexpr float width = 126.f;
-    constexpr float height = 34.f;
-    constexpr float margin = 24.f;
-    constexpr float gap = 12.f;
-    return Rectangle{
-        static_cast<float>(VirtualViewport::width()) - margin - width * 2.f - gap,
-        static_cast<float>(VirtualViewport::height()) - height - margin,
-        width,
-        height
-    };
-}
-
-Rectangle CombatScene::exhaustPileButtonBounds() const {
-    const Rectangle discard = discardPileButtonBounds();
-    constexpr float gap = 12.f;
-    return Rectangle{discard.x + discard.width + gap, discard.y, discard.width, discard.height};
-}
-
-Rectangle CombatScene::energyBubbleBounds() const {
-    constexpr float size = 62.f;
-    constexpr float gapBelowActor = 12.f;
-    constexpr float gapAboveHand = 10.f;
-    const float screenHeight = static_cast<float>(VirtualViewport::height());
-    const float handHeight = std::clamp(screenHeight * 0.36f, 250.f, 330.f);
-    const float handTop = screenHeight - handHeight;
-
-    if (const std::optional<Rectangle> playerBounds = view_.playerBounds(primaryPlayerId())) {
-        const float centerX = playerBounds->x + playerBounds->width * 0.5f;
-        const float preferredY = playerBounds->y + playerBounds->height + gapBelowActor;
-        const float maxY = handTop - size - gapAboveHand;
-        return Rectangle{
-            centerX - size * 0.5f,
-            std::min(preferredY, maxY),
-            size,
-            size
-        };
-    }
-
-    return Rectangle{
-        static_cast<float>(VirtualViewport::width()) * 0.5f - size * 0.5f,
-        handTop - size - gapAboveHand,
-        size,
-        size
-    };
-}
-
-Rectangle CombatScene::pileOverlayBounds() const {
-    const float width = std::min(1180.f, static_cast<float>(VirtualViewport::width()) - 56.f);
-    const float height = std::min(680.f, static_cast<float>(VirtualViewport::height()) - 56.f);
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle CombatScene::pileOverlayGridBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 28.f, modal.y + 86.f, modal.width - 56.f, modal.height - 158.f};
-}
-
-Rectangle CombatScene::pileOverlayCloseButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width - 146.f, modal.y + modal.height - 58.f, 112.f, 40.f};
-}
-
-Rectangle CombatScene::pileOverlayCardBounds(const Rectangle grid, const std::size_t index, const float scrollOffset) const {
-    constexpr int columns = 5;
-    constexpr float gap = 20.f;
-    const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
-    const float width = cardSize.x + 18.f;
-    const float height = cardSize.y + 26.f;
-    const float totalWidth = static_cast<float>(columns) * width + static_cast<float>(columns - 1) * gap;
-    const float startX = grid.x + std::max(0.f, (grid.width - totalWidth) * 0.5f);
-    const int column = static_cast<int>(index % columns);
-    const int row = static_cast<int>(index / columns);
-    return Rectangle{
-        startX + static_cast<float>(column) * (width + gap),
-        grid.y + 14.f + static_cast<float>(row) * (height + gap) - scrollOffset,
-        width,
-        height
-    };
-}
-float CombatScene::pileOverlayMaxScroll(const Rectangle grid, const std::size_t count) const {
-    if (count == 0) {
-        return 0.f;
-    }
-
-    constexpr int columns = 5;
-    constexpr float gap = 20.f;
-    const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
-    const float height = cardSize.y + 26.f;
-    const std::size_t rows = (count + columns - 1) / columns;
-    const float totalHeight = 28.f + static_cast<float>(rows) * height + static_cast<float>(rows > 0 ? rows - 1 : 0) * gap;
-    return std::max(0.f, totalHeight - grid.height);
-}
 
 const std::vector<CardInstance>& CombatScene::activePileCards() const {
     switch (pileOverlayMode_) {
@@ -163,14 +55,14 @@ void CombatScene::closePileOverlay() {
 }
 
 void CombatScene::updatePileOverlay(const Vector2 mousePosition) {
-    const Rectangle modal = pileOverlayBounds();
-    const Rectangle grid = pileOverlayGridBounds(modal);
+    const Rectangle modal = CombatSceneLayout::pileOverlayBounds();
+    const Rectangle grid = CombatSceneLayout::pileOverlayGridBounds(modal);
     const float wheel = GetMouseWheelMove();
     if (wheel != 0.f) {
         pileOverlayScrollOffset_ = std::clamp(
             pileOverlayScrollOffset_ - wheel * 76.f,
             0.f,
-            pileOverlayMaxScroll(grid, activePileCards().size())
+            CombatSceneLayout::pileOverlayMaxScroll(grid, activePileCards().size())
         );
     }
 
@@ -180,7 +72,7 @@ void CombatScene::updatePileOverlay(const Vector2 mousePosition) {
     }
 
     if (IsKeyPressed(KEY_ESCAPE) ||
-        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(pileOverlayCloseButtonBounds(modal), mousePosition))) {
+        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(CombatSceneLayout::pileOverlayCloseButtonBounds(modal), mousePosition))) {
         closePileOverlay();
         return;
     }
@@ -208,7 +100,7 @@ void CombatScene::renderEnergyBubble() const {
         return;
     }
 
-    const Rectangle bounds = energyBubbleBounds();
+    const Rectangle bounds = CombatSceneLayout::energyBubbleBounds(view_.playerBounds(primaryPlayerId()));
     const int centerX = static_cast<int>(bounds.x + bounds.width * 0.5f);
     const int centerY = static_cast<int>(bounds.y + bounds.height * 0.5f);
     const float radius = bounds.width * 0.5f;
@@ -230,27 +122,27 @@ void CombatScene::renderPileButtons() const {
     renderEnergyBubble();
     BasicUi::drawButton(
         uiFont_,
-        drawPileButtonBounds(),
+        CombatSceneLayout::drawPileButtonBounds(),
         localizedOrFallback(TextId("ui.draw_pile"), "Draw") + ": " + std::to_string(state_.deck.drawPile.size()),
         mouse
     );
     BasicUi::drawButton(
         uiFont_,
-        discardPileButtonBounds(),
+        CombatSceneLayout::discardPileButtonBounds(),
         localizedOrFallback(TextId("ui.discard_pile"), "Discard") + ": " + std::to_string(state_.deck.discardPile.size()),
         mouse
     );
     BasicUi::drawButton(
         uiFont_,
-        exhaustPileButtonBounds(),
+        CombatSceneLayout::exhaustPileButtonBounds(),
         localizedOrFallback(TextId("ui.exhaust_pile"), "Burned") + ": " + std::to_string(state_.deck.exhaustPile.size()),
         mouse
     );
 }
 
 void CombatScene::renderPileOverlay() const {
-    const Rectangle modal = pileOverlayBounds();
-    const Rectangle grid = pileOverlayGridBounds(modal);
+    const Rectangle modal = CombatSceneLayout::pileOverlayBounds();
+    const Rectangle grid = CombatSceneLayout::pileOverlayGridBounds(modal);
     const Vector2 mouse = GetMousePosition();
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 165});
@@ -266,7 +158,7 @@ void CombatScene::renderPileOverlay() const {
     } else {
         BeginScissorMode(static_cast<int>(grid.x), static_cast<int>(grid.y), static_cast<int>(grid.width), static_cast<int>(grid.height));
         for (std::size_t i = 0; i < cards.size(); ++i) {
-            const Rectangle cell = pileOverlayCardBounds(grid, i, pileOverlayScrollOffset_);
+            const Rectangle cell = CombatSceneLayout::pileOverlayCardBounds(grid, i, pileOverlayScrollOffset_);
             if (cell.y + cell.height < grid.y || cell.y > grid.y + grid.height) {
                 continue;
             }
@@ -282,7 +174,7 @@ void CombatScene::renderPileOverlay() const {
         15.f,
         Color{150, 160, 185, 255}
     );
-    BasicUi::drawButton(uiFont_, pileOverlayCloseButtonBounds(modal), localizedOrFallback(TextId("ui.close"), "Close"), mouse);
+    BasicUi::drawButton(uiFont_, CombatSceneLayout::pileOverlayCloseButtonBounds(modal), localizedOrFallback(TextId("ui.close"), "Close"), mouse);
     renderPileCardInspectPanel();
 }
 
@@ -301,10 +193,10 @@ std::optional<std::size_t> CombatScene::hoveredPileCardIndex(const Vector2 mouse
         return std::nullopt;
     }
 
-    const Rectangle grid = pileOverlayGridBounds(pileOverlayBounds());
+    const Rectangle grid = CombatSceneLayout::pileOverlayGridBounds(CombatSceneLayout::pileOverlayBounds());
     const std::vector<CardInstance>& cards = activePileCards();
     for (std::size_t i = 0; i < cards.size(); ++i) {
-        const Rectangle cell = pileOverlayCardBounds(grid, i, pileOverlayScrollOffset_);
+        const Rectangle cell = CombatSceneLayout::pileOverlayCardBounds(grid, i, pileOverlayScrollOffset_);
         if (cell.y + cell.height < grid.y || cell.y > grid.y + grid.height) {
             continue;
         }
@@ -336,7 +228,7 @@ void CombatScene::renderPileCardInspectPanel() const {
     const CardDefinition definition = CardUpgrade::effectiveDefinition(content_.cards().get(instance.definitionId), instance.upgraded);
     const InspectPanelModel panel = inspectModelBuilder_.buildCard(definition, cardModel);
 
-    const Rectangle modal = pileOverlayBounds();
+    const Rectangle modal = CombatSceneLayout::pileOverlayBounds();
     const float width = std::min(540.f, modal.width - 80.f);
     const Rectangle bounds{
         modal.x + modal.width - width - 32.f,

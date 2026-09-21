@@ -15,5 +15,12 @@
   "merchant_rest_card_offers": 5,
   "merchant_rest_max_card_purchases": 2,
   "merchant_rest_card_price_multiplier": 0.85,
-  "active_item_offer_chance_percent": 55
+  "active_item_offer_chance_percent": 55,
+  "card_price_growth_percent_per_floor": 4,
+  "relic_price_growth_percent_per_floor": 5,
+  "consumable_price_growth_percent_per_floor": 3,
+  "card_removal_price_per_floor": 10,
+  "card_removal_price_per_use": 25,
+  "affordable_card_offers": 1,
+  "affordable_card_price_cap_percent": 80
 }

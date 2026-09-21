@@ -16,6 +16,10 @@ ActiveItemDefinition ActiveItemDefinitionParser::parse(
     definition.descriptionTextId = TextId(reader.requiredString("description"));
     definition.maxCharge = reader.requiredInt("max_charge");
     definition.chargeCost = reader.requiredInt("charge_cost");
+    definition.startingCharge = reader.optionalInt("starting_charge", 0);
+    definition.combatCharge = reader.optionalInt("combat_charge", 1);
+    definition.eliteCharge = reader.optionalInt("elite_charge", 2);
+    definition.bossCharge = reader.optionalInt("boss_charge", 3);
     definition.shopPrice = reader.optionalInt("shop_price", 0);
     definition.canAppearInRewards = reader.optionalBool("reward_eligible", false);
     definition.canAppearInShop = reader.optionalBool("shop_eligible", false);
@@ -25,6 +29,12 @@ ActiveItemDefinition ActiveItemDefinitionParser::parse(
     }
     if (definition.chargeCost <= 0 || definition.chargeCost > definition.maxCharge) {
         throw std::runtime_error("JSON error in '" + sourcePath.string() + "': active item charge_cost must be in 1..max_charge");
+    }
+    if (definition.startingCharge < 0 || definition.startingCharge > definition.maxCharge) {
+        throw std::runtime_error("JSON error in '" + sourcePath.string() + "': active item starting_charge must be in 0..max_charge");
+    }
+    if (definition.combatCharge < 0 || definition.eliteCharge < 0 || definition.bossCharge < 0) {
+        throw std::runtime_error("JSON error in '" + sourcePath.string() + "': active item room charge values must not be negative");
     }
     if (definition.shopPrice < 0) {
         throw std::runtime_error("JSON error in '" + sourcePath.string() + "': active item shop_price must not be negative");

@@ -55,15 +55,20 @@ void StatusSystem::applyStatus(
         targetEntity.statuses.add(statusId, amount, source);
     }
 
-    state.log.add(
-        CombatLogEntryType::StatusApplied,
-        {
-            {"status", statusId},
-            {"amount", std::to_string(amount)},
-            {"target", targetEntity.definitionId.empty() ? std::to_string(target.value) : targetEntity.definitionId},
-            {"target_text_id", targetEntity.nameTextId.value}
-        }
-    );
+    CombatLogEntry::Variables logVariables{
+        {"status", statusId},
+        {"amount", std::to_string(amount)},
+        {"target", targetEntity.definitionId.empty() ? std::to_string(target.value) : targetEntity.definitionId},
+        {"target_text_id", targetEntity.nameTextId.value}
+    };
+    if (source.has_value() && state.hasEntity(*source)) {
+        const CombatEntity& sourceEntity = state.entity(*source);
+        logVariables["source"] = sourceEntity.definitionId.empty()
+            ? std::to_string(source->value)
+            : sourceEntity.definitionId;
+        logVariables["source_text_id"] = sourceEntity.nameTextId.value;
+    }
+    state.log.add(CombatLogEntryType::StatusApplied, std::move(logVariables));
 }
 
 void StatusSystem::removeExclusiveGroupStatuses(

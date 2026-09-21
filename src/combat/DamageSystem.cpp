@@ -3,7 +3,38 @@
 #include "combat/CombatState.hpp"
 
 #include <algorithm>
+#include <sstream>
 #include <string>
+
+namespace {
+void addEntityVariables(
+    CombatLogEntry::Variables& variables,
+    const CombatState& state,
+    const EntityId entityId,
+    const std::string& prefix
+) {
+    if (!state.hasEntity(entityId)) {
+        return;
+    }
+    const CombatEntity& entity = state.entity(entityId);
+    variables[prefix] = entity.definitionId.empty() ? std::to_string(entityId.value) : entity.definitionId;
+    variables[prefix + "_text_id"] = entity.nameTextId.value;
+}
+
+std::string modifierTrace(const ModifiedValue& modified) {
+    std::ostringstream output;
+    for (const ModifierBreakdownEntry& entry : modified.breakdown) {
+        if (entry.before == entry.after) {
+            continue;
+        }
+        if (output.tellp() > 0) {
+            output << "; ";
+        }
+        output << entry.description << " " << entry.before << "->" << entry.after;
+    }
+    return output.str();
+}
+}
 
 DamageSystem::DamageSystem(const ModifierSystem& modifierSystem, const GameEventBus* eventBus)
     : modifierSystem_(modifierSystem),
@@ -54,15 +85,17 @@ DamageResult DamageSystem::dealDamage(
         state.telemetry.damageBlockedByPlayers += result.blockedDamage;
     }
 
-    state.log.add(
-        CombatLogEntryType::DamageDealt,
-        {
-            {"raw", std::to_string(result.rawDamage)},
-            {"modified", std::to_string(result.modifiedDamage)},
-            {"blocked", std::to_string(result.blockedDamage)},
-            {"hp", std::to_string(result.hpDamage)}
-        }
-    );
+    CombatLogEntry::Variables logVariables{
+        {"raw", std::to_string(result.rawDamage)},
+        {"modified", std::to_string(result.modifiedDamage)},
+        {"blocked", std::to_string(result.blockedDamage)},
+        {"hp", std::to_string(result.hpDamage)},
+        {"card", cardId.value},
+        {"modifiers", modifierTrace(modified)}
+    };
+    addEntityVariables(logVariables, state, source, "source");
+    addEntityVariables(logVariables, state, target, "target");
+    state.log.add(CombatLogEntryType::DamageDealt, std::move(logVariables));
 
     if (eventBus_ != nullptr) {
         GameEvent dealt;
@@ -133,6 +166,7 @@ DamagePreview DamageSystem::previewDamage(
     preview.blockedMax = std::min(targetEntity.block, preview.modifiedMax);
     preview.hpDamageMin = std::max(0, preview.modifiedMin - preview.blockedMin);
     preview.hpDamageMax = std::max(0, preview.modifiedMax - preview.blockedMax);
+    preview.modifierLabels = modified.modifierDescriptions;
     return preview;
 }
 
@@ -171,5 +205,6 @@ DamagePreview DamageSystem::previewOutgoingDamage(
     preview.blockedMax = 0;
     preview.hpDamageMin = preview.modifiedMin;
     preview.hpDamageMax = preview.modifiedMax;
+    preview.modifierLabels = modified.modifierDescriptions;
     return preview;
 }

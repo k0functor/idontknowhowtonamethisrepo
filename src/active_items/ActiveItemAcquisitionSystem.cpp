@@ -1,5 +1,6 @@
 #include "ActiveItemAcquisitionSystem.hpp"
 
+#include <algorithm>
 #include <vector>
 
 namespace {
@@ -53,8 +54,9 @@ bool ActiveItemAcquisitionSystem::equipReplacement(
         return false;
     }
     const bool replaced = !run.activeItem.empty();
+    const ActiveItemDefinition& definition = items.get(itemId);
     run.activeItem.itemId = itemId.value;
-    run.activeItem.charge = 0;
+    run.activeItem.charge = std::clamp(definition.startingCharge, 0, definition.maxCharge);
     ++run.stats.activeItemsGained;
     if (replaced) {
         ++run.stats.activeItemsReplaced;

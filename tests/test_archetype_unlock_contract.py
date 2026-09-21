@@ -12,7 +12,7 @@ def read(path: str) -> str:
 def main() -> None:
     profile_manager = read("src/profile/ProfileManager.cpp")
     profile_save = read("src/profile/ProfileSaveSystem.cpp")
-    game_flow = read("src/flow/GameFlowController.cpp")
+    progression_service = read("src/flow/ProfileProgressionService.cpp")
 
     starter_block = profile_manager.split("starterArchetypeIds{", 1)[1].split("};", 1)[0]
     assert '"rusted_knight"' in starter_block
@@ -21,8 +21,8 @@ def main() -> None:
         "Sadist and Masochist must not be a starter archetype"
     )
 
-    assert 'run.currentFloorId == "floor3"' in game_flow
-    floor_three_block = game_flow.split('run.currentFloorId == "floor3"', 1)[1].split("}", 1)[0]
+    assert 'run.currentFloorId == "floor3"' in progression_service
+    floor_three_block = progression_service.split('run.currentFloorId == "floor3"', 1)[1].split("}", 1)[0]
     assert 'unlockArchetypeAndToast("sadist_masochist")' in floor_three_block
 
     achievements = json.loads(read("data/achievements/achievements.json"))
@@ -36,7 +36,7 @@ def main() -> None:
         assert archetypes["profile_hub.unlock_hint.sadist_masochist"]
         assert core["achievement.reward.furnace_heart_and_sadist_masochist"]
 
-    assert "profileSaveVersion = 8" in profile_save
+    assert "profileSaveVersion = 9" in profile_save
     assert "version < 8" in profile_save
     assert 'entry.contentId == "sadist_masochist"' in profile_save
     assert "clearedThirdFloor" in profile_save

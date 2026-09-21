@@ -1194,6 +1194,121 @@ RunCompletionType inferredCompletionType(const RunState& run) {
     return run.nextFloorId.empty() ? RunCompletionType::Victory : RunCompletionType::FloorCleared;
 }
 
+
+Json pacingToJson(const RunPacingState& pacing) {
+    Json rooms = Json::array();
+    for (const RunRoomTiming& room : pacing.completedRooms) {
+        rooms.push_back(Json{
+            {"floor_id", room.floorId},
+            {"floor_index", room.floorIndex},
+            {"node_id", room.nodeId},
+            {"node_type", nodeTypeToString(room.nodeType)},
+            {"active_seconds", room.activeSeconds}
+        });
+    }
+
+    Json floors = Json::array();
+    for (const RunFloorTiming& floor : pacing.completedFloors) {
+        floors.push_back(Json{
+            {"floor_id", floor.floorId},
+            {"floor_index", floor.floorIndex},
+            {"active_seconds", floor.activeSeconds},
+            {"rooms_completed", floor.roomsCompleted}
+        });
+    }
+
+    return Json{
+        {"active_seconds", pacing.activeSeconds},
+        {"map_seconds", pacing.mapSeconds},
+        {"combat_seconds", pacing.combatSeconds},
+        {"reward_seconds", pacing.rewardSeconds},
+        {"event_seconds", pacing.eventSeconds},
+        {"shop_seconds", pacing.shopSeconds},
+        {"rest_seconds", pacing.restSeconds},
+        {"chest_seconds", pacing.chestSeconds},
+        {"current_floor_seconds", pacing.currentFloorSeconds},
+        {"floor_start_nodes_completed", pacing.floorStartNodesCompleted},
+        {"floor_active", pacing.floorActive},
+        {"room_active", pacing.roomActive},
+        {"current_room_node_id", pacing.currentRoomNodeId},
+        {"current_room_type", nodeTypeToString(pacing.currentRoomType)},
+        {"current_room_seconds", pacing.currentRoomSeconds},
+        {"completed_rooms", std::move(rooms)},
+        {"completed_floors", std::move(floors)}
+    };
+}
+
+RunPacingState pacingFromJson(const Json& json, const std::filesystem::path& sourcePath) {
+    RunPacingState pacing;
+    pacing.activeSeconds = std::max(0.f, optionalFloat(json, "active_seconds", sourcePath, 0.f));
+    pacing.mapSeconds = std::max(0.f, optionalFloat(json, "map_seconds", sourcePath, 0.f));
+    pacing.combatSeconds = std::max(0.f, optionalFloat(json, "combat_seconds", sourcePath, 0.f));
+    pacing.rewardSeconds = std::max(0.f, optionalFloat(json, "reward_seconds", sourcePath, 0.f));
+    pacing.eventSeconds = std::max(0.f, optionalFloat(json, "event_seconds", sourcePath, 0.f));
+    pacing.shopSeconds = std::max(0.f, optionalFloat(json, "shop_seconds", sourcePath, 0.f));
+    pacing.restSeconds = std::max(0.f, optionalFloat(json, "rest_seconds", sourcePath, 0.f));
+    pacing.chestSeconds = std::max(0.f, optionalFloat(json, "chest_seconds", sourcePath, 0.f));
+    pacing.currentFloorSeconds = std::max(0.f, optionalFloat(json, "current_floor_seconds", sourcePath, 0.f));
+    pacing.floorStartNodesCompleted = std::max(0, optionalInt(json, "floor_start_nodes_completed", sourcePath, 0));
+    pacing.currentRoomNodeId = optionalInt(json, "current_room_node_id", sourcePath, -1);
+    pacing.currentRoomType = nodeTypeFromString(optionalString(json, "current_room_type", sourcePath, "combat"), sourcePath);
+    pacing.currentRoomSeconds = std::max(0.f, optionalFloat(json, "current_room_seconds", sourcePath, 0.f));
+
+    if (const Json* value = optionalField(json, "floor_active", sourcePath)) {
+        if (!value->is_boolean()) {
+            throwSaveError(sourcePath, "'floor_active' must be a boolean");
+        }
+        pacing.floorActive = value->get<bool>();
+    }
+    if (const Json* value = optionalField(json, "room_active", sourcePath)) {
+        if (!value->is_boolean()) {
+            throwSaveError(sourcePath, "'room_active' must be a boolean");
+        }
+        pacing.roomActive = value->get<bool>();
+    }
+
+    if (const Json* rooms = optionalField(json, "completed_rooms", sourcePath)) {
+        if (!rooms->is_array()) {
+            throwSaveError(sourcePath, "'completed_rooms' must be an array");
+        }
+        for (const Json& entry : *rooms) {
+            if (!entry.is_object()) {
+                throwSaveError(sourcePath, "'completed_rooms' entries must be objects");
+            }
+            pacing.completedRooms.push_back(RunRoomTiming{
+                optionalString(entry, "floor_id", sourcePath, ""),
+                optionalInt(entry, "floor_index", sourcePath, 0),
+                optionalInt(entry, "node_id", sourcePath, -1),
+                nodeTypeFromString(optionalString(entry, "node_type", sourcePath, "combat"), sourcePath),
+                std::max(0.f, optionalFloat(entry, "active_seconds", sourcePath, 0.f))
+            });
+        }
+    }
+
+    if (const Json* floors = optionalField(json, "completed_floors", sourcePath)) {
+        if (!floors->is_array()) {
+            throwSaveError(sourcePath, "'completed_floors' must be an array");
+        }
+        for (const Json& entry : *floors) {
+            if (!entry.is_object()) {
+                throwSaveError(sourcePath, "'completed_floors' entries must be objects");
+            }
+            pacing.completedFloors.push_back(RunFloorTiming{
+                optionalString(entry, "floor_id", sourcePath, ""),
+                optionalInt(entry, "floor_index", sourcePath, 0),
+                std::max(0.f, optionalFloat(entry, "active_seconds", sourcePath, 0.f)),
+                std::max(0, optionalInt(entry, "rooms_completed", sourcePath, 0))
+            });
+        }
+    }
+
+    if (!pacing.roomActive) {
+        pacing.currentRoomNodeId = -1;
+        pacing.currentRoomSeconds = 0.f;
+    }
+    return pacing;
+}
+
 Json statsToJson(const RunStats& stats) {
     return Json{
         {"combats_won", stats.combatsWon},
@@ -1316,6 +1431,7 @@ Json RunStateSerializer::toJson(const RunState& run) {
         {"actor_states", actorStatesToJson(normalized.actorStates)},
         {"map", mapToJson(normalized.map)},
         {"stats", statsToJson(normalized.stats)},
+        {"pacing", pacingToJson(normalized.pacing)},
         {"pending_room", pendingRoomToJson(normalized.pendingRoom)}
     };
 }
@@ -1419,6 +1535,15 @@ RunState RunStateSerializer::fromJson(const Json& json, const std::filesystem::p
     run.map = mapFromJson(requiredField(json, "map", sourcePath), sourcePath);
     if (const Json* stats = optionalField(json, "stats", sourcePath)) {
         run.stats = statsFromJson(*stats, sourcePath);
+    }
+
+    if (const Json* pacing = optionalField(json, "pacing", sourcePath)) {
+        if (!pacing->is_object()) {
+            throwSaveError(sourcePath, "'pacing' must be an object");
+        }
+        run.pacing = pacingFromJson(*pacing, sourcePath);
+    } else {
+        run.pacing.floorStartNodesCompleted = run.stats.nodesCompleted;
     }
 
     if (const Json* pendingRoom = optionalField(json, "pending_room", sourcePath)) {

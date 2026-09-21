@@ -1,4 +1,5 @@
 #include "CombatScene.hpp"
+#include "CombatSceneLayout.hpp"
 #include "ui/VirtualViewport.hpp"
 
 #include "cards/CardDefinition.hpp"
@@ -422,7 +423,7 @@ void CombatScene::updateCombatItemInspectInput(const Vector2 mousePosition) {
         }
     }
 
-    const Rectangle modal = combatItemInspectModalBounds();
+    const Rectangle modal = CombatSceneLayout::combatItemInspectModalBounds();
 
     if (IsKeyPressed(KEY_ESCAPE)) {
         closeCombatItemInspect();
@@ -440,17 +441,17 @@ void CombatScene::updateCombatItemInspectInput(const Vector2 mousePosition) {
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (BasicUi::contains(combatItemInspectCloseButtonBounds(modal), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::combatItemInspectCloseButtonBounds(modal), mousePosition)) {
             closeCombatItemInspect();
             return;
         }
 
-        if (BasicUi::contains(combatItemInspectPreviousButtonBounds(modal), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::combatItemInspectPreviousButtonBounds(modal), mousePosition)) {
             inspectPreviousItem();
             return;
         }
 
-        if (BasicUi::contains(combatItemInspectNextButtonBounds(modal), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::combatItemInspectNextButtonBounds(modal), mousePosition)) {
             inspectNextItem();
             return;
         }
@@ -506,7 +507,7 @@ void CombatScene::renderCombatItemInspectModal() const {
         }
     }
 
-    const Rectangle modal = combatItemInspectModalBounds();
+    const Rectangle modal = CombatSceneLayout::combatItemInspectModalBounds();
     const Vector2 mouse = GetMousePosition();
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 145});
@@ -521,11 +522,11 @@ void CombatScene::renderCombatItemInspectModal() const {
     };
     inspectPanelView_.render(uiFont_, panel, panelBounds);
 
-    const Rectangle previous = combatItemInspectPreviousButtonBounds(modal);
-    const Rectangle next = combatItemInspectNextButtonBounds(modal);
+    const Rectangle previous = CombatSceneLayout::combatItemInspectPreviousButtonBounds(modal);
+    const Rectangle next = CombatSceneLayout::combatItemInspectNextButtonBounds(modal);
     BasicUi::drawButton(uiFont_, previous, "<", mouse);
     BasicUi::drawButton(uiFont_, next, ">", mouse);
-    BasicUi::drawButton(uiFont_, combatItemInspectCloseButtonBounds(modal), localizedOrFallback(TextId("ui.close"), "Close"), mouse);
+    BasicUi::drawButton(uiFont_, CombatSceneLayout::combatItemInspectCloseButtonBounds(modal), localizedOrFallback(TextId("ui.close"), "Close"), mouse);
 
     const std::string counter = itemCount > 0
         ? std::to_string(itemIndex + 1) + "/" + std::to_string(itemCount)
@@ -537,31 +538,6 @@ void CombatScene::renderCombatItemInspectModal() const {
         16.f,
         Color{185, 190, 205, 255}
     );
-}
-
-Rectangle CombatScene::combatItemInspectModalBounds() const {
-    const float screenWidth = static_cast<float>(VirtualViewport::width());
-    const float screenHeight = static_cast<float>(VirtualViewport::height());
-    const float width = std::min(620.f, screenWidth - 80.f);
-    const float height = std::min(560.f, screenHeight - 80.f);
-    return Rectangle{
-        (screenWidth - width) * 0.5f,
-        (screenHeight - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle CombatScene::combatItemInspectCloseButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width - 136.f, modal.y + modal.height - 58.f, 112.f, 40.f};
-}
-
-Rectangle CombatScene::combatItemInspectPreviousButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 24.f, modal.y + modal.height - 58.f, 52.f, 40.f};
-}
-
-Rectangle CombatScene::combatItemInspectNextButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 86.f, modal.y + modal.height - 58.f, 52.f, 40.f};
 }
 
 void CombatScene::inspectPreviousItem() {
@@ -722,7 +698,7 @@ void CombatScene::updateConsumableConfirmationInput(const Vector2 mousePosition)
         return;
     }
 
-    const Rectangle modal = consumableConfirmationBounds();
+    const Rectangle modal = CombatSceneLayout::consumableConfirmationBounds();
 
     if (IsKeyPressed(KEY_ESCAPE)) {
         cancelConsumableConfirmation();
@@ -738,12 +714,12 @@ void CombatScene::updateConsumableConfirmationInput(const Vector2 mousePosition)
         return;
     }
 
-    if (BasicUi::contains(consumableConfirmButtonBounds(modal), mousePosition)) {
+    if (BasicUi::contains(CombatSceneLayout::consumableConfirmButtonBounds(modal), mousePosition)) {
         confirmConsumableUse();
         return;
     }
 
-    if (BasicUi::contains(consumableCancelButtonBounds(modal), mousePosition) ||
+    if (BasicUi::contains(CombatSceneLayout::consumableCancelButtonBounds(modal), mousePosition) ||
         !BasicUi::contains(modal, mousePosition)) {
         cancelConsumableConfirmation();
         return;
@@ -793,7 +769,7 @@ void CombatScene::renderConsumableConfirmationModal() const {
     }
 
     const Vector2 mouse = GetMousePosition();
-    const Rectangle modal = consumableConfirmationBounds();
+    const Rectangle modal = CombatSceneLayout::consumableConfirmationBounds();
     DrawRectangleRounded(modal, 0.045f, 14, Color{28, 30, 40, 250});
     DrawRectangleRoundedLinesEx(modal, 0.045f, 14, 3.f, Color{238, 196, 86, 255});
 
@@ -835,14 +811,14 @@ void CombatScene::renderConsumableConfirmationModal() const {
 
     BasicUi::drawButton(
         uiFont_,
-        consumableCancelButtonBounds(modal),
+        CombatSceneLayout::consumableCancelButtonBounds(modal),
         localizedOrFallback(TextId("ui.cancel"), "Cancel"),
         mouse
     );
 
     BasicUi::drawButton(
         uiFont_,
-        consumableConfirmButtonBounds(modal),
+        CombatSceneLayout::consumableConfirmButtonBounds(modal),
         consumableRequiresTarget(index)
             ? localizedOrFallback(TextId("consumable.confirm.choose_target"), "Choose target")
             : localizedOrFallback(TextId("ui.confirm"), "Confirm"),
@@ -921,25 +897,6 @@ std::optional<EntityId> CombatScene::previewTargetForConsumable(const std::size_
     }
 
     return std::nullopt;
-}
-
-Rectangle CombatScene::consumableConfirmationBounds() const {
-    const float width = std::min(560.f, static_cast<float>(VirtualViewport::width()) - 72.f);
-    const float height = 340.f;
-    return Rectangle{
-        static_cast<float>(VirtualViewport::width()) * 0.5f - width * 0.5f,
-        static_cast<float>(VirtualViewport::height()) * 0.5f - height * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle CombatScene::consumableConfirmButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width * 0.5f + 18.f, modal.y + modal.height - 70.f, 190.f, 48.f};
-}
-
-Rectangle CombatScene::consumableCancelButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width * 0.5f - 208.f, modal.y + modal.height - 70.f, 190.f, 48.f};
 }
 
 

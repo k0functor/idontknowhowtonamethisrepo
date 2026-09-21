@@ -19,6 +19,14 @@ int totalCurrentHp(const RunState& state) {
     return total;
 }
 
+int totalMissingHp(const RunState& state) {
+    int total = 0;
+    for (const RunActorState& actor : state.actorStates) {
+        total += std::max(0, actor.maxHp - actor.currentHp);
+    }
+    return total;
+}
+
 int maximumCurrentStress(const RunState& state) {
     int maximum = 0;
     for (const RunActorState& actor : state.actorStates) {
@@ -71,12 +79,51 @@ RunEventChoiceAvailability evaluateRunEventChoiceRequirements(
         });
     }
 
-    if (requirements.minDeckSize > 0 && static_cast<int>(state.deckCardIds.size()) < requirements.minDeckSize) {
+    const int deckSize = static_cast<int>(state.deckCardIds.size());
+    if (requirements.minDeckSize > 0 && deckSize < requirements.minDeckSize) {
         result.reasons.push_back(RunEventChoiceBlockReason{
             RunEventChoiceBlockReasonType::NotEnoughCards,
             requirements.minDeckSize,
-            static_cast<int>(state.deckCardIds.size()),
+            deckSize,
             {}
+        });
+    }
+    if (requirements.maxDeckSize > 0 && deckSize > requirements.maxDeckSize) {
+        result.reasons.push_back(RunEventChoiceBlockReason{
+            RunEventChoiceBlockReasonType::TooManyCards,
+            requirements.maxDeckSize,
+            deckSize,
+            {}
+        });
+    }
+
+    const int missingHp = totalMissingHp(state);
+    if (requirements.minMissingHp > 0 && missingHp < requirements.minMissingHp) {
+        result.reasons.push_back(RunEventChoiceBlockReason{
+            RunEventChoiceBlockReasonType::NotWoundedEnough,
+            requirements.minMissingHp,
+            missingHp,
+            {}
+        });
+    }
+
+    const int upgradedCards = static_cast<int>(state.upgradedDeckIndices.size());
+    if (requirements.minUpgradedCards > 0 && upgradedCards < requirements.minUpgradedCards) {
+        result.reasons.push_back(RunEventChoiceBlockReason{
+            RunEventChoiceBlockReasonType::NotEnoughUpgradedCards,
+            requirements.minUpgradedCards,
+            upgradedCards,
+            {}
+        });
+    }
+
+    if (!requirements.requiredMechanicId.empty() &&
+        state.archetypeMechanicId != requirements.requiredMechanicId) {
+        result.reasons.push_back(RunEventChoiceBlockReason{
+            RunEventChoiceBlockReasonType::WrongRunMechanic,
+            0,
+            0,
+            requirements.requiredMechanicId
         });
     }
 

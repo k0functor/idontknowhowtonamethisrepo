@@ -12,19 +12,23 @@ def fail(message: str) -> None:
 items = json.loads((ROOT / "data" / "active_items" / "foundation_items.json").read_text(encoding="utf-8"))
 by_id = {item.get("id"): item for item in items}
 expected = {
-    "hourglass": ("skip_enemy_turn", {"combat"}, 5),
-    "alchemist_flask": ("create_consumable", {"map", "reward", "shop", "chest", "event", "rest"}, 3),
-    "compass": ("reroll_map_choices", {"map"}, 4),
-    "mirror": ("copy_card", {"reward", "shop"}, 5),
+    "hourglass": ("skip_enemy_turn", {"combat"}, 6, 5, 2),
+    "alchemist_flask": ("create_consumable", {"map", "reward", "shop", "chest", "event", "rest"}, 4, 2, 1),
+    "compass": ("reroll_map_choices", {"map"}, 5, 3, 1),
+    "mirror": ("copy_card", {"reward", "shop"}, 6, 4, 1),
 }
-for item_id, (effect, contexts, charge) in expected.items():
+for item_id, (effect, contexts, maximum, cost, starting) in expected.items():
     item = by_id.get(item_id)
     if item is None:
         fail(f"missing {item_id}")
     if set(item.get("use_contexts", [])) != contexts:
         fail(f"{item_id} has wrong use contexts")
-    if item.get("max_charge") != charge or item.get("charge_cost") != charge:
-        fail(f"{item_id} must consume a full charge")
+    if item.get("max_charge") != maximum or item.get("charge_cost") != cost:
+        fail(f"{item_id} has wrong charge capacity or use cost")
+    if item.get("starting_charge") != starting:
+        fail(f"{item_id} has wrong starting charge")
+    if cost >= maximum:
+        fail(f"{item_id} must support banking charge above one use threshold")
     effects = item.get("effects", [])
     if len(effects) != 1 or effects[0].get("type") != effect:
         fail(f"{item_id} has wrong effect")

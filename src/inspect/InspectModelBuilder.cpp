@@ -802,6 +802,34 @@ std::string InspectModelBuilder::relicTriggerSummary(const RelicTriggerDefinitio
         );
     }
 
+    if (trigger.previousCardType.has_value()) {
+        out << ", " << formatRawText(
+            "inspect.relic.previous_card_type_filter",
+            {{"type", rawTextOrFallback("card.type." + toString(*trigger.previousCardType), toString(*trigger.previousCardType))}}
+        );
+    }
+
+    if (trigger.cardNumberThisTurn > 0) {
+        out << ", " << formatRawText(
+            "inspect.relic.card_number_this_turn",
+            {{"count", std::to_string(trigger.cardNumberThisTurn)}}
+        );
+    }
+
+    if (trigger.ownerStatusId.has_value()) {
+        out << ", " << formatRawText(
+            "inspect.relic.owner_status_filter",
+            {{"status", rawTextOrFallback("status." + *trigger.ownerStatusId + ".name", *trigger.ownerStatusId)}}
+        );
+    }
+
+    if (trigger.minimumDrones > 0) {
+        out << ", " << formatRawText(
+            "inspect.relic.min_drones",
+            {{"count", std::to_string(trigger.minimumDrones)}}
+        );
+    }
+
     if (trigger.minimumAmount > 0) {
         out << ", " << formatRawText(
             "inspect.relic.min_amount",

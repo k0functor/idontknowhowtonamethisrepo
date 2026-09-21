@@ -63,6 +63,17 @@ float fittedFontSize(
 }
 }
 
+ButtonStyle buttonStyle(const UiTheme::Tone tone) {
+    return ButtonStyle{
+        UiTheme::toneFill(tone),
+        UiTheme::toneHoverFill(tone),
+        UiTheme::toneFill(UiTheme::Tone::Disabled),
+        UiTheme::toneBorder(tone),
+        UiTheme::toneText(tone),
+        UiTheme::toneText(UiTheme::Tone::Disabled)
+    };
+}
+
 void drawText(
     const UiFont& font,
     const std::string& text,
@@ -141,6 +152,73 @@ bool contains(const Rectangle bounds, const Vector2 point) {
         point.y <= bounds.y + bounds.height;
 }
 
+void drawPanel(
+    const Rectangle bounds,
+    const bool raised,
+    const UiTheme::Tone tone,
+    const float roundness
+) {
+    const Color fill = tone == UiTheme::Tone::Neutral
+        ? (raised ? UiTheme::panelRaised : UiTheme::panel)
+        : UiTheme::toneFill(tone);
+    const Color panelBorder = tone == UiTheme::Tone::Neutral
+        ? UiTheme::border
+        : UiTheme::toneBorder(tone);
+
+    DrawRectangleRounded(bounds, roundness, 10, fill);
+    DrawRectangleRoundedLinesEx(bounds, roundness, 10, UiTheme::borderThickness, panelBorder);
+}
+
+void drawChip(
+    const UiFont& font,
+    const Rectangle bounds,
+    const std::string& label,
+    const UiTheme::Tone tone,
+    const float fontSize
+) {
+    DrawRectangleRounded(bounds, UiTheme::chipRoundness, 8, UiTheme::toneFill(tone));
+    DrawRectangleRoundedLinesEx(bounds, UiTheme::chipRoundness, 8, 1.5f, UiTheme::toneBorder(tone));
+    drawCenteredTextFitted(
+        font,
+        label,
+        Rectangle{bounds.x + 7.f, bounds.y, std::max(1.f, bounds.width - 14.f), bounds.height},
+        fontSize,
+        std::max(10.f, fontSize - 3.f),
+        UiTheme::toneText(tone)
+    );
+}
+
+void drawProgressBar(
+    const Rectangle bounds,
+    const float ratio,
+    const UiTheme::Tone tone,
+    const bool showMarkers
+) {
+    const float clamped = std::clamp(ratio, 0.f, 1.f);
+    DrawRectangleRounded(bounds, 0.45f, 8, UiTheme::panelInset);
+    if (clamped > 0.f) {
+        DrawRectangleRounded(
+            Rectangle{bounds.x, bounds.y, bounds.width * clamped, bounds.height},
+            0.45f,
+            8,
+            UiTheme::toneBorder(tone)
+        );
+    }
+    DrawRectangleRoundedLinesEx(bounds, 0.45f, 8, 1.f, UiTheme::borderSoft);
+
+    if (showMarkers) {
+        for (const float marker : {0.2f, 0.4f, 0.6f, 0.8f}) {
+            const float x = bounds.x + bounds.width * marker;
+            DrawLineEx(
+                Vector2{x, bounds.y + 1.f},
+                Vector2{x, bounds.y + bounds.height - 1.f},
+                1.f,
+                UiTheme::withAlpha(UiTheme::textPrimary, 0.55f)
+            );
+        }
+    }
+}
+
 bool drawButton(
     const UiFont& font,
     const Rectangle bounds,
@@ -155,8 +233,8 @@ bool drawButton(
         : (hovered ? style.hoveredBackground : style.background);
     const Color textColor = enabled ? style.text : style.disabledText;
 
-    DrawRectangleRounded(bounds, 0.18f, 8, fill);
-    DrawRectangleRoundedLinesEx(bounds, 0.18f, 8, 2.f, style.border);
+    DrawRectangleRounded(bounds, UiTheme::controlRoundness, 8, fill);
+    DrawRectangleRoundedLinesEx(bounds, UiTheme::controlRoundness, 8, UiTheme::borderThickness, style.border);
     drawCenteredTextFitted(font, label, Rectangle{bounds.x + 10.f, bounds.y, bounds.width - 20.f, bounds.height}, 27.f, 18.f, textColor);
 
     return enabled && hovered && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);

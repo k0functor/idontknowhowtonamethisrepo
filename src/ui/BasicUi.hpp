@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui/UiFont.hpp"
+#include "ui/UiTheme.hpp"
 
 #include <raylib.h>
 
@@ -9,13 +10,15 @@
 
 namespace BasicUi {
 struct ButtonStyle {
-    Color background{45, 48, 58, 255};
-    Color hoveredBackground{68, 72, 86, 255};
-    Color disabledBackground{35, 36, 42, 255};
-    Color border{130, 136, 160, 255};
-    Color text{235, 235, 242, 255};
-    Color disabledText{120, 124, 140, 255};
+    Color background{UiTheme::toneFill(UiTheme::Tone::Neutral)};
+    Color hoveredBackground{UiTheme::toneHoverFill(UiTheme::Tone::Neutral)};
+    Color disabledBackground{UiTheme::toneFill(UiTheme::Tone::Disabled)};
+    Color border{UiTheme::toneBorder(UiTheme::Tone::Neutral)};
+    Color text{UiTheme::toneText(UiTheme::Tone::Neutral)};
+    Color disabledText{UiTheme::toneText(UiTheme::Tone::Disabled)};
 };
+
+ButtonStyle buttonStyle(UiTheme::Tone tone);
 
 void drawText(
     const UiFont& font,
@@ -59,6 +62,28 @@ float measureTextWidth(
 );
 
 bool contains(Rectangle bounds, Vector2 point);
+
+void drawPanel(
+    Rectangle bounds,
+    bool raised = false,
+    UiTheme::Tone tone = UiTheme::Tone::Neutral,
+    float roundness = UiTheme::panelRoundness
+);
+
+void drawChip(
+    const UiFont& font,
+    Rectangle bounds,
+    const std::string& label,
+    UiTheme::Tone tone = UiTheme::Tone::Neutral,
+    float fontSize = 13.f
+);
+
+void drawProgressBar(
+    Rectangle bounds,
+    float ratio,
+    UiTheme::Tone tone,
+    bool showMarkers = false
+);
 
 bool drawButton(
     const UiFont& font,

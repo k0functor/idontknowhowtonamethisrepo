@@ -1,4 +1,5 @@
 #include "CombatScene.hpp"
+#include "CombatSceneLayout.hpp"
 #include "ui/VirtualViewport.hpp"
 
 #include "active_items/ActiveItemId.hpp"
@@ -17,6 +18,7 @@
 #include "run/RunMapNode.hpp"
 #include "run/SadistMasochistRules.hpp"
 #include "run/StressRules.hpp"
+#include "run/StressPsychopathRules.hpp"
 #include "statuses/StatusDefinition.hpp"
 #include "ui/BasicUi.hpp"
 #include "ui/CardViewModelFactory.hpp"
@@ -218,6 +220,8 @@ CombatScene::CombatScene(
     const UiFont& uiFont,
     RunState& runState,
     std::function<void(std::string)> onActiveItemUsed,
+    std::function<bool(const std::string&)> isOnboardingHintSeen,
+    std::function<void(std::string)> onOnboardingHintSeen,
     std::function<void(const CombatResult&)> onCombatWon,
     std::function<void(const CombatResult&)> onCombatLost
 )
@@ -300,7 +304,8 @@ CombatScene::CombatScene(
           content_.enemies(),
           cardViewModelBuilder_
       ),
-      inspectModelBuilder_(content_, localization_) {
+      inspectModelBuilder_(content_, localization_),
+      onboardingHints_(localization_, std::move(isOnboardingHintSeen), std::move(onOnboardingHintSeen)) {
     relicSystem_.setRelics(runState_);
     eventBus_.subscribe([this](const GameEvent& event) {
         relicSystem_.handleEvent(state_, event, effectSystem_, random_);
@@ -350,6 +355,11 @@ void CombatScene::update(const float deltaSeconds) {
     updateGroupImpactAnimations(deltaSeconds);
     updateEnemyDeathAnimations(deltaSeconds);
     sanitizeTargetSelection();
+    const bool onboardingTargetChoice = selectedCardId_.has_value() &&
+        state_.hand.contains(*selectedCardId_) && targetCandidatesForCard(*selectedCardId_).size() > 1u;
+    if (onboardingHints_.update(deltaSeconds, state_, combatFinished_, onboardingTargetChoice)) {
+        viewModelDirty_ = true;
+    }
 
     const bool wasResolvingEndTurn = pendingEndTurnResolution_;
     if (pendingEndTurnResolution_ && playedCardAnimations_.empty()) {
@@ -567,15 +577,15 @@ void CombatScene::update(const float deltaSeconds) {
     }
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (BasicUi::contains(drawPileButtonBounds(), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::drawPileButtonBounds(), mousePosition)) {
             openPileOverlay(PileOverlayMode::DrawPile);
             return;
         }
-        if (BasicUi::contains(discardPileButtonBounds(), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::discardPileButtonBounds(), mousePosition)) {
             openPileOverlay(PileOverlayMode::DiscardPile);
             return;
         }
-        if (BasicUi::contains(exhaustPileButtonBounds(), mousePosition)) {
+        if (BasicUi::contains(CombatSceneLayout::exhaustPileButtonBounds(), mousePosition)) {
             openPileOverlay(PileOverlayMode::ExhaustPile);
             return;
         }
@@ -829,7 +839,12 @@ bool CombatScene::handleDebugCommand(const std::vector<std::string>& tokens, std
         }
 
         CombatEntity& entity = state_.entity(*target);
-        const StressRules::StressAdjustmentResult result = StressRules::applyDelta(entity, amount, &random_);
+        const StressRules::StressAdjustmentResult result = StressRules::applyDelta(
+            entity,
+            amount,
+            &random_,
+            StressPsychopathRules::appliesTo(entity.definitionId)
+        );
         if (entity.type == EntityType::Player && result.collapsed) {
             entity.health.setCurrent(0);
             combatController_.updateAfterAction(state_);
@@ -1031,6 +1046,8 @@ void CombatScene::rebuildViewModel(const std::optional<EntityId> previewTarget) 
             model.handCards.end()
         );
     }
+
+    model.keyboardHintLabel = onboardingHints_.text();
 
     if (isSadistMasochistParty()) {
         model.turnOrderLabel = localization_.get(TextId("ui.turn_order.sadist_masochist_sequence"));
@@ -1403,7 +1420,7 @@ void CombatScene::playSelectedCardOn(const EntityId target) {
         const std::optional<Vector2> currentCenter = view_.cardCenter(playedCardId);
         pendingAnimation = PlayedCardAnimation{
             std::move(model),
-            currentCenter.value_or(Vector2{playedCardCenterPosition().x, static_cast<float>(VirtualViewport::height()) - 150.f}),
+            currentCenter.value_or(Vector2{CombatSceneLayout::playedCardCenterPosition().x, static_cast<float>(VirtualViewport::height()) - 150.f}),
             CardFlightAnimationKind::PlayedToDiscard,
             !playedCardAnimations_.empty(),
             0.f
@@ -1492,34 +1509,14 @@ void CombatScene::updatePlayedCardAnimations(const float deltaSeconds) {
     }
 }
 
-Vector2 CombatScene::playedCardCenterPosition() const {
-    return Vector2{
-        static_cast<float>(VirtualViewport::width()) * 0.5f,
-        static_cast<float>(VirtualViewport::height()) * 0.47f
-    };
-}
-
-Vector2 CombatScene::discardPileCenterPosition() const {
-    return rectangleCenter(discardPileButtonBounds());
-}
-
-Vector2 CombatScene::playedCardQueuePosition(const std::size_t queueIndex) const {
-    const Vector2 center = playedCardCenterPosition();
-    const float offset = static_cast<float>(queueIndex - 1u);
-    return Vector2{
-        center.x - 250.f - offset * 42.f,
-        center.y + 18.f + offset * 20.f
-    };
-}
-
 CardTransform CombatScene::playedCardAnimationTransform(const PlayedCardAnimation& animation) const {
     constexpr float flyToCenterDuration = 0.192f;
     constexpr float holdDuration = 0.112f;
     constexpr float flyToDiscardDuration = 0.384f;
 
-    const Vector2 center = playedCardCenterPosition();
-    const Vector2 source = animation.waitedInQueue ? playedCardQueuePosition(1u) : animation.sourcePosition;
-    const Vector2 discard = discardPileCenterPosition();
+    const Vector2 center = CombatSceneLayout::playedCardCenterPosition();
+    const Vector2 source = animation.waitedInQueue ? CombatSceneLayout::playedCardQueuePosition(1u) : animation.sourcePosition;
+    const Vector2 discard = CombatSceneLayout::discardPileCenterPosition();
     const float baseScale = CardVisualInstance::standardScale();
 
     CardTransform transform;
@@ -1555,7 +1552,7 @@ CardTransform CombatScene::handDiscardAnimationTransform(const PlayedCardAnimati
     const float duration = animation.durationSeconds > 0.f ? animation.durationSeconds : 0.42f;
     const float t = smoothStep(animation.elapsedSeconds / duration);
     const float baseScale = CardVisualInstance::standardScale();
-    const Vector2 discard = discardPileCenterPosition();
+    const Vector2 discard = CombatSceneLayout::discardPileCenterPosition();
     const Vector2 midpoint = lerpVector(animation.sourcePosition, discard, 0.5f);
     const float arcHeight = animation.discardArcHeight > 0.f ? animation.discardArcHeight : 118.f;
     const Vector2 control{
@@ -1601,7 +1598,7 @@ void CombatScene::renderPlayedCardAnimations() const {
         const float queueDepth = static_cast<float>(i - 1u);
         const float scale = CardVisualInstance::standardScale() * std::max(0.58f, 0.78f - queueDepth * 0.06f);
         const CardTransform transform{
-            playedCardQueuePosition(i),
+            CombatSceneLayout::playedCardQueuePosition(i),
             Vector2{scale, scale},
             -5.f,
             8500 - static_cast<int>(i)
@@ -1653,7 +1650,7 @@ void CombatScene::enqueueEndTurnDiscardAnimations() {
         const std::optional<Vector2> currentCenter = view_.cardCenter(card.instanceId);
         PlayedCardAnimation animation{
             std::move(model),
-            currentCenter.value_or(Vector2{playedCardCenterPosition().x, static_cast<float>(VirtualViewport::height()) - 150.f}),
+            currentCenter.value_or(Vector2{CombatSceneLayout::playedCardCenterPosition().x, static_cast<float>(VirtualViewport::height()) - 150.f}),
             CardFlightAnimationKind::HandToDiscard,
             false,
             0.f,
@@ -2298,17 +2295,7 @@ Rectangle CombatScene::feedbackTargetBounds(const EntityId targetId) const {
         }
     }
 
-    return Rectangle{
-        static_cast<float>(VirtualViewport::width()) * 0.5f - 80.f,
-        static_cast<float>(VirtualViewport::height()) * 0.5f - 60.f,
-        160.f,
-        120.f
-    };
-}
-
-Vector2 CombatScene::feedbackAnchor(const EntityId targetId) const {
-    const Rectangle bounds = feedbackTargetBounds(targetId);
-    return Vector2{bounds.x + bounds.width * 0.5f, bounds.y + bounds.height * 0.18f};
+    return CombatSceneLayout::fallbackFeedbackTargetBounds();
 }
 
 void CombatScene::renderCombatFeedbackAnimations() const {
@@ -2340,7 +2327,7 @@ void CombatScene::renderCombatFeedbackAnimations() const {
         const float opacity = progress < fadeStart
             ? 1.f
             : 1.f - smoothStep((progress - fadeStart) / (1.f - fadeStart));
-        const Vector2 anchor = feedbackAnchor(feedback.targetId);
+        const Vector2 anchor = CombatSceneLayout::feedbackAnchor(feedbackTargetBounds(feedback.targetId));
         const float yOffset = -28.f - 62.f * smoothStep(progress);
         const float xOffset = std::sin(feedback.elapsedSeconds * 7.4f) * 8.f;
         const float fontSize = feedback.kind == CombatFeedbackKind::Damage ? 30.f : 24.f;

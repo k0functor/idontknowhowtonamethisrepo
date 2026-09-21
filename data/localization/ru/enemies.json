@@ -372,5 +372,21 @@
   "inspect.enemy.intent_detail": "Подробности",
   "inspect.enemy.no_details.description": "У этого врага сейчас нет видимых намерений или статусов.",
   "inspect.enemy.no_details.name": "Нет видимых эффектов",
-  "inspect.enemy.normal.name": "Обычный враг"
+  "inspect.enemy.normal.name": "Обычный враг",
+  "enemy.the_last_regent.name": "Последний регент",
+  "enemy.action.the_last_regent_scepter_sentence.name": "Приговор скипетра",
+  "enemy.action.the_last_regent_empty_decree.name": "Пустой указ",
+  "enemy.action.the_last_regent_crown_tithe.name": "Королевская десятина",
+  "enemy.action.the_last_regent_claim_the_throne.name": "Занять трон",
+  "enemy.phase.the_last_regent.vacant_throne": "Пустующий трон",
+  "enemy.phase.the_last_regent.seized_crown": "Захваченная корона",
+  "enemy.phase.the_last_regent.no_successor": "Нет наследника",
+  "enemy.choir_of_chains.name": "Хор цепей",
+  "enemy.action.choir_of_chains_iron_refrain.name": "Железный рефрен",
+  "enemy.action.choir_of_chains_count_the_breaths.name": "Считать вдохи",
+  "enemy.action.choir_of_chains_bind_the_hand.name": "Связать руку",
+  "enemy.action.choir_of_chains_hold_the_note.name": "Держать ноту",
+  "enemy.phase.choir_of_chains.measured_hymn": "Размеренный гимн",
+  "enemy.phase.choir_of_chains.iron_refrain": "Железный рефрен",
+  "enemy.phase.choir_of_chains.final_cadence": "Последняя каденция"
 }

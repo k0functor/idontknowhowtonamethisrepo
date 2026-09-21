@@ -3,7 +3,7 @@
     "id": "field_kit",
     "name": "active_item.field_kit.name",
     "description": "active_item.field_kit.description",
-    "max_charge": 3,
+    "max_charge": 5,
     "charge_cost": 3,
     "use_contexts": [
       "map",
@@ -21,13 +21,17 @@
     ],
     "shop_price": 140,
     "reward_eligible": true,
-    "shop_eligible": true
+    "shop_eligible": true,
+    "starting_charge": 1,
+    "combat_charge": 1,
+    "elite_charge": 2,
+    "boss_charge": 3
   },
   {
     "id": "reroll_die",
     "name": "active_item.reroll_die.name",
     "description": "active_item.reroll_die.description",
-    "max_charge": 4,
+    "max_charge": 6,
     "charge_cost": 4,
     "use_contexts": [
       "reward",
@@ -42,13 +46,17 @@
     ],
     "shop_price": 180,
     "reward_eligible": true,
-    "shop_eligible": true
+    "shop_eligible": true,
+    "starting_charge": 1,
+    "combat_charge": 1,
+    "elite_charge": 2,
+    "boss_charge": 3
   },
   {
     "id": "hourglass",
     "name": "active_item.hourglass.name",
     "description": "active_item.hourglass.description",
-    "max_charge": 5,
+    "max_charge": 6,
     "charge_cost": 5,
     "use_contexts": [
       "combat"
@@ -61,14 +69,18 @@
     ],
     "shop_price": 190,
     "reward_eligible": true,
-    "shop_eligible": true
+    "shop_eligible": true,
+    "starting_charge": 2,
+    "combat_charge": 1,
+    "elite_charge": 2,
+    "boss_charge": 3
   },
   {
     "id": "alchemist_flask",
     "name": "active_item.alchemist_flask.name",
     "description": "active_item.alchemist_flask.description",
-    "max_charge": 3,
-    "charge_cost": 3,
+    "max_charge": 4,
+    "charge_cost": 2,
     "use_contexts": [
       "map",
       "reward",
@@ -85,14 +97,18 @@
     ],
     "shop_price": 150,
     "reward_eligible": true,
-    "shop_eligible": true
+    "shop_eligible": true,
+    "starting_charge": 1,
+    "combat_charge": 1,
+    "elite_charge": 2,
+    "boss_charge": 3
   },
   {
     "id": "compass",
     "name": "active_item.compass.name",
     "description": "active_item.compass.description",
-    "max_charge": 4,
-    "charge_cost": 4,
+    "max_charge": 5,
+    "charge_cost": 3,
     "use_contexts": [
       "map"
     ],
@@ -104,14 +120,18 @@
     ],
     "shop_price": 165,
     "reward_eligible": true,
-    "shop_eligible": true
+    "shop_eligible": true,
+    "starting_charge": 1,
+    "combat_charge": 1,
+    "elite_charge": 2,
+    "boss_charge": 3
   },
   {
     "id": "mirror",
     "name": "active_item.mirror.name",
     "description": "active_item.mirror.description",
-    "max_charge": 5,
-    "charge_cost": 5,
+    "max_charge": 6,
+    "charge_cost": 4,
     "use_contexts": [
       "reward",
       "shop"
@@ -124,14 +144,18 @@
     ],
     "shop_price": 210,
     "reward_eligible": true,
-    "shop_eligible": true
+    "shop_eligible": true,
+    "starting_charge": 1,
+    "combat_charge": 1,
+    "elite_charge": 2,
+    "boss_charge": 3
   },
   {
     "id": "grounding_chime",
     "name": "active_item.grounding_chime.name",
     "description": "active_item.grounding_chime.description",
-    "max_charge": 4,
-    "charge_cost": 4,
+    "max_charge": 5,
+    "charge_cost": 3,
     "use_contexts": [
       "combat"
     ],
@@ -143,6 +167,10 @@
     ],
     "shop_price": 175,
     "reward_eligible": true,
-    "shop_eligible": true
+    "shop_eligible": true,
+    "starting_charge": 1,
+    "combat_charge": 1,
+    "elite_charge": 2,
+    "boss_charge": 3
   }
 ]

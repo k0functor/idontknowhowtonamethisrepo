@@ -782,6 +782,7 @@
     "name": "card.herbalist_distillation.name",
     "description": "card.herbalist_distillation.description",
     "rarity": "uncommon",
+    "stress_cost": 12,
     "energy_cost": 1,
     "gold_cost": 115,
     "type": "skill",
@@ -808,6 +809,7 @@
       }
     ],
     "upgrade": {
+      "stress_cost": 8,
       "energy_cost": 0
     }
   },

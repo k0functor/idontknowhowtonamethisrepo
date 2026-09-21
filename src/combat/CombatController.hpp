@@ -12,5 +12,6 @@ public:
     CombatResult updateAfterAction(CombatState& state) const;
 
 private:
+    void defeatBossEntourage(CombatState& state) const;
     void applyOutcomeToState(CombatState& state, CombatOutcome outcome) const;
 };

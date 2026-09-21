@@ -4,83 +4,16 @@
 #include <cmath>
 #include <string>
 
+#include "ui/UiTheme.hpp"
 #include "ui/Utf8.hpp"
 
 namespace {
-Color statusFillColor(const StatusViewModel& status) {
-    if (status.debuff) {
-        return Color{94, 46, 54, 238};
-    }
-    if (status.buff) {
-        return Color{42, 82, 60, 238};
-    }
-    return Color{58, 62, 74, 238};
-}
-
-Color statusBorderColor(const StatusViewModel& status) {
-    if (status.debuff) {
-        return Color{236, 112, 126, 255};
-    }
-    if (status.buff) {
-        return Color{120, 226, 154, 255};
-    }
-    return Color{176, 184, 208, 255};
-}
-
 std::string statusChipText(const StatusViewModel& status) {
     std::string text = UiUtf8::truncateWithEllipsis(status.name, 8);
     if (status.amount > 0) {
         text += " " + std::to_string(status.amount);
     }
     return text;
-}
-
-Color withAlpha(const Color color, const float opacity) {
-    const float clamped = std::clamp(opacity, 0.f, 1.f);
-    return Color{
-        color.r,
-        color.g,
-        color.b,
-        static_cast<unsigned char>(static_cast<float>(color.a) * clamped)
-    };
-}
-
-Color intentFillColor(const EnemyIntentType type) {
-    switch (type) {
-        case EnemyIntentType::Attack:
-            return Color{102, 43, 43, 250};
-        case EnemyIntentType::Block:
-            return Color{39, 69, 101, 250};
-        case EnemyIntentType::Buff:
-            return Color{42, 82, 59, 250};
-        case EnemyIntentType::Debuff:
-            return Color{86, 49, 96, 250};
-        case EnemyIntentType::Special:
-            return Color{94, 73, 38, 250};
-        case EnemyIntentType::Unknown:
-            return Color{58, 60, 69, 250};
-    }
-
-    return Color{58, 60, 69, 250};
-}
-
-Color intentBorderColor(const EnemyIntentType type) {
-    switch (type) {
-        case EnemyIntentType::Attack:
-            return Color{255, 135, 122, 255};
-        case EnemyIntentType::Block:
-            return Color{128, 202, 255, 255};
-        case EnemyIntentType::Buff:
-            return Color{125, 232, 156, 255};
-        case EnemyIntentType::Debuff:
-            return Color{220, 150, 240, 255};
-        case EnemyIntentType::Special:
-            return Color{255, 218, 116, 255};
-        case EnemyIntentType::Unknown:
-            return Color{190, 194, 205, 255};
-    }
-
-    return Color{190, 194, 205, 255};
 }
 
 void drawCornerReticle(const Rectangle bounds, const Color color, const float thickness) {
@@ -133,27 +66,46 @@ void EnemyView::render(const Font* font, const bool hovered) const {
 
     const Rectangle body = bounds();
     const Rectangle intentPanel = intentBounds();
-    const Color fill = model_.alive ? Color{82, 58, 58, 255} : Color{46, 46, 50, 255};
+    const Color fill = model_.alive ? Color{70, 50, 54, 255} : UiTheme::toneFill(UiTheme::Tone::Disabled);
     const Color outline = model_.previewTarget
-        ? Color{255, 218, 90, 255}
+        ? UiTheme::toneBorder(UiTheme::Tone::Accent)
         : (model_.targetable
-            ? Color{115, 235, 165, 255}
-            : (hovered ? Color{255, 220, 120, 255} : Color{190, 194, 202, 255}));
+            ? UiTheme::toneBorder(UiTheme::Tone::Positive)
+            : (hovered ? UiTheme::toneText(UiTheme::Tone::Accent) : UiTheme::textSecondary));
     const float outlineThickness = model_.previewTarget ? 5.f : (model_.targetable ? 3.5f : (hovered ? 4.f : 2.f));
 
-    DrawRectangleRounded(body, 0.08f, 8, withAlpha(fill, model_.opacity));
-    DrawRectangleRoundedLinesEx(body, 0.08f, 8, outlineThickness, withAlpha(outline, model_.opacity));
+    DrawRectangleRounded(body, 0.08f, 8, UiTheme::withAlpha(fill, model_.opacity));
+    DrawRectangleRoundedLinesEx(body, 0.08f, 8, outlineThickness, UiTheme::withAlpha(outline, model_.opacity));
 
     if (model_.targetable || model_.previewTarget) {
         const Rectangle reticle{body.x - 7.f, body.y - 7.f, body.width + 14.f, body.height + 14.f};
-        drawCornerReticle(reticle, withAlpha(outline, model_.opacity), model_.previewTarget ? 4.f : 2.5f);
+        drawCornerReticle(reticle, UiTheme::withAlpha(outline, model_.opacity), model_.previewTarget ? 4.f : 2.5f);
     }
 
     if (model_.alive) {
-        const Color intentFill = intentFillColor(model_.intent.type);
-        const Color intentBorder = intentBorderColor(model_.intent.type);
-        DrawRectangleRounded(intentPanel, 0.22f, 8, withAlpha(intentFill, model_.opacity));
-        DrawRectangleRoundedLinesEx(intentPanel, 0.22f, 8, 2.f, withAlpha(intentBorder, model_.opacity));
+        const Color intentFill = UiTheme::intentFill(model_.intent.type);
+        const Color baseIntentBorder = UiTheme::intentBorder(model_.intent.type);
+        const Color intentBorder = model_.intentDangerLevel >= 2
+            ? UiTheme::toneBorder(UiTheme::Tone::Danger)
+            : baseIntentBorder;
+        const float intentBorderThickness = 2.f + static_cast<float>(model_.intentDangerLevel) * 0.55f;
+        DrawRectangleRounded(intentPanel, 0.22f, 8, UiTheme::withAlpha(intentFill, model_.opacity));
+        DrawRectangleRoundedLinesEx(
+            intentPanel,
+            0.22f,
+            8,
+            intentBorderThickness,
+            UiTheme::withAlpha(intentBorder, model_.opacity)
+        );
+        if (model_.intentDangerLevel > 0) {
+            const Rectangle dangerStrip{intentPanel.x + 4.f, intentPanel.y + 6.f, 4.f, intentPanel.height - 12.f};
+            DrawRectangleRounded(
+                dangerStrip,
+                0.8f,
+                4,
+                UiTheme::withAlpha(UiTheme::toneBorder(UiTheme::Tone::Danger), model_.opacity)
+            );
+        }
 
         if (model_.intentAffectsMultipleTargets && !model_.intentScopeLabel.empty()) {
             const float chipWidth = std::min(96.f, intentPanel.width * 0.44f);
@@ -163,8 +115,8 @@ void EnemyView::render(const Font* font, const bool hovered) const {
                 chipWidth,
                 intentPanel.height - 12.f
             };
-            DrawRectangleRounded(scopeChip, 0.3f, 6, withAlpha(Color{25, 27, 34, 210}, model_.opacity));
-            DrawRectangleRoundedLinesEx(scopeChip, 0.3f, 6, 1.f, withAlpha(intentBorder, model_.opacity));
+            DrawRectangleRounded(scopeChip, 0.3f, 6, UiTheme::withAlpha(UiTheme::panelInset, model_.opacity * 0.82f));
+            DrawRectangleRoundedLinesEx(scopeChip, 0.3f, 6, 1.f, UiTheme::withAlpha(intentBorder, model_.opacity));
         }
     }
 
@@ -173,12 +125,12 @@ void EnemyView::render(const Font* font, const bool hovered) const {
         : static_cast<float>(std::max(0, model_.currentHp)) / static_cast<float>(model_.maxHp);
 
     const Rectangle hpBack{body.x + 14.f, body.y + body.height - 36.f, body.width - 28.f, 18.f};
-    DrawRectangleRec(hpBack, withAlpha(Color{32, 32, 36, 255}, model_.opacity));
-    DrawRectangleRec(Rectangle{hpBack.x, hpBack.y, hpBack.width * hpRatio, hpBack.height}, withAlpha(Color{160, 60, 60, 255}, model_.opacity));
+    DrawRectangleRec(hpBack, UiTheme::withAlpha(UiTheme::panelInset, model_.opacity));
+    DrawRectangleRec(Rectangle{hpBack.x, hpBack.y, hpBack.width * hpRatio, hpBack.height}, UiTheme::withAlpha(UiTheme::toneBorder(UiTheme::Tone::Danger), model_.opacity));
 
     const Rectangle formationBadge{body.x + body.width - 47.f, body.y + 8.f, 38.f, 22.f};
-    DrawRectangleRounded(formationBadge, 0.35f, 6, withAlpha(Color{29, 31, 38, 230}, model_.opacity));
-    DrawRectangleRoundedLinesEx(formationBadge, 0.35f, 6, 1.f, withAlpha(Color{155, 162, 181, 255}, model_.opacity));
+    DrawRectangleRounded(formationBadge, 0.35f, 6, UiTheme::withAlpha(UiTheme::panelInset, model_.opacity));
+    DrawRectangleRoundedLinesEx(formationBadge, 0.35f, 6, 1.f, UiTheme::withAlpha(UiTheme::border, model_.opacity));
 
     if (font == nullptr) {
         return;
@@ -186,28 +138,28 @@ void EnemyView::render(const Font* font, const bool hovered) const {
 
     const float nameWidth = std::max(70.f, body.width - 76.f);
     const std::string displayName = UiUtf8::truncateWithEllipsis(model_.name, static_cast<std::size_t>(std::max(8.f, nameWidth / 10.f)));
-    DrawTextEx(*font, displayName.c_str(), Vector2{body.x + 14.f, body.y + 12.f}, body.width < 175.f ? 17.f : 20.f, 1.f, withAlpha(WHITE, model_.opacity));
-    DrawTextEx(*font, model_.formationLabel.c_str(), Vector2{formationBadge.x + 7.f, formationBadge.y + 4.f}, 12.f, 1.f, withAlpha(Color{218, 223, 234, 255}, model_.opacity));
+    DrawTextEx(*font, displayName.c_str(), Vector2{body.x + 14.f, body.y + 12.f}, body.width < 175.f ? 17.f : 20.f, 1.f, UiTheme::withAlpha(WHITE, model_.opacity));
+    DrawTextEx(*font, model_.formationLabel.c_str(), Vector2{formationBadge.x + 7.f, formationBadge.y + 4.f}, 12.f, 1.f, UiTheme::withAlpha(UiTheme::textSecondary, model_.opacity));
 
     if (!model_.phaseName.empty() && model_.alive) {
         const std::string phaseText = UiUtf8::truncateWithEllipsis(model_.phaseName, static_cast<std::size_t>(std::max(8.f, body.width / 10.f)));
         const Rectangle phaseChip{body.x + 12.f, body.y + 39.f, body.width - 24.f, 22.f};
-        DrawRectangleRounded(phaseChip, 0.3f, 6, withAlpha(Color{69, 49, 83, 225}, model_.opacity));
-        DrawRectangleRoundedLinesEx(phaseChip, 0.3f, 6, 1.f, withAlpha(Color{209, 157, 238, 255}, model_.opacity));
-        DrawTextEx(*font, phaseText.c_str(), Vector2{phaseChip.x + 8.f, phaseChip.y + 4.f}, 12.f, 1.f, withAlpha(Color{244, 222, 255, 255}, model_.opacity));
+        DrawRectangleRounded(phaseChip, 0.3f, 6, UiTheme::withAlpha(UiTheme::toneFill(UiTheme::Tone::Primary), model_.opacity));
+        DrawRectangleRoundedLinesEx(phaseChip, 0.3f, 6, 1.f, UiTheme::withAlpha(UiTheme::toneBorder(UiTheme::Tone::Primary), model_.opacity));
+        DrawTextEx(*font, phaseText.c_str(), Vector2{phaseChip.x + 8.f, phaseChip.y + 4.f}, 12.f, 1.f, UiTheme::withAlpha(UiTheme::toneText(UiTheme::Tone::Primary), model_.opacity));
     }
 
     if (model_.alive) {
         const float scopeReservation = model_.intentAffectsMultipleTargets ? std::min(104.f, intentPanel.width * 0.47f) : 8.f;
         const std::size_t intentLimit = static_cast<std::size_t>(std::max(7.f, (intentPanel.width - scopeReservation - 18.f) / 8.5f));
         const std::string intentText = UiUtf8::truncateWithEllipsis(model_.intentText, intentLimit);
-        DrawTextEx(*font, intentText.c_str(), Vector2{intentPanel.x + 10.f, intentPanel.y + 10.f}, 15.f, 1.f, withAlpha(intentBorderColor(model_.intent.type), model_.opacity));
+        DrawTextEx(*font, intentText.c_str(), Vector2{intentPanel.x + 10.f, intentPanel.y + 10.f}, 15.f, 1.f, UiTheme::withAlpha(UiTheme::intentBorder(model_.intent.type), model_.opacity));
 
         if (model_.intentAffectsMultipleTargets && !model_.intentScopeLabel.empty()) {
             const float chipWidth = std::min(96.f, intentPanel.width * 0.44f);
             const Rectangle scopeChip{intentPanel.x + intentPanel.width - chipWidth - 6.f, intentPanel.y + 6.f, chipWidth, intentPanel.height - 12.f};
             const std::string scope = UiUtf8::truncateWithEllipsis(model_.intentScopeLabel, 13);
-            DrawTextEx(*font, scope.c_str(), Vector2{scopeChip.x + 7.f, scopeChip.y + 6.f}, 11.f, 1.f, withAlpha(Color{240, 241, 246, 255}, model_.opacity));
+            DrawTextEx(*font, scope.c_str(), Vector2{scopeChip.x + 7.f, scopeChip.y + 6.f}, 11.f, 1.f, UiTheme::withAlpha(UiTheme::textPrimary, model_.opacity));
         }
     } else {
         const std::string label = model_.defeatedLabel.empty() ? "DEFEATED" : model_.defeatedLabel;
@@ -218,16 +170,16 @@ void EnemyView::render(const Font* font, const bool hovered) const {
             Vector2{body.x + body.width * 0.5f - labelSize.x * 0.5f, body.y + body.height * 0.48f},
             18.f,
             1.f,
-            withAlpha(Color{204, 204, 211, 255}, model_.opacity)
+            UiTheme::withAlpha(UiTheme::textMuted, model_.opacity)
         );
     }
 
     const std::string hpText = std::to_string(model_.currentHp) + "/" + std::to_string(model_.maxHp);
-    DrawTextEx(*font, hpText.c_str(), Vector2{body.x + 18.f, body.y + body.height - 38.f}, 14.f, 1.f, withAlpha(WHITE, model_.opacity));
+    DrawTextEx(*font, hpText.c_str(), Vector2{body.x + 18.f, body.y + body.height - 38.f}, 14.f, 1.f, UiTheme::withAlpha(WHITE, model_.opacity));
 
     if (model_.block > 0) {
         const std::string blockText = model_.blockLabel + ": " + std::to_string(model_.block);
-        DrawTextEx(*font, blockText.c_str(), Vector2{body.x + 14.f, body.y + (model_.phaseName.empty() ? 48.f : 66.f)}, 14.f, 1.f, withAlpha(Color{180, 215, 255, 255}, model_.opacity));
+        DrawTextEx(*font, blockText.c_str(), Vector2{body.x + 14.f, body.y + (model_.phaseName.empty() ? 48.f : 66.f)}, 14.f, 1.f, UiTheme::withAlpha(UiTheme::toneText(UiTheme::Tone::Info), model_.opacity));
     }
 
     const std::size_t capacity = visibleStatusCapacity();
@@ -242,20 +194,20 @@ void EnemyView::render(const Font* font, const bool hovered) const {
         }
 
         const StatusViewModel& status = model_.statuses[i];
-        DrawRectangleRounded(*chipBounds, 0.35f, 8, withAlpha(statusFillColor(status), model_.opacity));
-        DrawRectangleRoundedLinesEx(*chipBounds, 0.35f, 8, 1.4f, withAlpha(statusBorderColor(status), model_.opacity));
+        DrawRectangleRounded(*chipBounds, 0.35f, 8, UiTheme::withAlpha(UiTheme::statusFill(status), model_.opacity));
+        DrawRectangleRoundedLinesEx(*chipBounds, 0.35f, 8, 1.4f, UiTheme::withAlpha(UiTheme::statusBorder(status), model_.opacity));
 
         const std::string text = statusChipText(status);
-        DrawTextEx(*font, text.c_str(), Vector2{chipBounds->x + 8.f, chipBounds->y + (compactStatuses_ ? 3.f : 5.f)}, compactStatuses_ ? 10.f : 12.f, 1.f, withAlpha(Color{238, 242, 232, 255}, model_.opacity));
+        DrawTextEx(*font, text.c_str(), Vector2{chipBounds->x + 8.f, chipBounds->y + (compactStatuses_ ? 3.f : 5.f)}, compactStatuses_ ? 10.f : 12.f, 1.f, UiTheme::withAlpha(UiTheme::textPrimary, model_.opacity));
     }
 
     if (hasStatusOverflow) {
         const std::size_t hidden = model_.statuses.size() - visibleCount;
         const Rectangle moreBounds = statusBounds(visibleCount).value_or(Rectangle{});
-        DrawRectangleRounded(moreBounds, 0.35f, 6, withAlpha(Color{48, 50, 59, 245}, model_.opacity));
-        DrawRectangleRoundedLinesEx(moreBounds, 0.35f, 6, 1.f, withAlpha(Color{180, 184, 198, 255}, model_.opacity));
+        DrawRectangleRounded(moreBounds, 0.35f, 6, UiTheme::withAlpha(UiTheme::panelRaised, model_.opacity));
+        DrawRectangleRoundedLinesEx(moreBounds, 0.35f, 6, 1.f, UiTheme::withAlpha(UiTheme::border, model_.opacity));
         const std::string moreText = "+" + std::to_string(hidden);
-        DrawTextEx(*font, moreText.c_str(), Vector2{moreBounds.x + 9.f, moreBounds.y + 3.f}, 11.f, 1.f, withAlpha(WHITE, model_.opacity));
+        DrawTextEx(*font, moreText.c_str(), Vector2{moreBounds.x + 9.f, moreBounds.y + 3.f}, 11.f, 1.f, UiTheme::withAlpha(WHITE, model_.opacity));
     }
 }
 

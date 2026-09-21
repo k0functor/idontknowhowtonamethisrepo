@@ -28,8 +28,7 @@ void MainMenuScene::update(float) {
 
     const Rectangle play{centerX - width * 0.5f, startY, width, height};
     const Rectangle settings{centerX - width * 0.5f, startY + (height + gap), width, height};
-    const Rectangle credits{centerX - width * 0.5f, startY + 2.f * (height + gap), width, height};
-    const Rectangle exit{centerX - width * 0.5f, startY + 3.f * (height + gap), width, height};
+    const Rectangle exit{centerX - width * 0.5f, startY + 2.f * (height + gap), width, height};
 
     if (BasicUi::contains(play, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         onPlay_();
@@ -41,10 +40,6 @@ void MainMenuScene::update(float) {
             onSettings_();
         }
         return;
-    }
-
-    if (BasicUi::contains(credits, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        notification_ = localization_.get(TextId("ui.credits_later"));
     }
 
     if (BasicUi::contains(exit, mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -70,16 +65,5 @@ void MainMenuScene::render() const {
 
     BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY, width, height}, localization_.get(TextId("ui.play")), mouse);
     BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + (height + gap), width, height}, localization_.get(TextId("ui.settings")), mouse);
-    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + 2.f * (height + gap), width, height}, localization_.get(TextId("ui.credits")), mouse);
-    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + 3.f * (height + gap), width, height}, localization_.get(TextId("ui.exit")), mouse);
-
-    if (!notification_.empty()) {
-        BasicUi::drawCenteredText(
-            font_,
-            notification_,
-            Rectangle{0.f, 620.f, static_cast<float>(VirtualViewport::width()), 40.f},
-            18.f,
-            Color{190, 195, 215, 255}
-        );
-    }
+    BasicUi::drawButton(font_, Rectangle{centerX - width * 0.5f, startY + 2.f * (height + gap), width, height}, localization_.get(TextId("ui.exit")), mouse);
 }

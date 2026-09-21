@@ -56,40 +56,11 @@ private:
         Upgrade
     };
 
-    Vector2 nodeScreenPosition(const RunMapNode& node) const;
-    Rectangle mapViewportBounds() const;
-    float mapAvailableWidth() const;
-    float mapScale() const;
-    float mapContentWidth() const;
-    float mapMaxScrollOffset() const;
-    float scrollOffsetForNode(const RunMapNode& node) const;
     const RunMapNode* preferredMapFocusNode() const;
     float initialMapScrollOffset() const;
     void clampMapScrollOffset();
     void focusMapOnPreferredNode();
     void updateMapScroll(float deltaSeconds);
-    Rectangle nodeBounds(const RunMapNode& node) const;
-    Rectangle restModalBounds() const;
-    Rectangle restHealButtonBounds(Rectangle modal) const;
-    Rectangle restCalmButtonBounds(Rectangle modal) const;
-    Rectangle restUpgradeButtonBounds(Rectangle modal) const;
-    Rectangle restSkipButtonBounds(Rectangle modal) const;
-    Rectangle restCancelButtonBounds(Rectangle modal) const;
-    Rectangle deckButtonBounds() const;
-    Rectangle relicsButtonBounds() const;
-    Rectangle consumablesButtonBounds() const;
-    Rectangle abandonButtonBounds() const;
-    Rectangle abandonModalBounds() const;
-    Rectangle abandonCancelButtonBounds(Rectangle modal) const;
-    Rectangle abandonConfirmButtonBounds(Rectangle modal) const;
-    Rectangle overlayBounds() const;
-    Rectangle overlayCloseButtonBounds(Rectangle modal) const;
-    Rectangle overlayGridBounds(Rectangle modal) const;
-    Rectangle upgradePreviewModalBounds() const;
-    Rectangle upgradePreviewBeforeCardBounds(Rectangle modal) const;
-    Rectangle upgradePreviewAfterCardBounds(Rectangle modal) const;
-    Rectangle upgradePreviewCancelButtonBounds(Rectangle modal) const;
-    Rectangle upgradePreviewConfirmButtonBounds(Rectangle modal) const;
 
     const RunMapNode* hoveredMapNode(Vector2 mousePosition) const;
     const RunMapNode* currentMapNode() const;

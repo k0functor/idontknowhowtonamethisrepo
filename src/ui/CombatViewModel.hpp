@@ -7,8 +7,27 @@
 #include "ui/PlayerViewModel.hpp"
 #include "ui/RelicViewModel.hpp"
 
+#include <cstdint>
 #include <string>
 #include <vector>
+
+
+enum class CombatJournalTone {
+    Neutral,
+    Damage,
+    Defense,
+    Status,
+    Stress,
+    Resource,
+    Important
+};
+
+struct CombatJournalEntryViewModel {
+    std::uint64_t sequence = 0;
+    CombatJournalTone tone = CombatJournalTone::Neutral;
+    std::string text;
+    std::string detail;
+};
 
 struct DroneSlotViewModel {
     bool filled = false;
@@ -34,6 +53,11 @@ struct CombatViewModel {
     int discardPileSize = 0;
     int exhaustPileSize = 0;
 
+    int incomingDamageMin = 0;
+    int incomingDamageMax = 0;
+    int attackingEnemyCount = 0;
+    int partyWideThreatCount = 0;
+
     std::string turnLabel = {};
     std::string phaseText = {};
     std::string energyLabel = {};
@@ -48,6 +72,8 @@ struct CombatViewModel {
     std::string targetHintLabel;
     std::string turnOrderLabel;
     std::string activeActorLabel;
+    std::string incomingDamageLabel;
+    std::string partyWideThreatLabel;
 
     bool canEndTurn = false;
     bool showTopRelics = true;
@@ -55,7 +81,7 @@ struct CombatViewModel {
     std::vector<PlayerViewModel> players;
     std::vector<CardViewModel> handCards;
     std::vector<EnemyViewModel> enemies;
-    std::vector<std::string> recentLogEntries;
+    std::vector<CombatJournalEntryViewModel> recentJournalEntries;
     std::vector<RelicViewModel> relics;
     std::vector<ConsumableViewModel> consumables;
     std::vector<DroneSlotViewModel> droneSlots;

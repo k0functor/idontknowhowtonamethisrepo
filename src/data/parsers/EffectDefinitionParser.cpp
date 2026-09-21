@@ -37,8 +37,12 @@ EffectScalingDefinition parseScaling(
         );
     }
 
-    scaling.bonusIfStatusPresent = scalingReader.optionalInt("bonus_if_present", 0);
-    scaling.bonusPerStatusStack = scalingReader.optionalInt("bonus_per_stack", 0);
+    scaling.bonusIfStatusPresent = scalingReader.has("bonus_if_status_present")
+        ? scalingReader.requiredInt("bonus_if_status_present")
+        : scalingReader.optionalInt("bonus_if_present", 0);
+    scaling.bonusPerStatusStack = scalingReader.has("bonus_per_status_stack")
+        ? scalingReader.requiredInt("bonus_per_status_stack")
+        : scalingReader.optionalInt("bonus_per_stack", 0);
     scaling.bonusPerCardInHand = scalingReader.optionalInt("bonus_per_card_in_hand", 0);
     scaling.bonusPerCardInDiscard = scalingReader.optionalInt("bonus_per_card_in_discard", 0);
     scaling.maximumBonus = scalingReader.optionalInt("maximum_bonus", -1);

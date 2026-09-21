@@ -19,7 +19,7 @@
         "description": "event.forgotten_cache.choice.card.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           }
         ]
       },
@@ -184,7 +184,10 @@
             "type": "gain_stress",
             "amount": 8
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 8
+        }
       },
       {
         "text": "event.poisonous_well.choice.collect",
@@ -223,7 +226,7 @@
             "amount": 35
           },
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           }
         ],
         "requirements": {
@@ -546,7 +549,7 @@
             "amount": 6
           },
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           }
         ]
       },
@@ -607,7 +610,10 @@
             "type": "gain_stress",
             "amount": 4
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 8
+        }
       },
       {
         "text": "event.choice.skip",
@@ -637,7 +643,7 @@
             "amount": 5
           },
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           }
         ]
       },
@@ -879,7 +885,8 @@
           }
         ],
         "requirements": {
-          "min_gold": 35
+          "min_gold": 35,
+          "min_missing_hp": 10
         }
       },
       {
@@ -974,6 +981,14 @@
           {
             "type": "lose_stress",
             "amount": 16
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.started"
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.honest"
           }
         ],
         "requirements": {
@@ -991,6 +1006,14 @@
           {
             "type": "gain_stress",
             "amount": 14
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.started"
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.lied"
           }
         ]
       },
@@ -1312,7 +1335,8 @@
           }
         ],
         "requirements": {
-          "min_gold": 45
+          "min_gold": 45,
+          "min_missing_hp": 8
         }
       },
       {
@@ -1369,16 +1393,19 @@
         "description": "event.mirror_archive.choice.copy.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "gain_stress",
             "amount": 10
           }
-        ]
+        ],
+        "requirements": {
+          "min_upgraded_cards": 1
+        }
       },
       {
         "text": "event.choice.skip",
@@ -1508,7 +1535,10 @@
             "type": "gain_stress",
             "amount": 6
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 6
+        }
       },
       {
         "text": "event.choir_of_mildew.choice.harvest.text",
@@ -1575,7 +1605,7 @@
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 8
         }
       },
       {
@@ -1895,7 +1925,10 @@
             "type": "gain_stress",
             "amount": 6
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 10
+        }
       },
       {
         "text": "event.ash_well.choice.bury.text",
@@ -2033,16 +2066,25 @@
         "description": "event.furnace_confessional.choice.confess.description",
         "effects": [
           {
-            "type": "lose_stress",
-            "amount": 18
+            "type": "lose_gold",
+            "amount": 20
           },
           {
-            "type": "lose_gold",
-            "amount": 25
+            "type": "lose_stress",
+            "amount": 22
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.continued"
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.honest2"
           }
         ],
         "requirements": {
-          "min_gold": 25
+          "min_gold": 20,
+          "has_flag": "chain.confession.honest"
         }
       },
       {
@@ -2050,13 +2092,24 @@
         "description": "event.furnace_confessional.choice.lie.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "gain_stress",
             "amount": 10
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.continued"
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.lied2"
           }
-        ]
+        ],
+        "requirements": {
+          "has_flag": "chain.confession.lied"
+        }
       },
       {
         "text": "event.choice.skip",
@@ -2067,7 +2120,10 @@
           }
         ]
       }
-    ]
+    ],
+    "requirements": {
+      "has_flag": "chain.confession.started"
+    }
   },
   {
     "id": "sunlit_pyre",
@@ -2127,13 +2183,17 @@
         "description": "event.silent_planetarium.choice.chart.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "lose_stress",
             "amount": 8
           }
-        ]
+        ],
+        "requirements": {
+          "min_upgraded_cards": 2,
+          "max_deck_size": 18
+        }
       },
       {
         "text": "event.silent_planetarium.choice.break.text",
@@ -2221,13 +2281,16 @@
         "description": "event.black_telescope.choice.look.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "gain_stress",
             "amount": 10
           }
-        ]
+        ],
+        "requirements": {
+          "max_deck_size": 20
+        }
       },
       {
         "text": "event.black_telescope.choice.cover.text",
@@ -2277,7 +2340,10 @@
             "type": "gain_stress",
             "amount": 8
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 8
+        }
       },
       {
         "text": "event.blind_choir_stairs.choice.interrupt.text",
@@ -2318,11 +2384,11 @@
             "type": "remove_random_card"
           },
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 10
         }
       },
       {
@@ -2419,7 +2485,10 @@
             "type": "gain_stress",
             "amount": 14
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 12
+        }
       },
       {
         "text": "event.eclipse_well.choice.poison.text",
@@ -2626,7 +2695,7 @@
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 10
         }
       },
       {
@@ -2660,7 +2729,10 @@
             "type": "gain_stress",
             "amount": 12
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 14
+        }
       },
       {
         "text": "event.final_sacrament.choice.spill.text",
@@ -2702,7 +2774,7 @@
         "description": "event.chain_archive.choice.read.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "gain_gold",
@@ -2712,7 +2784,11 @@
             "type": "gain_stress",
             "amount": 10
           }
-        ]
+        ],
+        "requirements": {
+          "min_upgraded_cards": 3,
+          "max_deck_size": 20
+        }
       },
       {
         "text": "event.chain_archive.choice.burn.text",
@@ -2727,7 +2803,7 @@
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 10
         }
       },
       {
@@ -2919,7 +2995,7 @@
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 8
         }
       },
       {
@@ -3104,7 +3180,7 @@
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 8
         }
       },
       {
@@ -3257,7 +3333,8 @@
           }
         ],
         "requirements": {
-          "min_gold": 35
+          "min_gold": 35,
+          "min_missing_hp": 10
         }
       },
       {
@@ -3285,14 +3362,15 @@
         "effects": [
           {
             "type": "lose_gold",
-            "amount": 60
+            "amount": 45
           },
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           }
         ],
         "requirements": {
-          "min_gold": 60
+          "min_gold": 60,
+          "min_upgraded_cards": 1
         }
       },
       {
@@ -3399,7 +3477,7 @@
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 10
         }
       },
       {
@@ -3572,7 +3650,7 @@
         "description": "event.kneeling_armory.choice.take_blade.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "lose_hp",
@@ -3716,7 +3794,10 @@
             "type": "gain_stress",
             "amount": 15
           }
-        ]
+        ],
+        "requirements": {
+          "min_missing_hp": 16
+        }
       },
       {
         "text": "event.reliquary_blood_font.choice.bottle.text",
@@ -3759,7 +3840,7 @@
         "description": "event.court_of_empty_names.choice.sign.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "gain_gold",
@@ -3769,7 +3850,10 @@
             "type": "gain_stress",
             "amount": 10
           }
-        ]
+        ],
+        "requirements": {
+          "min_upgraded_cards": 4
+        }
       },
       {
         "text": "event.court_of_empty_names.choice.erase.text",
@@ -3784,7 +3868,7 @@
           }
         ],
         "requirements": {
-          "min_deck_size": 2
+          "min_deck_size": 10
         }
       },
       {
@@ -3857,16 +3941,21 @@
         "description": "event.dead_king_confession.choice.confess.description",
         "effects": [
           {
-            "type": "lose_stress",
-            "amount": 25
+            "type": "lose_gold",
+            "amount": 30
           },
           {
-            "type": "lose_gold",
-            "amount": 40
+            "type": "lose_stress",
+            "amount": 30
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.complete"
           }
         ],
         "requirements": {
-          "min_gold": 40
+          "min_gold": 30,
+          "has_flag": "chain.confession.honest2"
         }
       },
       {
@@ -3874,13 +3963,20 @@
         "description": "event.dead_king_confession.choice.lie.description",
         "effects": [
           {
-            "type": "gain_random_card"
+            "type": "upgrade_random_card"
           },
           {
             "type": "gain_stress",
-            "amount": 16
+            "amount": 12
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.complete"
           }
-        ]
+        ],
+        "requirements": {
+          "has_flag": "chain.confession.lied2"
+        }
       },
       {
         "text": "event.choice.skip",
@@ -3888,10 +3984,17 @@
         "effects": [
           {
             "type": "skip"
+          },
+          {
+            "type": "set_flag",
+            "flag": "chain.confession.complete"
           }
         ]
       }
-    ]
+    ],
+    "requirements": {
+      "has_flag": "chain.confession.continued"
+    }
   },
   {
     "id": "ossuary_treasury",
@@ -4048,6 +4151,9 @@
       "act2",
       "act3"
     ],
+    "requirements": {
+      "mechanic_id": "stress_psychopath"
+    },
     "choices": [
       {
         "text": "event.breathing_wall.choice.count.text",
@@ -4105,6 +4211,9 @@
       "act3",
       "act4"
     ],
+    "requirements": {
+      "mechanic_id": "stress_psychopath"
+    },
     "choices": [
       {
         "text": "event.silent_metronome.choice.break.text",
@@ -4162,6 +4271,9 @@
       "act4",
       "act5"
     ],
+    "requirements": {
+      "mechanic_id": "stress_psychopath"
+    },
     "choices": [
       {
         "text": "event.ash_inhaler.choice.use.text",

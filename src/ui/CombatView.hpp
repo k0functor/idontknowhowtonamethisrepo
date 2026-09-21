@@ -46,6 +46,7 @@ private:
     void applyResponsiveLayout();
     void layoutPlayers();
     void layoutEnemies();
+    void renderThreatSummary(const Font* font) const;
     void renderDronePanel(const Font* font) const;
     void renderCardTooltip(const Font* font) const;
 

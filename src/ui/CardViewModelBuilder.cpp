@@ -5,6 +5,7 @@
 #include "cards/CardUpgrade.hpp"
 
 #include <algorithm>
+#include <vector>
 
 namespace {
 std::string localizedOrFallback(
@@ -61,6 +62,7 @@ std::string sourceOwnerLabel(
         {}
     );
 }
+
 
 std::string cardFailureReasonText(
     const CombatState& state,
@@ -196,14 +198,34 @@ CardViewModel CardViewModelBuilder::build(
         );
     }
     model.energyCost = preview.energyCost;
+    model.stressCost = preview.stressCost;
+    model.sourceCurrentStress = preview.sourceStressBefore;
+    model.sourceMaxStress = preview.sourceMaxStress;
+    model.sourceStressAfterMinimum = preview.sourceStressAfterMinimum;
+    model.sourceStressAfterMaximum = preview.sourceStressAfterMaximum;
+    model.wouldCollapseFromStress = preview.wouldCollapseFromStress;
+    model.previewRequiresTarget = preview.outcome.requiresTargetSelection;
+    if (preview.wouldCollapseFromStress) {
+        model.stressPreviewLabel = localization_.get(
+            TextId("ui.card_stress_preview.collapse")
+        );
+    } else if (preview.sourceStressAfterMinimum != preview.sourceStressBefore ||
+               preview.sourceStressAfterMaximum != preview.sourceStressBefore) {
+        const std::string after = preview.sourceStressAfterMinimum == preview.sourceStressAfterMaximum
+            ? std::to_string(preview.sourceStressAfterMinimum)
+            : std::to_string(preview.sourceStressAfterMinimum) + "-" + std::to_string(preview.sourceStressAfterMaximum);
+        model.stressPreviewLabel = formatOrFallback(
+            localization_,
+            TextId("ui.card_stress_preview.after"),
+            {{"after", after}, {"max", std::to_string(preview.sourceMaxStress)}},
+            {}
+        );
+    }
     model.type = definition.type;
     model.rarity = definition.rarity;
     model.upgraded = instance.upgraded;
     model.playable = preview.playable;
-    int requiredStress = 0;
-    for (const EffectPreview& effect : preview.effects) {
-        requiredStress += effect.stressCost * std::max(1, effect.repeatCount);
-    }
+    const int requiredStress = preview.stressCost;
 
     model.unplayableReason = cardFailureReasonText(
         state,

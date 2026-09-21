@@ -443,6 +443,35 @@ bool ProfileManager::isSelectedAchievementCompleted(const std::string& achieveme
     return profile != nullptr && isAchievementCompleted(*profile, achievementId);
 }
 
+bool ProfileManager::isOnboardingHintSeen(const ProfileData& profile, const std::string& hintId) const {
+    if (hintId.empty()) {
+        return true;
+    }
+
+    return std::find(
+        profile.seenOnboardingHintIds.begin(),
+        profile.seenOnboardingHintIds.end(),
+        hintId
+    ) != profile.seenOnboardingHintIds.end();
+}
+
+bool ProfileManager::isSelectedOnboardingHintSeen(const std::string& hintId) const {
+    const ProfileData* profile = selectedProfile();
+    return profile != nullptr && isOnboardingHintSeen(*profile, hintId);
+}
+
+bool ProfileManager::markSelectedOnboardingHintSeen(const std::string& hintId) {
+    ProfileData* profile = selectedProfile();
+    if (profile == nullptr || hintId.empty() || isOnboardingHintSeen(*profile, hintId)) {
+        return false;
+    }
+
+    profile->seenOnboardingHintIds.push_back(hintId);
+    normalizeProfile(*profile, selectedSlotIndex_);
+    saveSelectedProfile();
+    return true;
+}
+
 bool ProfileManager::unlockSelectedArchetype(const std::string& archetypeId) {
     ProfileData* profile = selectedProfile();
     if (profile == nullptr || archetypeId.empty()) {
@@ -726,6 +755,7 @@ void ProfileManager::normalizeProfile(ProfileData& profile, const std::size_t in
     normalizeStringList(profile.discoveredConsumableIds);
     normalizeStringList(profile.completedChallengeIds);
     normalizeStringList(profile.completedAchievementIds);
+    normalizeStringList(profile.seenOnboardingHintIds);
     normalizeProgressLog(profile.progressLog);
     normalizeCountList(profile.cardPlayCounts);
     normalizeCountList(profile.relicPickCounts);

@@ -32,12 +32,26 @@ bool canAppearInShop(const CardDefinition& card) {
     return !isGeneratedCardPoolExcluded(card);
 }
 
+bool matchesRunMechanic(const RelicDefinition& relic, const std::string& mechanicId) {
+    return relic.mechanicId.empty() ||
+        relic.mechanicId == "default" ||
+        relic.mechanicId == mechanicId;
+}
+
 bool canAppearAsRelicReward(const RelicDefinition& relic) {
     return !isGeneratedRelicPoolExcluded(relic);
 }
 
+bool canAppearAsRelicReward(const RelicDefinition& relic, const std::string& mechanicId) {
+    return canAppearAsRelicReward(relic) && matchesRunMechanic(relic, mechanicId);
+}
+
 bool canAppearInShop(const RelicDefinition& relic) {
     return !isGeneratedRelicPoolExcluded(relic);
+}
+
+bool canAppearInShop(const RelicDefinition& relic, const std::string& mechanicId) {
+    return canAppearInShop(relic) && matchesRunMechanic(relic, mechanicId);
 }
 
 }

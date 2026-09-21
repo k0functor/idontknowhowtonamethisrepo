@@ -30,7 +30,9 @@ def main() -> None:
     assert "startTurnDiscardCount" in psychopath
     assert "gainEnergy(player.id, energyBonus)" in player_turn
     assert "StressBreakdownDiscard" in player_turn
-    assert "stressBandColor" in player_view
+    theme = read("src/ui/UiTheme.hpp")
+    assert "UiTheme::stressBand" in player_view
+    assert "stressBand" in theme
     assert "thresholdRatio" in player_view
 
     for locale in ("ru", "en"):

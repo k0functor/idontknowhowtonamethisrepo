@@ -8,6 +8,7 @@
 #include "run/RunStats.hpp"
 #include "run/RunActorState.hpp"
 #include "run/RunPendingRoomState.hpp"
+#include "run/RunPacingState.hpp"
 #include "run/RunPhase.hpp"
 #include "run/RunCompletionType.hpp"
 
@@ -62,6 +63,7 @@ struct RunState {
 
     RunMap map;
     RunStats stats;
+    RunPacingState pacing;
 
     RunPendingRoomState pendingRoom;
 };

@@ -13,4 +13,11 @@ public:
         EffectTarget target,
         const EffectContext& context
     ) const;
+
+    static bool isValidResolvedTarget(
+        const CombatState& state,
+        EffectTarget target,
+        EntityId candidate,
+        EntityId source
+    );
 };

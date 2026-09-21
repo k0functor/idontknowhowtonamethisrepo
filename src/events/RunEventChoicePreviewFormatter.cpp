@@ -108,6 +108,31 @@ std::string RunEventChoicePreviewFormatter::describeRequirements(const RunEventC
         ));
     }
 
+    if (requirements.maxDeckSize > 0) {
+        parts.push_back(localization_.format(
+            TextId("event.choice.requirement.max_deck_size"),
+            FormatArgs{{"required", amountString(requirements.maxDeckSize)}}
+        ));
+    }
+
+    if (requirements.minMissingHp > 0) {
+        parts.push_back(localization_.format(
+            TextId("event.choice.requirement.min_missing_hp"),
+            FormatArgs{{"required", amountString(requirements.minMissingHp)}}
+        ));
+    }
+
+    if (requirements.minUpgradedCards > 0) {
+        parts.push_back(localization_.format(
+            TextId("event.choice.requirement.min_upgraded_cards"),
+            FormatArgs{{"required", amountString(requirements.minUpgradedCards)}}
+        ));
+    }
+
+    if (!requirements.requiredMechanicId.empty()) {
+        parts.push_back(localization_.get(TextId("event.choice.requirement.run_mechanic")));
+    }
+
     if (requirements.minStress > 0) {
         parts.push_back(localization_.format(
             TextId("event.choice.requirement.min_stress"),
@@ -210,6 +235,24 @@ std::string RunEventChoicePreviewFormatter::describeBlockReason(const RunEventCh
                 FormatArgs{{"current", amountString(reason.current)}, {"required", amountString(reason.required)}}
             );
 
+        case RunEventChoiceBlockReasonType::TooManyCards:
+            return localization_.format(
+                TextId("event.choice.unavailable.deck_size_max"),
+                FormatArgs{{"current", amountString(reason.current)}, {"required", amountString(reason.required)}}
+            );
+
+        case RunEventChoiceBlockReasonType::NotWoundedEnough:
+            return localization_.format(
+                TextId("event.choice.unavailable.missing_hp"),
+                FormatArgs{{"current", amountString(reason.current)}, {"required", amountString(reason.required)}}
+            );
+
+        case RunEventChoiceBlockReasonType::NotEnoughUpgradedCards:
+            return localization_.format(
+                TextId("event.choice.unavailable.upgraded_cards"),
+                FormatArgs{{"current", amountString(reason.current)}, {"required", amountString(reason.required)}}
+            );
+
         case RunEventChoiceBlockReasonType::MissingRequiredRelic:
             return localization_.format(
                 TextId("event.choice.unavailable.required_relic"),
@@ -233,6 +276,9 @@ std::string RunEventChoicePreviewFormatter::describeBlockReason(const RunEventCh
                 TextId("event.choice.unavailable.forbidden_card"),
                 FormatArgs{{"name", cardName(reason.id)}}
             );
+
+        case RunEventChoiceBlockReasonType::WrongRunMechanic:
+            return localization_.get(TextId("event.choice.unavailable.run_mechanic"));
 
         case RunEventChoiceBlockReasonType::StressTooLow:
             return localization_.format(
@@ -290,6 +336,8 @@ std::string RunEventChoicePreviewFormatter::effectText(const RunEventEffect& eff
             return localization_.format(TextId("event.choice.effect.remove_card"), FormatArgs{{"name", cardName(effect.contentId)}});
         case RunEventEffectType::RemoveRandomCard:
             return localization_.get(TextId("event.choice.effect.remove_random_card"));
+        case RunEventEffectType::UpgradeRandomCard:
+            return localization_.get(TextId("event.choice.effect.upgrade_random_card"));
         case RunEventEffectType::GainStress:
             return localization_.format(TextId("event.choice.effect.gain_stress"), FormatArgs{{"amount", amountString(effect.amount)}});
         case RunEventEffectType::LoseStress:

@@ -58,7 +58,13 @@ def main() -> int:
         for trigger in by_id["bent_pauldron"].get("triggers", [])
         for effect in trigger.get("effects", [])
     )
-    assert status_amount(by_id["brass_locket"], "dexterity") == 1
+    assert status_amount(by_id["brass_locket"], "dexterity") == 0
+    assert any(
+        trigger.get("event") == "block_gained"
+        and trigger.get("min_amount") == 10
+        and any(effect.get("status") == "dexterity" for effect in trigger.get("effects", []))
+        for trigger in by_id["brass_locket"].get("triggers", [])
+    )
     assert any(
         effect.get("status") == "dexterity"
         for trigger in by_id["grounding_bead"].get("triggers", [])

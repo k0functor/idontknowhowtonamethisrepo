@@ -61,6 +61,7 @@ struct ModifiedValueRange {
     int modifiedMin = 0;
     int modifiedMax = 0;
     std::vector<std::string> modifierLabels;
+    std::vector<std::string> modifierDescriptions;
 };
 
 class IModifierProvider {

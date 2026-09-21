@@ -310,7 +310,8 @@
       {
         "id": "act1_grave_knight",
         "enemies": [
-          "grave_knight"
+          "grave_knight",
+          "rusted_mite"
         ],
         "weight": 1,
         "min_layer": 1,
@@ -319,7 +320,8 @@
       {
         "id": "act1_choir_executioner",
         "enemies": [
-          "choir_executioner"
+          "choir_executioner",
+          "censer_imp"
         ],
         "weight": 1,
         "min_layer": 1,
@@ -328,7 +330,8 @@
       {
         "id": "act1_glass_collector",
         "enemies": [
-          "glass_collector"
+          "glass_collector",
+          "ash_crow"
         ],
         "weight": 1,
         "min_layer": 1,
@@ -355,7 +358,8 @@
       {
         "id": "act1_rust_tithe_collector",
         "enemies": [
-          "rust_tithe_collector"
+          "rust_tithe_collector",
+          "lockjaw_husk"
         ],
         "weight": 1,
         "min_layer": 2,

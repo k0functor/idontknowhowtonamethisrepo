@@ -18,6 +18,10 @@ struct ActiveItemDefinition {
     TextId descriptionTextId;
     int maxCharge = 1;
     int chargeCost = 1;
+    int startingCharge = 0;
+    int combatCharge = 1;
+    int eliteCharge = 2;
+    int bossCharge = 3;
     int shopPrice = 0;
     bool canAppearInRewards = false;
     bool canAppearInShop = false;

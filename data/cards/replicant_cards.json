@@ -1078,6 +1078,7 @@
     "name": "card.replicant_feedback_loop.name",
     "description": "card.replicant_feedback_loop.description",
     "rarity": "rare",
+    "stress_cost": 18,
     "energy_cost": 1,
     "gold_cost": 165,
     "type": "skill",
@@ -1113,6 +1114,7 @@
       }
     ],
     "upgrade": {
+      "stress_cost": 12,
       "effects": [
         {
           "type": "use_drone",

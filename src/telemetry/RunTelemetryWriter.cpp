@@ -2,6 +2,7 @@
 
 #include "data/Json.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <stdexcept>
@@ -27,6 +28,69 @@ std::string completionTypeName(const RunCompletionType type) {
         case RunCompletionType::Victory: return "victory";
     }
     return "unknown";
+}
+
+
+Json pacingJson(const RunState& run) {
+    const RunPacingState& pacing = run.pacing;
+
+    Json phaseSeconds{
+        {"map", pacing.mapSeconds},
+        {"combat", pacing.combatSeconds},
+        {"reward", pacing.rewardSeconds},
+        {"event", pacing.eventSeconds},
+        {"shop", pacing.shopSeconds},
+        {"rest", pacing.restSeconds},
+        {"chest", pacing.chestSeconds}
+    };
+
+    Json rooms = Json::array();
+    for (const RunRoomTiming& room : pacing.completedRooms) {
+        rooms.push_back(Json{
+            {"floor_id", room.floorId},
+            {"floor_index", room.floorIndex},
+            {"node_id", room.nodeId},
+            {"node_type", toString(room.nodeType)},
+            {"active_seconds", room.activeSeconds}
+        });
+    }
+    if (pacing.roomActive && pacing.currentRoomNodeId >= 0) {
+        rooms.push_back(Json{
+            {"floor_id", run.currentFloorId},
+            {"floor_index", run.currentFloorIndex},
+            {"node_id", pacing.currentRoomNodeId},
+            {"node_type", toString(pacing.currentRoomType)},
+            {"active_seconds", pacing.currentRoomSeconds},
+            {"partial", true}
+        });
+    }
+
+    Json floors = Json::array();
+    for (const RunFloorTiming& floor : pacing.completedFloors) {
+        floors.push_back(Json{
+            {"floor_id", floor.floorId},
+            {"floor_index", floor.floorIndex},
+            {"active_seconds", floor.activeSeconds},
+            {"rooms_completed", floor.roomsCompleted}
+        });
+    }
+
+    if (pacing.floorActive && pacing.currentFloorSeconds > 0.f) {
+        floors.push_back(Json{
+            {"floor_id", run.currentFloorId},
+            {"floor_index", run.currentFloorIndex},
+            {"active_seconds", pacing.currentFloorSeconds},
+            {"rooms_completed", std::max(0, run.stats.nodesCompleted - pacing.floorStartNodesCompleted)},
+            {"partial", true}
+        });
+    }
+
+    return Json{
+        {"active_seconds", pacing.activeSeconds},
+        {"phase_seconds", std::move(phaseSeconds)},
+        {"rooms", std::move(rooms)},
+        {"floors", std::move(floors)}
+    };
 }
 
 Json statsJson(const RunStats& stats) {
@@ -90,11 +154,11 @@ void RunTelemetryWriter::append(
         {"upgraded_card_count", static_cast<int>(run.upgradedDeckIndices.size())},
         {"relic_count", static_cast<int>(run.relicIds.size())},
         {"active_item_id", run.activeItem.itemId},
-        {"stats", statsJson(run.stats)}
+        {"stats", statsJson(run.stats)},
+        {"pacing", pacingJson(run)}
     };
 
-    output << record.dump() << '
-';
+    output << record.dump() << '\n';
     if (!output.good()) {
         throw std::runtime_error("Cannot append local run telemetry: " + path.string());
     }

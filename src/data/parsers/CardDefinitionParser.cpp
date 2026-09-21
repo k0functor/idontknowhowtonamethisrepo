@@ -3,6 +3,7 @@
 #include "data/JsonReader.hpp"
 #include "data/parsers/EffectDefinitionParser.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -83,6 +84,9 @@ CardUpgradeDefinition parseUpgrade(
     if (upgradeReader.has("energy_cost")) {
         upgrade.energyCost = upgradeReader.requiredInt("energy_cost");
     }
+    if (upgradeReader.has("stress_cost")) {
+        upgrade.stressCost = upgradeReader.requiredInt("stress_cost");
+    }
     if (upgradeReader.has("gold_cost")) {
         upgrade.goldCost = upgradeReader.requiredInt("gold_cost");
     }
@@ -100,6 +104,13 @@ CardUpgradeDefinition parseUpgrade(
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() +
             "': card upgrade energy_cost must not be negative"
+        );
+    }
+
+    if (upgrade.stressCost.has_value() && *upgrade.stressCost < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() +
+            "': card upgrade stress_cost must not be negative"
         );
     }
 
@@ -131,6 +142,7 @@ CardDefinition CardDefinitionParser::parse(
     definition.type = cardTypeFromString(reader.requiredString("type"));
 
     definition.energyCost = reader.requiredInt("energy_cost");
+    definition.stressCost = reader.optionalInt("stress_cost", 0);
     definition.goldCost = reader.requiredInt("gold_cost");
     definition.ownerActorId = reader.optionalString("owner_actor", reader.optionalString("energy_pool", ""));
     definition.rewardPoolId = reader.optionalString("card_pool", reader.optionalString("reward_pool", definition.ownerActorId));
@@ -139,6 +151,13 @@ CardDefinition CardDefinitionParser::parse(
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() +
             "': card energy_cost must not be negative"
+        );
+    }
+
+    if (definition.stressCost < 0) {
+        throw std::runtime_error(
+            "JSON error in '" + sourcePath.string() +
+            "': card stress_cost must not be negative"
         );
     }
 
@@ -154,10 +173,17 @@ CardDefinition CardDefinitionParser::parse(
     definition.effects = parseEffects(reader, sourcePath);
     definition.upgrade = parseUpgrade(reader, sourcePath);
 
-    if (definition.effects.empty()) {
+    const bool isUnplayable = std::find(
+        definition.keywords.begin(),
+        definition.keywords.end(),
+        CardKeyword::Unplayable
+    ) != definition.keywords.end();
+
+    if (definition.effects.empty() && !isUnplayable) {
         throw std::runtime_error(
             "JSON error in '" + sourcePath.string() +
-            "': card '" + definition.id.value + "' must have at least one effect"
+            "': card '" + definition.id.value +
+            "' must have at least one effect unless it is unplayable"
         );
     }
 

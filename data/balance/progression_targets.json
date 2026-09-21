@@ -2,43 +2,128 @@
   "schema_version": 1,
   "starter_deck": {
     "target_combined_output": 22.0,
-    "warning_deviation_percent": 32.0
+    "warning_deviation_percent": 18.0,
+    "archetype_target_multipliers": {
+      "merchant": 0.86,
+      "sadist_masochist": 2.25
+    }
   },
   "floors": {
     "floor1": {
       "offense_multiplier": 1.0,
       "defense_multiplier": 1.0,
-      "combat_hp_loss_target": [0.0, 8.0],
-      "elite_hp_loss_target": [2.0, 16.0],
-      "boss_hp_loss_target": [6.0, 24.0]
+      "combat_hp_loss_target": [
+        0.0,
+        8.0
+      ],
+      "elite_hp_loss_target": [
+        2.0,
+        16.0
+      ],
+      "boss_hp_loss_target": [
+        6.0,
+        24.0
+      ]
     },
     "floor2": {
       "offense_multiplier": 1.25,
       "defense_multiplier": 1.15,
-      "combat_hp_loss_target": [2.0, 12.0],
-      "elite_hp_loss_target": [6.0, 22.0],
-      "boss_hp_loss_target": [10.0, 30.0]
+      "combat_hp_loss_target": [
+        0.0,
+        18.0
+      ],
+      "elite_hp_loss_target": [
+        6.0,
+        36.0
+      ],
+      "boss_hp_loss_target": [
+        10.0,
+        34.0
+      ],
+      "last_regular_layer": 7,
+      "combat_hp_loss_start_target": [
+        0.0,
+        6.0
+      ],
+      "elite_hp_loss_start_target": [
+        3.0,
+        18.0
+      ]
     },
     "floor3": {
       "offense_multiplier": 1.55,
       "defense_multiplier": 1.35,
-      "combat_hp_loss_target": [3.0, 15.0],
-      "elite_hp_loss_target": [8.0, 26.0],
-      "boss_hp_loss_target": [12.0, 34.0]
+      "combat_hp_loss_target": [
+        0.0,
+        24.0
+      ],
+      "elite_hp_loss_target": [
+        8.0,
+        36.0
+      ],
+      "boss_hp_loss_target": [
+        12.0,
+        40.0
+      ],
+      "last_regular_layer": 10,
+      "combat_hp_loss_start_target": [
+        0.0,
+        8.0
+      ],
+      "elite_hp_loss_start_target": [
+        5.0,
+        22.0
+      ]
     },
     "floor4": {
       "offense_multiplier": 1.95,
       "defense_multiplier": 1.6,
-      "combat_hp_loss_target": [5.0, 20.0],
-      "elite_hp_loss_target": [10.0, 32.0],
-      "boss_hp_loss_target": [15.0, 42.0]
+      "combat_hp_loss_target": [
+        5.0,
+        20.0
+      ],
+      "elite_hp_loss_target": [
+        10.0,
+        32.0
+      ],
+      "boss_hp_loss_target": [
+        15.0,
+        42.0
+      ],
+      "last_regular_layer": 13,
+      "combat_hp_loss_start_target": [
+        0.0,
+        12.0
+      ],
+      "elite_hp_loss_start_target": [
+        3.0,
+        20.0
+      ]
     },
     "floor5": {
       "offense_multiplier": 2.4,
       "defense_multiplier": 1.9,
-      "combat_hp_loss_target": [7.0, 24.0],
-      "elite_hp_loss_target": [14.0, 38.0],
-      "boss_hp_loss_target": [20.0, 50.0]
+      "combat_hp_loss_target": [
+        0.0,
+        26.0
+      ],
+      "elite_hp_loss_target": [
+        6.0,
+        40.0
+      ],
+      "boss_hp_loss_target": [
+        14.0,
+        55.0
+      ],
+      "last_regular_layer": 17,
+      "combat_hp_loss_start_target": [
+        0.0,
+        12.0
+      ],
+      "elite_hp_loss_start_target": [
+        2.0,
+        24.0
+      ]
     }
   }
 }

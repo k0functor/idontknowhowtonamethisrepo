@@ -45,8 +45,10 @@
     "rarity": "uncommon",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "card_played",
+        "card_type": "skill",
+        "previous_card_type": "attack",
+        "source_side": "player",
         "effects": [
           {
             "type": "draw_cards",
@@ -307,17 +309,16 @@
     "rarity": "uncommon",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "enemy_killed",
+        "source_side": "player",
         "effects": [
           {
-            "type": "apply_status",
+            "type": "gain_energy",
             "target": "self",
             "value": {
               "type": "fixed",
               "amount": 1
-            },
-            "status": "strength"
+            }
           },
           {
             "type": "draw_cards",
@@ -462,24 +463,17 @@
     "rarity": "rare",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "card_played",
+        "card_type": "attack",
+        "card_number_this_turn": 1,
+        "source_side": "player",
         "effects": [
-          {
-            "type": "apply_status",
-            "target": "self",
-            "status": "strength",
-            "value": {
-              "type": "fixed",
-              "amount": 1
-            }
-          },
           {
             "type": "block",
             "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 5
+              "amount": 6
             }
           }
         ]
@@ -564,16 +558,16 @@
     "rarity": "rare",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "card_played",
+        "card_number_this_turn": 3,
+        "source_side": "player",
         "effects": [
           {
-            "type": "apply_status",
+            "type": "gain_energy",
             "target": "self",
-            "status": "strength",
             "value": {
               "type": "fixed",
-              "amount": 2
+              "amount": 1
             }
           },
           {
@@ -595,17 +589,11 @@
     "rarity": "common",
     "triggers": [
       {
-        "event": "combat_started",
+        "event": "block_gained",
         "once_per_combat": true,
+        "source_side": "player",
+        "min_amount": 10,
         "effects": [
-          {
-            "type": "block",
-            "target": "self",
-            "value": {
-              "type": "fixed",
-              "amount": 4
-            }
-          },
           {
             "type": "apply_status",
             "target": "self",
@@ -614,6 +602,14 @@
               "amount": 1
             },
             "status": "dexterity"
+          },
+          {
+            "type": "draw_cards",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 1
+            }
           }
         ]
       }
@@ -653,6 +649,7 @@
     "name": "relic.grounding_bead.name",
     "description": "relic.grounding_bead.description",
     "rarity": "common",
+    "mechanic_id": "stress_psychopath",
     "triggers": [
       {
         "event": "stress_breakdown_triggered",
@@ -685,6 +682,7 @@
     "name": "relic.cracked_metronome.name",
     "description": "relic.cracked_metronome.description",
     "rarity": "uncommon",
+    "mechanic_id": "stress_psychopath",
     "triggers": [
       {
         "event": "stress_breakdown_triggered",
@@ -716,6 +714,7 @@
     "name": "relic.ash_filter.name",
     "description": "relic.ash_filter.description",
     "rarity": "uncommon",
+    "mechanic_id": "stress_psychopath",
     "triggers": [
       {
         "event": "stress_breakdown_triggered",
@@ -747,6 +746,7 @@
     "name": "relic.red_thread_spool.name",
     "description": "relic.red_thread_spool.description",
     "rarity": "rare",
+    "mechanic_id": "stress_psychopath",
     "triggers": [
       {
         "event": "stress_breakdown_triggered",
@@ -782,16 +782,17 @@
     "rarity": "common",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "card_played",
+        "card_type": "skill",
+        "previous_card_type": "attack",
+        "source_side": "player",
         "effects": [
           {
-            "type": "apply_status",
+            "type": "block",
             "target": "self",
-            "status": "dexterity",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 4
             }
           }
         ]
@@ -973,25 +974,33 @@
     "rarity": "uncommon",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "card_played",
+        "card_type": "attack",
+        "previous_card_type": "skill",
+        "source_side": "player",
         "effects": [
           {
-            "type": "apply_status",
+            "type": "draw_cards",
             "target": "self",
-            "status": "strength",
             "value": {
               "type": "fixed",
               "amount": 1
             }
-          },
+          }
+        ]
+      },
+      {
+        "event": "card_played",
+        "card_type": "skill",
+        "previous_card_type": "attack",
+        "source_side": "player",
+        "effects": [
           {
-            "type": "apply_status",
+            "type": "block",
             "target": "self",
-            "status": "dexterity",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 5
             }
           }
         ]
@@ -1030,22 +1039,12 @@
     "rarity": "uncommon",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "turn_started",
+        "min_drones": 3,
         "effects": [
           {
-            "type": "summon_drone",
+            "type": "draw_cards",
             "target": "self",
-            "status": "drone_guardian",
-            "value": {
-              "type": "fixed",
-              "amount": 1
-            }
-          },
-          {
-            "type": "apply_status",
-            "target": "self",
-            "status": "dexterity",
             "value": {
               "type": "fixed",
               "amount": 1
@@ -1053,7 +1052,8 @@
           }
         ]
       }
-    ]
+    ],
+    "mechanic_id": "replicant_drones"
   },
   {
     "id": "threefold_bead",
@@ -1062,22 +1062,40 @@
     "rarity": "uncommon",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "turn_started",
+        "owner_status": "stance_flame",
         "effects": [
           {
-            "type": "apply_status",
+            "type": "block",
             "target": "self",
-            "status": "ferocity",
+            "value": {
+              "type": "fixed",
+              "amount": 4
+            }
+          }
+        ]
+      },
+      {
+        "event": "turn_started",
+        "owner_status": "stance_ash",
+        "effects": [
+          {
+            "type": "draw_cards",
+            "target": "self",
             "value": {
               "type": "fixed",
               "amount": 1
             }
-          },
+          }
+        ]
+      },
+      {
+        "event": "turn_started",
+        "owner_status": "stance_smoke",
+        "effects": [
           {
-            "type": "apply_status",
+            "type": "gain_energy",
             "target": "self",
-            "status": "dexterity",
             "value": {
               "type": "fixed",
               "amount": 1
@@ -1085,7 +1103,8 @@
           }
         ]
       }
-    ]
+    ],
+    "mechanic_id": "monk_stances"
   },
   {
     "id": "blood_receipt",
@@ -1142,26 +1161,27 @@
     "rarity": "uncommon",
     "triggers": [
       {
-        "event": "combat_started",
+        "event": "status_applied",
+        "status": "burn",
         "once_per_combat": true,
+        "source_side": "player",
         "effects": [
           {
-            "type": "apply_status",
-            "target": "random_enemy",
-            "status": "burn",
+            "type": "draw_cards",
+            "target": "self",
             "value": {
               "type": "fixed",
-              "amount": 3
+              "amount": 1
             }
           },
           {
             "type": "apply_status",
             "target": "self",
-            "status": "ferocity",
             "value": {
               "type": "fixed",
               "amount": 1
-            }
+            },
+            "status": "ferocity"
           }
         ]
       }
@@ -1207,22 +1227,21 @@
     "rarity": "rare",
     "triggers": [
       {
-        "event": "combat_started",
-        "once_per_combat": true,
+        "event": "card_played",
+        "card_number_this_turn": 4,
+        "source_side": "player",
         "effects": [
           {
-            "type": "apply_status",
+            "type": "block",
             "target": "self",
-            "status": "strength",
             "value": {
               "type": "fixed",
-              "amount": 2
+              "amount": 8
             }
           },
           {
-            "type": "apply_status",
+            "type": "draw_cards",
             "target": "self",
-            "status": "dexterity",
             "value": {
               "type": "fixed",
               "amount": 1
@@ -1239,22 +1258,23 @@
     "rarity": "rare",
     "triggers": [
       {
-        "event": "combat_started",
+        "event": "damage_taken",
         "once_per_combat": true,
+        "source_side": "enemy",
+        "min_amount": 8,
         "effects": [
           {
             "type": "apply_status",
             "target": "self",
-            "status": "ferocity",
             "value": {
               "type": "fixed",
               "amount": 3
-            }
+            },
+            "status": "ferocity"
           },
           {
-            "type": "apply_status",
+            "type": "gain_energy",
             "target": "self",
-            "status": "vulnerable",
             "value": {
               "type": "fixed",
               "amount": 1
@@ -1271,25 +1291,26 @@
     "rarity": "rare",
     "triggers": [
       {
-        "event": "combat_started",
+        "event": "status_applied",
+        "status": "poison",
         "once_per_combat": true,
+        "source_side": "player",
         "effects": [
           {
             "type": "apply_status",
-            "target": "all_enemies",
-            "status": "poison",
+            "target": "self",
             "value": {
               "type": "fixed",
               "amount": 2
-            }
+            },
+            "status": "ferocity"
           },
           {
-            "type": "apply_status",
+            "type": "draw_cards",
             "target": "self",
-            "status": "ferocity",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             }
           }
         ]
@@ -1303,25 +1324,32 @@
     "rarity": "rare",
     "triggers": [
       {
-        "event": "turn_started",
-        "every_n_turns": 3,
+        "event": "card_played",
+        "card_number_this_turn": 5,
+        "source_side": "player",
         "effects": [
           {
-            "type": "apply_status",
+            "type": "gain_energy",
             "target": "self",
-            "status": "strength",
             "value": {
               "type": "fixed",
               "amount": 1
             }
           },
           {
-            "type": "apply_status",
+            "type": "draw_cards",
             "target": "self",
-            "status": "dexterity",
             "value": {
               "type": "fixed",
               "amount": 1
+            }
+          },
+          {
+            "type": "block",
+            "target": "self",
+            "value": {
+              "type": "fixed",
+              "amount": 5
             }
           }
         ]

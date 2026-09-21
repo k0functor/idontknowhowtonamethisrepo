@@ -1,4 +1,5 @@
 #include "ShopScene.hpp"
+#include "ShopLayout.hpp"
 #include "ui/VirtualViewport.hpp"
 
 #include "active_items/ActiveItemSystem.hpp"
@@ -17,23 +18,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace {
-constexpr float offerSpacing = 20.f;
-constexpr float textOfferHeight = 122.f;
-constexpr float textOfferSpacing = 16.f;
-constexpr float removeCardCellHeight = 310.f;
-constexpr float removeCardCellSpacing = 16.f;
-constexpr std::size_t removeCardColumns = 4u;
-constexpr float merchantRestDesiredCardScale = 1.36f;
-constexpr float merchantRestMinimumCardScale = 0.92f;
-constexpr float merchantRestCellHorizontalPadding = 12.f;
-constexpr float merchantRestPriceGap = 10.f;
-constexpr float merchantRestPriceHeight = 32.f;
-constexpr float merchantRestStatusHeight = 24.f;
-constexpr float merchantRestMaximumCardGap = 52.f;
-constexpr float merchantRestMinimumCardGap = 18.f;
-}
 
 ShopScene::ShopScene(
     const UiFont& font,
@@ -122,13 +106,13 @@ void ShopScene::render() const {
         Color{219, 205, 130, 255}
     );
 
-    const Rectangle panel = panelBounds();
+    const Rectangle panel = ShopLayout::panelBounds();
     DrawRectangleRounded(panel, 0.04f, 14, Color{29, 31, 41, 250});
     DrawRectangleRoundedLinesEx(panel, 0.04f, 14, 2.f, Color{111, 122, 150, 255});
 
     renderOffers();
 
-    BasicUi::drawButton(font_, leaveButtonBounds(), leaveButtonText(), mouse);
+    BasicUi::drawButton(font_, ShopLayout::leaveButtonBounds(), leaveButtonText(), mouse);
 
     if (!removeMode_ && !pendingPurchaseIndex_.has_value() && !relicOwnerChoiceOpen_) {
         renderHoverDescription();
@@ -147,255 +131,6 @@ void ShopScene::render() const {
     }
 }
 
-Rectangle ShopScene::panelBounds() const {
-    const float width = std::min(1580.f, static_cast<float>(VirtualViewport::width()) - 80.f);
-    const float height = std::min(790.f, static_cast<float>(VirtualViewport::height()) - 196.f);
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        118.f,
-        width,
-        height
-    };
-}
-
-Rectangle ShopScene::cardOffersAreaBounds() const {
-    const Rectangle panel = panelBounds();
-    if (shopState_.isMerchantRest()) {
-        return Rectangle{panel.x + 34.f, panel.y + 34.f, panel.width - 68.f, panel.height - 82.f};
-    }
-
-    const float width = std::min(930.f, panel.width * 0.60f);
-    return Rectangle{panel.x + 34.f, panel.y + 34.f, width, panel.height - 82.f};
-}
-
-Rectangle ShopScene::otherOffersAreaBounds() const {
-    const Rectangle panel = panelBounds();
-    if (shopState_.isMerchantRest()) {
-        return Rectangle{panel.x + panel.width - 34.f, panel.y + 34.f, 0.f, panel.height - 82.f};
-    }
-
-    const Rectangle cards = cardOffersAreaBounds();
-    const float x = cards.x + cards.width + 34.f;
-    return Rectangle{x, panel.y + 34.f, std::max(420.f, panel.x + panel.width - x - 34.f), panel.height - 82.f};
-}
-
-Rectangle ShopScene::offerBounds(const std::size_t index) const {
-    if (index >= shopState_.offers.size()) {
-        return Rectangle{};
-    }
-
-    const ShopOffer& offer = shopState_.offers[index];
-    if (offer.type == ShopOfferType::Card) {
-        const Rectangle area = cardOffersAreaBounds();
-        const std::size_t columns = cardOfferColumnCount();
-        const std::size_t ordinal = cardOfferOrdinal(index);
-
-        if (shopState_.isMerchantRest()) {
-            const Vector2 cardSize = CardVisualInstance::size();
-            const float scale = merchantRestCardScale();
-            const float cellWidth = cardSize.x * scale + merchantRestCellHorizontalPadding;
-            const float cellHeight = cardSize.y * scale + merchantRestPriceGap + merchantRestPriceHeight + merchantRestStatusHeight;
-            const float gap = merchantRestCardGap(cellWidth, columns);
-            const float totalWidth = static_cast<float>(columns) * cellWidth +
-                static_cast<float>(columns - 1u) * gap;
-            const float startX = area.x + (area.width - totalWidth) * 0.5f;
-            const float startY = area.y + (area.height - cellHeight) * 0.5f;
-
-            return Rectangle{
-                startX + static_cast<float>(ordinal) * (cellWidth + gap),
-                startY,
-                cellWidth,
-                cellHeight
-            };
-        }
-
-        const float columnCount = static_cast<float>(std::max<std::size_t>(1u, columns));
-        const float cellWidth = (area.width - offerSpacing * (columnCount - 1.f)) / columnCount;
-        const float cellHeight = cardOfferCellHeight();
-        const std::size_t column = ordinal % columns;
-        const std::size_t row = ordinal / columns;
-        return Rectangle{
-            area.x + static_cast<float>(column) * (cellWidth + offerSpacing),
-            area.y + static_cast<float>(row) * (cellHeight + offerSpacing),
-            cellWidth,
-            cellHeight
-        };
-    }
-
-    const Rectangle area = otherOffersAreaBounds();
-    const std::size_t ordinal = textOfferOrdinal(index);
-    return Rectangle{
-        area.x,
-        area.y + static_cast<float>(ordinal) * (textOfferHeight + textOfferSpacing),
-        area.width,
-        textOfferHeight
-    };
-}
-
-Rectangle ShopScene::cardOfferVisualBounds(const Rectangle cell) const {
-    if (shopState_.isMerchantRest()) {
-        const Vector2 cardSize = CardVisualInstance::size();
-        const float scale = merchantRestCardScale();
-        const float visualWidth = cardSize.x * scale;
-        const float visualHeight = cardSize.y * scale;
-        return Rectangle{
-            cell.x + (cell.width - visualWidth) * 0.5f,
-            cell.y,
-            visualWidth,
-            visualHeight
-        };
-    }
-
-    return Rectangle{cell.x + 8.f, cell.y + 10.f, cell.width - 16.f, cell.height - 92.f};
-}
-
-std::size_t ShopScene::cardOfferColumnCount() const {
-    const Rectangle area = cardOffersAreaBounds();
-    const std::size_t cardCount = std::max<std::size_t>(1u, std::count_if(
-        shopState_.offers.begin(),
-        shopState_.offers.end(),
-        [this](const ShopOffer& offer) {
-            return offer.type == ShopOfferType::Card && (shopState_.isMerchantRest() || !offer.purchased);
-        }
-    ));
-
-    if (shopState_.isMerchantRest()) {
-        return cardCount;
-    }
-
-    return area.width < 760.f ? 2u : 3u;
-}
-
-float ShopScene::cardOfferCellHeight() const {
-    const Rectangle area = cardOffersAreaBounds();
-    const std::size_t columns = cardOfferColumnCount();
-    const std::size_t cardCount = std::max<std::size_t>(1u, std::count_if(
-        shopState_.offers.begin(),
-        shopState_.offers.end(),
-        [this](const ShopOffer& offer) {
-            return offer.type == ShopOfferType::Card && (shopState_.isMerchantRest() || !offer.purchased);
-        }
-    ));
-    const std::size_t rows = std::max<std::size_t>(1u, (cardCount + columns - 1u) / columns);
-    const float availableHeight = area.height - offerSpacing * static_cast<float>(rows - 1u);
-    const float fittedHeight = availableHeight / static_cast<float>(rows);
-
-    if (shopState_.isMerchantRest()) {
-        const Vector2 cardSize = CardVisualInstance::size();
-        const float scale = merchantRestCardScale();
-        return cardSize.y * scale + merchantRestPriceGap + merchantRestPriceHeight + merchantRestStatusHeight;
-    }
-
-    return std::clamp(fittedHeight, 260.f, 376.f);
-}
-
-float ShopScene::merchantRestCardScale() const {
-    const Rectangle area = cardOffersAreaBounds();
-    const std::size_t cardCount = std::max<std::size_t>(1u, cardOfferColumnCount());
-    const Vector2 cardSize = CardVisualInstance::size();
-    const float horizontalGaps = merchantRestMaximumCardGap * static_cast<float>(cardCount - 1u);
-    const float horizontalPadding = merchantRestCellHorizontalPadding * static_cast<float>(cardCount);
-    const float widthScale = (area.width - horizontalGaps - horizontalPadding) /
-        (cardSize.x * static_cast<float>(cardCount));
-    const float heightScale = (area.height - merchantRestPriceGap - merchantRestPriceHeight - merchantRestStatusHeight) /
-        cardSize.y;
-    const float fittedScale = std::min({merchantRestDesiredCardScale, widthScale, heightScale});
-    return std::clamp(fittedScale, merchantRestMinimumCardScale, merchantRestDesiredCardScale);
-}
-
-float ShopScene::merchantRestCardGap(const float cellWidth, const std::size_t cardCount) const {
-    if (cardCount <= 1u) {
-        return 0.f;
-    }
-
-    const Rectangle area = cardOffersAreaBounds();
-    const float remainingWidth = area.width - cellWidth * static_cast<float>(cardCount);
-    const float fittedGap = remainingWidth / static_cast<float>(cardCount - 1u);
-    return std::clamp(fittedGap, merchantRestMinimumCardGap, merchantRestMaximumCardGap);
-}
-
-Rectangle ShopScene::leaveButtonBounds() const {
-    return Rectangle{
-        static_cast<float>(VirtualViewport::width()) * 0.5f - 150.f,
-        static_cast<float>(VirtualViewport::height()) - 82.f,
-        300.f,
-        50.f
-    };
-}
-
-Rectangle ShopScene::removeModeBounds() const {
-    const float width = std::min(1080.f, static_cast<float>(VirtualViewport::width()) - 70.f);
-    const float height = std::min(660.f, static_cast<float>(VirtualViewport::height()) - 70.f);
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle ShopScene::removeCardBounds(const std::size_t index) const {
-    const Rectangle modal = removeModeBounds();
-    const float gridX = modal.x + 35.f;
-    const float gridY = modal.y + 124.f;
-    const float gridWidth = modal.width - 70.f;
-    const float cellWidth = (gridWidth - removeCardCellSpacing * static_cast<float>(removeCardColumns - 1u)) /
-        static_cast<float>(removeCardColumns);
-    const std::size_t column = index % removeCardColumns;
-    const std::size_t row = index / removeCardColumns;
-
-    return Rectangle{
-        gridX + static_cast<float>(column) * (cellWidth + removeCardCellSpacing),
-        gridY + static_cast<float>(row) * (removeCardCellHeight + removeCardCellSpacing),
-        cellWidth,
-        removeCardCellHeight
-    };
-}
-
-Rectangle ShopScene::removeCancelButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width * 0.5f - 130.f, modal.y + modal.height - 66.f, 260.f, 46.f};
-}
-
-Rectangle ShopScene::purchaseConfirmationBounds() const {
-    bool activeItem = false;
-    if (pendingPurchaseIndex_.has_value() && *pendingPurchaseIndex_ < shopState_.offers.size()) {
-        activeItem = shopState_.offers[*pendingPurchaseIndex_].type == ShopOfferType::ActiveItem;
-    }
-    const float width = activeItem ? std::min(920.f, static_cast<float>(VirtualViewport::width()) - 72.f) : 620.f;
-    const float height = activeItem ? std::min(590.f, static_cast<float>(VirtualViewport::height()) - 72.f) : 270.f;
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle ShopScene::purchaseConfirmButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 64.f, modal.y + modal.height - 76.f, 220.f, 50.f};
-}
-
-Rectangle ShopScene::purchaseCancelButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width - 284.f, modal.y + modal.height - 76.f, 220.f, 50.f};
-}
-
-Rectangle ShopScene::relicOwnerModalBounds() const {
-    const float width = 700.f;
-    const float desiredHeight = 188.f + static_cast<float>(runState_.actorStates.size()) * 92.f + 76.f;
-    const float height = std::min(std::max(420.f, desiredHeight), static_cast<float>(VirtualViewport::height()) - 72.f);
-    return Rectangle{VirtualViewport::width() * 0.5f - width * 0.5f, VirtualViewport::height() * 0.5f - height * 0.5f, width, height};
-}
-
-Rectangle ShopScene::relicOwnerOptionBounds(const std::size_t index) const {
-    const Rectangle modal = relicOwnerModalBounds();
-    return Rectangle{modal.x + 42.f, modal.y + 140.f + static_cast<float>(index) * 92.f, modal.width - 84.f, 76.f};
-}
-
-Rectangle ShopScene::relicOwnerCancelButtonBounds() const {
-    const Rectangle modal = relicOwnerModalBounds();
-    return Rectangle{modal.x + modal.width * 0.5f - 120.f, modal.y + modal.height - 58.f, 240.f, 44.f};
-}
-
 void ShopScene::moveRelicOwnerSelection(const int delta) {
     if (runState_.actorStates.empty()) {
         selectedRelicOwnerIndex_.reset();
@@ -408,15 +143,8 @@ void ShopScene::moveRelicOwnerSelection(const int delta) {
     selectedRelicOwnerIndex_ = static_cast<std::size_t>(index);
 }
 
-Rectangle ShopScene::hoverDescriptionBounds(const Vector2 mouse, const float height) const {
-    constexpr float width = 520.f;
-    const float x = std::clamp(mouse.x + 28.f, 28.f, static_cast<float>(VirtualViewport::width()) - width - 28.f);
-    const float y = std::clamp(mouse.y + 28.f, 28.f, static_cast<float>(VirtualViewport::height()) - height - 28.f);
-    return Rectangle{x, y, width, height};
-}
-
 void ShopScene::updateShop(const Vector2 mouse) {
-    if (BasicUi::contains(leaveButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(ShopLayout::leaveButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         onLeave_();
         return;
     }
@@ -427,7 +155,7 @@ void ShopScene::updateShop(const Vector2 mouse) {
 
     for (std::size_t i = 0; i < shopState_.offers.size(); ++i) {
         ShopOffer& offer = shopState_.offers[i];
-        if (offer.purchased || !BasicUi::contains(offerBounds(i), mouse) || !canBuy(offer)) {
+        if (offer.purchased || !BasicUi::contains(ShopLayout::offerBounds(shopState_, i), mouse) || !canBuy(offer)) {
             continue;
         }
 
@@ -442,6 +170,12 @@ void ShopScene::updateShop(const Vector2 mouse) {
     }
 }
 
+bool ShopScene::pendingPurchaseIsActiveItem() const {
+    return pendingPurchaseIndex_.has_value() &&
+        *pendingPurchaseIndex_ < shopState_.offers.size() &&
+        shopState_.offers[*pendingPurchaseIndex_].type == ShopOfferType::ActiveItem;
+}
+
 void ShopScene::updatePurchaseConfirmation(const Vector2 mouse) {
     if (!pendingPurchaseIndex_.has_value() || *pendingPurchaseIndex_ >= shopState_.offers.size()) {
         pendingPurchaseIndex_.reset();
@@ -454,19 +188,19 @@ void ShopScene::updatePurchaseConfirmation(const Vector2 mouse) {
         return;
     }
 
-    const Rectangle modal = purchaseConfirmationBounds();
+    const Rectangle modal = ShopLayout::purchaseConfirmationBounds(pendingPurchaseIsActiveItem());
     if (IsKeyPressed(KEY_SPACE) && offer.type == ShopOfferType::Card && onCopyCard_) {
         (void)onCopyCard_(CardId(offer.contentId));
         return;
     }
 
     if (IsKeyPressed(KEY_ESCAPE) ||
-        (BasicUi::contains(purchaseCancelButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+        (BasicUi::contains(ShopLayout::purchaseCancelButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         pendingPurchaseIndex_.reset();
         return;
     }
 
-    if (BasicUi::contains(purchaseConfirmButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(ShopLayout::purchaseConfirmButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         if (offer.type == ShopOfferType::Relic && hasMultipleRelicOwners()) {
             pendingRelicOwnerPurchaseIndex_ = *pendingPurchaseIndex_;
             selectedRelicOwnerIndex_ = runState_.actorStates.empty() ? std::optional<std::size_t>{} : std::optional<std::size_t>{0u};
@@ -513,8 +247,9 @@ void ShopScene::updateRelicOwnerChoice(const Vector2 mouse) {
         return;
     }
 
+    const Rectangle modal = ShopLayout::relicOwnerModalBounds(runState_.actorStates.size());
     for (std::size_t i = 0; i < runState_.actorStates.size(); ++i) {
-        if (BasicUi::contains(relicOwnerOptionBounds(i), mouse)) {
+        if (BasicUi::contains(ShopLayout::relicOwnerOptionBounds(modal, i), mouse)) {
             selectedRelicOwnerIndex_ = i;
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 purchaseOfferAtIndex(*pendingRelicOwnerPurchaseIndex_, runState_.actorStates[i].definitionId);
@@ -526,7 +261,7 @@ void ShopScene::updateRelicOwnerChoice(const Vector2 mouse) {
         }
     }
 
-    if (BasicUi::contains(relicOwnerCancelButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(ShopLayout::relicOwnerCancelButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         pendingRelicOwnerPurchaseIndex_.reset();
         selectedRelicOwnerIndex_.reset();
         relicOwnerChoiceOpen_ = false;
@@ -534,26 +269,26 @@ void ShopScene::updateRelicOwnerChoice(const Vector2 mouse) {
 }
 
 void ShopScene::updateRemoveMode(const Vector2 mouse) {
-    const Rectangle modal = removeModeBounds();
+    const Rectangle modal = ShopLayout::removeModeBounds();
 
     const float wheel = GetMouseWheelMove();
     if (wheel > 0.f && removeScrollOffset_ > 0u) {
         --removeScrollOffset_;
-    } else if (wheel < 0.f && removeScrollOffset_ + visibleRemoveCardCount() < runState_.deckCardIds.size()) {
+    } else if (wheel < 0.f && removeScrollOffset_ + ShopLayout::visibleRemoveCardCount() < runState_.deckCardIds.size()) {
         ++removeScrollOffset_;
     }
 
     if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) && removeScrollOffset_ > 0u) {
         --removeScrollOffset_;
     }
-    if ((IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) && removeScrollOffset_ + visibleRemoveCardCount() < runState_.deckCardIds.size()) {
+    if ((IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) && removeScrollOffset_ + ShopLayout::visibleRemoveCardCount() < runState_.deckCardIds.size()) {
         ++removeScrollOffset_;
     }
 
     clampRemoveScrollOffset();
 
     if (IsKeyPressed(KEY_ESCAPE) ||
-        (BasicUi::contains(removeCancelButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+        (BasicUi::contains(ShopLayout::removeCancelButtonBounds(modal), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         removeMode_ = false;
         return;
     }
@@ -562,10 +297,10 @@ void ShopScene::updateRemoveMode(const Vector2 mouse) {
         return;
     }
 
-    const std::size_t visibleCount = visibleRemoveCardCount();
+    const std::size_t visibleCount = ShopLayout::visibleRemoveCardCount();
     for (std::size_t visibleIndex = 0; visibleIndex < visibleCount; ++visibleIndex) {
         const std::size_t deckIndex = removeScrollOffset_ + visibleIndex;
-        if (deckIndex >= runState_.deckCardIds.size() || !BasicUi::contains(removeCardBounds(visibleIndex), mouse)) {
+        if (deckIndex >= runState_.deckCardIds.size() || !BasicUi::contains(ShopLayout::removeCardBounds(visibleIndex), mouse)) {
             continue;
         }
 
@@ -596,7 +331,7 @@ void ShopScene::updateRemoveMode(const Vector2 mouse) {
 }
 
 void ShopScene::clampRemoveScrollOffset() {
-    const std::size_t visibleCount = visibleRemoveCardCount();
+    const std::size_t visibleCount = ShopLayout::visibleRemoveCardCount();
     if (runState_.deckCardIds.size() <= visibleCount) {
         removeScrollOffset_ = 0;
         return;
@@ -623,7 +358,7 @@ void ShopScene::renderOffers() const {
 
 void ShopScene::renderCardOffer(const ShopOffer& offer, const std::size_t offerIndex) const {
     const Vector2 mouse = GetMousePosition();
-    const Rectangle bounds = offerBounds(offerIndex);
+    const Rectangle bounds = ShopLayout::offerBounds(shopState_, offerIndex);
     const bool enabled = canBuy(offer);
     const bool hovered = enabled && BasicUi::contains(bounds, mouse);
 
@@ -633,7 +368,7 @@ void ShopScene::renderCardOffer(const ShopOffer& offer, const std::size_t offerI
         DrawRectangleRoundedLinesEx(bounds, 0.06f, 10, 2.f, hovered ? Color{238, 196, 86, 255} : Color{108, 118, 145, 255});
     }
 
-    const Rectangle visualBounds = cardOfferVisualBounds(bounds);
+    const Rectangle visualBounds = ShopLayout::cardOfferVisualBounds(shopState_, bounds);
     const CardId cardId(offer.contentId);
     if (cards_.contains(cardId)) {
         CardViewModel model = cardViewModel(
@@ -703,7 +438,7 @@ void ShopScene::renderCardOffer(const ShopOffer& offer, const std::size_t offerI
 
 void ShopScene::renderTextOffer(const ShopOffer& offer, const std::size_t offerIndex) const {
     const Vector2 mouse = GetMousePosition();
-    const Rectangle bounds = offerBounds(offerIndex);
+    const Rectangle bounds = ShopLayout::offerBounds(shopState_, offerIndex);
     const bool enabled = canBuy(offer);
     const bool hovered = enabled && BasicUi::contains(bounds, mouse);
     const Color fill = !enabled ? Color{34, 36, 44, 255} : (hovered ? Color{55, 60, 78, 255} : Color{41, 44, 58, 255});
@@ -744,14 +479,14 @@ void ShopScene::renderHoverDescription() const {
         if (offer.purchased || (offer.type != ShopOfferType::Relic && offer.type != ShopOfferType::Consumable && offer.type != ShopOfferType::ActiveItem)) {
             continue;
         }
-        if (!BasicUi::contains(offerBounds(i), mouse)) {
+        if (!BasicUi::contains(ShopLayout::offerBounds(shopState_, i), mouse)) {
             continue;
         }
 
         const std::string description = offerDescription(offer);
         const std::vector<std::string> lines = BasicUi::wrapText(font_, description, 19.f, 468.f);
         const float height = std::min(260.f, 92.f + static_cast<float>(lines.size()) * 24.f);
-        const Rectangle bounds = hoverDescriptionBounds(mouse, height);
+        const Rectangle bounds = ShopLayout::hoverDescriptionBounds(mouse, height);
 
         DrawRectangleRounded(bounds, 0.06f, 12, Color{24, 26, 35, 250});
         DrawRectangleRoundedLinesEx(bounds, 0.06f, 12, 2.f, Color{142, 154, 188, 255});
@@ -777,7 +512,7 @@ void ShopScene::renderPurchaseConfirmation() const {
 
     const ShopOffer& offer = shopState_.offers[*pendingPurchaseIndex_];
     const Vector2 mouse = GetMousePosition();
-    const Rectangle modal = purchaseConfirmationBounds();
+    const Rectangle modal = ShopLayout::purchaseConfirmationBounds(pendingPurchaseIsActiveItem());
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 140});
     DrawRectangleRounded(modal, 0.05f, 14, Color{27, 29, 39, 252});
@@ -808,8 +543,8 @@ void ShopScene::renderPurchaseConfirmation() const {
             offer.contentId,
             Rectangle{modal.x + 42.f, modal.y + 108.f, modal.width - 84.f, modal.height - 206.f}
         );
-        BasicUi::drawButton(font_, purchaseConfirmButtonBounds(modal), localization_.get(TextId("active_item.compare.buy_equip")), mouse);
-        BasicUi::drawButton(font_, purchaseCancelButtonBounds(modal), localization_.get(TextId("active_item.compare.keep")), mouse);
+        BasicUi::drawButton(font_, ShopLayout::purchaseConfirmButtonBounds(modal), localization_.get(TextId("active_item.compare.buy_equip")), mouse);
+        BasicUi::drawButton(font_, ShopLayout::purchaseCancelButtonBounds(modal), localization_.get(TextId("active_item.compare.keep")), mouse);
         return;
     }
 
@@ -847,8 +582,8 @@ void ShopScene::renderPurchaseConfirmation() const {
         Color{170, 180, 204, 255}
     );
 
-    BasicUi::drawButton(font_, purchaseConfirmButtonBounds(modal), localization_.get(TextId("shop.confirm.buy")), mouse);
-    BasicUi::drawButton(font_, purchaseCancelButtonBounds(modal), localization_.get(TextId("reward.cancel")), mouse);
+    BasicUi::drawButton(font_, ShopLayout::purchaseConfirmButtonBounds(modal), localization_.get(TextId("shop.confirm.buy")), mouse);
+    BasicUi::drawButton(font_, ShopLayout::purchaseCancelButtonBounds(modal), localization_.get(TextId("reward.cancel")), mouse);
 }
 
 void ShopScene::renderRelicOwnerChoice() const {
@@ -858,7 +593,7 @@ void ShopScene::renderRelicOwnerChoice() const {
 
     const ShopOffer& offer = shopState_.offers[*pendingRelicOwnerPurchaseIndex_];
     const Vector2 mouse = GetMousePosition();
-    const Rectangle modal = relicOwnerModalBounds();
+    const Rectangle modal = ShopLayout::relicOwnerModalBounds(runState_.actorStates.size());
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 140});
     DrawRectangleRounded(modal, 0.06f, 14, Color{25, 27, 38, 252});
@@ -883,7 +618,7 @@ void ShopScene::renderRelicOwnerChoice() const {
 
     for (std::size_t i = 0; i < runState_.actorStates.size(); ++i) {
         const RunActorState& actor = runState_.actorStates[i];
-        const Rectangle row = relicOwnerOptionBounds(i);
+        const Rectangle row = ShopLayout::relicOwnerOptionBounds(modal, i);
         const bool hovered = BasicUi::contains(row, mouse);
         const bool selected = selectedRelicOwnerIndex_.has_value() && *selectedRelicOwnerIndex_ == i;
         DrawRectangleRounded(row, 0.08f, 10, hovered || selected ? Color{55, 61, 80, 255} : Color{40, 43, 56, 255});
@@ -927,12 +662,12 @@ void ShopScene::renderRelicOwnerChoice() const {
         Color{150, 158, 184, 255}
     );
 
-    BasicUi::drawButton(font_, relicOwnerCancelButtonBounds(), localization_.get(TextId("reward.cancel")), mouse);
+    BasicUi::drawButton(font_, ShopLayout::relicOwnerCancelButtonBounds(modal), localization_.get(TextId("reward.cancel")), mouse);
 }
 
 void ShopScene::renderRemoveMode() const {
     const Vector2 mouse = GetMousePosition();
-    const Rectangle modal = removeModeBounds();
+    const Rectangle modal = ShopLayout::removeModeBounds();
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 145});
     DrawRectangleRounded(modal, 0.05f, 14, Color{26, 28, 38, 252});
@@ -941,14 +676,14 @@ void ShopScene::renderRemoveMode() const {
     BasicUi::drawCenteredText(font_, localization_.get(TextId("shop.remove_card_title")), Rectangle{modal.x + 20.f, modal.y + 22.f, modal.width - 40.f, 42.f}, 30.f, Color{255, 235, 175, 255});
     BasicUi::drawCenteredText(font_, localization_.format(TextId("shop.remove_card_description"), {{"price", std::to_string(shopState_.cardRemovalPrice)}}), Rectangle{modal.x + 30.f, modal.y + 66.f, modal.width - 60.f, 38.f}, 20.f, Color{190, 198, 220, 255});
 
-    const std::size_t visibleCount = visibleRemoveCardCount();
+    const std::size_t visibleCount = ShopLayout::visibleRemoveCardCount();
     for (std::size_t visibleIndex = 0; visibleIndex < visibleCount; ++visibleIndex) {
         const std::size_t deckIndex = removeScrollOffset_ + visibleIndex;
         if (deckIndex >= runState_.deckCardIds.size()) {
             break;
         }
 
-        const Rectangle cell = removeCardBounds(visibleIndex);
+        const Rectangle cell = ShopLayout::removeCardBounds(visibleIndex);
         const bool hovered = BasicUi::contains(cell, mouse);
         DrawRectangleRounded(cell, 0.06f, 10, hovered ? Color{55, 60, 78, 255} : Color{40, 43, 56, 255});
         DrawRectangleRoundedLinesEx(cell, 0.06f, 10, 2.f, hovered ? Color{238, 196, 86, 255} : Color{110, 120, 150, 255});
@@ -995,7 +730,7 @@ void ShopScene::renderRemoveMode() const {
         );
     }
 
-    BasicUi::drawButton(font_, removeCancelButtonBounds(modal), localization_.get(TextId("reward.cancel")), mouse);
+    BasicUi::drawButton(font_, ShopLayout::removeCancelButtonBounds(modal), localization_.get(TextId("reward.cancel")), mouse);
 }
 
 void ShopScene::purchaseOfferAtIndex(const std::size_t offerIndex) {
@@ -1228,34 +963,6 @@ Color ShopScene::offerStatusColor(const ShopOffer& offer) const {
     }
 
     return Color{210, 145, 135, 255};
-}
-
-std::size_t ShopScene::cardOfferOrdinal(const std::size_t offerIndex) const {
-    std::size_t ordinal = 0u;
-    for (std::size_t i = 0u; i < offerIndex && i < shopState_.offers.size(); ++i) {
-        if (shopState_.offers[i].type == ShopOfferType::Card &&
-            (shopState_.isMerchantRest() || !shopState_.offers[i].purchased)) {
-            ++ordinal;
-        }
-    }
-    return ordinal;
-}
-
-std::size_t ShopScene::textOfferOrdinal(const std::size_t offerIndex) const {
-    std::size_t ordinal = 0u;
-    for (std::size_t i = 0u; i < offerIndex && i < shopState_.offers.size(); ++i) {
-        if (!shopState_.offers[i].purchased && shopState_.offers[i].type != ShopOfferType::Card) {
-            ++ordinal;
-        }
-    }
-    return ordinal;
-}
-
-std::size_t ShopScene::visibleRemoveCardCount() const {
-    const Rectangle modal = removeModeBounds();
-    const float availableHeight = std::max(removeCardCellHeight, modal.height - 206.f);
-    const std::size_t rows = std::max<std::size_t>(1u, static_cast<std::size_t>((availableHeight + removeCardCellSpacing) / (removeCardCellHeight + removeCardCellSpacing)));
-    return rows * removeCardColumns;
 }
 
 bool ShopScene::isDeckIndexUpgraded(const std::size_t deckIndex) const {

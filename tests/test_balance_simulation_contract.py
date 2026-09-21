@@ -29,6 +29,15 @@ def main() -> int:
         assert first == second, "balance simulation must be deterministic for the same seed"
         assert first["schema_version"] == 2
         assert len(first["starter_decks"]) == 7
+        assert first["floor_baseline_archetypes"] == [
+            "herbalist",
+            "lost_psychopath",
+            "merchant",
+            "monk",
+            "replicant",
+            "rusted_knight",
+        ]
+        assert first["starter_deck_flags"] == []
         assert len(first["encounters"]) >= 200
         assert first["floor_aggregates"]
         assert first["progression_targets"]["schema_version"] == 1
@@ -38,11 +47,14 @@ def main() -> int:
             assert report["block_per_turn"] >= 0
             assert report["cards_per_turn"] > 0
             assert "combined_output" in report
+            assert "target_combined_output" in report
             assert "target_deviation_percent" in report
         for report in first["encounters"]:
             assert report["enemy_count"] in {1, 2, 3}
             assert report["total_hp"] > 0
             assert report["incoming_damage_per_turn"] >= 0
+            assert report["enemy_heal_per_turn"] >= 0
+            assert 0 <= report["player_offense_penalty"] <= 0.5
             assert report["target_status"] in {"below", "within", "above"}
             assert report["projected_player_damage_per_turn"] > 0
             assert report["projected_player_block_per_turn"] >= 0

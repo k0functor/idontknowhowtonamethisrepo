@@ -71,9 +71,11 @@ for boss in bosses:
         errors.append(f"{boss_id}: unreachable actions {sorted(action_ids - phased_actions)}")
     if len(set(phase_pools)) < 2:
         errors.append(f"{boss_id}: every phase uses the same action pool")
-    if not any(phase.get("summon_enemy_ids") for phase in phases):
-        errors.append(f"{boss_id}: no phase summons reinforcements")
-    if not any(phase.get("player_turn_effects") for phase in phases):
+    summon_phase_count = sum(bool(phase.get("summon_enemy_ids")) for phase in phases)
+    arena_phase_count = sum(bool(phase.get("player_turn_effects")) for phase in phases)
+    if summon_phase_count == 0 and arena_phase_count < 2:
+        errors.append(f"{boss_id}: solo boss needs arena rules in at least two phases")
+    if arena_phase_count == 0:
         errors.append(f"{boss_id}: no phase defines an arena rule")
 
 for locale in ("en", "ru"):
@@ -116,10 +118,10 @@ for path, tokens in required_code.items():
         if token not in text:
             errors.append(f"{path.relative_to(ROOT)}: missing token {token}")
 
-if len(bosses) != 13:
-    errors.append(f"expected 13 bosses, found {len(bosses)}")
-if phase_count < 39:
-    errors.append(f"expected at least 39 boss phases, found {phase_count}")
+if len(bosses) != 15:
+    errors.append(f"expected 15 bosses, found {len(bosses)}")
+if phase_count < 45:
+    errors.append(f"expected at least 45 boss phases, found {phase_count}")
 if summoning_phases < 13:
     errors.append(f"expected broad summon coverage, found {summoning_phases} summoning phases")
 if arena_phases < 13:

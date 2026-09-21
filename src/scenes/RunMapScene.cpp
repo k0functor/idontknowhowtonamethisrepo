@@ -1,4 +1,5 @@
 #include "RunMapScene.hpp"
+#include "RunMapLayout.hpp"
 #include "ui/VirtualViewport.hpp"
 #include "ui/CardTransform.hpp"
 #include "ui/CardViewModel.hpp"
@@ -29,18 +30,8 @@
 #include <raylib.h>
 
 namespace {
-constexpr float NODE_WIDTH = 108.f;
-constexpr float NODE_HEIGHT = 64.f;
 constexpr float CARD_GRID_GAP = 20.f;
 constexpr int CARD_GRID_MAX_COLUMNS = 5;
-constexpr float MAP_SCROLL_EPSILON = 1.f;
-constexpr float MAP_EDGE_SCROLL_ZONE = 86.f;
-constexpr float MAP_EDGE_SCROLL_MAX_SPEED = 980.f;
-constexpr float MAP_VIEWPORT_MARGIN_X = 32.f;
-constexpr float MAP_VIEWPORT_TOP = 96.f;
-constexpr float MAP_VIEWPORT_MIN_HEIGHT = 150.f;
-constexpr float MAP_VIEWPORT_BOTTOM_RESERVE = 78.f;
-constexpr float MAP_CONTENT_EDGE_PADDING = 118.f;
 
 Vector2 standardCardSlotSize() {
     const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
@@ -51,38 +42,6 @@ int cardGridColumns(const float gridWidth) {
     const Vector2 slotSize = standardCardSlotSize();
     const int fitting = static_cast<int>((gridWidth + CARD_GRID_GAP) / (slotSize.x + CARD_GRID_GAP));
     return std::max(1, std::min(CARD_GRID_MAX_COLUMNS, fitting));
-}
-
-struct MapRawBounds {
-    float minX = 0.f;
-    float maxX = 0.f;
-    float minY = 0.f;
-    float maxY = 0.f;
-};
-
-MapRawBounds calculateRawBounds(const RunMap& map) {
-    if (map.nodes.empty()) {
-        return {};
-    }
-
-    MapRawBounds bounds;
-    bounds.minX = std::numeric_limits<float>::max();
-    bounds.maxX = std::numeric_limits<float>::lowest();
-    bounds.minY = std::numeric_limits<float>::max();
-    bounds.maxY = std::numeric_limits<float>::lowest();
-
-    for (const RunMapNode& node : map.nodes) {
-        bounds.minX = std::min(bounds.minX, node.position.x);
-        bounds.maxX = std::max(bounds.maxX, node.position.x);
-        bounds.minY = std::min(bounds.minY, node.position.y);
-        bounds.maxY = std::max(bounds.maxY, node.position.y);
-    }
-
-    return bounds;
-}
-
-float safeDimension(const float value) {
-    return std::max(value, 1.f);
 }
 
 const RunMapNode* findNodeById(const RunMap& map, const int nodeId) {
@@ -186,27 +145,27 @@ void RunMapScene::update(const float deltaSeconds) {
         return;
     }
 
-    if (BasicUi::contains(abandonButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(RunMapLayout::abandonButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         abandonConfirmationOpen_ = true;
         return;
     }
 
-    if (BasicUi::contains(deckButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(RunMapLayout::deckButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         openOverlay(OverlayMode::Deck);
         return;
     }
 
-    if (BasicUi::contains(relicsButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(RunMapLayout::relicsButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         openOverlay(OverlayMode::Relics);
         return;
     }
 
-    if (BasicUi::contains(consumablesButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    if (BasicUi::contains(RunMapLayout::consumablesButtonBounds(), mouse) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         openOverlay(OverlayMode::Consumables);
         return;
     }
 
-    if (!BasicUi::contains(mapViewportBounds(), mouse)) {
+    if (!BasicUi::contains(RunMapLayout::mapViewportBounds(), mouse)) {
         return;
     }
 
@@ -215,7 +174,7 @@ void RunMapScene::update(const float deltaSeconds) {
             continue;
         }
 
-        if (!BasicUi::contains(nodeBounds(node), mouse) || !IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (!BasicUi::contains(RunMapLayout::nodeBounds(runState_.map, node, mapScrollOffset_), mouse) || !IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             continue;
         }
 
@@ -238,10 +197,10 @@ void RunMapScene::render() const {
     const Vector2 mouse = GetMousePosition();
 
     BasicUi::drawButton(font_, Rectangle{32.f, 32.f, 230.f, 48.f}, localization_.get(TextId("settings.save_and_exit")), mouse);
-    BasicUi::drawButton(font_, abandonButtonBounds(), localization_.get(TextId("run.abandon")), mouse);
-    BasicUi::drawButton(font_, deckButtonBounds(), localization_.get(TextId("run.view_deck")), mouse);
-    BasicUi::drawButton(font_, relicsButtonBounds(), localization_.get(TextId("run.view_relics")), mouse);
-    BasicUi::drawButton(font_, consumablesButtonBounds(), localization_.get(TextId("run.view_consumables")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::abandonButtonBounds(), localization_.get(TextId("run.abandon")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::deckButtonBounds(), localization_.get(TextId("run.view_deck")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::relicsButtonBounds(), localization_.get(TextId("run.view_relics")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::consumablesButtonBounds(), localization_.get(TextId("run.view_consumables")), mouse);
 
     const float summaryX = std::max(232.f, static_cast<float>(VirtualViewport::width()) - 360.f);
     BasicUi::drawText(
@@ -261,7 +220,7 @@ void RunMapScene::render() const {
 
     renderRunModeBanner();
 
-    const Rectangle viewport = mapViewportBounds();
+    const Rectangle viewport = RunMapLayout::mapViewportBounds();
     DrawRectangleRounded(viewport, 0.035f, 10, Color{12, 14, 22, 132});
     DrawRectangleRoundedLinesEx(viewport, 0.035f, 10, 1.5f, Color{68, 76, 104, 180});
 
@@ -275,7 +234,7 @@ void RunMapScene::render() const {
     );
 
     for (const RunMapNode& node : runState_.map.nodes) {
-        const Vector2 from = nodeScreenPosition(node);
+        const Vector2 from = RunMapLayout::nodeScreenPosition(runState_.map, node, mapScrollOffset_);
 
         for (const int nextNodeId : node.nextNodeIds) {
             const RunMapNode* target = findNodeById(runState_.map, nextNodeId);
@@ -284,7 +243,7 @@ void RunMapScene::render() const {
                 continue;
             }
 
-            const Vector2 to = nodeScreenPosition(*target);
+            const Vector2 to = RunMapLayout::nodeScreenPosition(runState_.map, *target, mapScrollOffset_);
             const bool hoveredConnection = hoveredNode != nullptr &&
                 (hoveredNode->id == node.id || hoveredNode->id == target->id);
             const float thickness = connectionThickness(node, *target) + (hoveredConnection ? 1.25f : 0.f);
@@ -293,7 +252,7 @@ void RunMapScene::render() const {
     }
 
     for (const RunMapNode& node : runState_.map.nodes) {
-        const Rectangle bounds = nodeBounds(node);
+        const Rectangle bounds = RunMapLayout::nodeBounds(runState_.map, node, mapScrollOffset_);
         const bool isHovered = hoveredNode != nullptr && hoveredNode->id == node.id;
 
         DrawRectangleRounded(bounds, 0.3f, 16, nodeColor(node));
@@ -329,71 +288,6 @@ void RunMapScene::render() const {
     }
 }
 
-Vector2 RunMapScene::nodeScreenPosition(const RunMapNode& node) const {
-    const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
-    const float scale = mapScale();
-    const Rectangle viewport = mapViewportBounds();
-
-    const Vector2 rawCenter{
-        (rawBounds.minX + rawBounds.maxX) * 0.5f,
-        (rawBounds.minY + rawBounds.maxY) * 0.5f
-    };
-
-    return Vector2{
-        viewport.x + MAP_CONTENT_EDGE_PADDING + (node.position.x - rawBounds.minX) * scale - mapScrollOffset_,
-        viewport.y + viewport.height * 0.5f + (node.position.y - rawCenter.y) * scale
-    };
-}
-
-Rectangle RunMapScene::mapViewportBounds() const {
-    const float screenWidth = static_cast<float>(VirtualViewport::width());
-    const float screenHeight = static_cast<float>(VirtualViewport::height());
-    const float width = std::max(1.f, screenWidth - MAP_VIEWPORT_MARGIN_X * 2.f);
-    const float height = std::max(
-        MAP_VIEWPORT_MIN_HEIGHT,
-        screenHeight - MAP_VIEWPORT_TOP - MAP_VIEWPORT_BOTTOM_RESERVE
-    );
-
-    return Rectangle{
-        MAP_VIEWPORT_MARGIN_X,
-        MAP_VIEWPORT_TOP,
-        width,
-        height
-    };
-}
-
-float RunMapScene::mapAvailableWidth() const {
-    return mapViewportBounds().width;
-}
-
-float RunMapScene::mapScale() const {
-    const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
-    const float rawHeight = safeDimension(rawBounds.maxY - rawBounds.minY);
-    const float verticalScale = mapViewportBounds().height / rawHeight;
-
-    // Horizontal readability is more important than fitting every layer on screen.
-    // Long maps scroll horizontally instead of compressing nodes into a tiny mess.
-    return std::min(1.f, verticalScale);
-}
-
-float RunMapScene::mapContentWidth() const {
-    const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
-    const float rawWidth = safeDimension(rawBounds.maxX - rawBounds.minX);
-    return rawWidth * mapScale() + MAP_CONTENT_EDGE_PADDING * 2.f;
-}
-
-float RunMapScene::mapMaxScrollOffset() const {
-    return std::max(0.f, mapContentWidth() - mapAvailableWidth());
-}
-
-float RunMapScene::scrollOffsetForNode(const RunMapNode& node) const {
-    const MapRawBounds rawBounds = calculateRawBounds(runState_.map);
-    const Rectangle viewport = mapViewportBounds();
-    const float rawNodeX = MAP_CONTENT_EDGE_PADDING + (node.position.x - rawBounds.minX) * mapScale();
-    const float desiredScreenX = viewport.x + viewport.width * 0.5f;
-    return std::clamp(viewport.x + rawNodeX - desiredScreenX, 0.f, mapMaxScrollOffset());
-}
-
 const RunMapNode* RunMapScene::preferredMapFocusNode() const {
     if (const RunMapNode* current = currentMapNode()) {
         return current;
@@ -415,34 +309,34 @@ const RunMapNode* RunMapScene::preferredMapFocusNode() const {
 
 float RunMapScene::initialMapScrollOffset() const {
     if (const RunMapNode* focus = preferredMapFocusNode()) {
-        return scrollOffsetForNode(*focus);
+        return RunMapLayout::scrollOffsetForNode(runState_.map, *focus);
     }
 
     return 0.f;
 }
 
 void RunMapScene::clampMapScrollOffset() {
-    mapScrollOffset_ = std::clamp(mapScrollOffset_, 0.f, mapMaxScrollOffset());
+    mapScrollOffset_ = std::clamp(mapScrollOffset_, 0.f, RunMapLayout::mapMaxScrollOffset(runState_.map));
 }
 
 void RunMapScene::focusMapOnPreferredNode() {
     if (const RunMapNode* focus = preferredMapFocusNode()) {
-        mapScrollOffset_ = scrollOffsetForNode(*focus);
+        mapScrollOffset_ = RunMapLayout::scrollOffsetForNode(runState_.map, *focus);
     }
 
     clampMapScrollOffset();
 }
 
 void RunMapScene::updateMapScroll(const float deltaSeconds) {
-    const float maxScroll = mapMaxScrollOffset();
-    if (maxScroll <= MAP_SCROLL_EPSILON) {
+    const float maxScroll = RunMapLayout::mapMaxScrollOffset(runState_.map);
+    if (maxScroll <= RunMapLayout::scrollEpsilon()) {
         mapScrollOffset_ = 0.f;
         isDraggingMapCanvas_ = false;
         return;
     }
 
     const Vector2 mouse = GetMousePosition();
-    const Rectangle viewport = mapViewportBounds();
+    const Rectangle viewport = RunMapLayout::mapViewportBounds();
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
         BasicUi::contains(viewport, mouse) &&
@@ -467,13 +361,13 @@ void RunMapScene::updateMapScroll(const float deltaSeconds) {
         mouse.y <= viewport.y + viewport.height;
 
     if (mouseInsideScrollableBand && !isDraggingMapCanvas_) {
-        if (mouse.x <= MAP_EDGE_SCROLL_ZONE) {
-            const float strength = 1.f - std::clamp(mouse.x / MAP_EDGE_SCROLL_ZONE, 0.f, 1.f);
-            mapScrollOffset_ -= MAP_EDGE_SCROLL_MAX_SPEED * strength * deltaSeconds;
-        } else if (mouse.x >= screenWidth - MAP_EDGE_SCROLL_ZONE) {
+        if (mouse.x <= RunMapLayout::edgeScrollZone()) {
+            const float strength = 1.f - std::clamp(mouse.x / RunMapLayout::edgeScrollZone(), 0.f, 1.f);
+            mapScrollOffset_ -= RunMapLayout::edgeScrollMaxSpeed() * strength * deltaSeconds;
+        } else if (mouse.x >= screenWidth - RunMapLayout::edgeScrollZone()) {
             const float distanceFromRight = screenWidth - mouse.x;
-            const float strength = 1.f - std::clamp(distanceFromRight / MAP_EDGE_SCROLL_ZONE, 0.f, 1.f);
-            mapScrollOffset_ += MAP_EDGE_SCROLL_MAX_SPEED * strength * deltaSeconds;
+            const float strength = 1.f - std::clamp(distanceFromRight / RunMapLayout::edgeScrollZone(), 0.f, 1.f);
+            mapScrollOffset_ += RunMapLayout::edgeScrollMaxSpeed() * strength * deltaSeconds;
         }
     }
 
@@ -481,154 +375,13 @@ void RunMapScene::updateMapScroll(const float deltaSeconds) {
 }
 
 
-Rectangle RunMapScene::nodeBounds(const RunMapNode& node) const {
-    const Vector2 position = nodeScreenPosition(node);
-    return Rectangle{
-        position.x - NODE_WIDTH * 0.5f,
-        position.y - NODE_HEIGHT * 0.5f,
-        NODE_WIDTH,
-        NODE_HEIGHT
-    };
-}
-
-Rectangle RunMapScene::restModalBounds() const {
-    const float width = std::min(660.f, static_cast<float>(VirtualViewport::width()) - 48.f);
-    const float height = std::min(500.f, static_cast<float>(VirtualViewport::height()) - 48.f);
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle RunMapScene::restHealButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 42.f, modal.y + modal.height - 214.f, (modal.width - 96.f) * 0.5f, 52.f};
-}
-
-Rectangle RunMapScene::restCalmButtonBounds(const Rectangle modal) const {
-    const Rectangle heal = restHealButtonBounds(modal);
-    return Rectangle{heal.x + heal.width + 12.f, heal.y, heal.width, heal.height};
-}
-
-Rectangle RunMapScene::restUpgradeButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 42.f, modal.y + modal.height - 150.f, modal.width - 84.f, 52.f};
-}
-
-Rectangle RunMapScene::restSkipButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 42.f, modal.y + modal.height - 88.f, modal.width - 220.f, 46.f};
-}
-
-Rectangle RunMapScene::restCancelButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width - 150.f, modal.y + modal.height - 58.f, 112.f, 38.f};
-}
-
-
-Rectangle RunMapScene::deckButtonBounds() const {
-    constexpr float buttonWidth = 126.f;
-    constexpr float buttonHeight = 42.f;
-    constexpr float gap = 10.f;
-    constexpr float relicsWidth = 126.f;
-    constexpr float consumablesWidth = 156.f;
-    constexpr float totalWidth = buttonWidth + relicsWidth + consumablesWidth + gap * 2.f;
-    const float startX = (static_cast<float>(VirtualViewport::width()) - totalWidth) * 0.5f;
-    return Rectangle{startX, 32.f, buttonWidth, buttonHeight};
-}
-
-Rectangle RunMapScene::relicsButtonBounds() const {
-    constexpr float buttonWidth = 126.f;
-    constexpr float buttonHeight = 42.f;
-    constexpr float gap = 10.f;
-    const Rectangle deck = deckButtonBounds();
-    return Rectangle{deck.x + deck.width + gap, 32.f, buttonWidth, buttonHeight};
-}
-
-Rectangle RunMapScene::consumablesButtonBounds() const {
-    constexpr float buttonWidth = 156.f;
-    constexpr float buttonHeight = 42.f;
-    constexpr float gap = 10.f;
-    const Rectangle relics = relicsButtonBounds();
-    return Rectangle{relics.x + relics.width + gap, 32.f, buttonWidth, buttonHeight};
-}
-
-Rectangle RunMapScene::abandonButtonBounds() const {
-    return Rectangle{274.f, 32.f, 140.f, 48.f};
-}
-
-Rectangle RunMapScene::abandonModalBounds() const {
-    const float width = 440.f;
-    const float height = 190.f;
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle RunMapScene::abandonCancelButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 28.f, modal.y + modal.height - 66.f, 180.f, 42.f};
-}
-
-Rectangle RunMapScene::abandonConfirmButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width - 208.f, modal.y + modal.height - 66.f, 180.f, 42.f};
-}
-
-Rectangle RunMapScene::overlayBounds() const {
-    const float width = std::min(1180.f, static_cast<float>(VirtualViewport::width()) - 56.f);
-    const float height = std::min(680.f, static_cast<float>(VirtualViewport::height()) - 56.f);
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle RunMapScene::overlayCloseButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width - 146.f, modal.y + modal.height - 58.f, 112.f, 40.f};
-}
-
-Rectangle RunMapScene::overlayGridBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + 28.f, modal.y + 86.f, modal.width - 56.f, modal.height - 166.f};
-}
-
-Rectangle RunMapScene::upgradePreviewModalBounds() const {
-    const float width = 760.f;
-    const float height = 520.f;
-    return Rectangle{
-        (static_cast<float>(VirtualViewport::width()) - width) * 0.5f,
-        (static_cast<float>(VirtualViewport::height()) - height) * 0.5f,
-        width,
-        height
-    };
-}
-
-Rectangle RunMapScene::upgradePreviewBeforeCardBounds(const Rectangle modal) const {
-    const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
-    return Rectangle{modal.x + 72.f, modal.y + 104.f, cardSize.x, cardSize.y};
-}
-
-Rectangle RunMapScene::upgradePreviewAfterCardBounds(const Rectangle modal) const {
-    const Vector2 cardSize = CardVisualInstance::standardDisplaySize();
-    return Rectangle{modal.x + modal.width - 72.f - cardSize.x, modal.y + 104.f, cardSize.x, cardSize.y};
-}
-
-Rectangle RunMapScene::upgradePreviewCancelButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width * 0.5f - 224.f, modal.y + modal.height - 72.f, 192.f, 44.f};
-}
-
-Rectangle RunMapScene::upgradePreviewConfirmButtonBounds(const Rectangle modal) const {
-    return Rectangle{modal.x + modal.width * 0.5f + 32.f, modal.y + modal.height - 72.f, 192.f, 44.f};
-}
-
 const RunMapNode* RunMapScene::hoveredMapNode(const Vector2 mousePosition) const {
-    if (isMapInteractionBlocked() || !BasicUi::contains(mapViewportBounds(), mousePosition)) {
+    if (isMapInteractionBlocked() || !BasicUi::contains(RunMapLayout::mapViewportBounds(), mousePosition)) {
         return nullptr;
     }
 
     for (const RunMapNode& node : runState_.map.nodes) {
-        if (BasicUi::contains(nodeBounds(node), mousePosition)) {
+        if (BasicUi::contains(RunMapLayout::nodeBounds(runState_.map, node, mapScrollOffset_), mousePosition)) {
             return &node;
         }
     }
@@ -857,7 +610,7 @@ void RunMapScene::renderRunModeBanner() const {
 }
 
 Rectangle RunMapScene::mapNodeInspectBounds() const {
-    const Rectangle viewport = mapViewportBounds();
+    const Rectangle viewport = RunMapLayout::mapViewportBounds();
     const float screenWidth = static_cast<float>(VirtualViewport::width());
     const float width = std::min(340.f, std::max(1.f, screenWidth - 64.f));
     const float height = 82.f;
@@ -940,16 +693,16 @@ void RunMapScene::renderMapNodeInspect(const RunMapNode& node) const {
 }
 
 void RunMapScene::updateAbandonConfirmation(const Vector2 mousePosition) {
-    const Rectangle modal = abandonModalBounds();
+    const Rectangle modal = RunMapLayout::abandonModalBounds();
 
     if (IsKeyPressed(KEY_ESCAPE) || IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ||
-        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(abandonCancelButtonBounds(modal), mousePosition))) {
+        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(RunMapLayout::abandonCancelButtonBounds(modal), mousePosition))) {
         abandonConfirmationOpen_ = false;
         return;
     }
 
     if (IsKeyPressed(KEY_ENTER) ||
-        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(abandonConfirmButtonBounds(modal), mousePosition))) {
+        (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && BasicUi::contains(RunMapLayout::abandonConfirmButtonBounds(modal), mousePosition))) {
         abandonConfirmationOpen_ = false;
         onAbandonRun_();
     }
@@ -959,7 +712,7 @@ void RunMapScene::renderAbandonConfirmation() const {
     const Vector2 mouse = GetMousePosition();
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{8, 9, 13, 178});
 
-    const Rectangle modal = abandonModalBounds();
+    const Rectangle modal = RunMapLayout::abandonModalBounds();
     DrawRectangleRounded(modal, 0.08f, 10, Color{31, 34, 43, 252});
     DrawRectangleRoundedLinesEx(modal, 0.08f, 10, 2.f, Color{180, 110, 105, 255});
 
@@ -973,13 +726,13 @@ void RunMapScene::renderAbandonConfirmation() const {
 
     BasicUi::drawButton(
         font_,
-        abandonCancelButtonBounds(modal),
+        RunMapLayout::abandonCancelButtonBounds(modal),
         localization_.get(TextId("ui.cancel")),
         mouse
     );
     BasicUi::drawButton(
         font_,
-        abandonConfirmButtonBounds(modal),
+        RunMapLayout::abandonConfirmButtonBounds(modal),
         localization_.get(TextId("run.abandon.confirm")),
         mouse,
         true,
@@ -999,14 +752,14 @@ void RunMapScene::updateRestModal(const Vector2 mousePosition) {
         return;
     }
 
-    const Rectangle modal = restModalBounds();
+    const Rectangle modal = RunMapLayout::restModalBounds();
 
     if (IsKeyPressed(KEY_ESCAPE)) {
         restModalNodeId_ = std::nullopt;
         return;
     }
 
-    if (BasicUi::contains(restHealButtonBounds(modal), mousePosition) &&
+    if (BasicUi::contains(RunMapLayout::restHealButtonBounds(modal), mousePosition) &&
         IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         const int nodeId = *restModalNodeId_;
         restModalNodeId_ = std::nullopt;
@@ -1014,7 +767,7 @@ void RunMapScene::updateRestModal(const Vector2 mousePosition) {
         return;
     }
 
-    if (BasicUi::contains(restCalmButtonBounds(modal), mousePosition) &&
+    if (BasicUi::contains(RunMapLayout::restCalmButtonBounds(modal), mousePosition) &&
         IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         const int nodeId = *restModalNodeId_;
         restModalNodeId_ = std::nullopt;
@@ -1023,13 +776,13 @@ void RunMapScene::updateRestModal(const Vector2 mousePosition) {
     }
 
     if (!upgradableDeckIndices().empty() &&
-        BasicUi::contains(restUpgradeButtonBounds(modal), mousePosition) &&
+        BasicUi::contains(RunMapLayout::restUpgradeButtonBounds(modal), mousePosition) &&
         IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         openOverlay(OverlayMode::Upgrade);
         return;
     }
 
-    if (BasicUi::contains(restSkipButtonBounds(modal), mousePosition) &&
+    if (BasicUi::contains(RunMapLayout::restSkipButtonBounds(modal), mousePosition) &&
         IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         const int nodeId = *restModalNodeId_;
         restModalNodeId_ = std::nullopt;
@@ -1037,7 +790,7 @@ void RunMapScene::updateRestModal(const Vector2 mousePosition) {
         return;
     }
 
-    if (BasicUi::contains(restCancelButtonBounds(modal), mousePosition) &&
+    if (BasicUi::contains(RunMapLayout::restCancelButtonBounds(modal), mousePosition) &&
         IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         restModalNodeId_ = std::nullopt;
     }
@@ -1045,7 +798,7 @@ void RunMapScene::updateRestModal(const Vector2 mousePosition) {
 
 void RunMapScene::renderRestModal() const {
     const Vector2 mouse = GetMousePosition();
-    const Rectangle modal = restModalBounds();
+    const Rectangle modal = RunMapLayout::restModalBounds();
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 150});
     DrawRectangleRounded(modal, 0.08f, 14, Color{28, 30, 38, 245});
@@ -1113,24 +866,24 @@ void RunMapScene::renderRestModal() const {
     );
     y = preview.y + preview.height + 16.f;
     for (const std::string& line : hintLines) {
-        if (y > restHealButtonBounds(modal).y - 10.f) {
+        if (y > RunMapLayout::restHealButtonBounds(modal).y - 10.f) {
             break;
         }
         BasicUi::drawText(font_, line, Vector2{modal.x + 42.f, y}, 15.f, Color{170, 178, 198, 255});
         y += 19.f;
     }
 
-    BasicUi::drawButton(font_, restHealButtonBounds(modal), localization_.get(TextId("rest.heal")), mouse);
-    BasicUi::drawButton(font_, restCalmButtonBounds(modal), localization_.get(TextId("rest.calm")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::restHealButtonBounds(modal), localization_.get(TextId("rest.heal")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::restCalmButtonBounds(modal), localization_.get(TextId("rest.calm")), mouse);
     BasicUi::drawButton(
         font_,
-        restUpgradeButtonBounds(modal),
+        RunMapLayout::restUpgradeButtonBounds(modal),
         localization_.get(TextId("rest.upgrade")),
         mouse,
         !upgradableDeckIndices().empty()
     );
-    BasicUi::drawButton(font_, restSkipButtonBounds(modal), localization_.get(TextId("rest.skip")), mouse);
-    BasicUi::drawButton(font_, restCancelButtonBounds(modal), localization_.get(TextId("rest.back")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::restSkipButtonBounds(modal), localization_.get(TextId("rest.skip")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::restCancelButtonBounds(modal), localization_.get(TextId("rest.back")), mouse);
 }
 
 std::string RunMapScene::restHealPreviewText() const {
@@ -1238,8 +991,8 @@ void RunMapScene::closeOverlay() {
 }
 
 void RunMapScene::updateOverlay(const Vector2 mousePosition) {
-    const Rectangle modal = overlayBounds();
-    const Rectangle grid = overlayGridBounds(modal);
+    const Rectangle modal = RunMapLayout::overlayBounds();
+    const Rectangle grid = RunMapLayout::overlayGridBounds(modal);
 
     if (overlayMode_ == OverlayMode::Upgrade && selectedUpgradeDeckIndex_.has_value()) {
         updateUpgradePreviewModal(mousePosition);
@@ -1320,7 +1073,7 @@ void RunMapScene::updateOverlay(const Vector2 mousePosition) {
     }
 
     if (IsKeyPressed(KEY_ESCAPE) ||
-        (BasicUi::contains(overlayCloseButtonBounds(modal), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
+        (BasicUi::contains(RunMapLayout::overlayCloseButtonBounds(modal), mousePosition) && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))) {
         closeOverlay();
         return;
     }
@@ -1373,7 +1126,7 @@ void RunMapScene::updateOverlay(const Vector2 mousePosition) {
 }
 
 void RunMapScene::updateUpgradePreviewModal(const Vector2 mousePosition) {
-    const Rectangle modal = upgradePreviewModalBounds();
+    const Rectangle modal = RunMapLayout::upgradePreviewModalBounds();
 
     if (IsKeyPressed(KEY_ESCAPE)) {
         selectedUpgradeDeckIndex_.reset();
@@ -1384,7 +1137,7 @@ void RunMapScene::updateUpgradePreviewModal(const Vector2 mousePosition) {
         return;
     }
 
-    if (BasicUi::contains(upgradePreviewCancelButtonBounds(modal), mousePosition)) {
+    if (BasicUi::contains(RunMapLayout::upgradePreviewCancelButtonBounds(modal), mousePosition)) {
         selectedUpgradeDeckIndex_.reset();
         return;
     }
@@ -1392,7 +1145,7 @@ void RunMapScene::updateUpgradePreviewModal(const Vector2 mousePosition) {
     if (selectedUpgradeDeckIndex_.has_value() &&
         restModalNodeId_.has_value() &&
         canUpgradeDeckIndex(*selectedUpgradeDeckIndex_) &&
-        BasicUi::contains(upgradePreviewConfirmButtonBounds(modal), mousePosition)) {
+        BasicUi::contains(RunMapLayout::upgradePreviewConfirmButtonBounds(modal), mousePosition)) {
         const int nodeId = *restModalNodeId_;
         const std::size_t deckIndex = *selectedUpgradeDeckIndex_;
         closeOverlay();
@@ -1403,7 +1156,7 @@ void RunMapScene::updateUpgradePreviewModal(const Vector2 mousePosition) {
 }
 
 void RunMapScene::renderOverlay() const {
-    const Rectangle modal = overlayBounds();
+    const Rectangle modal = RunMapLayout::overlayBounds();
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 165});
     DrawRectangleRounded(modal, 0.04f, 16, Color{25, 27, 38, 252});
     DrawRectangleRoundedLinesEx(modal, 0.04f, 16, 3.f, Color{238, 196, 86, 255});
@@ -1434,7 +1187,7 @@ void RunMapScene::renderOverlay() const {
     }
 
     const Vector2 mouse = GetMousePosition();
-    BasicUi::drawButton(font_, overlayCloseButtonBounds(modal), localization_.get(TextId("ui.close")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::overlayCloseButtonBounds(modal), localization_.get(TextId("ui.close")), mouse);
     renderCardInspectModal();
     renderRelicInspectModal();
     renderConsumableInspectModal();
@@ -1442,7 +1195,7 @@ void RunMapScene::renderOverlay() const {
 }
 
 void RunMapScene::renderDeckOverlay(const Rectangle modal) const {
-    const Rectangle grid = overlayGridBounds(modal);
+    const Rectangle grid = RunMapLayout::overlayGridBounds(modal);
     renderCardGrid(grid, allDeckIndices(runState_), false);
 
     renderOverlayFooterHint(
@@ -1452,7 +1205,7 @@ void RunMapScene::renderDeckOverlay(const Rectangle modal) const {
 }
 
 void RunMapScene::renderUpgradeOverlay(const Rectangle modal) const {
-    const Rectangle grid = overlayGridBounds(modal);
+    const Rectangle grid = RunMapLayout::overlayGridBounds(modal);
     const std::vector<std::size_t> deckIndices = upgradableDeckIndices();
     renderCardGrid(grid, deckIndices, true);
 
@@ -1516,9 +1269,9 @@ void RunMapScene::renderUpgradePreviewModal() const {
 
     const CardDefinition& base = cards_.get(selectedCardId);
     const CardDefinition upgraded = CardUpgrade::upgradedDefinition(base);
-    const Rectangle modal = upgradePreviewModalBounds();
-    const Rectangle beforeCardBounds = upgradePreviewBeforeCardBounds(modal);
-    const Rectangle afterCardBounds = upgradePreviewAfterCardBounds(modal);
+    const Rectangle modal = RunMapLayout::upgradePreviewModalBounds();
+    const Rectangle beforeCardBounds = RunMapLayout::upgradePreviewBeforeCardBounds(modal);
+    const Rectangle afterCardBounds = RunMapLayout::upgradePreviewAfterCardBounds(modal);
     const Vector2 mouse = GetMousePosition();
 
     DrawRectangle(0, 0, VirtualViewport::width(), VirtualViewport::height(), Color{0, 0, 0, 120});
@@ -1601,10 +1354,10 @@ void RunMapScene::renderUpgradePreviewModal() const {
         y += 20.f;
     }
 
-    BasicUi::drawButton(font_, upgradePreviewCancelButtonBounds(modal), localization_.get(TextId("ui.cancel")), mouse);
+    BasicUi::drawButton(font_, RunMapLayout::upgradePreviewCancelButtonBounds(modal), localization_.get(TextId("ui.cancel")), mouse);
     BasicUi::drawButton(
         font_,
-        upgradePreviewConfirmButtonBounds(modal),
+        RunMapLayout::upgradePreviewConfirmButtonBounds(modal),
         localization_.get(TextId("rest.confirm_upgrade")),
         mouse,
         canUpgradeDeckIndex(deckIndex)
@@ -1612,7 +1365,7 @@ void RunMapScene::renderUpgradePreviewModal() const {
 }
 
 void RunMapScene::renderRelicsOverlay(const Rectangle modal) const {
-    const Rectangle area = overlayGridBounds(modal);
+    const Rectangle area = RunMapLayout::overlayGridBounds(modal);
 
     if (runState_.relicIds.empty()) {
         BasicUi::drawCenteredText(font_, localization_.get(TextId("run.no_relics")), area, 22.f, Color{205, 210, 225, 255});
@@ -1669,7 +1422,7 @@ void RunMapScene::renderRelicsOverlay(const Rectangle modal) const {
 }
 
 void RunMapScene::renderConsumablesOverlay(const Rectangle modal) const {
-    const Rectangle area = overlayGridBounds(modal);
+    const Rectangle area = RunMapLayout::overlayGridBounds(modal);
 
     if (runState_.consumableIds.empty()) {
         BasicUi::drawCenteredText(font_, localization_.get(TextId("run.no_consumables")), area, 22.f, Color{205, 210, 225, 255});
@@ -1799,7 +1552,7 @@ std::optional<std::size_t> RunMapScene::hoveredOverlayDeckIndex(const Vector2 mo
         return std::nullopt;
     }
 
-    const Rectangle grid = overlayGridBounds(overlayBounds());
+    const Rectangle grid = RunMapLayout::overlayGridBounds(RunMapLayout::overlayBounds());
     const std::vector<std::size_t> deckIndices = visibleOverlayDeckIndices();
 
     for (std::size_t i = 0; i < deckIndices.size(); ++i) {
@@ -1821,7 +1574,7 @@ std::optional<std::string> RunMapScene::hoveredOverlayRelicId(const Vector2 mous
         return std::nullopt;
     }
 
-    const Rectangle area = overlayGridBounds(overlayBounds());
+    const Rectangle area = RunMapLayout::overlayGridBounds(RunMapLayout::overlayBounds());
     for (std::size_t i = 0; i < runState_.relicIds.size(); ++i) {
         const Rectangle row = listRowBounds(area, i, overlayScrollOffset_);
         if (row.y + row.height < area.y || row.y > area.y + area.height) {
@@ -1841,7 +1594,7 @@ std::optional<std::string> RunMapScene::hoveredOverlayConsumableId(const Vector2
         return std::nullopt;
     }
 
-    const Rectangle area = overlayGridBounds(overlayBounds());
+    const Rectangle area = RunMapLayout::overlayGridBounds(RunMapLayout::overlayBounds());
     for (std::size_t i = 0; i < runState_.consumableIds.size(); ++i) {
         const Rectangle row = listRowBounds(area, i, overlayScrollOffset_);
         if (row.y + row.height < area.y || row.y > area.y + area.height) {
@@ -1857,7 +1610,7 @@ std::optional<std::string> RunMapScene::hoveredOverlayConsumableId(const Vector2
 }
 
 Rectangle RunMapScene::cardInspectModalBounds() const {
-    const Rectangle overlay = overlayBounds();
+    const Rectangle overlay = RunMapLayout::overlayBounds();
     const float width = std::min(520.f, overlay.width - 96.f);
     const float height = std::min(600.f, overlay.height - 96.f);
     return Rectangle{
@@ -2500,6 +2253,41 @@ std::string RunMapScene::relicTriggerText(const RelicTriggerDefinition& trigger)
         out << " · " << localization_.format(
             TextId("inspect.relic.every_n_turns"),
             {{"count", std::to_string(trigger.everyNTurns)}}
+        );
+    }
+
+    if (trigger.cardType.has_value()) {
+        out << " · " << localization_.format(
+            TextId("inspect.relic.card_type_filter"),
+            {{"type", localizedOrFallback(TextId("card.type." + toString(*trigger.cardType)), toString(*trigger.cardType))}}
+        );
+    }
+
+    if (trigger.previousCardType.has_value()) {
+        out << " · " << localization_.format(
+            TextId("inspect.relic.previous_card_type_filter"),
+            {{"type", localizedOrFallback(TextId("card.type." + toString(*trigger.previousCardType)), toString(*trigger.previousCardType))}}
+        );
+    }
+
+    if (trigger.cardNumberThisTurn > 0) {
+        out << " · " << localization_.format(
+            TextId("inspect.relic.card_number_this_turn"),
+            {{"count", std::to_string(trigger.cardNumberThisTurn)}}
+        );
+    }
+
+    if (trigger.ownerStatusId.has_value()) {
+        out << " · " << localization_.format(
+            TextId("inspect.relic.owner_status_filter"),
+            {{"status", localizedOrFallback(TextId("status." + *trigger.ownerStatusId + ".name"), *trigger.ownerStatusId)}}
+        );
+    }
+
+    if (trigger.minimumDrones > 0) {
+        out << " · " << localization_.format(
+            TextId("inspect.relic.min_drones"),
+            {{"count", std::to_string(trigger.minimumDrones)}}
         );
     }
 

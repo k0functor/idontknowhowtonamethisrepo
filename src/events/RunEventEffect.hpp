@@ -13,6 +13,7 @@ enum class RunEventEffectType {
     GainRandomConsumable,
     RemoveCard,
     RemoveRandomCard,
+    UpgradeRandomCard,
     GainStress,
     LoseStress,
     LoseHp,

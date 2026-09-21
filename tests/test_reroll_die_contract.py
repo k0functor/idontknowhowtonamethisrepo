@@ -15,8 +15,10 @@ if die is None:
     fail("reroll_die item is missing")
 if die.get("use_contexts") != ["reward", "shop", "chest"]:
     fail("reroll_die must be limited to reward, shop, and chest contexts")
-if die.get("max_charge") != 4 or die.get("charge_cost") != 4:
-    fail("reroll_die must require a full four-room charge")
+if die.get("max_charge") != 6 or die.get("charge_cost") != 4:
+    fail("reroll_die must bank up to six charge and spend four per use")
+if die.get("starting_charge") != 1:
+    fail("reroll_die must provide a small starting charge after acquisition")
 if die.get("effects") != [{"type": "reroll_offers", "amount": 1}]:
     fail("reroll_die must use the reroll_offers effect")
 

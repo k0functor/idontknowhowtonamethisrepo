@@ -46,7 +46,7 @@ private:
 
     void fillActiveStance(PlayerViewModel& model, const StatusContainer& statuses) const;
 
-    std::vector<std::string> recentLogEntries(const CombatState& state, std::size_t maxCount) const;
+    std::vector<CombatJournalEntryViewModel> recentJournalEntries(const CombatState& state, std::size_t maxCount) const;
 
 private:
     const LocalizationManager& localization_;

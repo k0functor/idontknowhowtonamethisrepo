@@ -17,6 +17,16 @@ struct CardViewModel {
     std::string unplayableReason;
 
     int energyCost = 0;
+    int stressCost = 0;
+    int sourceCurrentStress = 0;
+    int sourceMaxStress = 0;
+    int sourceStressAfterMinimum = 0;
+    int sourceStressAfterMaximum = 0;
+    bool wouldCollapseFromStress = false;
+    std::string stressPreviewLabel;
+
+    bool previewRequiresTarget = false;
+
     int sourceCurrentEnergy = 0;
     int sourceMaxEnergy = 0;
 

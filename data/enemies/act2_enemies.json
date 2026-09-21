@@ -26,7 +26,7 @@
             }
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 0,
         "max_consecutive_uses": 2
       },
@@ -61,7 +61,7 @@
             }
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1
       }
@@ -83,12 +83,12 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -132,7 +132,7 @@
             "status": "status_cards"
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 0,
         "max_consecutive_uses": 2,
         "conditions": {
@@ -174,7 +174,7 @@
             }
           }
         ],
-        "weight": 5,
+        "weight": 3,
         "cooldown": 2,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -221,7 +221,7 @@
             }
           }
         ],
-        "weight": 5,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -242,7 +242,7 @@
             }
           }
         ],
-        "weight": 6,
+        "weight": 9,
         "cooldown": 0,
         "max_consecutive_uses": 2
       },
@@ -268,7 +268,7 @@
             "status": "strength"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 2,
         "max_consecutive_uses": 1
       }
@@ -295,7 +295,7 @@
             "repeat_count": 2
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 0,
         "max_consecutive_uses": 2,
         "conditions": {
@@ -339,7 +339,7 @@
             "status": "energy"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 2,
         "max_consecutive_uses": 1
       },
@@ -352,7 +352,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           },
@@ -366,7 +366,7 @@
             "status": "vulnerable"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -398,7 +398,7 @@
             }
           }
         ],
-        "weight": 6,
+        "weight": 9,
         "cooldown": 0,
         "max_consecutive_uses": 2
       },
@@ -415,7 +415,7 @@
             }
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -440,7 +440,7 @@
             }
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -466,7 +466,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 8
+              "amount": 9
             }
           },
           {
@@ -474,12 +474,12 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -510,7 +510,7 @@
             "status": "strength"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 2,
         "max_consecutive_uses": 1
       },
@@ -528,7 +528,7 @@
             "status": "vulnerable"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -546,11 +546,11 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 16
+              "amount": 17
             }
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 0,
         "max_consecutive_uses": 2,
         "conditions": {
@@ -577,12 +577,12 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 6
+              "amount": 5
             },
             "repeat_count": 3
           }
         ],
-        "weight": 6,
+        "weight": 7,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -608,7 +608,7 @@
             "status": "dexterity"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -626,7 +626,7 @@
             "status": "vulnerable"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -644,11 +644,11 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 24
+              "amount": 20
             }
           }
         ],
-        "weight": 8,
+        "weight": 9,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -676,7 +676,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           },
@@ -689,7 +689,7 @@
             }
           }
         ],
-        "weight": 4,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -712,7 +712,7 @@
             "repeat_count": 2
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 0,
         "max_consecutive_uses": 2,
         "conditions": {
@@ -743,7 +743,7 @@
             "status": "dexterity"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -756,7 +756,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 6
+              "amount": 8
             }
           },
           {
@@ -769,7 +769,7 @@
             "status": "vulnerable"
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -801,7 +801,7 @@
             "status": "poison"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -814,7 +814,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           },
@@ -841,7 +841,7 @@
             "status": "discard"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -873,7 +873,7 @@
             "status": "strength"
           }
         ],
-        "weight": 5,
+        "weight": 2,
         "cooldown": 2,
         "max_consecutive_uses": 1
       },
@@ -891,7 +891,7 @@
             "repeat_count": 4
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -926,12 +926,12 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -953,7 +953,7 @@
             }
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -979,7 +979,7 @@
             "status": "dexterity"
           }
         ],
-        "weight": 5,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -1005,7 +1005,7 @@
             "status": "vulnerable"
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 0,
         "max_consecutive_uses": 2,
         "conditions": {
@@ -1043,12 +1043,12 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1079,7 +1079,7 @@
             "status": "strength"
           }
         ],
-        "weight": 5,
+        "weight": 3,
         "cooldown": 2,
         "max_consecutive_uses": 1
       },
@@ -1105,7 +1105,7 @@
             }
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1128,7 +1128,7 @@
             "repeat_count": 2
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1151,7 +1151,7 @@
             }
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 1,
         "max_consecutive_uses": 1
       }
@@ -1262,7 +1262,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 9
+              "amount": 14
             }
           },
           {
@@ -1270,12 +1270,12 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "weak"
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1306,7 +1306,7 @@
             "status": "vulnerable"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1337,7 +1337,7 @@
             "status": "dexterity"
           }
         ],
-        "weight": 5,
+        "weight": 3,
         "cooldown": 2,
         "max_consecutive_uses": 1
       },
@@ -1355,7 +1355,7 @@
             "status": "poison"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -1373,7 +1373,7 @@
             "repeat_count": 2
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1402,7 +1402,8 @@
         "action_ids": [
           "last_tide_librarian_overdue_notice",
           "last_tide_librarian_black_footnote",
-          "last_tide_librarian_shelving_rite"
+          "last_tide_librarian_shelving_rite",
+          "last_tide_librarian_page_storm"
         ],
         "on_enter_effects": [
           {
@@ -1492,7 +1493,7 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 7
+              "amount": 6
             },
             "repeat_count": 3
           },
@@ -1501,12 +1502,12 @@
             "target": "random_ally",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "vulnerable"
           }
         ],
-        "weight": 6,
+        "weight": 7,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1537,7 +1538,7 @@
             "status": "strength"
           }
         ],
-        "weight": 5,
+        "weight": 4,
         "cooldown": 2,
         "max_consecutive_uses": 1
       },
@@ -1586,7 +1587,7 @@
             "status": "poison"
           }
         ],
-        "weight": 6,
+        "weight": 5,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -1611,7 +1612,7 @@
             }
           }
         ],
-        "weight": 8,
+        "weight": 7,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1733,7 +1734,7 @@
             "status": "weak"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1756,7 +1757,7 @@
             "repeat_count": 3
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1779,7 +1780,7 @@
             "status": "poison"
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1
       }
@@ -1814,7 +1815,7 @@
             "status": "vulnerable"
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 0,
         "max_consecutive_uses": 2,
         "conditions": {
@@ -1836,7 +1837,7 @@
             }
           }
         ],
-        "weight": 4,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -1870,7 +1871,7 @@
             }
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1896,7 +1897,7 @@
             "target": "all_allies",
             "value": {
               "type": "fixed",
-              "amount": 1
+              "amount": 2
             },
             "status": "vulnerable"
           }
@@ -1923,7 +1924,7 @@
             }
           }
         ],
-        "weight": 8,
+        "weight": 10,
         "cooldown": 0,
         "max_consecutive_uses": 2,
         "conditions": {
@@ -1962,7 +1963,7 @@
             }
           }
         ],
-        "weight": 3,
+        "weight": 2,
         "cooldown": 1,
         "max_consecutive_uses": 1,
         "conditions": {
@@ -1992,7 +1993,7 @@
             }
           }
         ],
-        "weight": 6,
+        "weight": 8,
         "cooldown": 0,
         "max_consecutive_uses": 2
       },
@@ -2018,7 +2019,7 @@
             "status": "strength"
           }
         ],
-        "weight": 5,
+        "weight": 3,
         "cooldown": 1,
         "max_consecutive_uses": 1
       },
@@ -2043,7 +2044,7 @@
             }
           }
         ],
-        "weight": 3,
+        "weight": 4,
         "cooldown": 1,
         "max_consecutive_uses": 1
       }

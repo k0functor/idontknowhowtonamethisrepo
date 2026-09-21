@@ -2,11 +2,14 @@
 
 #include <algorithm>
 
-int ActiveItemSystem::chargeGainForCombatRoom(const RunMapNodeType nodeType) {
+int ActiveItemSystem::chargeGainForCombatRoom(
+    const ActiveItemDefinition& definition,
+    const RunMapNodeType nodeType
+) {
     switch (nodeType) {
-        case RunMapNodeType::Combat: return 1;
-        case RunMapNodeType::Elite: return 2;
-        case RunMapNodeType::Boss: return 3;
+        case RunMapNodeType::Combat: return definition.combatCharge;
+        case RunMapNodeType::Elite: return definition.eliteCharge;
+        case RunMapNodeType::Boss: return definition.bossCharge;
         case RunMapNodeType::Event:
         case RunMapNodeType::Shop:
         case RunMapNodeType::Chest:
@@ -16,19 +19,52 @@ int ActiveItemSystem::chargeGainForCombatRoom(const RunMapNodeType nodeType) {
     return 0;
 }
 
+int ActiveItemSystem::addCharge(
+    RunState& run,
+    const ActiveItemDefinition& definition,
+    const int amount
+) {
+    if (run.activeItem.itemId != definition.id.value || amount <= 0) {
+        return 0;
+    }
+
+    const int before = std::clamp(run.activeItem.charge, 0, definition.maxCharge);
+    run.activeItem.charge = std::clamp(before + amount, 0, definition.maxCharge);
+    const int actualGain = run.activeItem.charge - before;
+    run.stats.activeItemChargeGained += actualGain;
+    return actualGain;
+}
+
+int ActiveItemSystem::missingChargeForUse(
+    const ActiveItemState& state,
+    const ActiveItemDefinition& definition
+) {
+    if (state.itemId != definition.id.value) {
+        return definition.chargeCost;
+    }
+    return std::max(0, definition.chargeCost - std::max(0, state.charge));
+}
+
+int ActiveItemSystem::normalCombatRoomsUntilUsable(
+    const ActiveItemState& state,
+    const ActiveItemDefinition& definition
+) {
+    const int missing = missingChargeForUse(state, definition);
+    if (missing <= 0) {
+        return 0;
+    }
+    if (definition.combatCharge <= 0) {
+        return -1;
+    }
+    return (missing + definition.combatCharge - 1) / definition.combatCharge;
+}
+
 int ActiveItemSystem::addCombatRoomCharge(
     RunState& run,
     const ActiveItemDefinition& definition,
     const RunMapNodeType nodeType
 ) {
-    if (run.activeItem.itemId != definition.id.value) return 0;
-
-    const int before = std::clamp(run.activeItem.charge, 0, definition.maxCharge);
-    const int gain = chargeGainForCombatRoom(nodeType);
-    run.activeItem.charge = std::clamp(before + gain, 0, definition.maxCharge);
-    const int actualGain = run.activeItem.charge - before;
-    run.stats.activeItemChargeGained += actualGain;
-    return actualGain;
+    return addCharge(run, definition, chargeGainForCombatRoom(definition, nodeType));
 }
 
 bool ActiveItemSystem::canUse(
@@ -127,6 +163,13 @@ ActiveItemUseResult ActiveItemSystem::use(
     result.chargeSpent = definition.chargeCost;
     result.status = ActiveItemUseStatus::Used;
     return result;
+}
+
+void ActiveItemSystem::equip(
+    RunState& run,
+    const ActiveItemDefinition& definition
+) {
+    equip(run, definition, definition.startingCharge);
 }
 
 void ActiveItemSystem::equip(

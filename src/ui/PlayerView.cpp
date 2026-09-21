@@ -1,5 +1,6 @@
 #include "PlayerView.hpp"
 
+#include "ui/UiTheme.hpp"
 #include "ui/Utf8.hpp"
 
 #include <algorithm>
@@ -7,38 +8,6 @@
 #include <string>
 
 namespace {
-Color statusFillColor(const StatusViewModel& status) {
-    if (status.debuff) {
-        return Color{94, 46, 54, 238};
-    }
-    if (status.buff) {
-        return Color{42, 82, 60, 238};
-    }
-    return Color{58, 62, 74, 238};
-}
-
-Color statusBorderColor(const StatusViewModel& status) {
-    if (status.debuff) {
-        return Color{236, 112, 126, 255};
-    }
-    if (status.buff) {
-        return Color{120, 226, 154, 255};
-    }
-    return Color{176, 184, 208, 255};
-}
-
-Color stressBandColor(const int bandIndex) {
-    switch (bandIndex) {
-        case 0: return Color{105, 178, 162, 255};
-        case 1: return Color{210, 190, 92, 255};
-        case 2: return Color{226, 150, 72, 255};
-        case 3: return Color{222, 92, 76, 255};
-        case 4: return Color{190, 62, 104, 255};
-        case 5: return Color{115, 42, 58, 255};
-        default: return Color{180, 150, 190, 255};
-    }
-}
-
 std::string statusChipText(const StatusViewModel& status) {
     std::string text = UiUtf8::truncateWithEllipsis(status.name, 8);
     if (status.amount > 0) {
@@ -98,14 +67,14 @@ bool PlayerView::contains(const Vector2 worldPosition) const {
 void PlayerView::render(const Font* font, const bool hovered) const {
     const Vector2 renderPosition{position_.x + model_.renderOffset.x, position_.y + model_.renderOffset.y};
     const Rectangle body{renderPosition.x, renderPosition.y, size_.x, size_.y};
-    const Color fill = model_.alive ? Color{58, 82, 92, 255} : Color{52, 52, 52, 255};
+    const Color fill = model_.alive ? Color{48, 72, 82, 255} : UiTheme::toneFill(UiTheme::Tone::Disabled);
     const Color outline = model_.previewTarget
-        ? Color{255, 218, 90, 255}
+        ? UiTheme::toneBorder(UiTheme::Tone::Accent)
         : (model_.targetable
-            ? Color{115, 235, 165, 255}
+            ? UiTheme::toneBorder(UiTheme::Tone::Positive)
             : (model_.activeTurn
-                ? Color{255, 205, 70, 255}
-                : (hovered ? Color{255, 230, 130, 255} : Color{200, 220, 235, 255})));
+                ? UiTheme::toneBorder(UiTheme::Tone::Accent)
+                : (hovered ? UiTheme::toneText(UiTheme::Tone::Accent) : UiTheme::textSecondary)));
     const float outlineThickness = model_.previewTarget ? 5.f : (model_.targetable ? 3.5f : (model_.activeTurn ? 4.5f : (hovered ? 4.f : 2.f)));
 
     DrawRectangleRounded(body, 0.12f, 12, fill);
@@ -116,10 +85,10 @@ void PlayerView::render(const Font* font, const bool hovered) const {
         : static_cast<float>(std::max(0, model_.currentHp)) / static_cast<float>(model_.maxHp);
 
     const Rectangle hpBack{renderPosition.x + 14.f, renderPosition.y + size_.y - 36.f, size_.x - 28.f, 18.f};
-    DrawRectangleRec(hpBack, Color{30, 34, 38, 255});
+    DrawRectangleRec(hpBack, UiTheme::panelInset);
 
     const Rectangle hpFill{hpBack.x, hpBack.y, hpBack.width * hpRatio, hpBack.height};
-    DrawRectangleRec(hpFill, Color{70, 165, 120, 255});
+    DrawRectangleRec(hpFill, UiTheme::toneBorder(UiTheme::Tone::Positive));
 
     if (font == nullptr) {
         return;
@@ -130,8 +99,8 @@ void PlayerView::render(const Font* font, const bool hovered) const {
         const float energyRadius = 26.f;
         const int energyCenterX = static_cast<int>(renderPosition.x + size_.x * 0.5f);
         const int energyCenterY = static_cast<int>(renderPosition.y + size_.y + energyRadius + 8.f);
-        DrawCircle(energyCenterX, energyCenterY, energyRadius, Color{54, 48, 78, 245});
-        DrawCircleLines(energyCenterX, energyCenterY, energyRadius, Color{190, 170, 245, 255});
+        DrawCircle(energyCenterX, energyCenterY, energyRadius, UiTheme::toneFill(UiTheme::Tone::Primary));
+        DrawCircleLines(energyCenterX, energyCenterY, energyRadius, UiTheme::toneBorder(UiTheme::Tone::Primary));
 
         const std::string energyText = std::to_string(model_.currentEnergy) + "/" + std::to_string(model_.maxEnergy);
         const Vector2 textSize = MeasureTextEx(*font, energyText.c_str(), 17.f, 1.f);
@@ -141,7 +110,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             Vector2{static_cast<float>(energyCenterX) - textSize.x * 0.5f, static_cast<float>(energyCenterY) - textSize.y * 0.5f},
             17.f,
             1.f,
-            Color{246, 240, 255, 255}
+            UiTheme::toneText(UiTheme::Tone::Primary)
         );
     }
 
@@ -153,7 +122,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             Vector2{firstRelicBounds.x, firstRelicBounds.y - 18.f},
             12.f,
             1.f,
-            Color{210, 195, 155, 255}
+            UiTheme::toneText(UiTheme::Tone::Accent)
         );
 
         const std::size_t visibleCount = visibleRelicSlotCount();
@@ -164,8 +133,8 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             }
 
             const bool overflow = relicSlotIsOverflow(i, model_.relics.size());
-            const Color fill = overflow ? Color{48, 42, 36, 238} : Color{70, 58, 35, 238};
-            const Color border = overflow ? Color{160, 145, 110, 255} : Color{230, 190, 90, 255};
+            const Color fill = overflow ? UiTheme::toneFill(UiTheme::Tone::Disabled) : UiTheme::toneFill(UiTheme::Tone::Accent);
+            const Color border = overflow ? UiTheme::toneBorder(UiTheme::Tone::Disabled) : UiTheme::toneBorder(UiTheme::Tone::Accent);
             DrawRectangleRounded(*chipBounds, 0.28f, 8, fill);
             DrawRectangleRoundedLinesEx(*chipBounds, 0.28f, 8, 1.4f, border);
 
@@ -177,7 +146,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
                 Vector2{chipBounds->x + 7.f, chipBounds->y + 4.f},
                 12.f,
                 1.f,
-                Color{236, 224, 184, 255}
+                UiTheme::toneText(UiTheme::Tone::Accent)
             );
         }
     }
@@ -185,7 +154,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
     DrawTextEx(*font, model_.name.c_str(), Vector2{renderPosition.x + 14.f, renderPosition.y + 12.f}, 20.f, 1.f, WHITE);
 
     if (model_.activeTurn) {
-        DrawTextEx(*font, model_.activeTurnLabel.c_str(), Vector2{renderPosition.x + size_.x - 78.f, renderPosition.y + 14.f}, 14.f, 1.f, Color{255, 222, 110, 255});
+        DrawTextEx(*font, model_.activeTurnLabel.c_str(), Vector2{renderPosition.x + size_.x - 78.f, renderPosition.y + 14.f}, 14.f, 1.f, UiTheme::toneText(UiTheme::Tone::Accent));
     }
 
     const std::string hpText = std::to_string(model_.currentHp) + "/" + std::to_string(model_.maxHp);
@@ -193,7 +162,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
 
     if (model_.block > 0) {
         const std::string blockText = model_.blockLabel + ": " + std::to_string(model_.block);
-        DrawTextEx(*font, blockText.c_str(), Vector2{renderPosition.x + 14.f, renderPosition.y + 44.f}, 15.f, 1.f, Color{180, 220, 255, 255});
+        DrawTextEx(*font, blockText.c_str(), Vector2{renderPosition.x + 14.f, renderPosition.y + 44.f}, 15.f, 1.f, UiTheme::toneText(UiTheme::Tone::Info));
     }
 
     float statusY = renderPosition.y + 84.f;
@@ -204,7 +173,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             stressText += "  " + model_.stressBandName;
         }
 
-        const Color stressColor = stressBandColor(model_.stressBandIndex);
+        const Color stressColor = UiTheme::stressBand(model_.stressBandIndex);
         DrawTextEx(
             *font,
             UiUtf8::truncateWithEllipsis(stressText, 34).c_str(),
@@ -217,7 +186,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
         const Rectangle stressBack{renderPosition.x + 14.f, renderPosition.y + 79.f, size_.x - 28.f, 8.f};
         const float stressRatio = static_cast<float>(std::clamp(model_.stress, 0, model_.maxStress)) /
             static_cast<float>(std::max(1, model_.maxStress));
-        DrawRectangleRec(stressBack, Color{35, 32, 42, 255});
+        DrawRectangleRec(stressBack, UiTheme::panelInset);
         DrawRectangleRec(
             Rectangle{stressBack.x, stressBack.y, stressBack.width * stressRatio, stressBack.height},
             stressColor
@@ -225,7 +194,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
 
         for (const float thresholdRatio : {0.2f, 0.4f, 0.6f, 0.8f}) {
             const int markerX = static_cast<int>(stressBack.x + stressBack.width * thresholdRatio);
-            DrawLine(markerX, static_cast<int>(stressBack.y), markerX, static_cast<int>(stressBack.y + stressBack.height), Color{238, 224, 236, 150});
+            DrawLine(markerX, static_cast<int>(stressBack.y), markerX, static_cast<int>(stressBack.y + stressBack.height), UiTheme::withAlpha(UiTheme::textPrimary, 0.58f));
         }
         statusY = renderPosition.y + 94.f;
     }
@@ -237,7 +206,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             Vector2{renderPosition.x + 14.f, statusY},
             12.f,
             1.f,
-            Color{238, 198, 156, 255}
+            UiTheme::toneText(UiTheme::Tone::Warning)
         );
         statusY += 16.f;
     }
@@ -248,14 +217,14 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             Vector2{renderPosition.x + 14.f, statusY},
             11.f,
             1.f,
-            Color{228, 174, 188, 255}
+            UiTheme::toneText(UiTheme::Tone::Danger)
         );
         statusY += 15.f;
     }
     if (!model_.activeStanceName.empty()) {
         const Rectangle stanceBounds{renderPosition.x + 12.f, statusY, size_.x - 24.f, 30.f};
-        DrawRectangleRounded(stanceBounds, 0.35f, 10, Color{72, 48, 96, 235});
-        DrawRectangleRoundedLinesEx(stanceBounds, 0.35f, 10, 1.5f, Color{185, 132, 235, 255});
+        DrawRectangleRounded(stanceBounds, 0.35f, 10, UiTheme::toneFill(UiTheme::Tone::Primary));
+        DrawRectangleRoundedLinesEx(stanceBounds, 0.35f, 10, 1.5f, UiTheme::toneBorder(UiTheme::Tone::Primary));
 
         const std::string stanceText = model_.activeStanceLabel + ": " + model_.activeStanceName;
         DrawTextEx(
@@ -264,7 +233,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             Vector2{stanceBounds.x + 9.f, stanceBounds.y + 7.f},
             13.f,
             1.f,
-            Color{238, 222, 255, 255}
+            UiTheme::toneText(UiTheme::Tone::Primary)
         );
 
         statusY += 36.f;
@@ -276,7 +245,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
                 Vector2{renderPosition.x + 14.f, statusY},
                 12.f,
                 1.f,
-                Color{204, 184, 226, 255}
+                UiTheme::textSecondary
             );
             statusY += 18.f;
         }
@@ -290,8 +259,8 @@ void PlayerView::render(const Font* font, const bool hovered) const {
         }
 
         const StatusViewModel& status = model_.statuses[i];
-        DrawRectangleRounded(*chipBounds, 0.35f, 8, statusFillColor(status));
-        DrawRectangleRoundedLinesEx(*chipBounds, 0.35f, 8, 1.4f, statusBorderColor(status));
+        DrawRectangleRounded(*chipBounds, 0.35f, 8, UiTheme::statusFill(status));
+        DrawRectangleRoundedLinesEx(*chipBounds, 0.35f, 8, 1.4f, UiTheme::statusBorder(status));
 
         const std::string text = statusChipText(status);
         DrawTextEx(
@@ -300,7 +269,7 @@ void PlayerView::render(const Font* font, const bool hovered) const {
             Vector2{chipBounds->x + 8.f, chipBounds->y + 5.f},
             12.f,
             1.f,
-            Color{238, 242, 232, 255}
+            UiTheme::textPrimary
         );
     }
 }

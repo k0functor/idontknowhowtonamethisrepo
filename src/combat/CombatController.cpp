@@ -78,10 +78,29 @@ CombatResult CombatController::buildResult(const CombatState& state) const {
 }
 
 CombatResult CombatController::updateAfterAction(CombatState& state) const {
+    defeatBossEntourage(state);
     state.pruneEnemyIntents();
     const CombatOutcome outcome = checkOutcome(state);
     applyOutcomeToState(state, outcome);
     return buildResult(state);
+}
+
+void CombatController::defeatBossEntourage(CombatState& state) const {
+    const bool bossDefeated = std::any_of(
+        state.enemies.begin(),
+        state.enemies.end(),
+        [](const CombatEntity& enemy) { return enemy.boss && !enemy.isAlive(); }
+    );
+    if (!bossDefeated) {
+        return;
+    }
+
+    for (CombatEntity& enemy : state.enemies) {
+        if (enemy.boss || !enemy.isAlive()) {
+            continue;
+        }
+        enemy.health.setCurrent(0);
+    }
 }
 
 void CombatController::applyOutcomeToState(

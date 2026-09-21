@@ -84,8 +84,12 @@ set(GAME_CORE_SOURCES
     src/game/GameEventBus.cpp
     src/ui/EnemyIntentPresentation.cpp
     src/rewards/RewardPoolRules.cpp
+    src/rewards/CardRewardQuality.cpp
+    src/shop/ShopEconomy.cpp
     src/run/RunCardEligibility.cpp
     src/run/RunRelicOwnership.cpp
+    src/run/RunPacingTracker.cpp
+    src/run/SadistMasochistRules.cpp
     src/events/RunEventRequirement.cpp
     src/events/RunEventSelector.cpp
     src/relics/RelicInventory.cpp
@@ -131,29 +135,62 @@ if (Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_encounter_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_group_encounter_depth.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_multi_enemy_ui_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_target_safety_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_active_item_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_reroll_die_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_active_item_acquisition_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_active_item_expansion_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_active_item_charge_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_band_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_economy_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_resource_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_role_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_breakdown_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_content_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_boss_phase_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_status_driven_relics_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_build_around_relics_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_card_lifecycle_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_data_driven_status_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_run_save_room_integration.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_balance_simulation_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_balance_targets_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor1_3_balance_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor4_balance_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor5_balance_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor5_boss_variety_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_midgame_enemy_combo_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_flow_architecture_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_scene_layout_architecture_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_ui_theme_and_combat_feedback_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_card_outcome_preview_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_combat_journal_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_telemetry_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_archetype_unlock_contract.py
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_card_depth_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_monk_card_pool_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_run_economy_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_card_offer_quality_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_event_chain_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_event_quality_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_full_run_simulation_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_critical_gameplay_qa_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_onboarding_contract.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_contest_readiness.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_contest_readiness_contract.py
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Validating localization, data content, floor definitions, core gameplay contracts, run save files, and floor vertical slices"
         VERBATIM
     )
 
+
+    add_custom_target(validate_contest
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_contest_readiness.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_contest_readiness_contract.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Validating contest release readiness"
+        VERBATIM
+    )
 
     add_custom_target(validate_floors
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/validate_floor_definitions.py
@@ -218,10 +255,24 @@ if (Python3_Interpreter_FOUND)
         VERBATIM
     )
 
+    add_custom_target(simulate_full_runs
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/simulate_full_runs.py --runs 250 --encounter-samples 12 --turns 5
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running approximate complete-run Monte Carlo simulations"
+        VERBATIM
+    )
+
     add_custom_target(report_run_telemetry
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/summarize_run_telemetry.py
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Summarizing local run telemetry"
+        VERBATIM
+    )
+
+    add_custom_target(report_run_pacing
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/report_run_pacing.py
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Reporting local run pacing"
         VERBATIM
     )
 else()
@@ -458,6 +509,10 @@ set(GAME_APP_SOURCES
 
     src/shop/ShopOffer.hpp
     src/shop/ShopState.hpp
+    src/shop/ShopEconomy.hpp
+    src/shop/ShopEconomy.cpp
+    src/shop/ShopGenerator.hpp
+    src/shop/ShopGenerator.cpp
     src/shop/ShopTuning.hpp
     src/shop/ShopTuning.cpp
 
@@ -562,6 +617,7 @@ set(GAME_APP_SOURCES
     src/combat/EnergySystem.hpp
     src/combat/EnergySystem.cpp
     src/combat/CardCost.hpp
+    src/combat/CardStressCost.hpp
     src/combat/CardCost.cpp
     src/combat/CardPlayFailureReason.hpp
     src/combat/EffectSystem.hpp
@@ -573,6 +629,7 @@ set(GAME_APP_SOURCES
 
     src/preview/PreviewValue.hpp
     src/preview/EffectPreview.hpp
+    src/preview/CardOutcomePreview.hpp
     src/preview/CardPreview.hpp
     src/preview/CardPreviewSystem.hpp
     src/preview/CardPreviewSystem.cpp
@@ -589,6 +646,7 @@ set(GAME_APP_SOURCES
     src/ui/PlayerViewModel.hpp
     src/ui/ConsumableViewModel.hpp
     src/ui/CombatViewModel.hpp
+    src/ui/UiTheme.hpp
     src/ui/UiFont.hpp
     src/ui/UiFont.cpp
     src/ui/Utf8.hpp
@@ -660,6 +718,9 @@ set(GAME_APP_SOURCES
     src/run/RunMapNode.cpp
     src/run/RunMap.hpp
     src/run/RunState.hpp
+    src/run/RunPacingState.hpp
+    src/run/RunPacingTracker.hpp
+    src/run/RunPacingTracker.cpp
     src/run/RunPendingRoomState.hpp
     src/run/RunPhase.hpp
     src/run/RunMapGenerationConfig.hpp
@@ -675,7 +736,6 @@ set(GAME_APP_SOURCES
     src/run/StressBreakdownRules.hpp
     src/run/StressEconomyRules.hpp
     src/run/SadistMasochistRules.hpp
-    src/run/SadistMasochistRules.cpp
     src/run/RunRelicOwnership.hpp
     src/run/RunRelicOwnership.cpp
     src/run/RunCardEligibility.hpp
@@ -684,6 +744,8 @@ set(GAME_APP_SOURCES
     src/run/RunController.cpp
 
     src/rewards/CardRewardOption.hpp
+    src/rewards/CardRewardQuality.hpp
+    src/rewards/CardRewardQuality.cpp
     src/rewards/RewardOption.hpp
     src/rewards/RewardContext.hpp
     src/rewards/RewardSelection.hpp
@@ -699,6 +761,8 @@ set(GAME_APP_SOURCES
     src/flow/SceneId.hpp
     src/flow/SceneManager.hpp
     src/flow/SceneManager.cpp
+    src/flow/ProfileProgressionService.hpp
+    src/flow/ProfileProgressionService.cpp
     src/flow/GameFlowController.hpp
     src/flow/GameFlowController.cpp
     src/ui/BasicUi.hpp
@@ -732,10 +796,16 @@ set(GAME_APP_SOURCES
     src/scenes/ProfileProgressScene.cpp
     src/scenes/DifficultySelectScene.hpp
     src/scenes/DifficultySelectScene.cpp
+    src/scenes/RunMapLayout.hpp
+    src/scenes/RunMapLayout.cpp
     src/scenes/RunMapScene.hpp
     src/scenes/RunMapScene.cpp
     src/scenes/MerchantRestScene.hpp
     src/scenes/MerchantRestScene.cpp
+    src/scenes/CombatSceneLayout.hpp
+    src/scenes/CombatSceneLayout.cpp
+    src/scenes/CombatOnboardingHints.hpp
+    src/scenes/CombatOnboardingHints.cpp
     src/scenes/CombatScene.hpp
     src/scenes/CombatScene.cpp
     src/scenes/CombatScenePiles.cpp
@@ -750,6 +820,8 @@ set(GAME_APP_SOURCES
     src/scenes/RunDefeatScene.cpp
     src/scenes/RunCompleteScene.hpp
     src/scenes/RunCompleteScene.cpp
+    src/scenes/ShopLayout.hpp
+    src/scenes/ShopLayout.cpp
     src/scenes/ShopScene.hpp
     src/scenes/ShopScene.cpp
     src/scenes/EventScene.hpp
@@ -827,6 +899,7 @@ if(BUILD_TESTING)
 
     add_executable(gameplay_integration_tests
         tests/GameplayIntegrationTests.cpp
+        src/preview/CardPreviewSystem.cpp
     )
 
     target_include_directories(gameplay_integration_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -841,6 +914,31 @@ if(BUILD_TESTING)
     add_test(NAME gameplay_integration COMMAND gameplay_integration_tests)
     set_tests_properties(gameplay_integration PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+    if(TARGET nlohmann_json::nlohmann_json)
+        add_executable(card_definition_parser_tests
+            tests/CardDefinitionParserTests.cpp
+            src/cards/CardKeyword.cpp
+            src/cards/CardRarity.cpp
+            src/cards/CardType.cpp
+            src/dice/DiceCorruption.cpp
+            src/effects/EffectTarget.cpp
+            src/data/JsonReader.cpp
+            src/data/parsers/EffectValueParser.cpp
+            src/data/parsers/EffectDefinitionParser.cpp
+            src/data/parsers/CardDefinitionParser.cpp
+        )
+        target_include_directories(card_definition_parser_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+        target_compile_features(card_definition_parser_tests PRIVATE cxx_std_20)
+        target_link_libraries(card_definition_parser_tests PRIVATE
+            game_core
+            nlohmann_json::nlohmann_json
+        )
+        set_target_properties(card_definition_parser_tests PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+        game_apply_warnings(card_definition_parser_tests)
+
+        add_test(NAME card_definition_parser COMMAND card_definition_parser_tests)
+        set_tests_properties(card_definition_parser PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    endif()
     if(TARGET game_persistence)
         add_executable(run_state_persistence_tests tests/RunStatePersistenceTests.cpp)
         target_include_directories(run_state_persistence_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -863,6 +961,9 @@ if(BUILD_TESTING)
         add_test(NAME multi_enemy_ui_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_multi_enemy_ui_contract.py)
         set_tests_properties(multi_enemy_ui_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+        add_test(NAME target_safety_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_target_safety_contract.py)
+        set_tests_properties(target_safety_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
         add_test(NAME enemy_ai_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_enemy_ai_contract.py)
         set_tests_properties(enemy_ai_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
@@ -878,11 +979,20 @@ if(BUILD_TESTING)
         add_test(NAME active_item_expansion_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_active_item_expansion_contract.py)
         set_tests_properties(active_item_expansion_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+        add_test(NAME active_item_charge_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_active_item_charge_contract.py)
+        set_tests_properties(active_item_charge_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
         add_test(NAME stress_band_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_band_contract.py)
         set_tests_properties(stress_band_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
         add_test(NAME stress_economy_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_economy_contract.py)
         set_tests_properties(stress_economy_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+        add_test(NAME stress_resource_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_resource_contract.py)
+        set_tests_properties(stress_resource_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+        add_test(NAME stress_role_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_role_contract.py)
+        set_tests_properties(stress_role_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
         add_test(NAME stress_breakdown_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_stress_breakdown_contract.py)
         set_tests_properties(stress_breakdown_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -895,6 +1005,9 @@ if(BUILD_TESTING)
 
         add_test(NAME status_driven_relics_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_status_driven_relics_contract.py)
         set_tests_properties(status_driven_relics_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+        add_test(NAME build_around_relics_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_build_around_relics_contract.py)
+        set_tests_properties(build_around_relics_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
         add_test(NAME card_lifecycle_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_card_lifecycle_contract.py)
         set_tests_properties(card_lifecycle_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -911,11 +1024,33 @@ if(BUILD_TESTING)
         add_test(NAME balance_targets_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_balance_targets_contract.py)
         set_tests_properties(balance_targets_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+        add_test(NAME floor1_3_balance_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor1_3_balance_contract.py)
+        set_tests_properties(floor1_3_balance_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        add_test(NAME floor4_balance_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor4_balance_contract.py)
+        set_tests_properties(floor4_balance_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        add_test(NAME floor5_balance_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor5_balance_contract.py)
+        add_test(NAME floor5_boss_variety_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_floor5_boss_variety_contract.py)
+        set_tests_properties(floor5_balance_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+        add_test(NAME midgame_enemy_combo_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_midgame_enemy_combo_contract.py)
+        add_test(NAME flow_architecture_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_flow_architecture_contract.py)
+        add_test(NAME scene_layout_architecture_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_scene_layout_architecture_contract.py)
+        add_test(NAME ui_theme_and_combat_feedback_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_ui_theme_and_combat_feedback_contract.py)
+        add_test(NAME card_outcome_preview_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_card_outcome_preview_contract.py)
+        add_test(NAME combat_journal_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_combat_journal_contract.py)
+        set_tests_properties(midgame_enemy_combo_contract flow_architecture_contract scene_layout_architecture_contract ui_theme_and_combat_feedback_contract card_outcome_preview_contract combat_journal_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
         add_test(NAME telemetry_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_telemetry_contract.py)
         set_tests_properties(telemetry_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+        add_test(NAME run_pacing_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_run_pacing_contract.py)
+        set_tests_properties(run_pacing_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
         add_test(NAME archetype_unlock_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_archetype_unlock_contract.py)
         set_tests_properties(archetype_unlock_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+        add_test(NAME monk_card_pool_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_monk_card_pool_contract.py)
+        set_tests_properties(monk_card_pool_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
         add_test(NAME card_depth_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_card_depth_contract.py)
         set_tests_properties(card_depth_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -925,5 +1060,13 @@ if(BUILD_TESTING)
 
         add_test(NAME event_chain_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_event_chain_contract.py)
         set_tests_properties(event_chain_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+        add_test(NAME event_quality_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_event_quality_contract.py)
+        add_test(NAME full_run_simulation_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_full_run_simulation_contract.py)
+        add_test(NAME critical_gameplay_qa_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_critical_gameplay_qa_contract.py)
+        add_test(NAME onboarding_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_onboarding_contract.py)
+        add_test(NAME contest_readiness_contract COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/test_contest_readiness_contract.py)
+        set_tests_properties(contest_readiness_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        set_tests_properties(event_quality_contract PROPERTIES WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     endif()
 endif()

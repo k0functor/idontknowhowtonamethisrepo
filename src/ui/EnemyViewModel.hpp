@@ -36,4 +36,5 @@ struct EnemyViewModel {
     bool targetable = false;
     bool previewTarget = false;
     bool intentAffectsMultipleTargets = false;
+    int intentDangerLevel = 0;
 };

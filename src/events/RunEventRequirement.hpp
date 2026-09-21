@@ -10,8 +10,12 @@ struct RunEventChoiceRequirements {
     int minHp = 0;
     bool freeConsumableSlot = false;
     int minDeckSize = 0;
+    int maxDeckSize = 0;
+    int minMissingHp = 0;
+    int minUpgradedCards = 0;
     int minStress = 0;
     int maxStress = 0;
+    std::string requiredMechanicId;
     std::vector<std::string> requiredRelicIds;
     std::vector<std::string> forbiddenRelicIds;
     std::vector<std::string> requiredCardIds;
@@ -27,12 +31,16 @@ enum class RunEventChoiceBlockReasonType {
     NotEnoughHp,
     NoFreeConsumableSlot,
     NotEnoughCards,
+    TooManyCards,
+    NotWoundedEnough,
+    NotEnoughUpgradedCards,
     MissingRequiredRelic,
     HasForbiddenRelic,
     MissingRequiredCard,
     HasForbiddenCard,
     StressTooLow,
     StressTooHigh,
+    WrongRunMechanic,
     MissingRequiredTrait,
     HasForbiddenTrait,
     MissingRequiredEventFlag,

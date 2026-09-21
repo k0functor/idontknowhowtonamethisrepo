@@ -350,6 +350,32 @@ void CardVisualInstance::render(const Font* font) const {
         WHITE
     );
 
+    if (model_.stressCost > 0) {
+        const Vector2 stressCostCenter = localToWorld(
+            Vector2{cardSize.x * 0.5f - 25.f, -cardSize.y * 0.5f + 25.f}
+        );
+        DrawCircleV(
+            stressCostCenter,
+            18.f * uniformScale(currentTransform_),
+            Color{76, 36, 72, 255}
+        );
+        DrawCircleLines(
+            static_cast<int>(stressCostCenter.x),
+            static_cast<int>(stressCostCenter.y),
+            18.f * uniformScale(currentTransform_),
+            Color{238, 170, 224, 255}
+        );
+        drawTextLocal(
+            font,
+            currentTransform_,
+            "S" + std::to_string(model_.stressCost),
+            Vector2{cardSize.x * 0.5f - 38.f, -cardSize.y * 0.5f + 15.f},
+            13.f,
+            1.f,
+            Color{255, 220, 248, 255}
+        );
+    }
+
     const FittedText title = fitTextToBox(
         *font,
         model_.name,
@@ -392,12 +418,27 @@ void CardVisualInstance::render(const Font* font) const {
     drawTextLocal(
         font,
         currentTransform_,
-        UiUtf8::wrapByCodepoints(model_.description, 24, 5),
+        UiUtf8::wrapByCodepoints(model_.description, 24, 4),
         Vector2{-cardSize.x * 0.5f + 15.f, -cardSize.y * 0.5f + 148.f},
         12.f,
         1.f,
         model_.playable ? WHITE : Color{170, 170, 170, 255}
     );
+
+    if (!model_.stressPreviewLabel.empty()) {
+        const Color stressPreviewColor = model_.wouldCollapseFromStress
+            ? Color{255, 155, 145, 255}
+            : Color{225, 190, 220, 255};
+        drawTextLocal(
+            font,
+            currentTransform_,
+            UiUtf8::truncateWithEllipsis(model_.stressPreviewLabel, 28),
+            Vector2{-cardSize.x * 0.5f + 15.f, cardSize.y * 0.5f - 58.f},
+            10.f,
+            1.f,
+            stressPreviewColor
+        );
+    }
 
     if (!model_.playable) {
         drawLocalRectangle(

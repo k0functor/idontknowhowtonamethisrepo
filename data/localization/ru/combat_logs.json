@@ -112,5 +112,19 @@
   "combat.log.stress_breakdown_prevented": "{actor} приходит в себя и предотвращает срыв от стресса.",
   "combat.log.boss_phase_changed": "{boss} переходит в фазу «{phase}».",
   "combat.log.boss_arena_effect": "Срабатывает правило арены босса {boss}: «{phase}».",
-  "combat.log.enemy_summoned": "Призвано подкрепление: {enemy}."
+  "combat.log.enemy_summoned": "Призвано подкрепление: {enemy}.",
+  "combat.log.unknown_entity": "Неизвестная цель",
+  "combat.log.damage_compact": "{source} → {target}: {hp} HP",
+  "combat.log.damage_breakdown": "База {raw} → {modified}; заблокировано {blocked}",
+  "combat.log.damage_breakdown_modified": "База {raw} → {modified}; заблокировано {blocked}. {modifiers}",
+  "combat.log.block_compact": "{target}: +{modified} блока",
+  "combat.log.block_breakdown": "База {raw} → {modified}",
+  "combat.log.block_breakdown_modified": "База {raw} → {modified}. {modifiers}",
+  "combat.log.heal_compact": "{target}: +{amount} HP",
+  "combat.log.gain_stress_compact": "{target}: +{amount} стресса",
+  "combat.log.lose_stress_compact": "{target}: −{amount} стресса",
+  "combat.log.stress_transition": "Стресс {before} → {after}",
+  "combat.log.stress_transition_card": "Стресс {before} → {after}; стоимость карты «{card}»",
+  "combat.log.caused_by_card": "Карта: {card}",
+  "combat.log.status_applied_from": "{source} → {target}: {status} +{amount}"
 }

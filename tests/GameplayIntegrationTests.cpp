@@ -19,6 +19,7 @@
 #include "combat/EnergySystem.hpp"
 #include "combat/ModifierSystem.hpp"
 #include "combat/PlayerTurnSystem.hpp"
+#include "preview/CardPreviewSystem.hpp"
 #include "combat/Targeting.hpp"
 #include "combat/TurnSystem.hpp"
 #include "core/Random.hpp"
@@ -29,11 +30,18 @@
 #include "drones/DroneSystem.hpp"
 #include "effects/EffectDefinition.hpp"
 #include "entities/CombatEntity.hpp"
+#include "events/RunEventRequirement.hpp"
+#include "events/RunEventSelector.hpp"
 #include "game/GameEventBus.hpp"
 #include "localization/LocalizationManager.hpp"
 #include "relics/RelicDatabase.hpp"
 #include "relics/RelicSystem.hpp"
 #include "rewards/RewardTuning.hpp"
+#include "run/RunPacingTracker.hpp"
+#include "run/RunState.hpp"
+#include "run/SadistMasochistRules.hpp"
+#include "run/StressPsychopathRules.hpp"
+#include "run/StressRules.hpp"
 #include "statuses/StatusDatabase.hpp"
 #include "statuses/StatusSystem.hpp"
 
@@ -181,12 +189,37 @@ std::vector<const ActiveItemDefinition*> ActiveItemDatabase::all() const {
     return result;
 }
 
-bool DroneDatabase::contains(const DroneId&) const {
-    return false;
+void DroneDatabase::clear() {
+    drones_.clear();
 }
 
-const DroneDefinition& DroneDatabase::get(const DroneId&) const {
-    throw std::runtime_error("unknown integration-test drone");
+void DroneDatabase::add(DroneDefinition definition) {
+    drones_.emplace(definition.id.value, std::move(definition));
+}
+
+bool DroneDatabase::contains(const DroneId& id) const {
+    return drones_.contains(id.value);
+}
+
+const DroneDefinition& DroneDatabase::get(const DroneId& id) const {
+    const auto iterator = drones_.find(id.value);
+    if (iterator == drones_.end()) {
+        throw std::runtime_error("unknown integration-test drone");
+    }
+    return iterator->second;
+}
+
+std::vector<const DroneDefinition*> DroneDatabase::all() const {
+    std::vector<const DroneDefinition*> result;
+    result.reserve(drones_.size());
+    for (const auto& [_, definition] : drones_) {
+        result.push_back(&definition);
+    }
+    return result;
+}
+
+std::size_t DroneDatabase::size() const {
+    return drones_.size();
 }
 
 namespace {
@@ -270,6 +303,17 @@ StatusDatabase makeStatuses() {
     poisonTrigger.logType = StatusTriggerLogType::PoisonDamage;
     poison.triggers.push_back(poisonTrigger);
     add(std::move(poison));
+
+    for (const char* stanceId : {"stance_flame", "stance_ash", "stance_smoke"}) {
+        StatusDefinition stance;
+        stance.id = StatusId(stanceId);
+        stance.nameTextId = TextId(std::string("status.") + stanceId + ".name");
+        stance.descriptionTextId = TextId(std::string("status.") + stanceId + ".description");
+        stance.type = StatusType::Buff;
+        stance.durationRule = StatusDurationRule::PersistentCombat;
+        stance.exclusiveGroup = "monk_stance";
+        add(std::move(stance));
+    }
 
     return statuses;
 }
@@ -417,6 +461,21 @@ void testCompleteMultiEnemyCombatScenario() {
     trigger.effects.push_back(fixedEffect(EffectType::ApplyStatus, EffectTarget::Self, 1, "dexterity"));
     relic.triggers.push_back(std::move(trigger));
 
+    RelicTriggerDefinition thirdCardTrigger;
+    thirdCardTrigger.eventType = GameEventType::CardPlayed;
+    thirdCardTrigger.cardNumberThisTurn = 3;
+    thirdCardTrigger.sourceSide = "player";
+    thirdCardTrigger.effects.push_back(fixedEffect(EffectType::ApplyStatus, EffectTarget::Self, 1, "strength"));
+    relic.triggers.push_back(std::move(thirdCardTrigger));
+
+    RelicTriggerDefinition alternatingTrigger;
+    alternatingTrigger.eventType = GameEventType::CardPlayed;
+    alternatingTrigger.cardType = CardType::Skill;
+    alternatingTrigger.previousCardType = CardType::Attack;
+    alternatingTrigger.sourceSide = "player";
+    alternatingTrigger.effects.push_back(fixedEffect(EffectType::ApplyStatus, EffectTarget::Self, 1, "dexterity"));
+    relic.triggers.push_back(std::move(alternatingTrigger));
+
     RelicDatabase relics;
     relics.add(std::move(relic));
     RelicSystem relicSystem(relics);
@@ -489,8 +548,10 @@ void testCompleteMultiEnemyCombatScenario() {
     play("sweep");
     play("venom", firstEnemyId);
 
-    check(state.players.front().statuses.stacks("strength") == 1,
-          "innate focus must grant strength before attack resolution");
+    check(state.players.front().statuses.stacks("strength") == 2,
+          "the third-card relic condition must trigger after the third card resolves");
+    check(state.players.front().statuses.stacks("dexterity") == 2,
+          "a Skill played immediately after an Attack must satisfy the sequence relic condition");
     check(state.players.front().block == 6,
           "five card block plus one dexterity must produce six block");
     check(state.enemies[0].health.current() == 1 && state.enemies[1].health.current() == 1,
@@ -699,6 +760,7 @@ void testBossPhaseAndArenaScenario() {
     CombatState state;
     state.players.push_back(makeEntity(100, EntityType::Player, "tester", 20));
     state.enemies.push_back(makeEntity(101, EntityType::Enemy, "integration_boss", 30));
+    state.enemies.front().boss = true;
     state.enemyHpMultiplier = 2.f;
     state.turn = 1;
 
@@ -727,11 +789,442 @@ void testBossPhaseAndArenaScenario() {
     phases.applyPlayerTurnEffects(state, random);
     check(state.players.front().health.current() == 16,
           "arena rule must trigger again on a later player turn");
+
+    state.enemies.front().health.setCurrent(0);
+    CombatController controller;
+    const CombatResult result = controller.updateAfterAction(state);
+    check(result.outcome == CombatOutcome::Victory,
+          "defeating a phased boss must also finish its summoned entourage");
+    check(state.aliveEnemyCount() == 0u,
+          "summoned boss minions must die immediately with their boss");
+}
+
+void testExactRepeatedDamagePreview() {
+    LocalizationManager localization;
+    StatusDatabase statuses = makeStatuses();
+    ModifierSystem modifiers(localization, statuses);
+    DamageSystem damageSystem(modifiers);
+    BlockSystem blockSystem(modifiers);
+    CardPlayValidator validator;
+    EffectResolver resolver;
+
+    CardDefinition repeatedStrike = makeCard(
+        "preview_repeated_strike",
+        CardType::Attack,
+        1,
+        {fixedEffect(EffectType::Damage, EffectTarget::SingleEnemy, 10)}
+    );
+    repeatedStrike.effects.front().repeatCount = 2;
+
+    CardDatabase cards;
+    cards.add(repeatedStrike);
+
+    CombatState state;
+    state.phase = CombatPhase::PlayerTurn;
+    state.players.push_back(makeEntity(201, EntityType::Player, "preview_source", 30));
+    state.enemies.push_back(makeEntity(202, EntityType::Enemy, "preview_target", 40));
+    state.players.front().statuses.set("strength", 2);
+    state.enemies.front().block = 5;
+    state.resources.setMaxEnergy(state.players.front().id, 3);
+    state.resources.gainEnergy(state.players.front().id, 3);
+
+    CardInstance instance;
+    instance.instanceId = CardInstanceId{7001};
+    instance.definitionId = repeatedStrike.id;
+    state.hand.add(instance);
+
+    CardPreviewSystem previews(cards, validator, resolver, damageSystem, blockSystem);
+    const CardPreview preview = previews.previewCard(
+        state,
+        instance.instanceId,
+        state.players.front().id,
+        state.enemies.front().id
+    );
+
+    check(preview.outcome.modifiedDamage.minimum == 24 && preview.outcome.modifiedDamage.maximum == 24,
+          "card preview must include strength and every repeated hit");
+    check(preview.outcome.hpDamage.minimum == 19 && preview.outcome.hpDamage.maximum == 19,
+          "card preview must consume target block only once across repeated hits");
+    check(!preview.outcome.modifierLabels.empty(),
+          "card preview must expose the modifier that changed the printed value");
+}
+
+
+void testRunPacingTracksRoomsFloorsAndPhases() {
+    RunState run;
+    run.currentFloorId = "floor1";
+    run.currentFloorIndex = 1;
+    run.phase = RunPhase::Map;
+
+    RunPacingTracker::tick(run, 2.f);
+    check(run.pacing.activeSeconds == 0.25f && run.pacing.mapSeconds == 0.25f,
+          "pacing must clamp a single frame and attribute it to the active phase");
+
+    RunPacingTracker::beginRoom(run, 7, RunMapNodeType::Combat);
+    run.phase = RunPhase::Combat;
+    RunPacingTracker::tick(run, 0.10f);
+    RunPacingTracker::tick(run, 0.15f);
+    RunPacingTracker::finishRoom(run, 7);
+
+    check(run.pacing.completedRooms.size() == 1,
+          "pacing must store a completed room sample");
+    check(run.pacing.completedRooms.front().nodeId == 7 &&
+              run.pacing.completedRooms.front().activeSeconds > 0.24f,
+          "pacing must retain the node id and active room duration");
+    check(run.pacing.combatSeconds > 0.24f,
+          "pacing must attribute room time to combat");
+
+    run.stats.nodesCompleted = 1;
+    RunPacingTracker::finishFloor(run);
+    check(run.pacing.completedFloors.size() == 1,
+          "pacing must store a completed floor sample");
+    check(run.pacing.completedFloors.front().roomsCompleted == 1,
+          "floor pacing must include completed room count");
+
+    run.currentFloorId = "floor2";
+    run.currentFloorIndex = 2;
+    RunPacingTracker::beginFloor(run);
+    check(run.pacing.floorActive && run.pacing.currentFloorSeconds == 0.f,
+          "starting a floor must reset only the current floor timer");
+}
+
+void testEventStateRequirementsAndUnseenSelection() {
+    RunState run;
+    RunActorState actor;
+    actor.definitionId = "event_tester";
+    actor.currentHp = 20;
+    actor.maxHp = 40;
+    run.actorStates.push_back(actor);
+    for (int index = 0; index < 12; ++index) {
+        run.deckCardIds.push_back(CardId("event_card_" + std::to_string(index)));
+    }
+    run.upgradedDeckIndices = {0, 1, 2};
+
+    RunEventChoiceRequirements requirements;
+    requirements.minDeckSize = 8;
+    requirements.maxDeckSize = 12;
+    requirements.minMissingHp = 15;
+    requirements.minUpgradedCards = 3;
+    check(evaluateRunEventChoiceRequirements(requirements, run).available,
+          "event requirements must accept a matching run state");
+
+    run.deckCardIds.push_back(CardId("event_card_extra"));
+    RunEventChoiceAvailability unavailable = evaluateRunEventChoiceRequirements(requirements, run);
+    check(!unavailable.available && std::any_of(
+              unavailable.reasons.begin(), unavailable.reasons.end(),
+              [](const RunEventChoiceBlockReason& reason) {
+                  return reason.type == RunEventChoiceBlockReasonType::TooManyCards;
+              }),
+          "event requirements must enforce maximum deck size");
+    run.deckCardIds.pop_back();
+
+    run.upgradedDeckIndices = {0, 1};
+    unavailable = evaluateRunEventChoiceRequirements(requirements, run);
+    check(!unavailable.available && std::any_of(
+              unavailable.reasons.begin(), unavailable.reasons.end(),
+              [](const RunEventChoiceBlockReason& reason) {
+                  return reason.type == RunEventChoiceBlockReasonType::NotEnoughUpgradedCards;
+              }),
+          "event requirements must inspect upgraded-card count");
+    run.upgradedDeckIndices = {0, 1, 2};
+
+    run.actorStates.front().currentHp = 30;
+    unavailable = evaluateRunEventChoiceRequirements(requirements, run);
+    check(!unavailable.available && std::any_of(
+              unavailable.reasons.begin(), unavailable.reasons.end(),
+              [](const RunEventChoiceBlockReason& reason) {
+                  return reason.type == RunEventChoiceBlockReasonType::NotWoundedEnough;
+              }),
+          "event requirements must inspect missing party HP");
+    run.actorStates.front().currentHp = 20;
+
+    RunEventDefinition seen;
+    seen.id = "seen";
+    RunEventDefinition unseen;
+    unseen.id = "unseen";
+    std::vector<const RunEventDefinition*> pool{&seen, &unseen};
+    run.eventFlags.push_back("event.seen.seen");
+    Random random(3401u);
+    check(chooseAvailableRunEvent(pool, run, random).id == "unseen",
+          "event selection must prefer an unseen event");
+
+    run.eventFlags.push_back("event.seen.unseen");
+    const std::string fallbackId = chooseAvailableRunEvent(pool, run, random).id;
+    check(fallbackId == "seen" || fallbackId == "unseen",
+          "event selection must fall back safely after exhausting a pool");
+}
+
+void testBossDefeatClearsMinions() {
+    CombatController controller;
+    CombatState state;
+    state.phase = CombatPhase::PlayerTurn;
+    state.players.push_back(makeEntity(300, EntityType::Player, "tester", 30));
+
+    CombatEntity boss = makeEntity(301, EntityType::Enemy, "boss", 20);
+    boss.boss = true;
+    boss.health.setCurrent(0);
+    CombatEntity minion = makeEntity(302, EntityType::Enemy, "minion", 10);
+    CombatEntity secondBoss = makeEntity(303, EntityType::Enemy, "second_boss", 12);
+    secondBoss.boss = true;
+
+    state.enemies.push_back(std::move(boss));
+    state.enemies.push_back(std::move(minion));
+    state.enemies.push_back(std::move(secondBoss));
+
+    controller.updateAfterAction(state);
+
+    check(!state.enemies[1].isAlive(), "defeating a boss must immediately defeat its non-boss entourage");
+    check(state.enemies[2].isAlive(), "defeating one boss must not automatically kill another boss");
+    check(state.phase == CombatPhase::PlayerTurn,
+          "combat must continue when another boss remains alive");
+}
+
+
+void testStressCollapseAndPsychopathIsolation() {
+    LocalizationManager localization;
+    StatusDatabase statuses = makeStatuses();
+    ModifierSystem modifiers(localization, statuses);
+    DamageSystem damageSystem(modifiers);
+    BlockSystem blockSystem(modifiers);
+    EnergySystem energySystem;
+    DrawSystem drawSystem;
+    EffectResolver resolver;
+    Targeting targeting;
+    StatusSystem statusSystem(statuses);
+    DroneDatabase drones;
+    DroneSystem droneSystem(drones, resolver, targeting, damageSystem, blockSystem, energySystem, drawSystem, statusSystem);
+    EffectSystem effects(resolver, targeting, damageSystem, blockSystem, energySystem, drawSystem, statusSystem, droneSystem);
+
+    CombatState collapse;
+    collapse.phase = CombatPhase::PlayerTurn;
+    collapse.players.push_back(makeEntity(400, EntityType::Player, "rusted_knight", 30));
+    collapse.enemies.push_back(makeEntity(401, EntityType::Enemy, "stress_dummy", 30));
+    collapse.players.front().stress = 195;
+    collapse.players.front().maxStress = StressRules::MaximumStress;
+
+    EffectContext stressContext;
+    stressContext.source = collapse.players.front().id;
+    Random random(3701u);
+    stressContext.random = &random;
+    effects.applyEffects(collapse, {fixedEffect(EffectType::GainStress, EffectTarget::Self, 10)}, stressContext);
+
+    check(collapse.players.front().stress == StressRules::MaximumStress,
+          "stress gain must clamp at the configured maximum");
+    check(!collapse.players.front().isAlive(),
+          "a normal actor reaching maximum stress must collapse and die");
+    CombatController combatController;
+    check(combatController.updateAfterAction(collapse).outcome == CombatOutcome::Defeat,
+          "stress collapse of the final actor must end combat in defeat");
+
+    CombatState normal;
+    normal.players.push_back(makeEntity(410, EntityType::Player, "rusted_knight", 30));
+    normal.enemies.push_back(makeEntity(411, EntityType::Enemy, "damage_dummy", 30));
+    normal.players.front().stress = StressRules::PanickedThreshold;
+    const DamageResult normalDamage = damageSystem.dealDamage(
+        normal, normal.players.front().id, normal.enemies.front().id, 5,
+        CardId("qa_attack"), DiceCorruption{}, true
+    );
+
+    CombatState psychopath;
+    psychopath.players.push_back(makeEntity(420, EntityType::Player, "lost_psychopath", 30));
+    psychopath.enemies.push_back(makeEntity(421, EntityType::Enemy, "damage_dummy", 30));
+    psychopath.players.front().stress = StressRules::PanickedThreshold;
+    const DamageResult psychopathDamage = damageSystem.dealDamage(
+        psychopath, psychopath.players.front().id, psychopath.enemies.front().id, 5,
+        CardId("qa_attack"), DiceCorruption{}, true
+    );
+
+    check(normalDamage.modifiedDamage == 5,
+          "high stress must not grant a direct damage bonus to ordinary actors");
+    check(psychopathDamage.modifiedDamage == 8,
+          "high stress must grant the psychopath-only damage bonus");
+}
+
+void testMonkStanceCycleAndReward() {
+    LocalizationManager localization;
+    StatusDatabase statuses = makeStatuses();
+    ModifierSystem modifiers(localization, statuses);
+    DamageSystem damageSystem(modifiers);
+    BlockSystem blockSystem(modifiers);
+    EnergySystem energySystem;
+    DrawSystem drawSystem;
+    EffectResolver resolver;
+    Targeting targeting;
+    StatusSystem statusSystem(statuses);
+    DroneDatabase drones;
+    DroneSystem droneSystem(drones, resolver, targeting, damageSystem, blockSystem, energySystem, drawSystem, statusSystem);
+    EffectSystem effects(resolver, targeting, damageSystem, blockSystem, energySystem, drawSystem, statusSystem, droneSystem);
+
+    CombatState state;
+    state.players.push_back(makeEntity(500, EntityType::Player, "monk", 30));
+    const EntityId monkId = state.players.front().id;
+    state.resources.setMaxEnergy(monkId, 3);
+    state.resources.spendEnergy(monkId, 3);
+    for (std::uint64_t id = 1; id <= 4; ++id) {
+        CardInstance card;
+        card.instanceId = CardInstanceId{5000 + id};
+        card.definitionId = CardId("qa_draw_card");
+        state.deck.drawPile.addTop(std::move(card));
+    }
+
+    statusSystem.applyStatus(state, monkId, "stance_flame", 1, monkId);
+    EffectContext context;
+    context.source = monkId;
+    Random random(3702u);
+    context.random = &random;
+    effects.applyEffects(state, {fixedEffect(EffectType::EnterStance, EffectTarget::Self, 0, "stance_ash")}, context);
+
+    check(!state.players.front().statuses.has("stance_flame") && state.players.front().statuses.has("stance_ash"),
+          "entering a stance must replace the previous stance in the exclusive group");
+    check(state.resources.energyFor(monkId) == 1 && state.hand.size() == 2u,
+          "a real monk stance shift must grant one energy and draw two cards");
+
+    effects.applyEffects(state, {fixedEffect(EffectType::EnterStance, EffectTarget::Self, 0, "stance_smoke")}, context);
+    check(!state.players.front().statuses.has("stance_ash") && state.players.front().statuses.has("stance_smoke"),
+          "the stance cycle must keep exactly one active stance");
+    check(state.resources.energyFor(monkId) == 2 && state.hand.size() == 4u,
+          "successive stance shifts must each trigger the monk reward");
+
+    CombatState ordinary;
+    ordinary.players.push_back(makeEntity(510, EntityType::Player, "rusted_knight", 30));
+    const EntityId ordinaryId = ordinary.players.front().id;
+    ordinary.resources.setMaxEnergy(ordinaryId, 3);
+    ordinary.resources.spendEnergy(ordinaryId, 3);
+    statusSystem.applyStatus(ordinary, ordinaryId, "stance_flame", 1, ordinaryId);
+    EffectContext ordinaryContext;
+    ordinaryContext.source = ordinaryId;
+    ordinaryContext.random = &random;
+    effects.applyEffects(ordinary, {fixedEffect(EffectType::EnterStance, EffectTarget::Self, 0, "stance_ash")}, ordinaryContext);
+    check(ordinary.resources.energyFor(ordinaryId) == 0 && ordinary.hand.empty(),
+          "stance-shift rewards must remain exclusive to the monk actor");
+}
+
+void testDroneSlotOverflowPassiveAndConsumption() {
+    LocalizationManager localization;
+    StatusDatabase statuses = makeStatuses();
+    ModifierSystem modifiers(localization, statuses);
+    DamageSystem damageSystem(modifiers);
+    BlockSystem blockSystem(modifiers);
+    EnergySystem energySystem;
+    DrawSystem drawSystem;
+    EffectResolver resolver;
+    Targeting targeting;
+    StatusSystem statusSystem(statuses);
+    DroneDatabase drones;
+
+    const auto addDrone = [&drones](const char* id, const int damage, const int passiveBlock) {
+        DroneDefinition drone;
+        drone.id = DroneId(id);
+        DroneActionDefinition active;
+        active.effects.push_back(fixedEffect(EffectType::Damage, EffectTarget::SingleEnemy, damage));
+        drone.activeAction = active;
+        if (passiveBlock > 0) {
+            DroneActionDefinition passive;
+            passive.effects.push_back(fixedEffect(EffectType::Block, EffectTarget::Self, passiveBlock));
+            drone.passiveAction = passive;
+        }
+        drones.add(std::move(drone));
+    };
+    addDrone("qa_drone_a", 1, 0);
+    addDrone("qa_drone_b", 3, 2);
+    addDrone("qa_drone_c", 4, 0);
+    addDrone("qa_drone_d", 5, 0);
+
+    DroneSystem droneSystem(drones, resolver, targeting, damageSystem, blockSystem, energySystem, drawSystem, statusSystem);
+    CombatState state;
+    state.players.push_back(makeEntity(600, EntityType::Player, "replicant", 30));
+    state.enemies.push_back(makeEntity(601, EntityType::Enemy, "drone_target", 30));
+    state.maxDroneSlots = 3;
+    const EntityId owner = state.players.front().id;
+
+    droneSystem.summonDrone(state, "qa_drone_a", owner);
+    droneSystem.summonDrone(state, "qa_drone_b", owner);
+    droneSystem.summonDrone(state, "qa_drone_c", owner);
+    droneSystem.summonDrone(state, "qa_drone_d", owner);
+    check(state.droneSlots.size() == 3u,
+          "summoning beyond the drone cap must keep exactly three slots");
+    check(state.droneSlots[0].droneId == "qa_drone_b" && state.droneSlots[2].droneId == "qa_drone_d",
+          "overflow must evict the oldest drone, not a random or newest slot");
+
+    Random random(3703u);
+    droneSystem.processEndOfPlayerTurn(state, random);
+    check(state.players.front().block == 2,
+          "passive drones must trigger at the end of the player turn");
+    droneSystem.useOldestDrone(state, &random);
+    check(state.enemies.front().health.current() == 27,
+          "using the oldest drone must execute its active effect");
+    check(state.droneSlots.size() == 2u && state.droneSlots.front().droneId == "qa_drone_c",
+          "an activated drone must be consumed from its exact slot");
+}
+
+void testSadistMasochistEngineAndSequentialTurns() {
+    CombatState state;
+    state.phase = CombatPhase::PlayerTurn;
+    state.turn = 1;
+    state.useSequentialPlayerTurns = true;
+    state.players.push_back(makeEntity(700, EntityType::Player, "sadist", 30));
+    state.players.push_back(makeEntity(701, EntityType::Player, "masochist", 30));
+    state.enemies.push_back(makeEntity(702, EntityType::Enemy, "turn_dummy", 30));
+
+    GameEvent event;
+    event.type = GameEventType::DamageDealt;
+    event.source = state.players[0].id;
+    event.target = state.players[1].id;
+    event.amount = 4;
+    SadistMasochistRules::handleEvent(state, event);
+    check(state.players[0].statuses.stacks(SadistMasochistRules::PleasureStatusId) == 1 &&
+              state.players[1].statuses.stacks(SadistMasochistRules::PainStatusId) == 1,
+          "sadist damage to masochist must arm both sides of the duo engine");
+
+    LocalizationManager localization;
+    StatusDatabase statuses = makeStatuses();
+    ModifierSystem modifiers(localization, statuses);
+    DamageSystem damageSystem(modifiers);
+    BlockSystem blockSystem(modifiers);
+    EnergySystem energySystem;
+    DrawSystem drawSystem;
+    EffectResolver resolver;
+    Targeting targeting;
+    StatusSystem statusSystem(statuses);
+    DroneDatabase drones;
+    DroneSystem droneSystem(drones, resolver, targeting, damageSystem, blockSystem, energySystem, drawSystem, statusSystem);
+    EffectSystem effectSystem(resolver, targeting, damageSystem, blockSystem, energySystem, drawSystem, statusSystem, droneSystem);
+    CardDatabase cards;
+    PlayerTurnSystem playerTurns(drawSystem, cards, nullptr, &effectSystem);
+    EnemyDefinition enemy;
+    enemy.id = EnemyId("turn_dummy");
+    enemy.maxHp = 30;
+    enemy.actions.push_back(attackAction("turn_dummy.wait", 0));
+    EnemyDatabase enemies;
+    enemies.add(std::move(enemy));
+    EnemyMoveSelector selector(modifiers);
+    EnemyTurnSystem enemyTurns(selector, effectSystem);
+    BossPhaseSystem phases(enemies, effectSystem);
+    CombatController controller;
+    TurnSystem turns(enemies, playerTurns, enemyTurns, selector, phases, statusSystem, droneSystem, controller, 5);
+
+    Random random(3704u);
+    turns.endPlayerTurn(state, random, true);
+    check(state.turn == 1 && state.activePlayerIndex == 1 && state.activePlayerId() == state.players[1].id,
+          "ending Sadist's subturn must pass the same round to Masochist");
+
+    state.players[0].health.setCurrent(0);
+    turns.endPlayerTurn(state, random, true);
+    check(state.turn == 2 && state.activePlayerId() == state.players[1].id,
+          "a dead duo member must be skipped when the next round starts");
 }
 
 } // namespace
 
 int main() {
+    testStressCollapseAndPsychopathIsolation();
+    testMonkStanceCycleAndReward();
+    testDroneSlotOverflowPassiveAndConsumption();
+    testSadistMasochistEngineAndSequentialTurns();
+    testRunPacingTracksRoomsFloorsAndPhases();
+    testEventStateRequirementsAndUnseenSelection();
+    testBossDefeatClearsMinions();
+    testExactRepeatedDamagePreview();
     testCompleteMultiEnemyCombatScenario();
     testActiveItemRewardPersistenceScenario();
     testBossPhaseAndArenaScenario();

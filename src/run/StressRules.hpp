@@ -131,7 +131,12 @@ void normalize(ActorState& actor) {
 }
 
 template <typename ActorState>
-StressAdjustmentResult applyDelta(ActorState& actor, const int delta, Random* random) {
+StressAdjustmentResult applyDelta(
+    ActorState& actor,
+    const int delta,
+    Random* random,
+    const bool psychopathMechanicEnabled = false
+) {
     normalize(actor);
 
     StressAdjustmentResult result;
@@ -144,11 +149,18 @@ StressAdjustmentResult applyDelta(ActorState& actor, const int delta, Random* ra
     result.bandChanged = result.beforeBand != result.afterBand;
     result.applied = result.after - result.before;
 
-    if (actor.stress < ResolveThreshold) {
+    if (!psychopathMechanicEnabled) {
+        actor.resolveCheckTriggered = false;
+        removeTrait(actor, BreakdownTraitId);
+        removeTrait(actor, ResolveTraitId);
+    } else if (actor.stress < ResolveThreshold) {
         actor.resolveCheckTriggered = false;
     }
 
-    if (delta > 0 && !actor.resolveCheckTriggered && actor.stress >= ResolveThreshold) {
+    if (psychopathMechanicEnabled &&
+        delta > 0 &&
+        !actor.resolveCheckTriggered &&
+        actor.stress >= ResolveThreshold) {
         actor.resolveCheckTriggered = true;
         result.resolveCheckTriggered = true;
 

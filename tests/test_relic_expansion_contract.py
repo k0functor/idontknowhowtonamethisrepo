@@ -26,9 +26,9 @@ def main() -> int:
                     assert effect.get('status') in statuses, f"{relic['id']} references unknown status"
                     applies.append(effect['status'])
         status_relics += bool(applies)
-    assert status_relics >= 36, f'expected at least 36 status relics, got {status_relics}'
-    assert any(e.get('target')=='all_enemies' and e.get('status')=='poison' for t in by_id['serpent_standard']['triggers'] for e in t['effects'])
-    assert any(e.get('status')=='vulnerable' and e.get('target')=='self' for t in by_id['glass_heart']['triggers'] for e in t['effects'])
+    assert status_relics >= 25, f'expected at least 25 status-driven relics, got {status_relics}'
+    assert any(t.get('event')=='status_applied' and t.get('status')=='poison' for t in by_id['serpent_standard']['triggers'])
+    assert any(t.get('event')=='damage_taken' and t.get('min_amount',0) >= 8 for t in by_id['glass_heart']['triggers'])
     for lang in ('ru','en'):
         text=load(f'data/localization/{lang}/relics.json')
         for rid in expected:

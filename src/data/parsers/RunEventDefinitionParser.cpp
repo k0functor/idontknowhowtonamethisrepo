@@ -19,6 +19,7 @@ RunEventEffectType parseEffectType(const std::string& value, const std::filesyst
     if (value == "gain_random_consumable") return RunEventEffectType::GainRandomConsumable;
     if (value == "remove_card") return RunEventEffectType::RemoveCard;
     if (value == "remove_random_card") return RunEventEffectType::RemoveRandomCard;
+    if (value == "upgrade_random_card") return RunEventEffectType::UpgradeRandomCard;
     if (value == "gain_stress") return RunEventEffectType::GainStress;
     if (value == "lose_stress") return RunEventEffectType::LoseStress;
     if (value == "lose_hp") return RunEventEffectType::LoseHp;
@@ -61,8 +62,12 @@ RunEventChoiceRequirements parseRequirements(const Json& json, const std::filesy
     requirements.minGold = std::max(0, requirementsReader.optionalInt("min_gold", 0));
     requirements.minHp = std::max(0, requirementsReader.optionalInt("min_hp", 0));
     requirements.minDeckSize = std::max(0, requirementsReader.optionalInt("min_deck_size", 0));
+    requirements.maxDeckSize = std::max(0, requirementsReader.optionalInt("max_deck_size", 0));
+    requirements.minMissingHp = std::max(0, requirementsReader.optionalInt("min_missing_hp", 0));
+    requirements.minUpgradedCards = std::max(0, requirementsReader.optionalInt("min_upgraded_cards", 0));
     requirements.minStress = std::max(0, requirementsReader.optionalInt("min_stress", 0));
     requirements.maxStress = std::max(0, requirementsReader.optionalInt("max_stress", 0));
+    requirements.requiredMechanicId = requirementsReader.optionalString("mechanic_id", "");
     requirements.freeConsumableSlot =
         requirementsReader.optionalBool("free_consumable_slot", false) ||
         requirementsReader.optionalBool("requires_free_consumable_slot", false);
@@ -111,6 +116,9 @@ RunEventChoiceRequirements parseRequirements(const Json& json, const std::filesy
     if (requirements.maxStress > 0 && requirements.minStress > requirements.maxStress) {
         throw std::runtime_error(sourcePath.string() + ": min_stress must not exceed max_stress");
     }
+    if (requirements.maxDeckSize > 0 && requirements.minDeckSize > requirements.maxDeckSize) {
+        throw std::runtime_error(sourcePath.string() + ": min_deck_size must not exceed max_deck_size");
+    }
     return requirements;
 }
 
@@ -143,6 +151,7 @@ bool effectNeedsContentId(const RunEventEffectType type) {
         case RunEventEffectType::GainRandomRelic:
         case RunEventEffectType::GainRandomConsumable:
         case RunEventEffectType::RemoveRandomCard:
+        case RunEventEffectType::UpgradeRandomCard:
         case RunEventEffectType::GainStress:
         case RunEventEffectType::LoseStress:
         case RunEventEffectType::LoseHp:

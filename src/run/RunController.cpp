@@ -3,6 +3,7 @@
 #include "active_items/ActiveItemAcquisitionSystem.hpp"
 #include "active_items/ActiveItemSystem.hpp"
 #include "cards/CardRarity.hpp"
+#include "cards/CardUpgrade.hpp"
 #include "cards/CardType.hpp"
 #include "consumables/ConsumableDefinition.hpp"
 #include "consumables/ConsumableId.hpp"
@@ -11,8 +12,10 @@
 #include "run/RunCardEligibility.hpp"
 #include "run/RunMapGenerator.hpp"
 #include "run/RunRelicOwnership.hpp"
+#include "run/RunPacingTracker.hpp"
 #include "run/StressEconomyRules.hpp"
 #include "run/StressRules.hpp"
+#include "run/StressPsychopathRules.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -396,6 +399,8 @@ bool RunController::advanceToNextFloor(
     Random& floorRandom = random();
     RunMapGenerator generator;
 
+    RunPacingTracker::finishFloor(state);
+
     state.act = floor.act;
     state.currentFloorId = floor.id;
     state.currentFloorIndex = floor.index;
@@ -408,6 +413,7 @@ bool RunController::advanceToNextFloor(
     state.pendingRoom.clear();
     state.map = generator.generateActOneMap(floorRandom, mapGeneration);
     state.randomState = floorRandom.state();
+    RunPacingTracker::beginFloor(state);
     return true;
 }
 
@@ -595,6 +601,7 @@ void RunController::startNode(const int nodeId) {
 
     map.currentNodeId = nodeId;
     selectedNode.state = RunMapNodeState::Current;
+    RunPacingTracker::beginRoom(run(), nodeId, selectedNode.type);
 
     switch (selectedNode.type) {
         case RunMapNodeType::Combat:
@@ -720,7 +727,7 @@ std::optional<RelicId> RunController::chooseChestRelic(
             continue;
         }
 
-        if (!RewardPoolRules::canAppearAsRelicReward(*relic)) {
+        if (!RewardPoolRules::canAppearAsRelicReward(*relic, state.archetypeMechanicId)) {
             continue;
         }
 
@@ -833,7 +840,12 @@ void RunController::reduceAllActorsStress(const int amount) {
 void RunController::adjustAllActorsStress(const int delta, Random* random) {
     RunState& state = run();
     for (RunActorState& actor : state.actorStates) {
-        const StressRules::StressAdjustmentResult result = StressRules::applyDelta(actor, delta, random);
+        const StressRules::StressAdjustmentResult result = StressRules::applyDelta(
+            actor,
+            delta,
+            random,
+            StressPsychopathRules::appliesTo(actor.definitionId)
+        );
         if (result.collapsed) {
             actor.currentHp = 0;
         }
@@ -1093,6 +1105,28 @@ RunEventChoiceResult RunController::completeEventChoice(
                 }
                 break;
 
+            case RunEventEffectType::UpgradeRandomCard: {
+                std::vector<std::size_t> candidates;
+                for (std::size_t index = 0; index < state.deckCardIds.size(); ++index) {
+                    const CardId cardId = state.deckCardIds[index];
+                    if (!containsDeckIndex(state.upgradedDeckIndices, index) &&
+                        cards.contains(cardId) && CardUpgrade::isUpgradable(cards.get(cardId))) {
+                        candidates.push_back(index);
+                    }
+                }
+                if (!candidates.empty()) {
+                    const int candidateIndex = random.rangeInclusive(0, static_cast<int>(candidates.size()) - 1);
+                    const std::size_t deckIndex = candidates[static_cast<std::size_t>(candidateIndex)];
+                    state.upgradedDeckIndices.push_back(static_cast<int>(deckIndex));
+                    std::sort(state.upgradedDeckIndices.begin(), state.upgradedDeckIndices.end());
+                    ++state.stats.cardsUpgraded;
+                    result.outcomes.push_back(RunEventOutcomeEntry{
+                        RunEventOutcomeType::CardUpgraded, 0, state.deckCardIds[deckIndex].value
+                    });
+                }
+                break;
+            }
+
             case RunEventEffectType::GainStress: {
                 const int gainedStress = std::max(0, effect.amount);
                 if (gainedStress > 0) {
@@ -1171,6 +1205,7 @@ void RunController::markNodeCompletedAndUnlockNext(const int nodeId) {
             );
         }
 
+        RunPacingTracker::finishRoom(run(), nodeId);
         current.state = RunMapNodeState::Completed;
         map.currentNodeId = nodeId;
 

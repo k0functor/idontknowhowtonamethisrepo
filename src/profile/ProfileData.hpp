@@ -19,6 +19,7 @@ struct ProfileData {
     std::vector<std::string> discoveredConsumableIds;
     std::vector<std::string> completedChallengeIds;
     std::vector<std::string> completedAchievementIds;
+    std::vector<std::string> seenOnboardingHintIds;
     std::vector<ProfileProgressEntry> progressLog;
 
     // Long-lived profile statistics. These are not unlock flags: they track

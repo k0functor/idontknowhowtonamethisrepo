@@ -47,5 +47,14 @@
   "event.choice.requirement.forbidden_event_flag": "available only before another choice",
   "event.choice.requirement.required_event_flag": "requires an earlier encounter",
   "event.choice.unavailable.forbidden_event_flag": "this option is no longer available after the earlier choice",
-  "event.choice.unavailable.required_event_flag": "requires an earlier encounter in this chain"
+  "event.choice.unavailable.required_event_flag": "requires an earlier encounter in this chain",
+  "event.choice.requirement.run_mechanic": "the matching archetype mechanic",
+  "event.choice.unavailable.run_mechanic": "available only to the matching archetype",
+  "event.choice.effect.upgrade_random_card": "upgrade a random card",
+  "event.choice.requirement.max_deck_size": "at most {required} deck cards",
+  "event.choice.requirement.min_missing_hp": "at least {required} missing party HP",
+  "event.choice.requirement.min_upgraded_cards": "at least {required} upgraded cards",
+  "event.choice.unavailable.deck_size_max": "deck cards {current}, requires at most {required}",
+  "event.choice.unavailable.missing_hp": "missing party HP {current}/{required}",
+  "event.choice.unavailable.upgraded_cards": "upgraded cards {current}/{required}"
 }

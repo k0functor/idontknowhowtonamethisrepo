@@ -25,6 +25,7 @@ public:
     const NodeRewardTuning& node(RunMapNodeType nodeType) const;
     double merchantGoldMultiplier() const;
     double groupGoldMultiplier(int enemyCount) const;
+    double floorGoldMultiplier(int floorIndex) const;
 
 private:
     NodeRewardTuning& mutableNode(RunMapNodeType nodeType);
@@ -39,4 +40,5 @@ private:
     NodeRewardTuning boss_;
     double merchantGoldMultiplier_ = 1.25;
     int groupGoldBonusPercentPerExtraEnemy_ = 20;
+    int goldGrowthPercentPerFloor_ = 8;
 };

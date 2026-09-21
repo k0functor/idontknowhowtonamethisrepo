@@ -1,0 +1,17 @@
+{
+  "card.monk_cinder_crossing.name": "Cinder Crossing",
+  "card.monk_cinder_crossing.description": "Deal {damage} damage. In Flame Stance, gain +{bonus_if_status} damage. Enter Ash Stance.",
+  "card.monk_ashen_passage.name": "Ashen Passage",
+  "card.monk_ashen_passage.description": "Gain {block} Block. In Ash Stance, gain +{bonus_if_status} Block. Enter Smoke Stance.",
+  "card.monk_smoke_ignition.name": "Smoke Ignition",
+  "card.monk_smoke_ignition.description": "Deal {damage} damage to all enemies. In Smoke Stance, gain +{bonus_if_status} damage. Enter Flame Stance.",
+  "card.monk_three_aspects.name": "Three Aspects",
+  "card.monk_three_aspects.description": "Deal 5 damage (+7 in Flame). Gain 5 Block (+7 in Ash). Draw 1 card (+1 in Smoke). Exhaust.",
+  "card.monk_three_aspects.upgrade.description": "Deal 6 damage (+9 in Flame). Gain 6 Block (+9 in Ash). Draw 1 card (+2 in Smoke). Exhaust.",
+  "card.monk_still_point.name": "Still Point",
+  "card.monk_still_point.description": "Flame: gain 2 Strength. Ash: gain 12 Block. Smoke: draw 2 cards. Retain. Exhaust.",
+  "card.monk_still_point.upgrade.description": "Flame: gain 3 Strength. Ash: gain 16 Block. Smoke: draw 3 cards. Retain. Exhaust.",
+  "card.monk_wheel_without_end.name": "Wheel Without End",
+  "card.monk_wheel_without_end.description": "Enter Flame, then Ash, then Smoke Stance. Each actual stance change grants the normal stance-shift reward. Exhaust.",
+  "card.monk_wheel_without_end.upgrade.description": "Enter Flame, then Ash, then Smoke Stance. Each actual stance change grants the normal stance-shift reward. Retain. Exhaust."
+}
