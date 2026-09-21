@@ -1132,6 +1132,16 @@ RunState normalizedRunForSave(const RunState& run) {
         normalized.currentFloorIndex = std::max(1, normalized.act);
     }
     for (RunActorState& actor : normalized.actorStates) {
+        // Keep save-side normalization aligned with actorStateFromJson().
+        // Otherwise serialize -> deserialize -> serialize can change a save
+        // (for example, resolveCheckTriggered is invalid below the resolve threshold).
+        if (actor.maxHp > 0) {
+            actor.currentHp = std::clamp(actor.currentHp, 0, actor.maxHp);
+        }
+        StressRules::normalize(actor);
+        if (actor.stress >= actor.maxStress) {
+            actor.currentHp = 0;
+        }
         normalizeStringVector(actor.traitIds);
         normalizeStringVector(actor.relicIds);
     }
